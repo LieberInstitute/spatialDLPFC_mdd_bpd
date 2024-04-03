@@ -3,7 +3,7 @@
 #SBATCH -o logs/slurm-o_splitSlide.txt 
 #SBATCH -e logs/slurm-e_splitSlide.txt
 #SBATCH --job-name=MBv-splitslide
-#SBATCH --array=1-4
+#SBATCH --array=1-17
 
 echo "**** Job starts ****"
 date
