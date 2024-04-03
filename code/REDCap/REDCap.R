@@ -16,15 +16,15 @@ D1$array <- "D1"
 REDCap_table <- rbind(A1, B1, C1, D1)
 REDCap_table <- REDCap_table[order(REDCap_table$slide), ]
 
-REDCap_HYP <- REDCap_table[which(REDCap_table$project == "LIBD4195"), ]
+REDCap_MBv <- REDCap_table[which(REDCap_table$project == "spatialAMY_LIBD4125"), ]
 
-Brain_nums <- unique(REDCap_HYP$sample)
+Brain_nums <- unique(REDCap_MBv$sample)
 write.table(Brain_nums, file = (here::here("raw-data", "sample_info", "ALLbrains.txt")), row.names = FALSE, col.names = FALSE)
 
-Samples <- unique(paste0(REDCap_HYP$slide, "_", REDCap_HYP$array))
+Samples <- unique(paste0(REDCap_MBv$slide, "_", REDCap_MBv$array))
 write.table(Samples, file = (here::here("raw-data", "sample_info", "ALLsamples.txt")), row.names = FALSE, col.names = FALSE)
 
-save(REDCap_HYP, file = (here::here("code", "REDCap", "REDCap_MBv.rda")))
+save(REDCap_MBv, file = (here::here("code", "REDCap", "REDCap_MBv.rda")))
 
 ## https://jhu-genomics.slack.com/archives/CR9NYA0BF/p1650383126365919
 ## /dcs04/lieber/lcolladotor/rawDataTDSC_LIBD001/raw-data/2022-04-12_SPag033122/

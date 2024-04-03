@@ -3,7 +3,7 @@
 #SBATCH -n 8
 #SBATCH --job-name=mbv-spaceranger
 #SBATCH -o logs/spaceranger_slurm_240108o.txt
-#SBATCH --array=1-16
+#SBATCH --array=1-8
 
 echo "**** Job starts ****"
 date
@@ -49,13 +49,14 @@ spaceranger count \
     --loupe-alignment=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/images/loupe/${SAM}.json \
     --jobmode=local \
     --localcores=8 \
-    --localmem=64
+    --localmem=64 \
+    --r1-length=26
 
 ## Move output
 echo "Moving results to new location"
 date
-mkdir -p /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/01-spaceranger/
-mv ${SAMPLE} /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/01-spaceranger/
+mkdir -p /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/01_spaceranger/
+mv ${SAMPLE} /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/01_spaceranger/
 
 echo "**** Job ends ****"
 date
