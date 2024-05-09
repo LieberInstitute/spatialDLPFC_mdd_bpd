@@ -49,8 +49,8 @@ spaceranger count \
     --loupe-alignment=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/images/loupe/${SAM}.json \
     --jobmode=local \
     --localcores=8 \
-    --localmem=64 \
-    --r1-length=26
+    --localmem=64 
+#    --r1-length=26
 
 ## Move output
 echo "Moving results to new location"
