@@ -1,13 +1,13 @@
 spaceranger  (spaceranger-2.1.0)
 Copyright (c) 2021 10x Genomics, Inc.  All rights reserved.
 -------------------------------------------------------------------------------
-Wed Apr  3 12:45:59 EDT 2024
+Mon Apr 29 17:25:59 EDT 2024
 
 =====================================================================
 System Info
 uname -a
 ---------------------------------------------------------------------
-Linux compute-153.cm.cluster 5.14.0-284.11.1.el9_2.x86_64 #1 SMP PREEMPT_DYNAMIC Tue May 9 17:09:15 UTC 2023 x86_64 x86_64 x86_64 GNU/Linux
+Linux compute-110.cm.cluster 5.14.0-284.11.1.el9_2.x86_64 #1 SMP PREEMPT_DYNAMIC Tue May 9 17:09:15 UTC 2023 x86_64 x86_64 x86_64 GNU/Linux
 =====================================================================
 
 =====================================================================
@@ -52,7 +52,7 @@ ldd (GNU libc) 2.34
 CPU Model
 grep -m 1 'model name' /proc/cpuinfo | cut -d ':' -f 2 | sed 's/^[ \t]*//'
 ---------------------------------------------------------------------
-Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz
+Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz
 =====================================================================
 
 =====================================================================
@@ -66,21 +66,21 @@ grep 'physical id' /proc/cpuinfo | sort -u | wc -l
 CPU Cores
 grep -c processor /proc/cpuinfo
 ---------------------------------------------------------------------
-128
+48
 =====================================================================
 
 =====================================================================
 CPU Support
 grep -m 1 'flags' /proc/cpuinfo | cut -d ':' -f 2 | sed 's/^\s*//'
 ---------------------------------------------------------------------
-fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 invpcid_single intel_ppin ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb intel_pt avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect wbnoinvd dtherm ida arat pln pts avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq la57 rdpid fsrm md_clear pconfig flush_l1d arch_capabilities
+fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti intel_ppin tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm rdt_a rdseed adx smap intel_pt xsaveopt cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts
 =====================================================================
 
 =====================================================================
 Memory Total
 grep MemTotal /proc/meminfo | cut -d ':' -f 2 | sed 's/^[ \t]*//'
 ---------------------------------------------------------------------
-527785568 kB
+131558316 kB
 =====================================================================
 
 =====================================================================
@@ -89,309 +89,255 @@ df -Ph | awk '{print $2, $3, $4}'
 ---------------------------------------------------------------------
 Size Used Avail
 4.0M 0 4.0M
-252G 26M 252G
-101G 604M 101G
-25G 5.9G 20G
-290G 2.1G 288G
-61G 5.6G 55G
-61G 1.3G 59G
-200M 7.0M 193M
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 12K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 12K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 80K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-22T 5.2T 16T
-2.0T 181G 1.9T
-44T 41T 2.9T
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 12K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-51G 8.0K 51G
-51G 4.0K 51G
-51G 4.0K 51G
-50T 50T 534G
-51G 4.0K 51G
-51G 4.0K 51G
-199T 195T 4.1T
-200T 165T 36T
-51G 4.0K 51G
-1.5P 1.5P 39T
-1.2P 848T 283T
-1.7P 1.7P 18T
-100T 37T 64T
-92T 63T 30T
-60T 39T 22T
+63G 1008K 63G
+26G 461M 25G
+26G 5.9G 20G
+61G 3.1G 57G
+61G 472M 60G
+309G 2.2G 307G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 8.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 8.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 8.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+22T 3.6T 18T
+2.0T 188G 1.9T
+43T 41T 2.2T
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 8.0K 13G
+13G 8.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 8.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 8.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 8.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 8.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+13G 4.0K 13G
+60T 47T 14T
+1.5P 1.5P 27T
 =====================================================================
 
 =====================================================================
@@ -400,362 +346,289 @@ mount | cut -d ' ' -f 5,6
 ---------------------------------------------------------------------
 proc (rw,nosuid,nodev,noexec,relatime)
 sysfs (rw,nosuid,nodev,noexec,relatime)
-devtmpfs (rw,nosuid,size=4096k,nr_inodes=65968327,mode=755,inode64)
+devtmpfs (rw,nosuid,size=4096k,nr_inodes=16440045,mode=755,inode64)
 securityfs (rw,nosuid,nodev,noexec,relatime)
 tmpfs (rw,nosuid,nodev,inode64)
 devpts (rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000)
-tmpfs (rw,nosuid,nodev,size=105557116k,nr_inodes=819200,mode=755,inode64)
+tmpfs (rw,nosuid,nodev,size=26311664k,nr_inodes=819200,mode=755,inode64)
 cgroup2 (rw,nosuid,nodev,noexec,relatime,nsdelegate,memory_recursiveprot)
 pstore (rw,nosuid,nodev,noexec,relatime)
-efivarfs (rw,nosuid,nodev,noexec,relatime)
 bpf (rw,nosuid,nodev,noexec,relatime,mode=700)
-xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=256k,sunit=512,swidth=512,noquota)
-autofs (rw,relatime,fd=29,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=55315)
+xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+autofs (rw,relatime,fd=29,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=24005)
+debugfs (rw,nosuid,nodev,noexec,relatime)
 hugetlbfs (rw,relatime,pagesize=2M)
 mqueue (rw,nosuid,nodev,noexec,relatime)
-debugfs (rw,nosuid,nodev,noexec,relatime)
 tracefs (rw,nosuid,nodev,noexec,relatime)
 fusectl (rw,nosuid,nodev,noexec,relatime)
 configfs (rw,nosuid,nodev,noexec,relatime)
 ramfs (ro,nosuid,nodev,noexec,relatime,mode=700)
 ramfs (ro,nosuid,nodev,noexec,relatime,mode=700)
-xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=256k,sunit=512,swidth=512,noquota)
-xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=256k,sunit=512,swidth=512,noquota)
-xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=256k,sunit=512,swidth=512,noquota)
-vfat (rw,relatime,fmask=0077,dmask=0077,codepage=437,iocharset=ascii,shortname=winnt,errors=remount-ro)
+xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,noquota)
 ramfs (ro,nosuid,nodev,noexec,relatime,mode=700)
 rpc_pipefs (rw,relatime)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=40008,gid=41080,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=40632,gid=4161,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=40979,gid=70,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41405,gid=4014,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=40919,gid=70,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41100,gid=4161,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41011,gid=70,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41552,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41254,gid=4019,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41740,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42089,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42233,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41968,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42082,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42143,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42197,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42332,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42219,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42432,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42140,gid=4129,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41775,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41813,gid=4047,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41939,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41820,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42167,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41340,gid=70,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42619,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42628,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42612,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42601,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42606,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42633,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42671,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42726,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42694,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42717,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42771,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42712,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42773,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42781,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42793,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42767,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42792,gid=4218,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42787,gid=4217,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42799,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42629,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42723,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42705,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42770,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41721,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42711,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41875,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42742,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42086,gid=4218,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42710,gid=4217,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42012,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42697,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42704,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42775,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42753,gid=4218,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41810,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41917,gid=4129,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42778,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41708,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41961,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42176,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42110,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42323,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42232,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42305,gid=4129,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41982,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42188,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42389,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41983,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42236,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42174,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42230,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42296,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42034,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42226,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42300,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42023,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42294,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42327,gid=4129,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42178,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42311,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42322,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42309,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42382,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42356,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42395,gid=4129,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42318,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42414,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42317,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42408,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42438,gid=4161,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42418,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42459,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42462,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42514,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42437,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42477,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42502,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42464,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42496,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42541,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42487,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42491,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42483,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42470,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42558,gid=4218,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42467,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42540,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42554,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42549,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42463,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42589,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42546,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42557,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42563,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42597,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42571,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42598,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42847,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42848,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42730,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42782,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42720,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42795,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42734,gid=4217,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42800,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42791,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42788,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42809,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42820,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42810,gid=4161,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42833,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42843,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42854,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42834,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42901,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42885,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42622,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42926,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42903,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42653,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42921,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42920,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42908,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42929,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42666,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42689,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42675,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42962,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42678,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42925,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42821,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42955,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42876,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42896,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42923,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42692,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42807,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42906,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42930,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42961,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42910,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42950,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42960,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42839,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42844,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42899,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42898,gid=100,inode64)
-nfs4 (rw,noatime,nodiratime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.153,local_lock=none,addr=192.168.11.207)
-nfs4 (rw,noatime,nodiratime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.153,local_lock=none,addr=192.168.11.205)
-nfs4 (rw,noatime,nodiratime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.153,local_lock=none,addr=192.168.11.205)
-autofs (rw,relatime,fd=29,pgrp=1922689,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=59920415)
-autofs (rw,relatime,fd=41,pgrp=1922689,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=59855358)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42346,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42361,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42578,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42319,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42319,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42493,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42391,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42974,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41790,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42427,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42733,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42213,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42846,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41595,gid=4045,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42393,gid=4104,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42907,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42907,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42740,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42418,group_id=100)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=41983,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41227,gid=4119,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42366,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42364,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42990,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43005,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43009,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43006,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41117,gid=4129,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=40624,gid=4104,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42658,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43000,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42959,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41934,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42641,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42856,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43008,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42505,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42983,gid=100,inode64)
-autofs (rw,relatime,fd=5,pgrp=1922689,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=59851582)
-autofs (rw,relatime,fd=11,pgrp=1922689,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=59789310)
-autofs (rw,relatime,fd=17,pgrp=1922689,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=59901206)
-autofs (rw,relatime,fd=23,pgrp=1922689,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=59907241)
-autofs (rw,relatime,fd=35,pgrp=1922689,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=59893965)
-autofs (rw,relatime,fd=47,pgrp=1922689,timeout=1200,minproto=5,maxproto=5,direct,pipe_ino=59913852)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42794,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41886,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42902,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42691,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42932,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42979,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=40008,gid=41080,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41254,gid=4019,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41227,gid=4119,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41011,gid=70,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=40604,gid=70,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=40624,gid=4104,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=40632,gid=4161,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41810,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41875,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41721,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42023,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41968,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41939,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41354,gid=4007,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42089,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42332,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42311,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42167,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42459,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42282,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42230,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42219,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42389,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42305,gid=4129,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42233,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42318,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42356,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42082,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42382,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42467,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42414,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42491,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42571,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42496,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42514,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42563,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42589,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42619,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42597,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42554,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42197,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42641,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42666,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42687,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42689,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42691,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42692,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42704,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42705,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42712,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42725,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42730,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42740,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42788,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42787,gid=4217,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42770,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42794,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42793,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42799,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42807,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42810,gid=4161,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42821,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42843,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42834,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42829,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42899,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42296,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42902,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42906,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42898,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42896,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41914,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42929,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42653,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42930,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42591,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42903,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=40873,gid=4009,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41917,gid=4129,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42327,gid=4129,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41405,gid=4014,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42950,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=43000,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42983,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42921,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41340,gid=70,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41552,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41775,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41108,gid=4047,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41934,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42255,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42325,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42012,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41188,gid=70,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42178,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42174,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42819,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42920,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42818,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42300,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42086,gid=4218,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41790,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42910,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42366,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42956,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42432,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42558,gid=4218,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42034,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42598,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42962,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42427,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42628,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42531,gid=4218,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42612,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42629,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42438,gid=4161,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42954,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42143,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42098,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42809,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42778,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42964,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42463,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42847,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42781,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42540,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42997,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41820,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42633,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42720,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42678,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42978,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=43005,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42726,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42671,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42403,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42176,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42541,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42771,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42213,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42974,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42110,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42395,gid=4129,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42418,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42437,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42502,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42470,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42462,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42226,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42476,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42606,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42483,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42493,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42557,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42505,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42961,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42803,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42782,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42990,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42923,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42854,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42901,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42926,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42908,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42959,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42546,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42960,gid=100,inode64)
+nfs4 (rw,noatime,nodiratime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.110,local_lock=none,addr=192.168.11.207)
+nfs4 (rw,noatime,nodiratime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.110,local_lock=none,addr=192.168.11.205)
+nfs4 (rw,noatime,nodiratime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.110,local_lock=none,addr=192.168.11.205)
+autofs (rw,relatime,fd=23,pgrp=3351189,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=175545089)
+autofs (rw,relatime,fd=29,pgrp=3351189,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=175549642)
+autofs (rw,relatime,fd=41,pgrp=3351189,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=175494958)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42697,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=43023,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42487,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42601,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42651,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42464,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42140,gid=4129,inode64)
+fuse.portal (rw,nosuid,nodev,relatime,user_id=42140,group_id=4129)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42979,gid=100,inode64)
 fuse.portal (rw,nosuid,nodev,relatime,user_id=42979,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42765,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42986,gid=4161,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41188,gid=70,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42226,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42842,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42647,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42997,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42822,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42822,group_id=100)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42629,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42374,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42573,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42664,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42664,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41716,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42818,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42483,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43022,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43023,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42900,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42651,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42671,group_id=100)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=43022,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42954,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43034,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42505,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43002,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42793,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42146,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41108,gid=4047,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42146,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43021,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42999,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42999,group_id=100)
-fuse.rclone (rw,nosuid,nodev,relatime,user_id=43022,group_id=100)
-type fuse.rclone
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43030,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42991,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41354,gid=4007,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=40604,gid=70,inode64)
 fuse.portal (rw,nosuid,nodev,relatime,user_id=42974,group_id=100)
-binfmt_misc (rw,nosuid,nodev,noexec,relatime)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43026,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42304,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42638,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42992,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=43002,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42179,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42989,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43036,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43039,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42539,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41258,gid=4134,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42887,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42436,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42076,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42595,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42595,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41269,gid=4125,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42471,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42625,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42782,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=40894,gid=4019,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41896,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42958,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42838,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42662,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42275,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42255,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42179,gid=100,inode64)
 fuse.portal (rw,nosuid,nodev,relatime,user_id=42255,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42967,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42952,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42687,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=40873,gid=4009,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43050,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43046,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43047,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=43050,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42725,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41457,gid=4104,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42972,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42827,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41841,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43031,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=43029,gid=100,inode64)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=43029,group_id=100)
-fuse.portal (rw,nosuid,nodev,relatime,user_id=42653,group_id=100)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42591,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41825,gid=100,inode64)
-nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.153,local_lock=none,addr=192.168.11.209)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42584,gid=100,inode64)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=42956,gid=100,inode64)
-lustre (rw,checksum,flock,nouser_xattr,lruresize,lazystatfs,nouser_fid2path,verbose,noencrypt)
-nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.153,local_lock=none,addr=192.168.11.209)
-tmpfs (rw,nosuid,nodev,relatime,size=52778556k,nr_inodes=13194639,mode=700,uid=41656,gid=100,inode64)
-nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.153,local_lock=none,addr=192.168.11.209)
-nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.153,local_lock=none,addr=192.168.11.201)
-lustre (rw,checksum,flock,nouser_xattr,lruresize,lazystatfs,nouser_fid2path,verbose,noencrypt)
-nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.153,local_lock=none,addr=192.168.11.209)
-nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.153,local_lock=none,addr=192.168.11.201)
-nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.153,local_lock=none,addr=192.168.11.201)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42421,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=43039,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=43040,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=43041,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42779,gid=100,inode64)
+fuse.portal (rw,nosuid,nodev,relatime,user_id=42779,group_id=100)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41798,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42887,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42595,gid=100,inode64)
+fuse.portal (rw,nosuid,nodev,relatime,user_id=42595,group_id=100)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42188,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42076,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=43030,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42800,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=40894,gid=4019,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41896,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42838,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41960,gid=4129,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42275,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42967,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42436,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42232,gid=100,inode64)
+binfmt_misc (rw,nosuid,nodev,noexec,relatime)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42792,gid=4218,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42907,gid=100,inode64)
+fuse.portal (rw,nosuid,nodev,relatime,user_id=42907,group_id=100)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41457,gid=4104,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42989,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42408,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41258,gid=4134,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=43031,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42710,gid=4217,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42848,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=43034,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42675,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42856,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=40919,gid=70,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42839,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41773,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41656,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42952,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42361,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42442,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42309,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42733,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42323,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42694,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41269,gid=4125,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=43056,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42986,gid=4161,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41982,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=40979,gid=70,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=43050,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42146,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42573,gid=100,inode64)
+autofs (rw,relatime,fd=11,pgrp=3351189,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=175545087)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=41117,gid=4129,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=43022,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42584,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42999,gid=100,inode64)
+fuse.portal (rw,nosuid,nodev,relatime,user_id=43022,group_id=100)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42895,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42775,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42294,gid=100,inode64)
+autofs (rw,relatime,fd=5,pgrp=3351189,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=175538255)
+autofs (rw,relatime,fd=17,pgrp=3351189,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=175446898)
+autofs (rw,relatime,fd=35,pgrp=3351189,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=175549644)
+autofs (rw,relatime,fd=47,pgrp=3351189,timeout=1200,minproto=5,maxproto=5,direct,pipe_ino=175612929)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42900,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42897,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=13155828k,nr_inodes=3288957,mode=700,uid=42578,gid=100,inode64)
+nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.110,local_lock=none,addr=192.168.11.201)
+nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.110,local_lock=none,addr=192.168.11.209)
 =====================================================================
 
 =====================================================================
@@ -767,7 +640,7 @@ core file size              (blocks, -c) 0
 data seg size               (kbytes, -d) unlimited
 scheduling priority                 (-e) 0
 file size                   (blocks, -f) unlimited
-pending signals                     (-i) 2061510
+pending signals                     (-i) 513751
 max locked memory           (kbytes, -l) 8192
 max memory size             (kbytes, -m) 83886080
 open files                          (-n) 1024
@@ -790,7 +663,7 @@ core file size              (blocks, -c) unlimited
 data seg size               (kbytes, -d) unlimited
 scheduling priority                 (-e) 0
 file size                   (blocks, -f) unlimited
-pending signals                     (-i) 2061510
+pending signals                     (-i) 513751
 max locked memory           (kbytes, -l) unlimited
 max memory size             (kbytes, -m) 83886080
 open files                          (-n) 131072
@@ -799,7 +672,7 @@ POSIX message queues         (bytes, -q) 819200
 real-time priority                  (-r) 0
 stack size                  (kbytes, -s) unlimited
 cpu time                   (seconds, -t) unlimited
-max user processes                  (-u) 2061510
+max user processes                  (-u) 513751
 virtual memory              (kbytes, -v) unlimited
 file locks                          (-x) unlimited
 =====================================================================
@@ -809,7 +682,7 @@ Global File Limit
 cat /proc/sys/fs/file-{max,nr}
 ---------------------------------------------------------------------
 9223372036854775807
-45856	0	9223372036854775807
+28256	0	9223372036854775807
 =====================================================================
 
 =====================================================================
@@ -823,7 +696,7 @@ vm.dirty_background_bytes = 0
 vm.dirty_background_ratio = 10
 vm.dirty_bytes = 0
 vm.dirty_expire_centisecs = 3000
-vm.dirty_ratio = 40
+vm.dirty_ratio = 20
 vm.dirty_writeback_centisecs = 500
 vm.dirtytime_expire_seconds = 43200
 vm.extfrag_threshold = 500
@@ -835,7 +708,7 @@ vm.lowmem_reserve_ratio = 256	256	32	0	0
 vm.max_map_count = 65530
 vm.memory_failure_early_kill = 0
 vm.memory_failure_recovery = 1
-vm.min_free_kbytes = 91890
+vm.min_free_kbytes = 90112
 vm.min_slab_ratio = 5
 vm.min_unmapped_ratio = 1
 vm.mmap_min_addr = 65536
@@ -854,7 +727,7 @@ vm.page_lock_unfairness = 5
 vm.panic_on_oom = 0
 vm.percpu_pagelist_high_fraction = 0
 vm.stat_interval = 1
-vm.swappiness = 10
+vm.swappiness = 60
 vm.unprivileged_userfaultfd = 0
 vm.user_reserve_kbytes = 131072
 vm.vfs_cache_pressure = 100
@@ -874,7 +747,7 @@ cat /sys/kernel/mm/*transparent_hugepage/enabled
 cgroups
 cat /proc/self/cgroup
 ---------------------------------------------------------------------
-0::/system.slice/slurmstepd.scope/job_3833401/step_batch/user/task_0
+0::/system.slice/slurmstepd.scope/job_5124833/step_batch/user/task_0
 =====================================================================
 
 =====================================================================
