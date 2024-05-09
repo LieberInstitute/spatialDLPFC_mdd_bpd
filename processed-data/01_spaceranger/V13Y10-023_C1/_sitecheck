@@ -1,7 +1,7 @@
 spaceranger  (spaceranger-2.1.0)
 Copyright (c) 2021 10x Genomics, Inc.  All rights reserved.
 -------------------------------------------------------------------------------
-Wed Apr  3 14:07:17 EDT 2024
+Mon Apr 29 18:56:12 EDT 2024
 
 =====================================================================
 System Info
@@ -89,12 +89,12 @@ df -Ph | awk '{print $2, $3, $4}'
 ---------------------------------------------------------------------
 Size Used Avail
 4.0M 0 4.0M
-504G 25M 504G
-202G 69M 202G
-26G 5.9G 20G
-61G 5.5G 55G
+504G 18M 504G
+202G 466M 202G
+26G 6.0G 20G
+61G 7.5G 53G
 290G 2.1G 288G
-61G 19G 42G
+61G 22G 39G
 101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
@@ -167,8 +167,117 @@ Size Used Avail
 101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
+101G 8.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 8.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 8.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 8.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 8.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 8.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 8.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 8.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
+22T 3.6T 18T
+43T 41T 2.2T
+2.0T 188G 1.9T
 101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
@@ -196,58 +305,6 @@ Size Used Avail
 101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
-101G 8.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
@@ -262,51 +319,33 @@ Size Used Avail
 101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
+101G 4.0K 101G
+101G 4.0K 101G
 101G 8.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-22T 5.1T 16T
-44T 41T 2.8T
-2.0T 181G 1.9T
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-199T 195T 4.1T
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-101G 4.0K 101G
-50T 50T 534G
-101G 4.0K 101G
 101G 8.0K 101G
-101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
 101G 4.0K 101G
 200T 36T 165T
+1.5P 1.5P 26T
+30T 3.9T 27T
+100T 97T 3.3T
+60T 47T 14T
+142T 138T 4.2T
 101G 4.0K 101G
+100T 12T 89T
+43T 41T 2.2T
+1.7P 1.7P 13T
+200T 200T 34G
 101G 4.0K 101G
-1.5P 1.5P 39T
-101G 4.0K 101G
-200T 69T 132T
-1.7P 1.7P 18T
-1.2P 848T 283T
+200T 167T 34T
+50T 50T 61G
 =====================================================================
 
 =====================================================================
@@ -521,14 +560,9 @@ tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=
 nfs4 (rw,noatime,nodiratime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.207)
 nfs4 (rw,noatime,nodiratime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.205)
 nfs4 (rw,noatime,nodiratime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.205)
-autofs (rw,relatime,fd=5,pgrp=5581,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=21351)
-autofs (rw,relatime,fd=11,pgrp=5581,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=252950)
-autofs (rw,relatime,fd=17,pgrp=5581,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=162838)
-autofs (rw,relatime,fd=23,pgrp=5581,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=252984)
-autofs (rw,relatime,fd=29,pgrp=5581,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=229518)
-autofs (rw,relatime,fd=35,pgrp=5581,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=229567)
-autofs (rw,relatime,fd=41,pgrp=5581,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=105507)
-autofs (rw,relatime,fd=47,pgrp=5581,timeout=1200,minproto=5,maxproto=5,direct,pipe_ino=162852)
+autofs (rw,relatime,fd=11,pgrp=2872511,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=294259124)
+autofs (rw,relatime,fd=23,pgrp=2872511,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=294153789)
+autofs (rw,relatime,fd=29,pgrp=2872511,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=294078583)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=41269,gid=4125,inode64)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42233,gid=100,inode64)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42232,gid=100,inode64)
@@ -538,15 +572,10 @@ tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=
 fuse.portal (rw,nosuid,nodev,relatime,user_id=42418,group_id=100)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42767,gid=100,inode64)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=41773,gid=100,inode64)
-lustre (rw,checksum,flock,nouser_xattr,lruresize,lazystatfs,nouser_fid2path,verbose,noencrypt)
-lustre (rw,checksum,flock,nouser_xattr,lruresize,lazystatfs,nouser_fid2path,verbose,noencrypt)
-lustre (rw,checksum,flock,nouser_xattr,lruresize,lazystatfs,nouser_fid2path,verbose,noencrypt)
-lustre (rw,checksum,flock,nouser_xattr,lruresize,lazystatfs,nouser_fid2path,verbose,noencrypt)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42573,gid=100,inode64)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=43050,gid=100,inode64)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42296,gid=100,inode64)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42579,gid=100,inode64)
-nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.209)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42742,gid=100,inode64)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42625,gid=100,inode64)
 fuse.portal (rw,nosuid,nodev,relatime,user_id=42992,group_id=100)
@@ -555,18 +584,70 @@ tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42887,gid=100,inode64)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42781,gid=100,inode64)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=41117,gid=4129,inode64)
-nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.201)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42146,gid=100,inode64)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=43031,gid=100,inode64)
 fuse.portal (rw,nosuid,nodev,relatime,user_id=42979,group_id=100)
 fuse.portal (rw,nosuid,nodev,relatime,user_id=42505,group_id=100)
-nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.209)
 tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42952,gid=100,inode64)
-nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.201)
-lustre (rw,checksum,flock,nouser_xattr,lruresize,lazystatfs,nouser_fid2path,verbose,noencrypt)
-lustre (rw,checksum,flock,nouser_xattr,lruresize,lazystatfs,nouser_fid2path,verbose,noencrypt)
 fuse.portal (rw,nosuid,nodev,relatime,user_id=41983,group_id=100)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42463,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42751,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=40979,gid=70,inode64)
+fuse.portal (rw,nosuid,nodev,relatime,user_id=42907,group_id=100)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42903,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42658,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42839,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=43056,gid=100,inode64)
+fuse.portal (rw,nosuid,nodev,relatime,user_id=42319,group_id=100)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42956,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=43023,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42309,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42735,gid=4217,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42389,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42653,gid=100,inode64)
+fuse.portal (rw,nosuid,nodev,relatime,user_id=42653,group_id=100)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42539,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=41457,gid=4104,inode64)
+binfmt_misc (rw,nosuid,nodev,noexec,relatime)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42827,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42477,gid=100,inode64)
+fuse.portal (rw,nosuid,nodev,relatime,user_id=42664,group_id=100)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42919,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=40873,gid=4009,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=43052,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42894,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=43049,gid=100,inode64)
+fuse.portal (rw,nosuid,nodev,relatime,user_id=43049,group_id=100)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42844,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42076,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42829,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42578,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42566,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42779,gid=100,inode64)
+fuse.portal (rw,nosuid,nodev,relatime,user_id=42779,group_id=100)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=41825,gid=100,inode64)
+autofs (rw,relatime,fd=5,pgrp=2872511,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=293038649)
+autofs (rw,relatime,fd=17,pgrp=2872511,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=294078572)
+autofs (rw,relatime,fd=35,pgrp=2872511,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=294180346)
+autofs (rw,relatime,fd=41,pgrp=2872511,timeout=1200,minproto=5,maxproto=5,indirect,pipe_ino=294240394)
+autofs (rw,relatime,fd=47,pgrp=2872511,timeout=1200,minproto=5,maxproto=5,direct,pipe_ino=294180350)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42317,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=43037,gid=100,inode64)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42897,gid=100,inode64)
 nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.201)
+nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.209)
+nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.203)
+nfs4 (rw,relatime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.205)
+nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.201)
+nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.201)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42491,gid=100,inode64)
+nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.203)
+nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.201)
+lustre (rw,checksum,flock,nouser_xattr,lruresize,lazystatfs,nouser_fid2path,verbose,noencrypt)
+nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.209)
+tmpfs (rw,nosuid,nodev,relatime,size=105625684k,nr_inodes=26406421,mode=700,uid=42998,gid=100,inode64)
+nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.209)
+nfs4 (rw,noatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.11.124,local_lock=none,addr=192.168.11.209)
 =====================================================================
 
 =====================================================================
@@ -620,7 +701,7 @@ Global File Limit
 cat /proc/sys/fs/file-{max,nr}
 ---------------------------------------------------------------------
 9223372036854775807
-37376	0	9223372036854775807
+39424	0	9223372036854775807
 =====================================================================
 
 =====================================================================
@@ -685,7 +766,7 @@ cat /sys/kernel/mm/*transparent_hugepage/enabled
 cgroups
 cat /proc/self/cgroup
 ---------------------------------------------------------------------
-0::/system.slice/slurmstepd.scope/job_3852393/step_batch/user/task_0
+0::/system.slice/slurmstepd.scope/job_5125822/step_batch/user/task_0
 =====================================================================
 
 =====================================================================
