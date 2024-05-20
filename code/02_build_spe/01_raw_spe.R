@@ -14,13 +14,16 @@ load(here::here("code", "REDCap", "REDCap_MBv.rda"))
 
 # sample_info <- data.frame(dateImg = as.Date(REDCap_dACC$date)) 
 # sample_info$experimenterImg <- as.factor(REDCap_dACC$experimenter_img)
-sample_info <- data.frame(slide = as.factor(REDCap_HYP$slide))
-sample_info$array <- as.factor(REDCap_HYP$array)
-sample_info$brnum <- as.factor(sapply(strsplit(REDCap_HYP$sample, "-"), `[`, 1))
-sample_info$species <- as.factor(REDCap_HYP$species)
-sample_info$replicate <- as.factor(REDCap_HYP$serial)
+sample_info <- data.frame(slide = as.factor(REDCap_MBv$slide))
+sample_info$array <- as.factor(REDCap_MBv$array)
+sample_info$brnum <- as.factor(sapply(strsplit(REDCap_MBv$sample, "-"), `[`, 1))
+sample_info$species <- as.factor(REDCap_MBv$species)
+sample_info$replicate <- as.factor(REDCap_MBv$serial)
 sample_info$sample_id <- paste(sample_info$slide, sample_info$array, sep = "_")
 sample_info$sample_path = file.path(here::here("processed-data", "01_spaceranger"), sample_info$sample_id,"outs")
+
+list4spe = c('V13F27-338','V13F27-348', 'V13Y10-020','V13Y10-021', 'V13Y10-022','V13Y10-023')
+sample_info = sample_info[sample_info$slide %in% list4spe,]
 
 ##discard barnyard samples
 #stopifnot(all(file.exists(sample_info$sample_path)))
@@ -43,7 +46,7 @@ spe <- read10xVisiumWrapper(
     sample_info$sample_id,
     type = "sparse",
     data = "raw",
-    images = c("lowres", "hires", "detected", "aligned"),
+    images = c("lowres", "detected", "aligned"),
     load = TRUE,
     reference_gtf = file.path("/dcs04/lieber/lcolladotor/annotationFiles_LIBD001/10x/refdata-gex-GRCh38-2020-A/","genes", "genes.gtf")
 )
