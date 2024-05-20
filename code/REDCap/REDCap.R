@@ -2,7 +2,7 @@ setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bp
 
 library("here")
 
-REDCap <- read.csv(file.path(here::here("raw-data", "sample_info", "Visium_DATA_2024-01-10_1103.csv")), header = TRUE, stringsAsFactors = FALSE)
+REDCap <- read.csv(file.path(here::here("raw-data", "sample_info", "Visium_DATA_2024-05-09_1012.csv")), header = TRUE, stringsAsFactors = FALSE)
 A1 <- subset(REDCap, select = c("slide", "species_a1", "sample_a1", "serial_a1","region_a1", "project_a1"))
 B1 <- subset(REDCap, select = c("slide", "species_b1", "sample_b1", "serial_b1","region_b1", "project_b1"))
 C1 <- subset(REDCap, select = c("slide", "species_c1", "sample_c1", "serial_c1","region_c1", "project_c1"))
@@ -16,7 +16,7 @@ D1$array <- "D1"
 REDCap_table <- rbind(A1, B1, C1, D1)
 REDCap_table <- REDCap_table[order(REDCap_table$slide), ]
 
-REDCap_MBv <- REDCap_table[which(REDCap_table$project == "spatialAMY_LIBD4125"), ]
+REDCap_MBv <- REDCap_table[which(REDCap_table$project == "spatialDLPFC_MBv_4100"), ]
 
 Brain_nums <- unique(REDCap_MBv$sample)
 write.table(Brain_nums, file = (here::here("raw-data", "sample_info", "ALLbrains.txt")), row.names = FALSE, col.names = FALSE)
