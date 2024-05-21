@@ -21,18 +21,18 @@ colData(spe)$genes_3MAD.outlier_slide = isOutlier(colData(spe)$lg10.genes, batch
 
 cat(paste(format(Sys.time()), "Calculate local outliers (UMI counts)...","\n"))
 spe <- localOutliers(spe, metric = "sum_umi", direction = "lower", log = TRUE)
-colData(spe)[,c(ncol(colData(spe)),ncol(colData(spe))-2)] = NULL
-colnames(colData(spe))[ncol(colData(spe))] = "sum_local.outlier"
+#colData(spe)[,c(ncol(colData(spe)),ncol(colData(spe))-2)] = NULL
+colnames(colData(spe))[ncol(colData(spe))-1] = "sum_local.outlier"
 
 cat(paste(format(Sys.time()), "Calculate local outliers (n genes)...","\n"))
 spe <- localOutliers(spe, metric = "sum_gene", direction = "lower", log = TRUE)
-colData(spe)[,c(ncol(colData(spe)),ncol(colData(spe))-2)] = NULL
-colnames(colData(spe))[ncol(colData(spe))] = "genes_local.outlier"
+#colData(spe)[,c(ncol(colData(spe)),ncol(colData(spe))-2)] = NULL
+colnames(colData(spe))[ncol(colData(spe))-1] = "genes_local.outlier"
 
 cat(paste(format(Sys.time()), "Calculate local outliers (mito %)...","\n"))
 spe <- localOutliers(spe, metric = "expr_chrM_ratio", direction = "higher", log = FALSE)
-colData(spe)[,c(ncol(colData(spe)),ncol(colData(spe))-2)] = NULL
-colnames(colData(spe))[ncol(colData(spe))] = "chrM.ratio_local.outlier"
+#colData(spe)[,c(ncol(colData(spe)),ncol(colData(spe))-2)] = NULL
+colnames(colData(spe))[ncol(colData(spe))-1] = "chrM.ratio_local.outlier"
 
 cat(paste(format(Sys.time()), "Save spe object to", here("processed-data","03_QC","spe_batch1.Rdata"),"\n"))
 save(spe, file=here("processed-data","03_QC","spe_batch1.Rdata"))
