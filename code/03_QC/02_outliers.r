@@ -4,13 +4,7 @@ library(SpotSweeper)
 library(here)
 
 cat(paste(format(Sys.time()),"Load raw spe and specify metadata columns...","\n"))
-load(here("processed-data","02_build_spe","spe_raw.Rdata"))
-colData(spe) = cbind(colData(spe),
-do.call(rbind, lapply(strsplit(spe$sample_id, split="_"), function(x) cbind.data.frame("slide"=x[[1]],"position"=x[[2]]))))
-
-colData(spe) = colData(spe)[, c("key","sample_id","slide","position","in_tissue","array_row","array_col","sum_umi","sum_gene","expr_chrM","expr_chrM_ratio")]
-
-spe <- spe[,spe$in_tissue==TRUE]
+load(here("processed-data","02_build_spe","spe_demo.Rdata"))
 colData(spe)$lg10.sum = log10(colData(spe)$sum_umi)
 colData(spe)$lg10.genes = log10(colData(spe)$sum_gene)
 
