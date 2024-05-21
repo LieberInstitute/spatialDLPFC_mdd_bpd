@@ -17,6 +17,6 @@ echo "n Tasks: ${SLURM_NTASKS}"
 date
 module load conda_R/devel
 echo "Module list:"
-module list
+echo module list
 echo "R checkpoints"
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/03_QC/01_outliers.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/03_QC/02_outliers.r

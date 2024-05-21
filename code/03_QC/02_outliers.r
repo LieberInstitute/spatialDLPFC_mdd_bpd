@@ -4,14 +4,19 @@ library(SpotSweeper)
 library(here)
 
 cat(paste(format(Sys.time()),"Load raw spe and specify metadata columns...","\n"))
-load(here("processed-data","02_build_spe","spe_demo.Rdata"))
+load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
 colData(spe)$lg10.sum = log10(colData(spe)$sum_umi)
 colData(spe)$lg10.genes = log10(colData(spe)$sum_gene)
 
 cat(paste(format(Sys.time()), "Calculate 3MAD outliers...","\n"))
 colData(spe)$sum_3MAD.outlier_slide = isOutlier(colData(spe)$lg10.sum, batch=colData(spe)$slide, type="lower", nmads=3)
+colData(spe)$sum_3MAD.outlier_sample = isOutlier(colData(spe)$lg10.sum, batch=colData(spe)$sample_id, type="lower", nmads=3)
 
 colData(spe)$genes_3MAD.outlier_slide = isOutlier(colData(spe)$lg10.genes, batch=colData(spe)$slide, type="lower", nmads=3)
+colData(spe)$genes_3MAD.outlier_sample = isOutlier(colData(spe)$lg10.genes, batch=colData(spe)$sample_id, type="lower", nmads=3)
+
+colData(spe)$chrM.ratio_3MAD.outlier_slide = isOutlier(colData(spe)$expr_chrM_ratio, batch=colData(spe)$slide, type="higher", nmads=3)
+colData(spe)$chrM.ratio_3MAD.outlier_sample = isOutlier(colData(spe)$expr_chrM_ratio, batch=colData(spe)$sample_id, type="higher", nmads=3)
 
 cat(paste(format(Sys.time()), "Calculate local outliers (UMI counts)...","\n"))
 spe <- localOutliers(spe, metric = "sum_umi", direction = "lower", log = TRUE)
@@ -28,6 +33,6 @@ spe <- localOutliers(spe, metric = "expr_chrM_ratio", direction = "higher", log 
 #colData(spe)[,c(ncol(colData(spe)),ncol(colData(spe))-2)] = NULL
 colnames(colData(spe))[ncol(colData(spe))-1] = "chrM.ratio_local.outlier"
 
-cat(paste(format(Sys.time()), "Save spe object to", here("processed-data","03_QC","spe_batch1.Rdata"),"\n"))
-save(spe, file=here("processed-data","03_QC","spe_batch1.Rdata"))
+cat(paste(format(Sys.time()), "Save spe object to", here("processed-data","03_QC","spe_demo-filt.Rdata"),"\n"))
+save(spe, file=here("processed-data","03_QC","spe_demo-filt.Rdata"))
 cat(paste(format(Sys.time()), "Finished!"))
