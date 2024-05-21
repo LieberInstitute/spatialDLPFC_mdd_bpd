@@ -8,9 +8,25 @@ do.call(rbind, lapply(strsplit(spe$sample_id, split="_"), function(x) cbind.data
 
 d1 = read.csv(here("raw-data","sample_info","all_brain_demographics_2024-05-21.csv"))
 d2 = read.csv(here("raw-data","sample_info","mdd_bpd_brains_2024-05-21.csv"))
+
+check.d1 = setdiff(unique(spe$sample_id),unique(d1$sample_id))
+if(length(check.d1)>0) {
+cat("The following samples were present in the spe object but not the demographic info:\n")
+cat(check.d1)
+cat("\n")
+}
+
+check.d2 = setdiff(unique(spe$sample_id),unique(paste(d2$slide, d2$position, sep="_")))
+if(length(check.d2)>0) {
+cat("The following samples were present in the spe object but not the MBv list:\n")
+cat(check.d2)
+cat("\n")
+}
+
+if(length(check.d1>0 | length(check.d2>0) {stop("Not all samples mapped to brain")}
 demo = left_join(d2, d1[,c("brain","sex","condition")], by=c("brain"))
 mdata = left_join(mdata, demo, by=c("slide","position"))
- 
+
 colData(spe) = cbind(colData(spe)[,c("key","sample_id")],
 	mdata[,c("slide","position","brain","sex","condition")],
 	colData(spe)[,c("in_tissue","array_row","array_col",
