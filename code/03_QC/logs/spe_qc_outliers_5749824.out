@@ -1,0 +1,17 @@
+**** JHPCE info ****
+User: jthompso
+Job id: 5749824
+Job name: spe_qc_outliers
+Node(s): compute-124
+Node memory requested: 81920
+n Tasks: 
+Tue May 21 11:42:42 AM EDT 2024
+Module list:
+R checkpoints
+2024-05-21 11:43:05 Load raw spe and specify metadata columns... 
+2024-05-21 11:45:40 Calculate 3MAD outliers... 
+2024-05-21 11:45:41 Calculate local outliers (UMI counts)... 
+2024-05-21 11:50:03 Calculate local outliers (n genes)... 
+2024-05-21 11:54:25 Calculate local outliers (mito %)... 
+2024-05-21 11:58:40 Save spe object to /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/03_QC/spe_batch1.Rdata 
+2024-05-21 12:02:23 Finished!
