@@ -48,8 +48,9 @@ for(x in seq_along(l1)) {
 		}))
 	# for top and bottom row, use precast::draw figs to combine list of ggplot objects into a single gg/ggplot/ggarrange object,
 	### then combine into single object with cowplot so that it will plot on a single pdf page
-	pdf(here("plots", "03_QC", paste0(names(l1)[x],"_outlier-overview.pdf")), width=12, height=6)
-	cowplot::plot_grid(PRECAST::drawFigs(p.list1, layout.dim=c(1,4), common.legend=FALSE),
+	#pdf(here("plots", "03_QC", paste0(names(l1)[x],"_outlier-overview.pdf")), width=12, height=6)
+	finalPlot = cowplot::plot_grid(PRECAST::drawFigs(p.list1, layout.dim=c(1,4), common.legend=FALSE),
 		PRECAST::drawFigs(p.list2, layout.dim=c(1,4), common.legend=TRUE, legend.position="none"), nrow=2)
-	dev.off()
+	ggsave(filename=here("plots", "03_QC", paste0(names(l1)[x],"_outlier-overview.pdf")), finalPlot, width=12, height=6)
+	#dev.off()
 }
