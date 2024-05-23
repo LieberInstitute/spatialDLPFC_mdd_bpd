@@ -40,23 +40,20 @@ slide_function <- function(spe_object, mlist) {
 		ncol=4,
 		top=grid::textGrob(paste("Slide",unique(spe_object$slide)), gp=grid::gpar(fontsize=24))) 
 }
-pdf(here("plots", "03_QC", paste0("spatial_outliers_",names(metric.list)[1])), width=12, height=12)
-slide_function(s1[[1]], metric.list[[1]])
-slide_function(s1[[2]], metric.list[[1]])
-slide_function(s1[[3]], metric.list[[1]])
-slide_function(s1[[4]], metric.list[[1]])
+pdf(here("plots", "03_QC", paste0("spatial_outliers_",names(metric.list)[1],".pdf")), width=12, height=12)
+for(i in seq_along(s1)) {
+	slide_function(s1[[i]], metric.list[[1]])
+}
 dev.off()
 
-pdf(here("plots", "03_QC", paste0("spatial_outliers_",names(metric.list)[2])), width=12, height=12)
-slide_function(s1[[1]], metric.list[[2]])
-slide_function(s1[[2]], metric.list[[2]])
-slide_function(s1[[3]], metric.list[[2]])
-slide_function(s1[[4]], metric.list[[2]])
+pdf(here("plots", "03_QC", paste0("spatial_outliers_",names(metric.list)[2],".pdf")), width=12, height=12)
+for(i in seq_along(s1))	{                       
+        slide_function(s1[[i]], metric.list[[2]])
+}
 dev.off()
 
-pdf(here("plots", "03_QC", paste0("spatial_outliers_",names(metric.list)[3])), width=12, height=12)
-slide_function(s1[[1]], metric.list[[3]])
-slide_function(s1[[2]], metric.list[[3]])
-slide_function(s1[[3]], metric.list[[3]])
-slide_function(s1[[4]], metric.list[[3]])
+pdf(here("plots", "03_QC", paste0("spatial_outliers_",names(metric.list)[3],".pdf")), width=12, height=12)
+for(i in seq_along(s1))	{                       
+        slide_function(s1[[i]], metric.list[[3]])
+}
 dev.off()
