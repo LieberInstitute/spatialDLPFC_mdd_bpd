@@ -27,5 +27,5 @@ p.list = list(plotSpots(l1[[x]], annotate = "plot_outliers", sample_id="sample_i
 	plotSpots(filt.spe, annotate="lg10.genes", pal=c("black","white"))+ggtitle("post-filt lg10(n genes)"),
 	plotSpots(filt.spe, annotate="expr_chrM_ratio", pal=c("white","black"))+ggtitle("post-filt chrM ratio"))
 
-ggsave(do.call(gridExtra::grid.arrange, c(p.list, ncol=4, bottom="Exclude (red) spots are determined based on local outliers and eastern edge removal.")), filename=here("plots","03_QC",paste0(names(l1)[x],"filter-preview.pdf")), width=12, height=3)
+ggsave(do.call(gridExtra::grid.arrange, c(p.list, ncol=4, bottom="Exclude (red) spots are determined based on local outliers and eastern edge removal.")), filename=here("plots","03_QC",paste0(names(l1)[x],"_filter-preview.pdf")), width=12, height=3)
 })
