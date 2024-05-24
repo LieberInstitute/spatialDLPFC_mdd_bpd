@@ -39,16 +39,17 @@ adj.mtx = lapply(l2, function(x) {
 
 # step 4: step-wise exclude all outlier spots adjacent to eastern edge outliers
 final.list = lapply(seq_along(l2), function(x) {
+	cat(names(l2)[x],"\n")
 	is.outlier = l2[[x]]$sum_3MAD.outlier_sample | l2[[x]]$genes_3MAD.outlier_sample
 	out.mtx = adj.mtx[[x]][,is.outlier]
 	new.seed = l2[[x]]$array_row==eastern.edge[[names(l2)[x]]] & is.outlier
 	exclude.spots = colnames(adj.mtx[[x]])[new.seed]
 
-	while(length(new.seed)>0) {
+	while(length(new.seed)>1) {
 		r1 = colSums(out.mtx[new.seed,])>0
 		new.seed = setdiff(colnames(out.mtx)[r1], exclude.spots)
 		exclude.spots = union(new.seed, exclude.spots)
-	})
+	}
 	colData(l2[[x]])[exclude.spots,"key"] 
 })
 
