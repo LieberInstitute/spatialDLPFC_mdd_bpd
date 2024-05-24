@@ -7,14 +7,14 @@ library(here)
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
 spe$sum.outlier_f = factor(paste(spe$sum_3MAD.outlier_sample, spe$sum_local.outlier),
-	levels=c("FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE TRUE"),
-	labels=c("none","local only","3MAD only","both"))
+	levels=c("FALSE FALSE","TRUE FALSE","FALSE TRUE","TRUE TRUE"),
+	labels=c("none","3MAD only","local only","both"))
 spe$genes.outlier_f = factor(paste(spe$genes_3MAD.outlier_sample, spe$genes_local.outlier),
-	levels=c("FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE TRUE"),
-	labels=c("none","local only","3MAD only","both"))
+	levels=c("FALSE FALSE","TRUE FALSE","FALSE TRUE","TRUE TRUE"),
+        labels=c("none","3MAD only","local only","both"))
 spe$chrM.outlier_f = factor(paste(spe$chrM.ratio_3MAD.outlier_sample, spe$chrM.ratio_local.outlier),
-	levels=c("FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE TRUE"),
-	labels=c("none","local only","3MAD only","both"))
+	levels=c("FALSE FALSE","TRUE FALSE","FALSE TRUE","TRUE TRUE"),
+        labels=c("none","3MAD only","local only","both"))
 
 l1 = unique(spe$sample_id)
 names(l1) = lapply(l1, function(x) unique(colData(spe)[spe$sample_id==x,"brain"]))
@@ -28,7 +28,7 @@ for(x in seq_along(l1)) {
 		table(l1[[x]]$genes.outlier_f),
 		table(l1[[x]]$chrM.outlier_f)))
 	colnames(m1) = c("umi","genes","chrM")
-	m1 = as.data.frame(m1[c("both","3MAD only","local only","none"),])
+	m1 = as.data.frame(m1[c("both","local only","3MAD only","none"),])
 	### create theme for outlier table
 	color.theme <- c(rep(c("#e41a1c","black","#377eb8","lightgrey"), times = c(12)))
 	tt <- ttheme_minimal(core=list(bg_params=list(fill= color.theme), fg_params=list(col="white")))
