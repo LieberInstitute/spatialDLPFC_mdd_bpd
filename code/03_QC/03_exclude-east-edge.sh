@@ -1,5 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=30G
+#SBATCH --mem=20G
+#SBATCH -t 0-2:00
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
 #SBATCH --job-name=exclude-east-edge
