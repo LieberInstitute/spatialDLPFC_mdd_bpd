@@ -36,6 +36,11 @@ colData(spe) = cbind(colData(spe)[,c("key","sample_id")],
 
 save(spe, file=here("processed-data","02_build_spe","spe_demo.Rdata"))
 
+write(c(paste("Created spe_demo on",format(Sys.time(), tz="UTC"),"UTC"),
+        paste("File location:",here("processed-data","02_build_spe","spe_demo.Rdata")),
+        paste("Source code:",here("code","02_build_spe","02_add_demographic_info.r")),
+        "*","*","*"), here("spe_tracker_current.txt"), append=TRUE)
+
 ## Reproducibility information
 print("Reproducibility information:")
 format(Sys.time(), tz="UTC")

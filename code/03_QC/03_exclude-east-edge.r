@@ -62,6 +62,11 @@ colData(spe)[spe$key %in% unlist(final.list),"exclude_east_edge"] = TRUE
 
 save(spe, file=here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
+write(c(paste("Modified spe_demo-filt on",format(Sys.time(), tz="UTC"),"UTC"),
+        paste("File location:",here("processed-data","03_QC","spe_demo-filt.Rdata")),
+        paste("Source code:",here("code","03_QC","03_exclude-east-edge.r")),
+        "*","*","*"), here("spe_tracker_current.txt"), append=TRUE)
+
 ## Reproducibility information
 print("Reproducibility information:")
 format(Sys.time(), tz="UTC")

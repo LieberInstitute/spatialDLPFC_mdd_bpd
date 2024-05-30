@@ -14,6 +14,11 @@ spe$remove = factor(spe$remove, levels=c("ok","off tissue","zero counts"))
 spe = spe[,spe$remove=="ok"]
 save(spe, file=here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
+write(c(paste("Created spe_demo-filt on",format(Sys.time(), tz="UTC"),"UTC"),
+        paste("File location:",here("processed-data","03_QC","spe_demo-filt.Rdata")),
+        paste("Source code:",here("code","03_QC","01_errant_spots.r")),
+        "*","*","*"), here("spe_tracker_current.txt"), append=TRUE)
+
 ## Reproducibility information
 print("Reproducibility information:")
 format(Sys.time(), tz="UTC")

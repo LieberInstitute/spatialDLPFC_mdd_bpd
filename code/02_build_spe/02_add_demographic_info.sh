@@ -1,5 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=10G
+#SBATCH -t 0-2:00
 #SBATCH --job-name=add_demographic_info
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/02_build_spe/logs/%x_%j.log
 
