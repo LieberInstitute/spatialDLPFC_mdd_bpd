@@ -1,8 +1,12 @@
-library(dplyr)
-library(ggplot2)
-library(SpatialExperiment)
-library(scater)
-library(here)
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
+suppressPackageStartupMessages({
+	library(dplyr)
+	library(ggplot2)
+	library(SpatialExperiment)
+	library(scater)
+	library(here)
+})
+
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
 title.key= c("sum_3MAD.outlier_slide"="UMI counts (3MAD), block per slide",
@@ -68,3 +72,10 @@ gridExtra::grid.arrange(p1, p2, nrow=2, heights=c(1,3))
 dev.off()
 
 }
+
+## Reproducibility information
+print("Reproducibility information:")
+format(Sys.time(), tz="UTC")
+proc.time()
+options(width = 120)
+sessionInfo()

@@ -1,6 +1,9 @@
-library(SpatialExperiment)
-library(ggspavis)
-library(here)
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
+suppressPackageStartupMessages({
+	library(SpatialExperiment)
+	library(ggspavis)
+	library(here)
+})
 
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
@@ -18,3 +21,10 @@ l1 = lapply(l1, function(x) colData(spe)$sample_id==x)
 
 ggsave(plotSpots(spe, annotate = "plot_outliers", sample_id="sample_id",pal=c("lightgrey", "black", "red"), point_size=.2), 
 filename=here("plots","03_QC","edge_detection_results.pdf"), width=12, height=12)
+
+## Reproducibility information
+print("Reproducibility information:")
+format(Sys.time(), tz="UTC")
+proc.time()
+options(width = 120)
+sessionInfo()

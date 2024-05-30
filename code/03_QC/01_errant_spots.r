@@ -1,6 +1,9 @@
-library(SpatialExperiment)
-library(dplyr)
-library(here)
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
+suppressPackageStartupMessages({
+	library(SpatialExperiment)
+	library(dplyr)
+	library(here)
+})
 
 load(here("processed-data","02_build_spe","spe_demo.Rdata"))
 
@@ -10,3 +13,10 @@ spe$remove = factor(spe$remove, levels=c("ok","off tissue","zero counts"))
 
 spe = spe[,spe$remove=="ok"]
 save(spe, file=here("processed-data","03_QC","spe_demo-filt.Rdata"))
+
+## Reproducibility information
+print("Reproducibility information:")
+format(Sys.time(), tz="UTC")
+proc.time()
+options(width = 120)
+sessionInfo()

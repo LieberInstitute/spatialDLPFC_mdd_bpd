@@ -1,8 +1,11 @@
-library(SpatialExperiment)
-library(ggspavis)
-library(gridExtra)
-library(parallel)
-library(here)
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
+suppressPackageStartupMessages({
+	library(SpatialExperiment)
+	library(ggspavis)
+	library(gridExtra)
+	library(parallel)
+	library(here)
+})
 
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
@@ -54,3 +57,10 @@ for(x in seq_along(l1)) {
 	ggsave(filename=here("plots", "03_QC", paste0(names(l1)[x],"_outlier-overview.pdf")), finalPlot, width=12, height=6)
 	#dev.off()
 }
+
+## Reproducibility information
+print("Reproducibility information:")
+format(Sys.time(), tz="UTC")
+proc.time()
+options(width = 120)
+sessionInfo()

@@ -1,6 +1,9 @@
-library(SpatialExperiment)
-library(dplyr)
-library(here)
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
+suppressPackageStartupMessages({
+	library(SpatialExperiment)
+	library(dplyr)
+	library(here)
+})
 
 d1 = read.csv(here("raw-data","sample_info","Big_240_DLPFC_Dissections.csv"))
 d2 = read.csv(here("raw-data","sample_info","MDD_BPD_VisiumHE.csv"))
@@ -32,3 +35,10 @@ colData(spe) = cbind(colData(spe)[,c("key","sample_id")],
 	"sum_umi","sum_gene","expr_chrM","expr_chrM_ratio")])
 
 save(spe, file=here("processed-data","02_build_spe","spe_demo.Rdata"))
+
+## Reproducibility information
+print("Reproducibility information:")
+format(Sys.time(), tz="UTC")
+proc.time()
+options(width = 120)
+sessionInfo()

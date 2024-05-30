@@ -52,7 +52,19 @@ spe <- read10xVisiumWrapper(
 )
 Sys.time()
 save(spe, file = here::here("processed-data", "02_build_spe", "spe_raw.Rdata"))
-
+if(file.exists(here("spe_tracker_current.txt"))) {
+	if(file.exists(here("spe_tracker_archive.txt"))) {
+		write(c("########", paste("ARCHIVED",format(Sys.time(), tz="UTC"),"UTC"), "########", readLines(here("spe_tracker_current.txt"))), append=TRUE)
+	} else {
+		writeLines(c("########", paste("ARCHIVED",format(Sys.time(), tz="UTC"),"UTC"), "########", readLines(here("spe_tracker_current.txt")), file(here("spe_tracker_archive.txt"))))
+		close(file(here("spe_tracker_archive.txt")))
+	}
+} else {
+	writeLines(c(paste("Created spe_raw on",format(Sys.time(), tz="UTC"),"UTC"), paste("File location:",here("processed-data","02_build_spe","spe_raw.Rdata")), 
+		paste("Source code:",here("code","02_build_spe","01_raw_spe.R")),"*","*","*"), 
+		file(here("spe_tracker_current.txt")))
+	close(file(here("spe_tracker_current.txt")))  
+}
 # Sys.time()
 # spe <- read10xVisiumWrapper(
 #     sample_info_mouse$sample_path,
@@ -81,7 +93,10 @@ spe <- add_design(spe)
 
 # dir.create(here::here("processed-data", "pilot_data_checks"), showWarnings = FALSE)
 save(spe, file = here::here("processed-data", "02_build_spe", "spe_raw.Rdata"))
-
+write(c(paste("Modified spe_raw on",format(Sys.time(), tz="UTC"),"UTC"),
+	paste("File location:",here("processed-data","02_build_spe","spe_raw.Rdata")),
+	paste("Source code:",here("code","02_build_spe","01_raw_spe.R")),
+	"*","*","*"), here("spe_tracker_current.txt"), append=TRUE)
 ##### 2024_05_30 JT commented out below because it was throwing an error (based on the absence of tissue_spot_counts.csv for all samples) and therefore nothing below was being run
 ## Read in cell counts and segmentation results
 #segmentations_list <-
@@ -161,8 +176,8 @@ save(spe, file = here::here("processed-data", "02_build_spe", "spe_raw.Rdata"))
 #save(spe, file = here::here("processed-data", "02_build_spe", "spe.Rdata"))
 
 ## Reproducibility information
-#print("Reproducibility information:")
-#Sys.time()
-#proc.time()
-#options(width = 120)
-#session_info()
+print("Reproducibility information:")
+format(Sys.time(), tz="UTC")
+proc.time()
+options(width = 120)
+sessionInfo()

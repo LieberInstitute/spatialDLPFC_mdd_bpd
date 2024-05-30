@@ -1,7 +1,10 @@
-library(SpatialExperiment)
-library(ggspavis)
-library(dplyr)
-library(here)
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
+suppressPackageStartupMessages({
+	library(SpatialExperiment)
+	library(ggspavis)
+	library(dplyr)
+	library(here)
+})
 
 load(here("processed-data","02_build_spe","spe_demo.Rdata"))
 
@@ -18,3 +21,10 @@ p1 <- lapply(1:length(l1), function(x) plotSpots(spe[,l1[[x]]], annotate="remove
 pdf(here("plots", "03_QC", paste0("errant_spots_",Sys.Date(),".pdf")), width=8, height=12)
 PRECAST::drawFigs(p1, layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
 dev.off()
+
+## Reproducibility information
+print("Reproducibility information:")
+format(Sys.time(), tz="UTC")
+proc.time()
+options(width = 120)
+sessionInfo()

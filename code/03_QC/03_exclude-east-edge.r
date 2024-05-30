@@ -1,6 +1,9 @@
-library(SpatialExperiment)
-library(Seurat)
-library(here)
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
+suppressPackageStartupMessages({
+	library(SpatialExperiment)
+	library(Seurat)
+	library(here)
+})
 
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
@@ -58,3 +61,10 @@ spe$exclude_east_edge = FALSE
 colData(spe)[spe$key %in% unlist(final.list),"exclude_east_edge"] = TRUE
 
 save(spe, file=here("processed-data","03_QC","spe_demo-filt.Rdata"))
+
+## Reproducibility information
+print("Reproducibility information:")
+format(Sys.time(), tz="UTC")
+proc.time()
+options(width = 120)
+sessionInfo()

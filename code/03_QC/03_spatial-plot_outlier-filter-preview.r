@@ -1,6 +1,9 @@
-library(SpatialExperiment)
-library(ggspavis)
-library(here)
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
+suppressPackageStartupMessages({
+	library(SpatialExperiment)
+	library(ggspavis)
+	library(here)
+})
 
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
@@ -29,3 +32,10 @@ p.list = list(plotSpots(l1[[x]], annotate = "plot_outliers", sample_id="sample_i
 
 ggsave(do.call(gridExtra::grid.arrange, c(p.list, ncol=4, bottom="Exclude (red) spots are determined based on local outliers and eastern edge removal.")), filename=here("plots","03_QC",paste0(names(l1)[x],"_filter-preview.pdf")), width=12, height=3)
 })
+
+## Reproducibility information
+print("Reproducibility information:")
+format(Sys.time(), tz="UTC")
+proc.time()
+options(width = 120)
+sessionInfo()
