@@ -7,8 +7,8 @@ suppressPackageStartupMessages({
 
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
-spe$exclude_outliers = spe$sum_local.outlier | spe$genes_local.outlier | spe$chrM.ratio_local.outlier | spe$exclude_east_edge
-spe$extra_3MAD_outliers = spe$sum_3MAD.outlier_sample | spe$genes_3MAD.outlier_sample
+spe$exclude_outliers = spe$umi_local.outlier | spe$genes_local.outlier | spe$chrM.ratio_local.outlier | spe$exclude_east_edge
+spe$extra_3MAD_outliers = spe$umi_3MAD.outlier_sample | spe$genes_3MAD.outlier_sample
 spe$plot_outliers = factor(paste(spe$exclude_outliers, spe$extra_3MAD_outliers),
 	levels=c("FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE TRUE"),
 	labels=c("keep","3MAD flag","exclude","exclude"))
@@ -26,7 +26,7 @@ named.colors[unique(l1[[x]]$plot_outliers)]
 p.list = list(plotSpots(l1[[x]], annotate = "plot_outliers", sample_id="sample_id",pal=named.colors[unique(l1[[x]]$plot_outliers)], point_size=.2)+labs(color="")+ggtitle(names(l1)[x])+
 		theme(title=element_text(face="bold", size=16), legend.position="bottom", legend.text=element_text(size=10), 
 		legend.box.spacing=unit(1,"pt"), legend.spacing=unit(0,"pt"), legend.margin=margin(0,0,0,0),legend.key.width=unit(1,"mm")), 
-	plotSpots(filt.spe, annotate="lg10.sum", pal=c("black","white"))+ggtitle("post-filt lg10(UMI counts)"),
+	plotSpots(filt.spe, annotate="lg10.umi", pal=c("black","white"))+ggtitle("post-filt lg10(UMI counts)"),
 	plotSpots(filt.spe, annotate="lg10.genes", pal=c("black","white"))+ggtitle("post-filt lg10(n genes)"),
 	plotSpots(filt.spe, annotate="expr_chrM_ratio", pal=c("white","black"))+ggtitle("post-filt chrM ratio"))
 

@@ -8,12 +8,12 @@ suppressPackageStartupMessages({
 
 cat(paste(format(Sys.time(), tz="UTC"),"Load raw spe and specify metadata columns...","\n"))
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
-colData(spe)$lg10.sum = log10(colData(spe)$sum_umi)
+colData(spe)$lg10.umi = log10(colData(spe)$sum_umi)
 colData(spe)$lg10.genes = log10(colData(spe)$sum_gene)
 
 cat(paste(format(Sys.time(), tz="UTC"), "Calculate 3MAD outliers...","\n"))
-colData(spe)$sum_3MAD.outlier_slide = isOutlier(colData(spe)$lg10.sum, batch=colData(spe)$slide, type="lower", nmads=3)
-colData(spe)$sum_3MAD.outlier_sample = isOutlier(colData(spe)$lg10.sum, batch=colData(spe)$sample_id, type="lower", nmads=3)
+colData(spe)$umi_3MAD.outlier_slide = isOutlier(colData(spe)$lg10.umi, batch=colData(spe)$slide, type="lower", nmads=3)
+colData(spe)$umi_3MAD.outlier_sample = isOutlier(colData(spe)$lg10.umi, batch=colData(spe)$sample_id, type="lower", nmads=3)
 
 colData(spe)$genes_3MAD.outlier_slide = isOutlier(colData(spe)$lg10.genes, batch=colData(spe)$slide, type="lower", nmads=3)
 colData(spe)$genes_3MAD.outlier_sample = isOutlier(colData(spe)$lg10.genes, batch=colData(spe)$sample_id, type="lower", nmads=3)
@@ -24,7 +24,7 @@ colData(spe)$chrM.ratio_3MAD.outlier_sample = isOutlier(colData(spe)$expr_chrM_r
 cat(paste(format(Sys.time(), tz="UTC"), "Calculate local outliers (UMI counts)...","\n"))
 spe <- localOutliers(spe, metric = "sum_umi", direction = "lower", log = TRUE)
 #colData(spe)[,c(ncol(colData(spe)),ncol(colData(spe))-2)] = NULL
-colnames(colData(spe))[ncol(colData(spe))-1] = "sum_local.outlier"
+colnames(colData(spe))[ncol(colData(spe))-1] = "umi_local.outlier"
 
 cat(paste(format(Sys.time(), tz="UTC"), "Calculate local outliers (n genes)...","\n"))
 spe <- localOutliers(spe, metric = "sum_gene", direction = "lower", log = TRUE)
@@ -43,6 +43,7 @@ write(c(paste("Modified spe_demo-filt on",format(Sys.time(), tz="UTC"),"UTC"),
         paste("File location:",here("processed-data","03_QC","spe_demo-filt.Rdata")),
         paste("Source code:",here("code","03_QC","02_outliers.r")),
         "*","*","*"), here("spe_tracker_current.txt"), append=TRUE)
+
 ## Reproducibility information
 print("Reproducibility information:")
 format(Sys.time(), tz="UTC")

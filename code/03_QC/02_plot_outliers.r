@@ -9,34 +9,34 @@ suppressPackageStartupMessages({
 
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
-title.key= c("sum_3MAD.outlier_slide"="UMI counts (3MAD), block per slide",
-"sum_3MAD.outlier_sample"="UMI counts (3MAD), block per sample",
+title.key= c("umi_3MAD.outlier_slide"="UMI counts (3MAD), block per slide",
+"umi_3MAD.outlier_sample"="UMI counts (3MAD), block per sample",
 "genes_3MAD.outlier_slide"="n genes (3MAD), block per slide",
 "genes_3MAD.outlier_sample"="n genes (3MAD), block per sample",
 "chrM.ratio_3MAD.outlier_slide"="mito % (3MAD), block per slide",
 "chrM.ratio_3MAD.outlier_sample"="mito % (3MAD), block per sample",
-"sum_local.outlier"="UMI counts (local outliers)",
+"umi_local.outlier"="UMI counts (local outliers)",
 "genes_local.outlier"="n genes (local outliers)",
 "chrM.ratio_local.outlier"="mito % (local outliers)")
 
 
-plot.var.key= c("sum_3MAD.outlier_slide"="lg10.sum",
-"sum_3MAD.outlier_sample"="lg10.sum",
+plot.var.key= c("umi_3MAD.outlier_slide"="lg10.umi",
+"umi_3MAD.outlier_sample"="lg10.umi",
 "genes_3MAD.outlier_slide"="lg10.genes",
 "genes_3MAD.outlier_sample"="lg10.genes",
 "chrM.ratio_3MAD.outlier_slide"="expr_chrM_ratio",
 "chrM.ratio_3MAD.outlier_sample"="expr_chrM_ratio",
-"sum_local.outlier"="lg10.sum",
+"umi_local.outlier"="lg10.umi",
 "genes_local.outlier"="lg10.genes",
 "chrM.ratio_local.outlier"="expr_chrM_ratio")
 
-pdf.key = c("sum_3MAD.outlier_slide"="umi-counts-slide_3MAD",
-"sum_3MAD.outlier_sample"="umi-counts-sample_3MAD",
+pdf.key = c("umi_3MAD.outlier_slide"="umi-counts-slide_3MAD",
+"umi_3MAD.outlier_sample"="umi-counts-sample_3MAD",
 "genes_3MAD.outlier_slide"="n-genes-slide_3MAD",
 "genes_3MAD.outlier_sample"="n-genes-sample_3MAD",
 "chrM.ratio_3MAD.outlier_slide"="mito-perc-slide_3MAD",
 "chrM.ratio_3MAD.outlier_sample"="mito-perc-sample-3MAD",
-"sum_local.outlier"="umi-counts_local",
+"umi_local.outlier"="umi-counts_local",
 "genes_local.outlier"="n-genes_local",
 "chrM.ratio_local.outlier"="mito-perc_local")
 

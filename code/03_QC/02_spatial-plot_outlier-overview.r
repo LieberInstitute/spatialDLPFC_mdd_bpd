@@ -9,7 +9,7 @@ suppressPackageStartupMessages({
 
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
-spe$sum.outlier_f = factor(paste(spe$sum_3MAD.outlier_sample, spe$sum_local.outlier),
+spe$umi.outlier_f = factor(paste(spe$umi_3MAD.outlier_sample, spe$umi_local.outlier),
 	levels=c("FALSE FALSE","TRUE FALSE","FALSE TRUE","TRUE TRUE"),
 	labels=c("none","3MAD only","local only","both"))
 spe$genes.outlier_f = factor(paste(spe$genes_3MAD.outlier_sample, spe$genes_local.outlier),
@@ -27,7 +27,7 @@ for(x in seq_along(l1)) {
 	# convert tissue image to grob
 	g = grid::rasterGrob(imgRaster(l1[[x]]))
 	# calculate # outlier totals
-	m1 = t(rbind(table(l1[[x]]$sum.outlier_f),
+	m1 = t(rbind(table(l1[[x]]$umi.outlier_f),
 		table(l1[[x]]$genes.outlier_f),
 		table(l1[[x]]$chrM.outlier_f)))
 	colnames(m1) = c("umi","genes","chrM")
@@ -38,10 +38,10 @@ for(x in seq_along(l1)) {
 	### make table into grob
 	gt = tableGrob(m1, theme=tt)
 	# outlier metrics to plot
-	mlist2 = c("sum.outlier_f","genes.outlier_f","chrM.outlier_f")
+	mlist2 = c("umi.outlier_f","genes.outlier_f","chrM.outlier_f")
 	# build list of ggplot objects for top row
 	p.list1 = list(ggplot()+theme_minimal()+annotation_custom(g)+ggtitle(names(l1)[x])+theme(title=element_text(face="bold")),
-		plotSpots(l1[[x]], annotate="lg10.sum", pal=c("black","white")),
+		plotSpots(l1[[x]], annotate="lg10.umi", pal=c("black","white")),
 		plotSpots(l1[[x]], annotate="lg10.genes", pal=c("black","white")),
 		plotSpots(l1[[x]], annotate="expr_chrM_ratio", pal=c("white","black")))
 	# build list of ggplot objects for bottom row

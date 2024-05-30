@@ -19,7 +19,7 @@ names(n.eastern.edge) = names(eastern.edge)
 # step 2: identify images that qualify for eastern edge exclusion
 qualify = lapply(seq_along(l1), function(x) {
   subset1 = colData(l1[[x]])[l1[[x]]$array_row==eastern.edge[[x]],]
-  perc = max(sum(subset1$sum_3MAD.outlier_sample)/nrow(subset1), sum(subset1$genes_3MAD.outlier_sample)/nrow(subset1))
+  perc = max(sum(subset1$umi_3MAD.outlier_sample)/nrow(subset1), sum(subset1$genes_3MAD.outlier_sample)/nrow(subset1))
   if(perc>.8 & length(n.eastern.edge[[x]])>20) {return(TRUE)}
   else {return(FALSE)}
 })
@@ -43,7 +43,7 @@ adj.mtx = lapply(l2, function(x) {
 # step 4: step-wise exclude all outlier spots adjacent to eastern edge outliers
 final.list = lapply(seq_along(l2), function(x) {
 	cat(names(l2)[x],"\n")
-	is.outlier = l2[[x]]$sum_3MAD.outlier_sample | l2[[x]]$genes_3MAD.outlier_sample
+	is.outlier = l2[[x]]$umi_3MAD.outlier_sample | l2[[x]]$genes_3MAD.outlier_sample
 	out.mtx = adj.mtx[[x]][,is.outlier]
 	new.seed = l2[[x]]$array_row==eastern.edge[[names(l2)[x]]] & is.outlier
 	exclude.spots = colnames(adj.mtx[[x]])[new.seed]
