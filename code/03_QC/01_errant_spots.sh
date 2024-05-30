@@ -1,5 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=30G
+#SBATCH --mem=10G
+#SBATCH -t 0-1:00
 #SBATCH --job-name=errant_spots
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/03_QC/logs/%x_%j.log
 
