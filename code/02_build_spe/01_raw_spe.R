@@ -82,86 +82,87 @@ spe <- add_design(spe)
 # dir.create(here::here("processed-data", "pilot_data_checks"), showWarnings = FALSE)
 save(spe, file = here::here("processed-data", "02_build_spe", "spe_raw.Rdata"))
 
+##### 2024_05_30 JT commented out below because it was throwing an error (based on the absence of tissue_spot_counts.csv for all samples) and therefore nothing below was being run
 ## Read in cell counts and segmentation results
-segmentations_list <-
-  lapply(sample_info$sample_id, function(sampleid) {
-    file <-
-      here(
-        "processed-data",
-        "01_spaceranger",
-        sampleid,
-        "outs",
-        "spatial",
-        "tissue_spot_counts.csv"
-      )
-    if (!file.exists(file)) {
-      return(NULL)
-    }
-    x <- read.csv(file)
-    x$key <- paste0(x$barcode, "_", sampleid)
-    return(x)
-  })
+#segmentations_list <-
+#  lapply(sample_info$sample_id, function(sampleid) {
+#    file <-
+#      here(
+#        "processed-data",
+#        "01_spaceranger",
+#        sampleid,
+#        "outs",
+#        "spatial",
+#        "tissue_spot_counts.csv"
+#      )
+#    if (!file.exists(file)) {
+#      return(NULL)
+#    }
+#    x <- read.csv(file)
+#    x$key <- paste0(x$barcode, "_", sampleid)
+#    return(x)
+#  })
 
 ## Merge them (once the these files are done, this could be replaced by an rbind)
-segmentations <-
-  Reduce(function(...) {
-    merge(..., all = TRUE)
-  }, segmentations_list[lengths(segmentations_list) > 0])
-
+#segmentations <-
+#  Reduce(function(...) {
+#    merge(..., all = TRUE)
+#  }, segmentations_list[lengths(segmentations_list) > 0])
+#
 ## Add the information
-segmentation_match <- match(spe$key, segmentations$key)
-segmentation_info <-
-  segmentations[segmentation_match, -which(
-    colnames(segmentations) %in% c("barcode", "tissue", "row", "col", "imagerow", "imagecol", "key")
-  )]
-colData(spe) <- cbind(colData(spe), segmentation_info)
+#segmentation_match <- match(spe$key, segmentations$key)
+#segmentation_info <-
+#  segmentations[segmentation_match, -which(
+#    colnames(segmentations) %in% c("barcode", "tissue", "row", "col", "imagerow", "imagecol", "key")
+#  )]
+#colData(spe) <- cbind(colData(spe), segmentation_info)
 
 ## Remove genes with no data
-no_expr <- which(rowSums(counts(spe)) == 0)
-length(no_expr)
+#no_expr <- which(rowSums(counts(spe)) == 0)
+#length(no_expr)
 # [1] 6345
-length(no_expr) / nrow(spe) * 100
+#length(no_expr) / nrow(spe) * 100
 # [1] 17.33559
-spe <- spe[-no_expr, ]
+#spe <- spe[-no_expr, ]
 
 
 ## For visualizing this later with spatialLIBD
-spe$overlaps_tissue <-
-  factor(ifelse(spe$in_tissue, "in", "out"))
+#spe$overlaps_tissue <-
+#  factor(ifelse(spe$in_tissue, "in", "out"))
 
 ## Save with and without dropping spots outside of the tissue
 #spe_raw <- spe
 
-save(spe, file = here::here("processed-data", "02_build_spe", "spe_raw.Rdata"))
+#save(spe, file = here::here("processed-data", "02_build_spe", "spe_raw.Rdata"))
 
 ## Size in Gb
-lobstr::obj_size(spe)
+#lobstr::obj_size(spe)
 # 2.07GB
 
 
 ## Now drop the spots outside the tissue
-spe_raw <- spe
-spe <- spe_raw[, spe_raw$in_tissue]
-dim(spe)
+#spe_raw <- spe
+#spe <- spe_raw[, spe_raw$in_tissue]
+#dim(spe)
 # [1] 36601 37298
 ## Remove spots without counts
-if (any(colSums(counts(spe)) == 0)) {
-  message("removing spots without counts for spe")
-  spe <- spe[, -which(colSums(counts(spe)) == 0)]
-  dim(spe)
-}
+#if (any(colSums(counts(spe)) == 0)) {
+#  message("removing spots without counts for spe")
+#  spe <- spe[, -which(colSums(counts(spe)) == 0)]
+#  dim(spe)
+#}
 
 # removing spots without counts for spe
 # [1] 30256 37290
 
-lobstr::obj_size(spe)
+#lobstr::obj_size(spe)
 # 2.04 GB
 
-save(spe, file = here::here("processed-data", "02_build_spe", "spe.Rdata"))
+#save(spe, file = here::here("processed-data", "02_build_spe", "spe.Rdata"))
 
 ## Reproducibility information
-print("Reproducibility information:")
-Sys.time()
-proc.time()
-options(width = 120)
-session_info()
+#print("Reproducibility information:")
+#Sys.time()
+#proc.time()
+#options(width = 120)
+#session_info()
