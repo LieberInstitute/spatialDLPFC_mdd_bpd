@@ -9,12 +9,15 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 load(here("processed-data","04_preprocessing","spe_norm.Rdata"))
+#below line only for all 24 samples
+spe_small <- spe
 table(spe$plot_outliers)
 l1 = unique(spe$slide)
 
 #pick 4 samples (1 slide), 8 samples (2 slides), or 16 samples (4slides)
-spe_small = spe[,spe$slide %in% l1[c(1,3,4,6)]]
+#spe_small = spe[,spe$slide %in% l1[c(1,3,4,6)]]
 spe_small = spe_small[rowSums(logcounts(spe_small))>3,]
+spe_small = spe_small[-grep("^MT-",rowData(spe_small)$gene_name),]
 dim(spe_small)
 table(spe_small$brain)
 
@@ -41,7 +44,7 @@ df = left_join(df, cbind.data.frame("gene"=rownames(batch),
 	"rank"=(nrow(batch)+1)-rank(rowData(batch)$binomial_deviance)),
 	by="gene", suffix=c("_default","_brain"))
 
-write.csv(df, here("processed-data","04_preprocessing","bindev_test-single_n16_default-brain.csv"), row.names=FALSE)
+write.csv(df, here("processed-data","04_preprocessing","bindev_test-single_n24_default-brain.csv"), row.names=FALSE)
 
 ## Reproducibility information
 print("Reproducibility information:")
