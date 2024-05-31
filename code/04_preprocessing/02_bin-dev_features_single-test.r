@@ -14,18 +14,20 @@ l1 = unique(spe$slide)
 
 #pick 4 samples (1 slide), 8 samples (2 slides), or 16 samples (4slides)
 spe_small = spe[,spe$slide %in% l1[c(1,3)]]
+spe_small = spe_small[rowSums(logcounts(spe_small))>3,]
+dim(spe_small)
 table(spe_small$brain)
 
 #first run without correction
-cat("Executing default model... \n")
-spe_small <- nullResiduals(spe_small, assay="counts", type="deviance")
-dev = assays(spe_small)$binomial_deviance_residuals
+cat("\nExecuting default model... \n")
+dev <- nullResiduals(counts(spe_small), type="deviance", fam="binomial")
+#dev = assays(spe_small)$binomial_deviance_residuals
 
 df = cbind.data.frame("gene"=rownames(dev),"gene_name"=rowData(spe_small)$gene_name,
 	"dev"= matrixStats::rowVars(as.matrix(dev)),
 	"rank"=(nrow(dev)+1)-rank(matrixStats::rowVars(as.matrix(dev))))
 #then run with correction
-cat("Executing batch model... \n")
+cat("\nExecuting batch model... \n")
 batch_test <- devianceFeatureSelection(spe_small, fam="binomial", batch=as.factor(spe_small$brain))
 
 df = left_join(df, cbind.data.frame("gene"=rownames(rowData(batch_test)),

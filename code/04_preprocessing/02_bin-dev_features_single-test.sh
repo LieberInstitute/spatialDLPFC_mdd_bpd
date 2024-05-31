@@ -1,6 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=150G
-#SBATCH -t 0-2:00
+#SBATCH --mem=80G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
 #SBATCH --job-name=bindev_single-test
