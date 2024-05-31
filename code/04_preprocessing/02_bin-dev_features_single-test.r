@@ -20,19 +20,25 @@ table(spe_small$brain)
 
 #first run without correction
 cat("\nExecuting default model... \n")
-dev <- nullResiduals(counts(spe_small), type="deviance", fam="binomial")
+#dev <- nullResiduals(counts(spe_small), type="deviance", fam="binomial")
+default <- devianceFeatureSelection(spe_small, fam="binomial", batch=NULL)
 #dev = assays(spe_small)$binomial_deviance_residuals
 
-df = cbind.data.frame("gene"=rownames(dev),"gene_name"=rowData(spe_small)$gene_name,
-	"dev"= matrixStats::rowVars(as.matrix(dev)),
-	"rank"=(nrow(dev)+1)-rank(matrixStats::rowVars(as.matrix(dev))))
+df = cbind.data.frame("gene"=rownames(default),"gene_name"=rowData(default)$gene_name,
+#	"dev"= matrixStats::rowVars(as.matrix(dev)),
+	"dev"=rowData(default)$binomial_deviance,
+#	"rank"=(nrow(dev)+1)-rank(matrixStats::rowVars(as.matrix(dev))))
+	"rank"=(nrow(default)+1)-rank(rowData(default)$binomial_deviance))
 #then run with correction
-cat("\nExecuting batch model... \n")
-batch_test <- devianceFeatureSelection(spe_small, fam="binomial", batch=as.factor(spe_small$brain))
+cat("\nExecuting batch model... \n\n")
+batch <- devianceFeatureSelection(spe_small, fam="binomial", batch=as.factor(spe_small$brain))
+#batch_test <- nullResiduals(counts(spe_small), type="deviance", fam="binomial", batch=as.factor(spe_small$brain))
 
-df = left_join(df, cbind.data.frame("gene"=rownames(rowData(batch_test)),
-	"dev"=rowData(batch_test)$binomial_deviance,
-	"rank"=(nrow(batch_test)+1)-rank(rowData(batch_test)$binomial_deviance)),
+df = left_join(df, cbind.data.frame("gene"=rownames(batch),
+#	"dev"= matrixStats::rowVars(as.matrix(batch_test)),	
+	"dev"=rowData(batch)$binomial_deviance,
+#	"rank"=(nrow(batch_test)+1)-rank(matrixStats::rowVars(as.matrix(batch_test)))),
+	"rank"=(nrow(batch)+1)-rank(rowData(batch)$binomial_deviance)),
 	by="gene", suffix=c("_default","_brain"))
 
 write.csv(df, here("processed-data","04_preprocessing","bindev_test-single_n8_default-brain.csv"), row.names=FALSE)
