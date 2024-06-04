@@ -52,6 +52,7 @@ exclude.list <- list("MTRN"=grep("^MTRN",bindev.df$gene_name, value=T),
 	"DNAJ"=grep("^DNAJ",bindev.df$gene_name, value=T),
 	"HSP"=grep("^HSP",bindev.df$gene_name, value=T),
 	"ribo"=grep("RPS|RPL",bindev.df$gene_name, value=T))
+exclude.list <- lapply(exclude.list, function(x) rownames(name.key)[name.key$gene_name %in% x])
 cat("\n\nExcluded genes:\n")
 unlist(lapply(exclude.list, length))
 
