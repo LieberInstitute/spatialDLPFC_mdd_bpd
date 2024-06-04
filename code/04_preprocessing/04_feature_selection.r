@@ -14,12 +14,18 @@ bindev.df = do.call(rbind, lapply(l1, function(x) {
 	return(tmp)
 })
 )
+name.key = distinct(bindev.df, gene, gene_name)
+rownames(name.key) = name.key$gene
 
-genes.2k = unique(filter(bindev.df, rank_brain<=2000)$gene_name)
-genes.3k = unique(filter(bindev.df, rank_brain<=3000)$gene_name)
+genes.2k = unique(filter(bindev.df, rank_brain<=2000)$gene)
+names(genes.2k) = name.key[genes.2k,"gene_name"]
+genes.3k = unique(filter(bindev.df, rank_brain<=3000)$gene)
+names(genes.3k) = name.key[genes.3k,"gene_name"]
 
-outlier.2k = unique(read.csv(here("processed-data","04_preprocessing","subject-biased_genes.csv"))$gene_name)
-outlier.3k = unique(read.csv(here("processed-data","04_preprocessing","subject-biased_genes-3000.csv"))$gene_name)
+outlier.2k = unique(read.csv(here("processed-data","04_preprocessing","subject-biased_genes.csv"))$gene)
+names(outlier.2k) = name.key[outlier.2k,"gene_name"]
+outlier.3k = unique(read.csv(here("processed-data","04_preprocessing","subject-biased_genes-3000.csv"))$gene)
+names(outlier.3k) = name.key[outlier.3k,"gene_name"]
 
 l1 = list.files(here("processed-data","04_preprocessing"))
 l1 = l1[
@@ -35,7 +41,8 @@ l1 = l1[
 ]
 
 svg.df = do.call(rbind, lapply(l1, function(x) mutate(read.csv(here("processed-data","04_preprocessing",x)), file=x) %>% filter(padj<.05)))
-svg.genes = unique(svg.df$gene_name)
+svg.genes = unique(svg.df$gene_id)
+names(svg.genes) = name.key[svg.genes,"gene_name"]
 
 gene.list = list("bd.2k"=genes.2k, "bd.3k"=genes.3k, "svg"=svg.genes)
 cat("\nStarting feature list size:\n")
@@ -53,7 +60,9 @@ cat("\n\nFiltered feature list size:\n")
 unlist(lapply(gene.list2, length))
 
 lm = read.csv(here("processed-data","04_preprocessing","EXT_layer-markers_tableS5.csv"))
-layer.markers = filter(lm, rank<=3000)$gene_name
+#rownames(lm) = lm$ensembl
+layer.markers = unique(filter(lm, rank<=3000)$ensembl)
+names(layer.markers) = name.key[layer.markers,"gene_name"]
 
 feature.list = list("bindev.2k"=union(setdiff(gene.list2[[1]], outlier.2k), layer.markers),
 	"bindev.3k"=union(setdiff(gene.list2[[2]], outlier.3k), layer.markers),
