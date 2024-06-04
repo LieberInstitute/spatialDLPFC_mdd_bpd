@@ -8,7 +8,8 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 load(here("processed-data","04_preprocessing","spe_norm.Rdata"))
-spe_small = filter_genes(spe[,spe$slide=="V13Y10-023"], filter_genes_ncounts = 3, filter_genes_pcspots = .5, filter_mito=T)
+spe = filter_genes(spe, filter_genes_ncounts = 3, filter_genes_pcspots = .5, filter_mito=T)
+spe_small = spe[,spe$slide=="V13Y10-023"]
 
         cat("\n",unique(spe_small$slide),"Calculating nnSVG... ",format(Sys.time(),tz="UTC"),"\n")
         cat("\n",dim(spe_small),"\n")
