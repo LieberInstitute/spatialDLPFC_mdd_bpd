@@ -70,6 +70,7 @@ feature.list = list("bindev.2k"=union(setdiff(gene.list2[[1]], outlier.2k), laye
 cat("\n\nFinal feature list size:\n")
 unlist(lapply(feature.list, length))
 
+feature.list = lapply(feature.list, function(x) {names(x) <- name.key[x,"gene_name"]; return(x)})
 saveRDS(feature.list, here("processed-data","04_preprocessing","bindev-2k-3k_svg_feature-list.rda"))
 
 ## Reproducibility information
