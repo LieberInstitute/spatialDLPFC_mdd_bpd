@@ -7,14 +7,18 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
-spe = nnSVG::filter_genes(spe, filter_genes_ncounts = 3, filter_genes_pcspots = .5)
+
+# previously used nnSVG filter to limit genes, now using feature list
+#spe = nnSVG::filter_genes(spe, filter_genes_ncounts = 3, filter_genes_pcspots = .5)
+feature.list = readRDS(here("processed-data","04_preprocessing","bindev-2k-3k_svg_feature-list.rda"))
 #single sample first just to see how long it takes
 #spe_small = spe[,spe$brain=="Br6529"]
-#then single slide
-#spe_small = spe[,spe$brain %in% unique(spe$brain)[c(1,5,9,13,17,21)]]
+#then 6 samples
+spe_small = spe[feature.list$bindev.3k,spe$brain %in% unique(spe$brain)[c(1,5,9,13,17,21)]]
 #then whole thing
-spe = SpaNorm(spe, verbose=TRUE)
-save(spe, file=here("processed-data","04_preprocessing","spe_SpaNorm.Rdata"))
+
+spe_small = SpaNorm(spe_small, verbose=TRUE)
+save(spe_small, file=here("processed-data","04_preprocessing","spe_SpaNorm-bindev.3k.Rdata"))
 
 ## Reproducibility information
 print("Reproducibility information:")
