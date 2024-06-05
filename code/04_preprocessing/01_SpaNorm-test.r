@@ -17,8 +17,8 @@ feature.list = readRDS(here("processed-data","04_preprocessing","bindev-2k-3k_sv
 spe_small = spe[feature.list$bindev.3k,spe$brain %in% unique(spe$brain)[c(1,5,9,13,17,21)]]
 #then whole thing
 
-spe_small = SpaNorm(spe_small, verbose=TRUE)
-save(spe_small, file=here("processed-data","04_preprocessing","spe_SpaNorm-bindev.3k.Rdata"))
+spe_small = SpaNorm(spe_small, scale.factor=2, verbose=TRUE)
+save(spe_small, file=here("processed-data","04_preprocessing","spe_SpaNorm-sf2-test6-bindev.3k.Rdata"))
 
 ## Reproducibility information
 print("Reproducibility information:")

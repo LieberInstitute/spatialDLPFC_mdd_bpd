@@ -11,7 +11,7 @@ set.seed(123)
 load(here("processed-data","05_clustering","srt-list_spe_counts.Rdata"))
 feature.list = readRDS(here("processed-data","04_preprocessing","bindev-2k-3k_svg_feature-list.rda"))
 #load SpaNorm object to access logcounts
-load(here("processed-data","04_preprocessing","spe_SpaNorm-test6-bindev.3k.Rdata"))
+load(here("processed-data","04_preprocessing","spe_SpaNorm-sf3-test6-bindev.3k.Rdata"))
 l1 = unique(spe_small$sample_id)
 names(l1) = lapply(l1, function(x) unique(colData(spe_small)[spe_small$sample_id==x,"brain"]))
 l1 = lapply(l1, function(x) spe_small[,colData(spe_small)$sample_id==x])
@@ -34,7 +34,7 @@ PRECASTObj <- PRECAST(PRECASTObj, K = 7)
 PRECASTObj <- SelectModel(PRECASTObj, criteria="MBIC")
 seuInt <- IntegrateSpaData(PRECASTObj, species = "Human")
 
-save(seuInt,file=here("processed-data","05_clustering","srt_precast_6samp_bindev.3k_SpaNorm.Rdata"))
+save(seuInt,file=here("processed-data","05_clustering","srt_precast_6samp_bindev.3k_SpaNorm-sf3.Rdata"))
 
 ## Reproducibility information
 print("Reproducibility information:")

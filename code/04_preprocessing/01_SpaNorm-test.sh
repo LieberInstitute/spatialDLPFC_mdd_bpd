@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=80G
+#SBATCH --mem=50G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
 #SBATCH --job-name=SpaNorm-test
