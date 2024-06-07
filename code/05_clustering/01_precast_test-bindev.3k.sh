@@ -1,5 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=150G
+#SBATCH --mem=50G
+#SBATCH --ntasks=6
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
 #SBATCH --job-name=precast_bindev.3k

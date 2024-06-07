@@ -7,19 +7,20 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 load(here("processed-data","05_clustering","srt-list_spe_counts.Rdata"))
+srt.sets = srt.sets[c("Br5366","Br5916","Br6231","Br5639","Br5599",'Br5694')]
 feature.list = readRDS(here("processed-data","04_preprocessing","bindev-2k-3k_svg_feature-list.rda"))
 
 preobj <- CreatePRECASTObject(seuList = srt.sets, customGenelist=feature.list$bindev.3k,
 	premin.spots=0, premin.features=0, postmin.spots=0, postmin.features=0)
 PRECASTObj <- AddAdjList(preobj, platform = "Visium")
 # define model parameters and run model
-PRECASTObj <- AddParSetting(PRECASTObj, maxIter = 20, verbose = TRUE)
+PRECASTObj <- AddParSetting(PRECASTObj, maxIter = 20, verbose = TRUE, coreNum=6)
 PRECASTObj <- PRECAST(PRECASTObj, K = 7)
 # pick model (necessary but only changes things if more than 1 K) and integrate
 PRECASTObj <- SelectModel(PRECASTObj, criteria="MBIC")
 seuInt <- IntegrateSpaData(PRECASTObj, species = "Human")
 
-save(seuInt,file=here("processed-data","05_clustering","srt_precast_24samp_bindev.3k.Rdata"))
+save(seuInt,file=here("processed-data","05_clustering","srt_precast_6samp-2_bindev.3k.Rdata"))
 
 ## Reproducibility information
 print("Reproducibility information:")
