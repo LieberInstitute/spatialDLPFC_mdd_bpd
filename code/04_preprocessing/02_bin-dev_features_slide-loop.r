@@ -33,7 +33,7 @@ mclapply(l1, function(x) {
 }, mc.cores=6)
 
 ## Reproducibility information
-print("Reproducibility information:")
+cat("\n\nReproducibility information:\n")
 format(Sys.time(), tz="UTC")
 proc.time()
 options(width = 120)

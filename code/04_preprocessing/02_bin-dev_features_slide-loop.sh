@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --ntasks=6
-#SBATCH --mem-per-cpu=50G
+#SBATCH --mem=50G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
 #SBATCH --job-name=bindev_slide-loop
@@ -14,7 +14,7 @@ echo "User: ${USER}"
 echo "Job id: ${SLURM_JOB_ID}"
 echo "Job name: ${SLURM_JOB_NAME}"
 echo "Node(s): ${SLURM_NODELIST}"
-echo "Node memory requested: ${SLURM_MEM_PER_CPU}"
+echo "Node memory requested: ${SLURM_MEM_PER_NODE}"
 echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/devel
