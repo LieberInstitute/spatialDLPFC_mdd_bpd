@@ -25,10 +25,11 @@ p1 <- lapply(1:length(l1), function(x)
 	labs(title=names(l1)[[x]])
 )
 
-pdf(here("plots", "03_QC", "spot-tissue_annotation.pdf"), width=8, height=12)
-PRECAST::drawFigs(p1, layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
-dev.off()
-cat("\nplot destination:",here("plots", "03_QC", "spot-tissue_annotation.pdf"),"\n")
+#pdf(here("plots", "03_QC", "spot-tissue_annotation.pdf"), width=12, height=16)
+f1 = PRECAST::drawFigs(p1, layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
+#dev.off()
+ggsave(filename = here("plots","03_QC","spot-tissue_annotation.png"), plot=f1, width=12, height=16, bg="white")
+cat("\nplot destination:",here("plots", "03_QC", "spot-tissue_annotation.png"),"\n")
 
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")
