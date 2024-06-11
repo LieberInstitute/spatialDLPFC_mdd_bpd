@@ -5,6 +5,7 @@ suppressPackageStartupMessages({
 	library(SpotSweeper)
 	library(here)
 })
+set.seed(123)
 
 cat(paste(format(Sys.time(), tz="UTC"),"Load raw spe and specify metadata columns...","\n"))
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
@@ -39,13 +40,14 @@ colnames(colData(spe))[ncol(colData(spe))-1] = "chrM.ratio_local.outlier"
 cat(paste(format(Sys.time(), tz="UTC"), "Save spe object to", here("processed-data","03_QC","spe_demo-filt.Rdata"),"\n"))
 save(spe, file=here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
-write(c(paste("Modified spe_demo-filt on",format(Sys.time(), tz="UTC"),"UTC"),
-        paste("File location:",here("processed-data","03_QC","spe_demo-filt.Rdata")),
-        paste("Source code:",here("code","03_QC","02_outliers.r")),
-        "*","*","*"), here("spe_tracker_current.txt"), append=TRUE)
+write(c(paste("******* Modified spe_demo-filt on",format(Sys.time(), tz="UTC"),"UTC"),
+        paste("******* Old location:",here("processed-data","03_QC","spe_demo-filt.Rdata")),
+	paste("******* New location:",here("processed-data","03_QC","spe_demo-filt.Rdata")),
+        paste("******* Source code:",here("code","03_QC","02_outliers.r")),
+        "*********","*********","*********"), here("spe_tracker_current.txt"), append=TRUE)
 
 ## Reproducibility information
-print("Reproducibility information:")
+cat("\n\nReproducibility information:\n")
 format(Sys.time(), tz="UTC")
 proc.time()
 options(width = 120)
