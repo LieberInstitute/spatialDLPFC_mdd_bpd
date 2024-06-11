@@ -84,7 +84,8 @@ cat("Old dim:",dim(spe),"\n")
 spe2 = spe[,spe$keep_spots!="off tissue" & spe$edge_outlier==FALSE]
 cat("New dim:",dim(spe2),"\n")
 cat("Saving filtered spe...\n")
-save(spe2, file=here("processed-data","03_QC","spe_demo-filt.Rdata"))
+spe <- spe2
+save(spe, file=here("processed-data","03_QC","spe_demo-filt.Rdata"))
 write(c(paste("***** Filtered spe_demo on",format(Sys.time(), tz="UTC"),"UTC"),
         paste("***** Old file location:",here("processed-data","03_QC","spe_demo.Rdata")),
         paste("***** New file location:",here("processed-data","03_QC","spe_demo-filt.Rdata")),
