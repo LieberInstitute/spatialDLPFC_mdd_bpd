@@ -19,7 +19,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/devel
 module list
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/03_QC/04_filter-outliers.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/03_QC/03_filter-outliers.r
 
 echo "**** Job ends ****"
 date
