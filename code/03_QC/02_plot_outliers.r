@@ -67,14 +67,15 @@ violin.list = lapply(seq_along(slide.list), function(x) {
 })
 p2 = PRECAST::drawFigs(violin.list, layout.dim = c(3, 2), common.legend = TRUE, legend.position = "right", align = "hv")
 
-pdf(here("plots", "03_QC", paste0("outliers_distribution-plot_",pdf.key[[i]],".pdf")), width=8, height=12)
-gridExtra::grid.arrange(p1, p2, nrow=2, heights=c(1,3))
-dev.off()
+#pdf(here("plots", "03_QC", paste0("outliers_distribution-plot_",pdf.key[[i]],".pdf")), width=8, height=12)
+ggsave(filename=here("plots","03_QC",paste0("outliers_distribution-plot_",pdf.key[[i]],".png")), gridExtra::grid.arrange(p1, p2, nrow=2, heights=c(1,3)),
+	width=8, height=12, bg="white")
+#dev.off()
 
 }
 
 ## Reproducibility information
-print("Reproducibility information:")
+cat("\n\nReproducibility information:\n")
 format(Sys.time(), tz="UTC")
 proc.time()
 options(width = 120)
