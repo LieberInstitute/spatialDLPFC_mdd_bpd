@@ -44,6 +44,11 @@ spe2$lg10.genes = log10(spe2$sum_gene)
 colData(spe2)$umi_3MAD.outlier_slide = isOutlier(spe2$lg10.umi, batch=spe2$slide, type="lower", nmads=3)
 colData(spe2)$genes_3MAD.outlier_slide = isOutlier(spe2$lg10.genes, batch=spe2$slide, type="lower", nmads=3)
 
+colData(spe2)$umi_3MAD.outlier_sample = isOutlier(spe2$lg10.umi, batch=spe2$sample_id, type="lower", nmads=3)
+colData(spe2)$genes_3MAD.outlier_sample = isOutlier(spe2$lg10.genes, batch=spe2$sample_id, type="lower", nmads=3)
+
+colData(spe2)$umi_3MAD.outlier = spe2$umi_3MAD.outlier_sample | spe2$umi_3MAD.outlier_slide
+colData(spe2)$genes_3MAD.outlier = spe2$genes_3MAD.outlier_sample | spe2$genes_3MAD.outlier_slide
 #then ID samples for edge removal
 l2 = unique(spe2$sample_id)
 names(l2) = lapply(l2, function(x) unique(colData(spe2)[spe2$sample_id==x,"brain"]))
@@ -79,12 +84,11 @@ write(c(paste("*** Modified spe_demo on",format(Sys.time(), tz="UTC"),"UTC"),
         paste("*** Source code:",here("code","03_QC","01_revised_edge_detection.r")),
         "*****","*****","*****"), here("spe_tracker_current.txt"), append=TRUE)
 
-cat("\n\n Filtering spe...\n")
+cat("\n\nFiltering spe...\n")
 cat("Old dim:",dim(spe),"\n")
-spe2 = spe[,spe$keep_spots!="off tissue" & spe$edge_outlier==FALSE]
-cat("New dim:",dim(spe2),"\n")
+spe = spe[,spe$keep_spots!="off tissue" & spe$edge_outlier==FALSE]
+cat("New dim:",dim(spe),"\n")
 cat("Saving filtered spe...\n")
-spe <- spe2
 save(spe, file=here("processed-data","03_QC","spe_demo-filt.Rdata"))
 write(c(paste("***** Filtered spe_demo on",format(Sys.time(), tz="UTC"),"UTC"),
         paste("***** Old file location:",here("processed-data","03_QC","spe_demo.Rdata")),
