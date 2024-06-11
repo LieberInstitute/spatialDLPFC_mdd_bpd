@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --mem=50G
+#SBATCH --mem=80G
 #SBATCH --ntasks=6
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=precast_bindev.3k
+#SBATCH --job-name=precast_bindev.3k_24-sig-TRUE
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -19,7 +19,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/devel
 module list
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/01_precast_test-bindev.3k.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/02_precast_bindev.3k.r
 
 echo "**** Job ends ****"
 date
