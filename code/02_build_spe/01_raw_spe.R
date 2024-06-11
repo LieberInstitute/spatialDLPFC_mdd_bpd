@@ -51,32 +51,6 @@ spe <- read10xVisiumWrapper(
     reference_gtf = file.path("/dcs04/lieber/lcolladotor/annotationFiles_LIBD001/10x/refdata-gex-GRCh38-2020-A/","genes", "genes.gtf")
 )
 Sys.time()
-save(spe, file = here::here("processed-data", "02_build_spe", "spe_raw.Rdata"))
-if(file.exists(here("spe_tracker_current.txt"))) {
-	if(file.exists(here("spe_tracker_archive.txt"))) {
-		write(c("########", paste("ARCHIVED",format(Sys.time(), tz="UTC"),"UTC"), "########", readLines(here("spe_tracker_current.txt"))), append=TRUE)
-	} else {
-		writeLines(c("########", paste("ARCHIVED",format(Sys.time(), tz="UTC"),"UTC"), "########", readLines(here("spe_tracker_current.txt")), file(here("spe_tracker_archive.txt"))))
-		close(file(here("spe_tracker_archive.txt")))
-	}
-} else {
-	writeLines(c(paste("Created spe_raw on",format(Sys.time(), tz="UTC"),"UTC"), paste("File location:",here("processed-data","02_build_spe","spe_raw.Rdata")), 
-		paste("Source code:",here("code","02_build_spe","01_raw_spe.R")),"*","*","*"), 
-		file(here("spe_tracker_current.txt")))
-	close(file(here("spe_tracker_current.txt")))  
-}
-# Sys.time()
-# spe <- read10xVisiumWrapper(
-#     sample_info_mouse$sample_path,
-#     sample_info_mouse$sample_id,
-#     type = "sparse",
-#     data = "raw",
-#     images = c("lowres", "hires", "detected", "aligned"),
-#     load = TRUE,
-#     reference_gtf = file.path("/dcs04/lieber/lcolladotor/annotationFiles_LIBD001/10x/refdata-gex-mm10-2020-A/","genes", "genes.gtf")
-# )
-# Sys.time()
-# save(spe, file = here::here("processed-data", "02_build_spe", "spe_raw_human.Rdata"))
 
 ## Add the study design info
 add_design <- function(spe) {
@@ -91,12 +65,39 @@ add_design <- function(spe) {
 }
 spe <- add_design(spe)
 
-# dir.create(here::here("processed-data", "pilot_data_checks"), showWarnings = FALSE)
 save(spe, file = here::here("processed-data", "02_build_spe", "spe_raw.Rdata"))
-write(c(paste("Modified spe_raw on",format(Sys.time(), tz="UTC"),"UTC"),
-	paste("File location:",here("processed-data","02_build_spe","spe_raw.Rdata")),
-	paste("Source code:",here("code","02_build_spe","01_raw_spe.R")),
-	"*","*","*"), here("spe_tracker_current.txt"), append=TRUE)
+if(file.exists(here("spe_tracker_current.txt"))) {
+	if(file.exists(here("spe_tracker_archive.txt"))) {
+		x = readLines(here("spe_tracker_current.txt"))
+		write(c("########", paste("ARCHIVED",format(Sys.time(), tz="UTC"),"UTC"), "########"), here("spe_tracker_archive.txt"), append=TRUE)
+	} else {
+		writeLines(c("########", paste("ARCHIVED",format(Sys.time(), tz="UTC"),"UTC"), "########"), file(here("spe_tracker_archive.txt"))) 
+		x = readLines(here("spe_tracker_current.txt"))
+		write(x, here("spe_tracker_archive.txt"), append=TRUE)
+		close(file(here("spe_tracker_archive.txt")))
+	}
+}
+writeLines(c(paste("Created spe_raw on",format(Sys.time(), tz="UTC"),"UTC"), 
+	paste("New file location:",here("processed-data","02_build_spe","spe_raw.Rdata")), 
+	paste("Source code:",here("code","02_build_spe","01_raw_spe.R")),"*","*","*"), 
+	file(here("spe_tracker_current.txt")))
+close(file(here("spe_tracker_current.txt")))
+# Sys.time()
+# spe <- read10xVisiumWrapper(
+#     sample_info_mouse$sample_path,
+#     sample_info_mouse$sample_id,
+#     type = "sparse",
+#     data = "raw",
+#     images = c("lowres", "hires", "detected", "aligned"),
+#     load = TRUE,
+#     reference_gtf = file.path("/dcs04/lieber/lcolladotor/annotationFiles_LIBD001/10x/refdata-gex-mm10-2020-A/","genes", "genes.gtf")
+# )
+# Sys.time()
+# save(spe, file = here::here("processed-data", "02_build_spe", "spe_raw_human.Rdata"))
+
+
+# dir.create(here::here("processed-data", "pilot_data_checks"), showWarnings = FALSE)
+
 ##### 2024_05_30 JT commented out below because it was throwing an error (based on the absence of tissue_spot_counts.csv for all samples) and therefore nothing below was being run
 ## Read in cell counts and segmentation results
 #segmentations_list <-
@@ -176,7 +177,7 @@ write(c(paste("Modified spe_raw on",format(Sys.time(), tz="UTC"),"UTC"),
 #save(spe, file = here::here("processed-data", "02_build_spe", "spe.Rdata"))
 
 ## Reproducibility information
-print("Reproducibility information:")
+cat("\n\nReproducibility information:\n")
 format(Sys.time(), tz="UTC")
 proc.time()
 options(width = 120)
