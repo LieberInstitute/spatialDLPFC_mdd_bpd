@@ -2,64 +2,65 @@ setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bp
 suppressPackageStartupMessages({
 	library(SpatialExperiment)
 	library(ggspavis)
-	library(gridExtra)
-	library(parallel)
 	library(here)
 })
 
+load(here("processed-data","03_QC","spe_demo.Rdata"))
+spe_full = spe
+spe_full$plot_tissue = factor(paste(spe_full$keep_spots, spe_full$edge_outlier),
+	levels=c("image perimeter FALSE","keep FALSE","off tissue FALSE","tissue perimeter FALSE",
+		"image perimeter TRUE","keep TRUE","tissue perimeter TRUE"),
+	labels=c("image perimeter","tissue","off tissue","tissue perimeter",
+		"image perimeter: edge removed","tissue: edge removed","tissue perimeter: edge removed"))
+
 load(here("processed-data","03_QC","spe_demo-filt.Rdata"))
 
-spe$umi.outlier_f = factor(paste(spe$umi_3MAD.outlier_sample, spe$umi_local.outlier),
-	levels=c("FALSE FALSE","TRUE FALSE","FALSE TRUE","TRUE TRUE"),
-	labels=c("none","3MAD only","local only","both"))
-spe$genes.outlier_f = factor(paste(spe$genes_3MAD.outlier_sample, spe$genes_local.outlier),
-	levels=c("FALSE FALSE","TRUE FALSE","FALSE TRUE","TRUE TRUE"),
-        labels=c("none","3MAD only","local only","both"))
-spe$chrM.outlier_f = factor(paste(spe$chrM.ratio_3MAD.outlier_sample, spe$chrM.ratio_local.outlier),
-	levels=c("FALSE FALSE","TRUE FALSE","FALSE TRUE","TRUE TRUE"),
-        labels=c("none","3MAD only","local only","both"))
+spe$sample = factor(paste(spe$umi_3MAD.outlier_sample | spe$genes_3MAD.outlier_sample, spe$chrM.ratio_3MAD.outlier_sample),
+        levels=c("FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE NA","TRUE TRUE"),
+        labels=c("none","mito","umi/genes","both","both"))
+spe$slide = factor(paste(spe$umi_3MAD.outlier_slide | spe$genes_3MAD.outlier_slide, spe$chrM.ratio_3MAD.outlier_slide),
+        levels=c("FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE NA","TRUE TRUE"),
+        labels=c("none","mito","umi/genes","both","both"))
+spe$local = factor(paste(spe$umi_local.outlier | spe$genes_local.outlier, spe$chrM.ratio_local.outlier),
+        levels=c("FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE TRUE"),
+        labels=c("none","mito","umi/genes","both"))
 
 l1 = unique(spe$sample_id)
 names(l1) = lapply(l1, function(x) unique(colData(spe)[spe$sample_id==x,"brain"]))
-l1 = lapply(l1, function(x) spe[,colData(spe)$sample_id==x])
+l1 = lapply(l1, function(x) colData(spe)$sample_id==x)
 
 for(x in seq_along(l1)) {
-	# convert tissue image to grob
-	g = grid::rasterGrob(imgRaster(l1[[x]]))
-	# calculate # outlier totals
-	m1 = t(rbind(table(l1[[x]]$umi.outlier_f),
-		table(l1[[x]]$genes.outlier_f),
-		table(l1[[x]]$chrM.outlier_f)))
-	colnames(m1) = c("umi","genes","chrM")
-	m1 = as.data.frame(m1[c("both","local only","3MAD only","none"),])
-	### create theme for outlier table
-	color.theme <- c(rep(c("#e41a1c","black","#377eb8","lightgrey"), times = c(12)))
-	tt <- ttheme_minimal(core=list(bg_params=list(fill= color.theme), fg_params=list(col="white")))
-	### make table into grob
-	gt = tableGrob(m1, theme=tt)
-	# outlier metrics to plot
-	mlist2 = c("umi.outlier_f","genes.outlier_f","chrM.outlier_f")
+	cat("Generating plots for",names(l1)[x],"...\n")
+	spe.tmp = spe[,l1[[x]]]
+	spe_full.tmp = spe_full[,spe_full$brain==names(l1)[x]]
+	# tissue/spot annotation
+	p1 <- plotSpots(spe_full.tmp, annotate="plot_tissue", in_tissue=NULL,
+		pal=c("red","goldenrod1","powderblue","black","pink","palegoldenrod","grey"))+
+		ggtitle(names(l1)[x])+labs(color="tissue/spot annotation")+
+		theme(legend.position="bottom", legend.direction="vertical", plot.title=element_text(face="bold"))
 	# build list of ggplot objects for top row
-	p.list1 = list(ggplot()+theme_minimal()+annotation_custom(g)+ggtitle(names(l1)[x])+theme(title=element_text(face="bold")),
-		plotSpots(l1[[x]], annotate="lg10.umi", pal=c("black","white")),
-		plotSpots(l1[[x]], annotate="lg10.genes", pal=c("black","white")),
-		plotSpots(l1[[x]], annotate="expr_chrM_ratio", pal=c("white","black")))
+	p.list1 = list(plotSpots(spe.tmp, annotate="lg10.umi", pal=c("black","white")),
+		plotSpots(spe.tmp, annotate="lg10.genes", pal=c("black","white")),
+		plotSpots(spe.tmp, annotate="expr_chrM_ratio", pal=c("white","black")))
 	# build list of ggplot objects for bottom row
-	p.list2 = c(list(ggplot()+theme_minimal()+annotation_custom(gt)+ggtitle("# outliers")),
-		lapply(mlist2, function(y) {
-			plotSpots(l1[[x]], annotate=y, pal=c("lightgrey","#377eb8","black","#e41a1c"))+ggtitle(y)+theme(legend.position="none")
-		}))
-	# for top and bottom row, use precast::draw figs to combine list of ggplot objects into a single gg/ggplot/ggarrange object,
-	### then combine into single object with cowplot so that it will plot on a single pdf page
-	#pdf(here("plots", "03_QC", paste0(names(l1)[x],"_outlier-overview.pdf")), width=12, height=6)
-	finalPlot = cowplot::plot_grid(PRECAST::drawFigs(p.list1, layout.dim=c(1,4), common.legend=FALSE),
-		PRECAST::drawFigs(p.list2, layout.dim=c(1,4), common.legend=TRUE, legend.position="none"), nrow=2)
-	ggsave(filename=here("plots", "03_QC", paste0(names(l1)[x],"_outlier-overview.pdf")), finalPlot, width=12, height=6)
+	mlist = c("sample","slide","local")
+	color.key = c("none"="grey","mito"="dodgerblue","umi/genes"="black","both"="red")
+	p.list2 = lapply(mlist, function(y) {
+			plotSpots(spe.tmp, annotate=y, pal=color.key[levels(colData(spe.tmp)[,y])])+
+			ggtitle(paste(y,"outliers"))+labs(color="")+
+			theme(plot.title=element_text(hjust=.5),
+				legend.box.spacing=unit(2,"pt"), legend.spacing=unit(0,"pt"), legend.margin=margin(0,0,0,0),legend.key.width=unit(1,"mm"))
+	})
+	# combine plots
+	lay= rbind(c(1,2,3,4),c(1,5,6,7))
+	finalPlot = gridExtra::grid.arrange(p1, p.list1[[1]], p.list1[[2]], p.list1[[3]], p.list2[[1]], p.list2[[2]], p.list2[[3]],
+		layout_matrix=lay)
+	ggsave(filename=here("plots", "03_QC", paste0(names(l1)[x],"_outlier-overview.png")), finalPlot, width=12, height=6)
 	#dev.off()
 }
 
 ## Reproducibility information
-print("Reproducibility information:")
+cat("\n\nReproducibility information:\n")
 format(Sys.time(), tz="UTC")
 proc.time()
 options(width = 120)
