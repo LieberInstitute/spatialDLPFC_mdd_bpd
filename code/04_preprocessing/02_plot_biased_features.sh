@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --mem=2G
+#SBATCH --mem=10G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=biased-features_table
+#SBATCH --job-name=biased-features_dotplot
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_preprocessing/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -18,7 +18,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/devel
 module list
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_preprocessing/02_biased-features_table.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_preprocessing/02_plot_biased_features.r
 
 echo "**** Job ends ****"
 date
