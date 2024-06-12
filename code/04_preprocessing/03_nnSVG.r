@@ -27,7 +27,7 @@ for (i in seq_along(l1)) {
 }
 
 ## Reproducibility information
-print("Reproducibility information:")
+cat("\n\nReproducibility information:\n")
 format(Sys.time(), tz="UTC")
 proc.time()
 options(width = 120)
