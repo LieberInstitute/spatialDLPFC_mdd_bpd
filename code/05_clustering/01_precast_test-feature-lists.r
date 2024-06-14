@@ -40,7 +40,7 @@ mclapply(seq_along(feature.list), function(x) {
 	preobj <- CreatePRECASTObject(seuList = srt.sets, customGenelist=feature.list[[x]],
 		premin.spots=0, premin.features=0, postmin.spots=0, postmin.features=0)
 	PRECASTObj <- AddAdjList(preobj, platform = "Visium") 
-	PRECASTObj <- AddParSetting(PRECASTObj, maxIter = 20, verbose = TRUE)
+	PRECASTObj <- AddParSetting(PRECASTObj, maxIter = 20, verbose = TRUE, Sigma_equal=FALSE)
 	PRECASTObj <- PRECAST(PRECASTObj, K = 7)
 	PRECASTObj <- SelectModel(PRECASTObj, criteria="MBIC")
 	seuInt <- IntegrateSpaData(PRECASTObj, species = "Human")

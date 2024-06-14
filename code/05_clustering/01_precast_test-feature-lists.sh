@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --ntasks=12
-#SBATCH --mem-per-cpu=50G
+#SBATCH --mem=80G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
 #SBATCH --job-name=precast_6samp

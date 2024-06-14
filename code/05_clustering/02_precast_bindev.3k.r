@@ -14,7 +14,7 @@ preobj <- CreatePRECASTObject(seuList = srt.sets, customGenelist=feature.list$bi
 	premin.spots=0, premin.features=0, postmin.spots=0, postmin.features=0)
 PRECASTObj <- AddAdjList(preobj, platform = "Visium")
 # define model parameters and run model
-PRECASTObj <- AddParSetting(PRECASTObj, maxIter = 20, verbose = TRUE, Sigma_equal=TRUE, coreNum=6)
+PRECASTObj <- AddParSetting(PRECASTObj, maxIter = 20, verbose = TRUE, Sigma_equal=FALSE, coreNum=6)
 PRECASTObj <- PRECAST(PRECASTObj, K = 7)
 # pick model (necessary but only changes things if more than 1 K) and integrate
 PRECASTObj <- SelectModel(PRECASTObj, criteria="MBIC")
