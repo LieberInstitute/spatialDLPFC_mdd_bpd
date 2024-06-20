@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --mem=80G
+#SBATCH --mem=50G
 #SBATCH --ntasks=12
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=precast_svg-no-bias_24_k-7
+#SBATCH --job-name=precast_svg-nobias_24_k-8
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/logs/%x_%j.log
 
 set -e
