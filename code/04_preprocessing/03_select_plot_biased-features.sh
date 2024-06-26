@@ -2,7 +2,7 @@
 #SBATCH --mem=10G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=bindev_results_plots
+#SBATCH --job-name=bindev-10k_subject-biased_plots
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_preprocessing/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -18,7 +18,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/devel
 module list
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_preprocessing/03_bindev-features_results_plot.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_preprocessing/03_select_plot_biased-features.r
 
 echo "**** Job ends ****"
 date
