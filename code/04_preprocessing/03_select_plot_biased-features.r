@@ -3,6 +3,7 @@ suppressPackageStartupMessages({
 	library(ggplot2)
 	library(dplyr)
 	library(here)
+	library(SpatialExperiment)
 })
 
 l1 = list.files(here("processed-data","04_preprocessing"))
@@ -75,7 +76,7 @@ cat("\nfaceted density plot save to:",here("plots","04_preprocessing","biased-fe
 #histogram of nSD for both threshold methods
 p2 <- ggplot(bindev.df, aes(x=abs(nSD), fill=nSD.bin))+
 	geom_histogram(color="grey90")+
-	scale_fill_brewer(palette="YlOrRd")+
+	scale_fill_brewer(palette="YlGnBu")+
 	facet_wrap(vars(slide), ncol=2)+
 	labs(title="pooled SD calculation", x="abs(nSD)",fill="nSD",y="# genes")+
 	scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 1),
@@ -99,7 +100,41 @@ p4 <- ggplot(bindev.df, aes(x=rank_default, y=rank_brain, color=outlier.group))+
 
 ggsave(file=here("plots","04_preprocessing","biased-features-10k_pooled-sd_per-slide-sd_hist-and-scatter.png"), plot=gridExtra::grid.arrange(p2,p3,p4, ncol=3),
         height=8, width=20, bg="white")
-cat("\nthree figure pooled and per-slide SD threshold plot saved to:",here("plots","04_preprocessing","biased-features-10k_pooled-sd_per-slide-sd_hist-and-scatter.png"))
+cat("\nthree figure pooled and per-slide SD threshold plot saved to:",here("plots","04_preprocessing","biased-features-10k_pooled-sd_per-slide-sd_hist-and-scatter.png\n"))
+
+#new figure for summarizing which samples dominate the biased genes determination
+### the last/third plot is likely to be the only one used when scaling up to the full dataset
+source(here("code","04_preprocessing","helper_functions.r"))
+load(here("processed-data","04_preprocessing","spe_norm.Rdata"))
+
+out.df <- dotplotDF(union(outlier.list[[1]],outlier.list[[2]]), spe, norm.to.mbp=TRUE, rank.df=bindev.df)
+out.df$outlier.group="both"
+out.df = mutate(out.df, outlier.group=if_else(gene %in% setdiff(outlier.list[[1]], outlier.list[[2]]), "pooled only", outlier.group)) %>% 
+	mutate(outlier.group=if_else(gene %in% setdiff(outlier.list[[2]], outlier.list[[1]]), "per slide only", outlier.group))
+
+most.biased = left_join(out.df, 
+		distinct(as.data.frame(colData(spe))[,c("brain","slide","condition","sex")]), by=c("brain","slide")) %>% 
+	group_by(outlier.group, gene, gene_name) %>% 
+	mutate(max1=max(scaled_expr_norm_mbp), is.max=max1==scaled_expr_norm_mbp)
+most.biased.samples = group_by(most.biased, slide, brain, condition, outlier.group) %>% summarise(most.biased=sum(is.max))
+
+p5 <- ggplot(most.biased, aes(x=scaled_expr_norm_mbp, color=is.max))+
+	geom_density()+theme_bw()+scale_color_manual(values=c("grey50","red"))+
+	labs(x="RNA counts norm. to MBP counts (scaled)", color="is max value?", title="Single sample expression accounts for much of bias")
+
+p6 <- ggplot(most.biased.samples, aes(x=slide, y=most.biased, label=brain, color=condition))+
+	geom_text()+theme_bw()+
+	facet_grid(rows=vars(outlier.group))+
+	labs(y="# genes for which sample exhibits highest expr. of biased gene")
+p7 <- ggplot(most.biased.samples, aes(x=most.biased))+
+	geom_histogram(fill="grey50",color="grey30")+theme_bw()+
+	geom_text(data=filter(most.biased.samples, most.biased>10), aes(x=most.biased, y=3, label=brain, color=condition))+
+	facet_grid(rows=vars(outlier.group))+
+	labs(x="# genes for which single sample exhibits highest expr. of biased gene", y="# samples with x highest biased gene expr", title="Labels: samples with max value for >10 biased genes")
+
+ggsave(file=here("plots","04_preprocessing","biased-features-10k_influence-of-sample-on-n-biased-genes.png"), plot=gridExtra::grid.arrange(p5,p6,p7, ncol=3),
+        height=8, width=20, bg="white")
+cat("\nthree figure sample influence on # of biased genes summary saved to:",here("plots","04_preprocessing","biased-features-10k_influence-of-sample-on-n-biased-genes.png"))
 
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")
