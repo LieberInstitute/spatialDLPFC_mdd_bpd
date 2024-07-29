@@ -2,7 +2,7 @@
 #SBATCH --mem=50G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=bindev_brain-batch
+#SBATCH --job-name=bindev_slide-batch
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_preprocessing/logs/%x_%j.log
 
 echo "**** Job starts ****"

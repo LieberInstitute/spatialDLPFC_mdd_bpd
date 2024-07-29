@@ -3,7 +3,7 @@
 #SBATCH --mem=50G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=bindev_slide-loop
+#SBATCH --job-name=bindev_brain-batch_loop
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_preprocessing/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -19,7 +19,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/devel
 module list
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_preprocessing/02_calculate_binomial_deviance.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_preprocessing/02_calculate_binomial_deviance_batch-brain_loop.r
 
 echo "**** Job ends ****"
 date
