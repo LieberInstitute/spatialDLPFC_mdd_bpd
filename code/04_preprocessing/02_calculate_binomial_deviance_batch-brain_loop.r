@@ -10,11 +10,31 @@ set.seed(123)
 
 load(here("processed-data","04_preprocessing","spe_norm.Rdata"))
 
-l1 = unique(spe$slide)
-names(l1) = l1
-l1 = lapply(l1, function(x) spe[-grep("^MT-",rowData(spe)$gene_name), spe$slide==x])
+# run with SVGs only: first load SVGs
+l1 = list.files(here("processed-data","04_preprocessing"))
+l1 = l1[
+        unlist(lapply(l1, function(x) {
+                if(dir.exists(here("processed-data","04_preprocessing",x))) return(FALSE)
+                else {
+                        split_1 = unlist(strsplit(x, split="_"))[[1]]
+                        split.2 = unlist(strsplit(x, split="\\."))[[2]]
+                        if(split_1=="nnSVG" & split.2=="csv") return(TRUE)
+                        else {return(FALSE)}
+                }
+        }))
+]
 
-mclapply(l1, function(x) {
+svg.df = do.call(rbind, lapply(l1, function(x) mutate(read.csv(here("processed-data","04_preprocessing",x)), file=x) %>% filter(padj<.05)))
+svgs = unique(svg.df$gene_id)
+length(svgs)
+
+l2 = unique(spe$slide)
+names(l2) = l2
+#l2 = lapply(l2, function(x) spe[-grep("^MT-",rowData(spe)$gene_name), spe$slide==x])
+# run with SVGs only: filter spe to SVGs
+l2 = lapply(l2, function(x) spe[svgs, spe$slide==x])
+
+mclapply(l2, function(x) {
 	cat("\n",unique(x$slide),": Running default model...\n")
         default <- devianceFeatureSelection(x, fam="binomial", batch=NULL)
 
@@ -29,7 +49,7 @@ mclapply(l1, function(x) {
                 "rank"=(nrow(batch)+1)-rank(rowData(batch)$binomial_deviance)),
         by="gene", suffix=c("_default","_brain"))
 
-        write.csv(df, here("processed-data","04_preprocessing",paste0("bindev_",unique(x$slide),"_default-brain.csv")),row.names=FALSE)
+        write.csv(df, here("processed-data","04_preprocessing",paste0("bindev_",unique(x$slide),"_default-brain_svgs-only.csv")),row.names=FALSE)
 }, mc.cores=6)
 
 ## Reproducibility information
