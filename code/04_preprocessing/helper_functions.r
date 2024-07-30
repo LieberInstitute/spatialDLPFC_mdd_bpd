@@ -7,23 +7,25 @@ prepBias <- function(bindev.results, n.top=10000, sd.interval=5, ...) {
         #error conditions 
         if(!is.numeric(sd.interval)) {stop("`sd.interval` determinning bin width must be a single numeric value.")}
         tmp = grep("rank_", colnames(bindev.results), value=TRUE)
-        if(length(tmp)!=2) {stop("Dataframe of binomial deviance results must have two rank columns.\nColumns must be named `rank_default` and `rank_[batch]` where [batch] is >
-        if(length(intersect(tmp,"rank_default"))==0) {stop("One of the rank columns must be named `rank_default` in order to compare influence of rank with batch effect.\nRena>
+        if(length(tmp)!=2) {stop("Dataframe of binomial deviance results must have two rank columns.\nColumns must be named `rank_default` and `rank_[batch]`.\nRe-run binomial deviance or reformat results table.\n")}
+        if(length(intersect(tmp,"rank_default"))==0) {stop("One of the rank columns must be named `rank_default` in order to compare influence of rank with batch effect.\nReformat results table.\n")}
         
         #clarification message
         batch = setdiff(tmp, "rank_default")
         cat("Detected",batch,"as batch variable for bias detection\n")
 
         #limit search for biased features to top 10k ranked genes
-        seq1 = seq(0,n.top, by=1000)
-        bindev.results$rank_default_bin = NA
-        for (i in 2:length(seq1)) {
-                bindev.results = mutate(bindev.results,
-                        rank_default_bin=if_else(between(rank_default, seq1[i-1]+1, seq1[i]),
-                                paste0("[",seq1[i-1]+1,",",seq1[i],"]"),
-                                rank_default_bin))
-        }
-        bindev.results = filter(bindev.results, !is.na(rank_default_bin))
+	bindev.results = filter(bindev.results, rank_default<=n.top)
+        ## more complicated version to check for change in nSD dist with increasing rank
+#	seq1 = seq(0,n.top, by=1000)
+#        bindev.results$rank_default_bin = NA
+#        for (i in 2:length(seq1)) {
+#                bindev.results = mutate(bindev.results,
+#                        rank_default_bin=if_else(between(rank_default, seq1[i-1]+1, seq1[i]),
+#                                paste0("[",seq1[i-1]+1,",",seq1[i],"]"),
+#                                rank_default_bin))
+#        }
+#        bindev.results = filter(bindev.results, !is.na(rank_default_bin))
 
         #determine SD based on all entries
         bindev.results$r.diff = bindev.results[,batch]-bindev.results[,"rank_default"]
@@ -32,9 +34,8 @@ prepBias <- function(bindev.results, n.top=10000, sd.interval=5, ...) {
         bindev.results$nSD = (bindev.results$r.diff-mean1)/sd1
         bindev.results$nSD.bin = cut(abs(bindev.results$nSD), right=FALSE,
                 breaks=seq(0,max(bindev.results$nSD)+sd.interval, by=sd.interval), include.lowest=TRUE)
-
         #if working with bindev results that were looped over slides (each slide analyzed separately), also calculate per-slide SD
-        if(length(grep("slide", colnames(bindev.results))==1) {
+        if(length(grep("^slide$", colnames(bindev.results)))==1) {
                 #determine per slide SD
                 cat("\nper-slide mean and SD rank diff.\n")
                 group_by(bindev.results, slide) %>% summarise(avg.r.diff=mean(r.diff), sd.r.diff=sd(r.diff))
@@ -49,10 +50,13 @@ findBiasedFeatures <- function(prepped.df, sd.safe=list(c("[0,5)"))) {
         #description
         ### prepped.df = dataframe produced by prepBias function
         ### sd.safe = character string of binned SD values that cover non-biased genes; all other values of binned SD will be considered biased
-        ###### sd.safe is a list where the first element indicates the values to use for pooled SD approach and the second value (if present) sets a different cutoff for the p>
+        ###### sd.safe is a list where the first element indicates the values to use for pooled SD approach and the second list element (if present) sets a different cutoff for the per-slide SD approach
         
         #error conditions 
         if(!is.list(sd.safe) & !is.character(sd.safe)) {stop("`sd.safe` must be character string specifying values of `nSD.bin` to mark safe from biased feature list")}
+	if(length(sd.safe)>2) {stop("More than 2 list elements detected in `sd.safe`.\nReformat `sd.safe` so that the first list element is a character vector for pooled SD threshold and the second (optional) list element is a character vector for per-slide SD threshold.\n")} 
+	check.missing = setdiff(unlist(sd.safe), unique(prepped.df$nSD.bin))
+	if(length(check.missing)>0) {stop("One or more elements `sd.safe` are not valid `nSD.bin` values: ",check.missing,"\n")}
         
         tmp = grep("nSD\\.bin", colnames(prepped.df))
         if(length(tmp)==0) {stop("Supplied dataframe does not contain `nSD.bin` values. Make sure prepBias has been run.")}
@@ -63,18 +67,35 @@ findBiasedFeatures <- function(prepped.df, sd.safe=list(c("[0,5)"))) {
 
         #formatting sd.safe and sd.safe messages
         if(length(sd.safe)==1) {
-                cat("Applying SD bin threshold to pooled SD calculation only.\n")
-                cat("SD bins greater than",sd.safe[[1]],"will be considered biased.\n")
-                if(is.character(sd.safe)) {
-                        cat("Coercing `sd.safe` to list...\n")
-                        sd.safe = list(sd.safe)
+		if(length(tmp)==2) {
+                        cat("Only 1 SD threshold supplied but detected pooled and per-slide SD approaches in results.\nApplying same threshold to both.\n")
+                        cat("*** To identify biased features for pooled SD approach only, set second list element to NULL\n")
+			cat("Pooled SD calculations: SD bins greater than",sd.safe[[1]],"will be considered biased.\n")
+                        cat("Per-slide SD calculations: SD bins greater than",sd.safe[[1]],"will be considered biased.\n")
+			if(is.character(sd.safe)) {cat("Coercing `sd.safe` to list...\n"); sd.safe = list(sd.safe, sd.safe)}
+			else {sd.safe = list(sd.safe[[1]], sd.safe[[1]])}
+		} 
+		else {
+			cat("Applying SD bin threshold to pooled SD calculation only.\n")
+			cat("SD bins greater than",sd.safe[[1]],"will be considered biased.\n")
+                        if(is.character(sd.safe)) {
+				cat("Coercing `sd.safe` to list...\n")
+				sd.safe = list(sd.safe)
+			}
                 }
         }
-        if(length(sd.safe)==2) {
+        else {
                 if(is.list(sd.safe)) {
-                        cat("Pooled SD calculations: SD bins greater than",sd.safe[[1]],"will be considered biased.\n")
-                        cat("Per-slide SD calculations: SD bins greater than",sd.safe[[2]],"will be considered biased.\n")
-                }
+			if(sum(sapply(sd.safe, is.null))==0) {
+				cat("Pooled SD calculations: SD bins greater than",sd.safe[[1]],"will be considered biased.\n")
+				cat("Per-slide SD calculations: SD bins greater than",sd.safe[[2]],"will be considered biased.\n")
+			}
+			else {
+				cat("NULL list element detected.\n")
+				sd.safe = sd.safe[[1]]
+				if(is.null(sd.safe)) {stop("NULL pooled SD threshold detected. Calculating per-slide bias only is not currently supported.")}
+			}
+		}
                 if(is.character(sd.safe)) {
                         cat("Applying SD bin threshold to pooled SD calculation only.\n")
                         cat("SD bins greater than",sd.safe,"will be considered biased.\n")
@@ -87,11 +108,11 @@ findBiasedFeatures <- function(prepped.df, sd.safe=list(c("[0,5)"))) {
         prepped.df = ungroup(prepped.df)
         out.df = mutate(prepped.df, nSD.outlier=nSD.bin %in% setdiff(prepped.df$nSD.bin, sd.safe[[1]]))
         if(length(sd.safe)==2) {
-                out.df = mutate(prepped.df, nSD.outlier_slide=nSD.bin_slide %in% setdiff(prepped.df$nSD.bin_slide, sd.safe[[2]],
+                out.df = mutate(out.df, nSD.outlier_slide=nSD.bin_slide %in% setdiff(prepped.df$nSD.bin_slide, sd.safe[[2]]),
                         outlier.group= factor(paste(nSD.outlier, nSD.outlier_slide),
                                 levels=c("FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE TRUE"),
                                 labels=c("none","per-slide only","pooled only","both")
-                                )
+				)
                         )
         }
         return(out.df)
@@ -151,16 +172,31 @@ dotplotDF <- function(plot.genes, spe, norm.to.mbp=TRUE, order.by.rank=FALSE, ra
 
 	#add in rank information if requestioned
 	if(order.by.rank==TRUE | !is.null(rank.df)) {
-		#create necessary rank dfs
-		best.rank.slide.df = filter(rank.df, gene %in% plot.genes) %>% group_by(slide, gene, gene_name) %>%
-			summarize(best.rank.slide=min(rank_brain), .groups="drop")
+		#recode rank_batch so that this works with any batch variable
+		## first isolate name of batch var
+		tmp = setdiff(grep("rank_",colnames(rank.df), value=T), "rank_default")
+		## then find column
+		tmp.loc = grep(tmp, colnames(rank.df))
+		## then rename
+		colnames(rank.df)[tmp.loc] = "rank_batch"
+		#now proceed
 		best.rank.all.df = filter(rank.df, gene %in% plot.genes) %>% group_by(gene, gene_name) %>%
-			summarize(best.rank.all = min(rank_brain), .groups="drop") %>%
-			arrange(best.rank.all) %>% mutate(index=row_number(), i2=length(plot.genes)-index, ytext=paste(best.rank.all,gene_name, sep=" - ")) %>%
-			arrange(i2) %>% mutate(ylabel=factor(i2, levels=i2,labels=ytext))
+                        summarize(best.rank.all = min(rank_batch), .groups="drop") %>%
+                        arrange(best.rank.all) %>% mutate(index=row_number(), i2=length(plot.genes)-index, ytext=paste(best.rank.all,gene_name, sep=" - ")) %>%
+                        arrange(i2) %>% mutate(ylabel=factor(i2, levels=i2, labels=ytext))
+		# best.rank.slide.df was only generated in case I wanted to see which slide was driving the result
+		# i think i can comment this out with no downstream consequences
+		#extra steps if working with per-slide loop
+#		if(length(grep("^slide$", colnames(rank.df)))>0) {
+#			best.rank.slide.df = filter(rank.df, gene %in% plot.genes) %>% group_by(slide, gene, gene_name) %>%
+#				summarize(best.rank.slide=min(rank_batch), .groups="drop")
+#			plot.genes.df <- left_join(plot.genes.df, best.rank.slide.df, by=c("slide","gene","gene_name")) %>%
+#				left_join(best.rank.all.df, by=c("gene","gene_name")) %>%
+#				mutate(xlabel=paste(position, brain))
+#		}
+		# if i do end up including above, i will need to add an else{ statement here
 		#add rank information
-		plot.genes.df <- left_join(plot.genes.df, best.rank.slide.df, by=c("slide","gene","gene_name")) %>%
-			left_join(best.rank.all.df, by=c("gene","gene_name")) %>%
+		plot.genes.df <- left_join(plot.genes.df, best.rank.all.df, by=c("gene","gene_name")) %>%
 			mutate(xlabel=paste(position, brain))
 	}
 	return(plot.genes.df)
