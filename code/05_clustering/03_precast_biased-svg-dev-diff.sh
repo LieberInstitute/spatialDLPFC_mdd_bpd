@@ -1,10 +1,13 @@
 #!/bin/bash
-#SBATCH --mem=30G
+#SBATCH --mem=50G
+#SBATCH --ntasks=12
+#SBATCH -t 0-03:00
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=plot_precast_test
+#SBATCH --job-name=precast_svgs-biased3_24_k-7
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/logs/%x_%j.log
 
+set -e
 echo "**** Job starts ****"
 date
 
@@ -18,7 +21,13 @@ echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/devel
 module list
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/01_plot_precast_test-feature-list.r
+
+# these lines necessary only if performing multiple k
+#echo "set stack size to unlimited"
+#ulimit -s unlimited
+#ulimit -s
+
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/03_precast_biased-svg-dev-diff.r
 
 echo "**** Job ends ****"
 date
