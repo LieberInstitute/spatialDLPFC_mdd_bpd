@@ -169,6 +169,9 @@ dotplotDF <- function(plot.genes, spe, norm.to.mbp=TRUE, order.by.rank=FALSE, ra
 			by=c("brain", "position", "slide"), suffix=c("","_mbp")) %>% 
 		mutate(expr_norm_mbp = avg/avg_mbp) %>% group_by(gene) %>% mutate(scaled_expr_norm_mbp= as.numeric(scale(expr_norm_mbp)))
 	}
+	else {
+		plot.genes.df = group_by(plot.genes.df, gene) %>% mutate(scaled_avg= as.numeric(scale(avg)))
+	}
 
 	#add in rank information if requestioned
 	if(order.by.rank==TRUE | !is.null(rank.df)) {
@@ -199,5 +202,6 @@ dotplotDF <- function(plot.genes, spe, norm.to.mbp=TRUE, order.by.rank=FALSE, ra
 		plot.genes.df <- left_join(plot.genes.df, best.rank.all.df, by=c("gene","gene_name")) %>%
 			mutate(xlabel=paste(position, brain))
 	}
+	else {plot.genes.df <- mutate(plot.genes.df, xlabel=paste(position, brain), ylabel=gene_name)}
 	return(plot.genes.df)
 }
