@@ -4,7 +4,7 @@
 #SBATCH -t 0-03:00
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=precast_svgs-not-loop_24_k-7
+#SBATCH --job-name=precast_svgs-supp_24_k-8
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/logs/%x_%j.log
 
 set -e
@@ -27,7 +27,7 @@ module list
 #ulimit -s unlimited
 #ulimit -s
 
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/02_precast_biased-svg.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/01_precast_supp-svg.r
 
 echo "**** Job ends ****"
 date
