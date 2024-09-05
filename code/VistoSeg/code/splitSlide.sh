@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mem=80G
-#SBATCH -o logs/slurm-o_splitSlide.txt 
-#SBATCH -e logs/slurm-e_splitSlide.txt
+#SBATCH -o logs/splitSlide.txt 
 #SBATCH --job-name=MBv-splitslide
-#SBATCH --array=1-17
+#SBATCH --array=1
+#SBATCH -t 2-00:00:00
 
 echo "**** Job starts ****"
 date
@@ -21,7 +21,7 @@ module load matlab/R2023a
 
 ## Load toolbox for VistoSeg
 toolbox='/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/VistoSeg/code'
-samplelist="splitSlide_list.txt"
+samplelist="24-09-splitSlide-list.txt"
 
 ## Read inputs from splitSlide_list.txt file
 fname=$(awk 'BEGIN {FS="\t"} {print $1}' ${samplelist} | awk "NR==${SLURM_ARRAY_TASK_ID}")
