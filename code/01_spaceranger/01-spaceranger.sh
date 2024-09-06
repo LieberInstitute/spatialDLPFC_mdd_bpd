@@ -3,7 +3,7 @@
 #SBATCH -n 8
 #SBATCH --job-name=mbv-spaceranger
 #SBATCH -o logs/mbv-spaceranger240906o.txt
-#SBATCH --array=1-96
+#SBATCH --array=1-96%16
 #SBATCH -t 5-00:00:00
 
 echo "**** Job starts ****"
