@@ -1,6 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=15G
-#SBATCH -t 0-2:00 #set time limit to be 2 hours
+#SBATCH --mem=100G
 #SBATCH --job-name=mbv_build_spe_hdf5
 #SBATCH -o /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/02_build_spe/logs/%x_%j.log
 
