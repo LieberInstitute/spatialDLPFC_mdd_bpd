@@ -21,7 +21,7 @@ stopifnot(identical(rownames(colData(spe)), rownames(cdata)))
 colData(spe)$keep_spots = cdata$keep_spots
 colData(spe)$edge_outlier = cdata$edge_outlier
 cat("dim spe before edge outlier removal:",dim(spe),"\n")
-spe = spe[,spe$edge_outlier==FALSE]
+spe = spe[,spe$edge_outlier==FALSE & spe$in_tissue==TRUE]
 cat("dim spe after edge outlier removal:",dim(spe),"\n\n")
 
 #prep for outlier detection
@@ -45,13 +45,14 @@ spe <- localOutliers(spe, metric = "expr_chrM_ratio", direction = "higher", log 
 colnames(colData(spe))[ncol(colData(spe))-1] = "chrM.ratio_local.outlier"
 
 #update coldata
-stopifnot(identical(rownames(cdata)[cdata$edge_outlier==FALSE], rownames(colData(spe))))
+true.spots = cdata$edge_outlier==FALSE & cdata$in_tissue==TRUE
+stopifnot(identical(rownames(cdata)[true.spots], rownames(colData(spe))))
 cdata$umi_local.outlier = NA
-cdata[cdata$edge_outlier==FALSE, "umi_local.outlier"] = colData(spe)$umi_local.outlier
+cdata[true.spots, "umi_local.outlier"] = colData(spe)$umi_local.outlier
 cdata$genes_local.outlier = NA
-cdata[cdata$edge_outlier==FALSE, "genes_local.outlier"] = colData(spe)$genes_local.outlier
+cdata[true.spots, "genes_local.outlier"] = colData(spe)$genes_local.outlier
 cdata$chrM.ratio_local.outlier = NA
-cdata[cdata$edge_outlier==FALSE, "chrM.ratio_local.outlier"] =	colData(spe)$chrM.ratio_local.outlier
+cdata[true.spots, "chrM.ratio_local.outlier"] =	colData(spe)$chrM.ratio_local.outlier
 
 #save coldata
 write.csv(cdata, here("processed-data","03_QC","spe_n120_edge-detection_spotsweeper_colData.csv"), row.names=T)

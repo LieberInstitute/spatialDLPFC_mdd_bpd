@@ -18,18 +18,24 @@ cdata = read.csv(here("processed-data","03_QC","spe_n120_edge-detection_spotswee
 stopifnot(identical(rownames(colData(spe)), rownames(cdata)))
 
 #add edge info and subset
+cat("\n# spots off tissue:\n")
+table(!spe$in_tissue)
 colData(spe)$keep_spots = cdata$keep_spots
 colData(spe)$edge_outlier = cdata$edge_outlier
+cat("\n# spots edge outliers:\n")
 table(spe$edge_outlier)
 colData(spe)$local_outlier = cdata$umi_local.outlier | cdata$genes_local.outlier | cdata$chrM.ratio_local.outlier
+cat("\n# spots local outliers:\n")
 table(spe$local_outlier)
 
 #remove outliers
-any_outlier = spe$edge_outlier | spe$local_outlier
+any_outlier = spe$edge_outlier | spe$local_outlier | !spe$in_tissue
 table(any_outlier)
 cat("dim spe before outlier removal:",dim(spe),"\n")
 spe = spe[,any_outlier==FALSE]
 cat("dim spe after outlier removal:",dim(spe),"\n\n")
+spe = spe[rowSums(counts(spe))!=0,]
+cat("dim spe after zero-count genes removal:",dim(spe),"\n\n")
 
 #normalization
 #spe <- computeLibraryFactors(spe)
