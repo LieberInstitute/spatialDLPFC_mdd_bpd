@@ -16,11 +16,6 @@ showtree(counts(spe))
 cat("\nseed:\n")
 seed(counts(spe))
 
-#remove 0 count genes
-spe = spe[rowSums(counts(spe))!=0,]
-cat("\n\nspe dimensions after removing 0 count genes:\n")
-dim(spe)
-
 cat("\nnset verbose block processing:\n")
 DelayedArray:::set_verbose_block_processing(TRUE)
 
