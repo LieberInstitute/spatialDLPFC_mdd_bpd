@@ -70,14 +70,22 @@ colnames(spe) <- spotcodes
 rownames(colData(spe)) <- spotcodes
 
 #save
-start.time2 = Sys.time()
-cat("\nStart save:"); start.time2           
+DelayedArray:::set_verbose_block_processing(TRUE)
+start.time1 = Sys.time()
+cat("\nStart HDF5Array save:"); start.time1
+cmtx = as(counts(spe), "HDF5Matrix")
+writeHDF5Array(cmtx, filepath="processed-data/02_build_spe/spe_n120_raw-counts_backup",
+               name="counts")
+cat("\nTime elapsed (writeHDF5Array):",
+        round(difftime(Sys.time(), start.time1, units="mins"),2), "minutes\n")
 
+
+start.time2 = Sys.time()
+cat("\nStart HDF5SummExp save:"); start.time2           
 saveHDF5SummarizedExperiment(spe, dir=here("processed-data","02_build_spe"), prefix="spe_n120_",
         chunkdim=getHDF5DumpChunkDim(c(1,ncol(spe))),
-        verbose=F)
-
-cat("\nTime elapsed (saveHDF5):",
+        verbose=T)
+cat("\nTime elapsed (saveHDF5SummarizedExperiment):",
         round(difftime(Sys.time(), start.time2, units="mins"),2), "minutes\n")
 
 if(file.exists(here("spe_tracker_current.txt"))) {
