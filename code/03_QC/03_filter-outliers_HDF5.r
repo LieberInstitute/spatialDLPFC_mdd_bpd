@@ -2,7 +2,7 @@ setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bp
 suppressPackageStartupMessages({
         library(SpatialExperiment)
         library(HDF5Array)
-        library(scuttle)
+        library(DelayedArray)
         library(here)
 })
 set.seed(123)
@@ -27,15 +27,19 @@ table(spe$edge_outlier)
 colData(spe)$local_outlier = cdata$umi_local.outlier | cdata$genes_local.outlier | cdata$chrM.ratio_local.outlier
 cat("\n# spots local outliers:\n")
 table(spe$local_outlier)
-
-#remove outliers
 any_outlier = spe$edge_outlier | spe$local_outlier | !spe$in_tissue
 table(any_outlier)
+
+#remove outliers
+## remove genes first. once the spe is subset, the chunk dims change or something such that trying to do rowSums after
+## removing outliers takes at least 10x as long.
+## compare verbose chunk dim processing output of code/03_QC/logs/filter_genes_test_10239313.log (subset genes first) which ran in 5 min
+## to the output of code/03_QC/logs/filter_genes_test_10239258.log which i terminated after 7 min (subset genes after) and had barely made progress
+spe = spe[rowSums(counts(spe))!=0,]
+cat("\n\ndim spe after zero-count genes removal:",dim(spe),"\n")
 cat("dim spe before outlier removal:",dim(spe),"\n")
 spe = spe[,any_outlier==FALSE]
 cat("dim spe after outlier removal:",dim(spe),"\n\n")
-spe = spe[rowSums(counts(spe))!=0,]
-cat("dim spe after zero-count genes removal:",dim(spe),"\n\n")
 
 #normalization
 #spe <- computeLibraryFactors(spe)
@@ -47,7 +51,7 @@ cat("\nStart save:"); start.time2
 
 saveHDF5SummarizedExperiment(spe, dir=here("processed-data","03_QC"), prefix="spe_n120_postQC_",
         chunkdim=getHDF5DumpChunkDim(c(1,ncol(spe))),
-        verbose=T)
+        verbose=T, replace=T)
 
 cat("\nTime elapsed (saveHDF5):",
         round(difftime(Sys.time(), start.time2, units="hours"),2), "hours\n")
@@ -56,7 +60,7 @@ cat("\nTime elapsed (saveHDF5):",
 write(c(paste("*** Created post QC filtered spe on",format(Sys.time(), tz="UTC"),"UTC"),
         paste("*** Old file location:",here("processed-data","02_build_spe","spe_n120_")),
         paste("*** New file location:",here("processed-data","03_QC","spe_n120_postQC_")),
-        paste("**** Source code:",here("code","03_QC","03_filter-outliers_HDF5.r")),
+        paste("*** Source code:",here("code","03_QC","03_filter-outliers_HDF5.r")),
         "***","***","***"), here("spe_tracker_current.txt"), append=TRUE)
 
 ## Reproducibility information

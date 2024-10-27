@@ -18,20 +18,28 @@ showtree(logcounts(spe))
 cat("\nseed:\n")
 seed(logcounts(spe))
 
-#spe = filter_genes(spe, filter_genes_ncounts = 3, filter_genes_pcspots = .5, filter_mito=T)
-l1 = unique(spe$slide)
-names(l1) = l1
-l1 = lapply(l1, function(x) spe[,spe$slide==x])
+spe = filter_genes(spe, filter_genes_ncounts = 3, filter_genes_pcspots = .1, filter_mito=T) #will give 6k genes
 
+spe$dummy_slide = spe$slide
+colData(spe)[spe$slide=="V13B23-283","dummy_slide"] = "joint-283-339"
+colData(spe)[spe$slide=="V13B23-339","dummy_slide"] = "joint-283-339"
+
+l1 = unique(spe$dummy_slide)
+names(l1) = l1
+l1 = lapply(l1, function(x) spe[,spe$dummy_slide==x])
+
+sapply(l1, function(x) length(unique(x$sample_id)))
+
+cat("\n\nSTARTING LOOP\n\n")
 for (i in seq_along(l1)) {
 	cat("\n",names(l1)[i],"\n")
-	spe_small <- filter_genes(l1[[i]], filter_genes_ncounts = 3, filter_genes_pcspots = .5, filter_mito=T)
+	#spe_small <- filter_genes(l1[[i]], filter_genes_ncounts = 3, filter_genes_pcspots = .5, filter_mito=T)
 	spe_small = l1[[i]]
 	cat("\nCalculating nnSVG... ",format(Sys.time(),tz="EST"),"\n")
-	cat("\n",dim(spe_small),"\n")
+	dim(spe_small)
 	spe_nnSVG <- nnSVG(spe_small, n_threads=12)
 	svg = rowData(spe_nnSVG)
-	cat("\nSaving results...\n\n")
+	cat("\nSaving results...\n")
 	write.csv(svg, here("processed-data","04_feature_selection",paste0("nnSVG_",names(l1)[i],".csv")), row.names=T)
 }
 
