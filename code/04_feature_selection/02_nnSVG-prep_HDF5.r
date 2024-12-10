@@ -3,12 +3,13 @@ suppressPackageStartupMessages({
 	library(SpatialExperiment)
 	library(HDF5Array)
 	library(DelayedArray)
-	library(scran)
+	library(BiocParallel)
 	library(nnSVG)
-	library(parallel)
-	library(here)
 })
 set.seed(123)
+
+cat("\nBiocParallel defaults:\n")
+MulticoreParam()
 
 spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n120_postQC_norm_")
 cat("\n\nspe dimensions:\n")
@@ -26,22 +27,11 @@ colData(spe)[spe$slide=="V13B23-339","dummy_slide"] = "joint-283-339"
 
 l1 = unique(spe$dummy_slide)
 names(l1) = l1
-l1 = lapply(l1, function(x) spe[,spe$dummy_slide==x])
-
-sapply(l1, function(x) length(unique(x$sample_id)))
-
-cat("\n\nSTARTING LOOP\n\n")
-for (i in seq_along(l1)) {
-	cat("\n",names(l1)[i],"\n")
-	#spe_small <- filter_genes(l1[[i]], filter_genes_ncounts = 3, filter_genes_pcspots = .5, filter_mito=T)
-	spe_small = l1[[i]]
-	cat("\nCalculating nnSVG... ",format(Sys.time(),tz="EST"),"\n")
-	dim(spe_small)
-	spe_nnSVG <- nnSVG(spe_small, n_threads=12)
-	svg = rowData(spe_nnSVG)
-	cat("\nSaving results...\n")
-	write.csv(svg, here("processed-data","04_feature_selection",paste0("nnSVG_",names(l1)[i],".csv")), row.names=T)
-}
+l1 = bplapply(l1, function(x) {
+	print(x); Sys.time()
+	tmp <- spe[,spe$dummy_slide==x]
+	save(tmp, file=paste0("processed-data/04_feature_selection/per-slide_spe/",x,".Rdata"))
+})
 
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")
