@@ -13,7 +13,7 @@ cat("\nCalculating nnSVG... ",format(Sys.time(),tz="EST"),"\n")
 dim(tmp)
 results <- nnSVG(tmp, n_threads=12)
 svg = rowData(results)
-write.csv(svg, paste0("processed-data/04_feature_selection/per-slide_svgs",gsub("\\.Rdata","_nnSVG-results",args[[1]]),".csv"), row.names=T)
+write.csv(svg, paste0("processed-data/04_feature_selection/per-slide_svgs/",gsub("\\.Rdata","_nnSVG-results",args[[1]]),".csv"), row.names=T)
 
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")
