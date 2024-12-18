@@ -1,7 +1,7 @@
 setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
 suppressPackageStartupMessages({
 	library(SpatialExperiment)
-	library(spoon)
+	#library(spoon)
 	library(nnSVG)
 	library(HDF5Array)
 	library(DelayedArray)
@@ -49,14 +49,25 @@ if(dim(weights)[2]==dim(logcounts(tmp))[1]) {
 	colnames(weights) = rownames(logcounts(tmp))
 }
 
+
 cat("\n\nWeighted nnSVG...")
 format(Sys.time(), tz="EST")
-output = weighted_nnSVG(input=tmp, w=weights, #spatial_coords=spatialCoords(tmp), 
-	BPPARAM = MulticoreParam(workers=12, RNGseed = 5))
+# calculate weighted logcount matrix
+### from here: https://github.com/kinnaryshah/spoon/blob/main/R/weighted_nnSVG.R#L109
+weighted_logcounts <- t(weights)*assays(tmp)[['logcounts']]
+weighted_mean <- Matrix::rowMeans(weighted_logcounts)
+assay(tmp, "weighted_logcounts") <- weighted_logcounts
+
+# now try my re-written nnSVG code
+### rather than parallelizing the nnSVG() function over each gene, using the gene-specific weights matrix column as the covariate, (Kinnary's weighted_nnSVG)
+### instead modify the BRISC parallelization within the nnSVG() function so that only the column of the weight matrix corresponding to the relevant gene is used as a covariate
+source("code/04_feature_selection/nnSVG_re-write_iterative-cov-matrix.r")
+output = weighted_nnSVG(input=tmp, assay="weighted_logcounts", X=weights, 
+	n_threads=12)
 format(Sys.time(), tz="EST")
 
-write.csv(output, "processed-data/04_feature_selection/test_spoon-nnSVG_results.csv", row.names=T)
-cat("\n\nWeighted nnSVG results saved to: processed-data/04_feature_selection/test_spoon-nnSVG_results.csv") 
+write.csv(rowData(output), "processed-data/04_feature_selection/test_spoon-nnSVG-rewrite_results.csv", row.names=T)
+cat("\n\nWeighted nnSVG results saved to: processed-data/04_feature_selection/test_spoon-nnSVG-rewrite_results.csv") 
 
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")
