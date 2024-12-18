@@ -5,10 +5,37 @@ suppressPackageStartupMessages({
 	library(HDF5Array)
 	library(DelayedArray)
 	library(gridExtra)
+	library(scater)
 })
 
 spe <- loadHDF5SummarizedExperiment(dir="processed-data/03_QC/", prefix="spe_n120_postQC_")
+spe$dummy_slide = spe$slide
+colData(spe)[spe$slide=="V13B23-283","dummy_slide"] = "joint-283-339"
+colData(spe)[spe$slide=="V13B23-339","dummy_slide"] = "joint-283-339"
 
+spe$sex = ifelse(spe$sex=="","M",spe$sex)
+
+#QC metrics summary
+p1 <- ggcells(spe, aes(x=array, y=sum_umi, fill=condition, lty=sex))+
+  geom_violin()+facet_wrap(vars(dummy_slide))+
+  scale_y_log10()+theme_bw()+ggtitle("Library size")
+
+p2 <- ggcells(spe, aes(x=array, y=sum_gene, fill=condition, lty=sex))+
+  geom_violin()+facet_wrap(vars(dummy_slide))+
+  theme_bw()+ggtitle("Detected genes")
+  
+p3 <- ggcells(spe, aes(x=array, y=expr_chrM_ratio, fill=condition, lty=sex))+
+  geom_violin()+facet_wrap(vars(dummy_slide))+
+  theme_bw()+ggtitle("Mitochondrial fraction")
+
+cat("Compiling QC summary plots...",format(Sys.time()),"\n")
+pdf(file="plots/03_QC/QC-filtered_qc-metrics_violin-plots.pdf", width=8.5, height=11)
+p1
+p2
+p3
+dev.off()
+
+#QC metrics spot plots
 dummy = c("V13B23-283","V13B23-339")
 remainder = setdiff(unique(spe$slide), dummy)
 slideList = list(c(dummy, remainder[1:5]),remainder[6:11],remainder[12:17],remainder[18:23],remainder[24:29])
