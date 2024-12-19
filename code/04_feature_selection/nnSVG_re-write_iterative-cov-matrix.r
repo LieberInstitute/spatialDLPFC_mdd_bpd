@@ -21,8 +21,8 @@ suppressPackageStartupMessages({
 	library(methods)
 })
 
-weighted_nnSVG <- function(input, spatial_coords = NULL, X = NULL, 
-                  assay_name = "logcounts", 
+weightedJT_nnSVG <- function(input, spatial_coords = NULL, X = NULL, 
+                  assay_name = "weighted_logcounts", 
                   n_neighbors = 10, order = "AMMD", 
                   n_threads = 1, BPPARAM = NULL, 
                   verbose = FALSE) {
@@ -102,8 +102,9 @@ weighted_nnSVG <- function(input, spatial_coords = NULL, X = NULL,
   # calculate statistics
   # --------------------
   
-  if (is(input, "SpatialExperiment") && ("logcounts" %in% assayNames(spe))) {
-    lc <- logcounts(spe)
+  if (is(input, "SpatialExperiment")) { #&& ("logcounts" %in% assayNames(spe))) { ###JT: change from pulling logcounts
+    ### lc <- logcounts(spe)
+    lc <- y ###JT: set lc to named assay not auto to logcounts
     # mean logcounts
     mat_brisc <- cbind(
       mat_brisc, 
