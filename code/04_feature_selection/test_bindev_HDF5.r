@@ -29,15 +29,18 @@ df = cbind.data.frame(rowData(spe)[names(default),c("gene_id","gene_name")],"dev
 
 cat("\nRunning batch model...\n")
 format(Sys.time(), tz="EST")
-batch <- devianceFeatureSelection(rlz, fam="binomial", batch=as.factor(spe$slide))
+#batch <- devianceFeatureSelection(rlz, fam="binomial", batch=as.factor(spe$slide))
+batch <- devianceFeatureSelection(rlz, fam="binomial", batch=as.factor(spe$sample_id))
 
 df = left_join(df, cbind.data.frame(rowData(spe)[rownames(rlz),c("gene_id","gene_name")], "dev"=batch, "rank"=(length(batch)+1)-rank(batch)),
 	by=c("gene_id","gene_name"), suffix=c("_default","_batch")) 
 
 cat("\nSave output...\n")
 format(Sys.time(), tz="EST")
-write.csv(df, "processed-data/04_feature_selection/test_bindev_batch-slide.csv",row.names=FALSE)
-cat("\nSaved to: processed-data/04_feature_selection/test_bindev_batch-slide.csv\n")
+#write.csv(df, "processed-data/04_feature_selection/test_bindev_batch-slide.csv",row.names=FALSE)
+#cat("\nSaved to: processed-data/04_feature_selection/test_bindev_batch-slide.csv\n")
+write.csv(df, "processed-data/04_feature_selection/test_bindev_batch-sample.csv",row.names=FALSE)
+cat("\nSaved to: processed-data/04_feature_selection/test_bindev_batch-sample.csv\n")
 
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")
