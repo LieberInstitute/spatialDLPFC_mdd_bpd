@@ -1,6 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=30G
-#SBATCH -t 0-2:00
+#SBATCH --mem=3G
 #SBATCH --job-name=plot_spaceranger
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/02_build_spe/logs/%x_%j.log
 
