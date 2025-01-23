@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=100G
-#SBATCH --job-name=mbv_build_spe_hdf5
+#SBATCH --mem=10G
+#SBATCH --job-name=build_spe_HDF5
 #SBATCH -o /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/02_build_spe/logs/%x_%j.log
 
 
@@ -16,13 +16,13 @@ echo "Node memory requested: ${SLURM_MEM_PER_NODE}"
 echo "n Tasks: ${SLURM_NTASKS}"
 
 ## Load the R module
-module load conda_R/
+module load conda_R/4.4.x
 
 ## List current modules for reproducibility
 module list
 
 ## Edit with your job command
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/02_build_spe/01_raw_spe_hdf5.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/02_build_spe/02_raw_spe_HDF5.r
 
 echo "**** Job ends ****"
 date
