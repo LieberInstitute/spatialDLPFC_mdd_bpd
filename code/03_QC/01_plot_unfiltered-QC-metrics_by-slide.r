@@ -64,7 +64,7 @@ libList = lapply(slideList, function(x) {
 	lapply(1:length(l1), function(z)
 		suppressMessages(plotSpots(l1[[z]], annotate="sum_umi", point_size=0.2)+
 		scale_color_gradient(low="white", high="navy", labels=function(x) paste0(x/1000,"k"))+
-		labs(title=names(l1)[[z]], color="sum UMI")+
+		labs(title=names(l1)[[z]], color="UMI")+
 		theme(legend.text=element_text(size=8), panel.background=element_rect(fill="grey30"))
 	))
 })
@@ -88,7 +88,7 @@ geneList = lapply(slideList, function(x) {
 	lapply(1:length(l1), function(z)
 		suppressMessages(plotSpots(l1[[z]], annotate="sum_gene", point_size=0.2)+
 		scale_color_gradient(low="white", high="navy", labels=function(x) paste0(x/1000,"k"))+
-		labs(title=names(l1)[[z]], color="# genes")+
+		labs(title=names(l1)[[z]], color="genes")+
 		theme(legend.text=element_text(size=8), panel.background=element_rect(fill="grey30"))
 	))
 })
@@ -114,7 +114,7 @@ mitoList = lapply(slideList, function(x) {
 		max_value = sort(unique(colData(l1[[z]])$expr_chrM_ratio), decreasing=T)[2]
 		suppressMessages(plotSpots(l1[[z]], annotate="expr_chrM_ratio", point_size=0.2)+
 		scale_color_gradient(low="white", high="navy", limits=c(0,max_value))+
-		labs(title=names(l1)[[z]], color="chrM ratio")+
+		labs(title=names(l1)[[z]], color="chrM")+
 		theme(legend.text=element_text(size=8), panel.background=element_rect(fill="grey30"))
 	)})
 })
@@ -218,12 +218,17 @@ rearrangePlots <- function(slide_id) {
        p1[[4]],p2[[4]],p3[[4]],p4[[4]],p5[[4]],p6[[4]])
 }
 
-pdf(file="plots/03_QC/unfiltered_QC-metrics-marker-gex_spot-plots.pdf", width=16, height=12)
+#pdf(file="plots/03_QC/unfiltered_QC-metrics-marker-gex_spot-plots.pdf", width=16, height=12)
 for(i in names(slideList)) {
-	do.call(grid.arrange, c(rearrangePlots(i), ncol=6))
+	#png(file=paste0("plots/03_QC/slide_unfiltered_QC_pngs/",i,".png"), width=16, height=12)
+	ggsave(file=paste0("plots/03_QC/slide_unfiltered_QC_pngs/",i,".png"), 
+		do.call(grid.arrange, c(rearrangePlots(i), ncol=6)), 
+		bg="white", unit="in", width=16, height=12) 
+	#dev.off()
 }
-dev.off()
-cat("Saved to: plots/03_QC/unfiltered_QC-metrics-marker-gex_spot-plots.pdf\n")
+#dev.off()
+#cat("Saved to: plots/03_QC/unfiltered_QC-metrics-marker-gex_spot-plots.pdf\n")
+cat("\nSaved to: plots/03_QC/slide_unfiltered_QC_pngs/\n")
 
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")
