@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=10G
-#SBATCH --job-name=3MAD_outliers
+#SBATCH --mem=3G
+#SBATCH --job-name=find_edges
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/03_QC/edgeDetection_finalized/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -16,7 +16,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/4.4.x
 module list
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/03_QC/edgeDetection_finalized/3MAD_outliers.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/03_QC/edgeDetection_finalized/02_find_edge_outliers.r
 
 echo "**** Job ends ****"
 date
