@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=find_edges
+#SBATCH --job-name=find_edges-shift-test
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/03_QC/edgeDetection_finalized/logs/%x_%j.log
 
 echo "**** Job starts ****"

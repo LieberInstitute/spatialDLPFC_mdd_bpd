@@ -17,6 +17,7 @@ colData(spe)$umi_3MAD.outlier = cdata$umi_3MAD.outlier
 colData(spe)$genes_3MAD.outlier = cdata$genes_3MAD.outlier
 colData(spe)$edge_outlier_umi = cdata$edge_outlier_umi
 colData(spe)$edge_outlier_genes = cdata$edge_outlier_genes
+colData(spe)$edge_outlier_genes.shifted = cdata$edge_outlier_genes.shifted
 
 spe <- spe[,spe$in_tissue]
 dim(spe)
@@ -24,6 +25,7 @@ colData(spe)$umi_3MAD.outlier <- as.factor(spe$umi_3MAD.outlier)
 colData(spe)$genes_3MAD.outlier <- as.factor(spe$genes_3MAD.outlier)
 colData(spe)$edge_outlier_umi <- as.factor(spe$edge_outlier_umi)
 colData(spe)$edge_outlier_genes <- as.factor(spe$edge_outlier_genes)
+colData(spe)$edge_outlier_genes.shifted <- as.factor(spe$edge_outlier_genes.shifted)
 
 #plotting-related colData
 spe$dummy_slide = spe$slide
@@ -44,6 +46,13 @@ slideList = lapply(slideList, function(x) {
         unlist(lapply(x, function(y)
         sort(unique(colData(spe)[spe$facet_violin==y,"facet_spots"]))
         ))
+})
+#slightly different slide list for the extra genes-based outlier spotplot
+slideList2 = list(c(seed[2:6],seed[1]),seed[7:12], seed[13:18], seed[19:24], seed[25:30])
+slideList2 = lapply(slideList2, function(x) {
+  unlist(lapply(x, function(y)
+    sort(unique(colData(spe)[spe$facet_violin==y,"facet_spots"]))
+  ))
 })
 
 #color palettes
@@ -112,13 +121,27 @@ edgeList2 = lapply(slideList, function(x) {
   )
 })
 
+
+edgeList3 = lapply(slideList2, function(x) {
+  l1 = x; names(l1) = x
+  l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
+
+  lapply(1:length(l1), function(z)
+    suppressMessages(plotSpots(l1[[z]], annotate="edge_outlier_genes", point_size=0.2, pal=color.palette2)+
+      geom_point(show.legend=TRUE, size=.1)+
+      scale_color_manual(values=color.palette2, drop=F)+
+      labs(title=names(l1)[[z]], color="genes")+
+      theme(legend.text=element_text(size=8), legend.title=element_text(size=10)))
+  )
+})
+
 cat("Compiling # genes-based edge outlier plots...",format(Sys.time()),"\n")
 pdf(file="plots/03_QC/edgeDetection_finalized/edges-detected_3MAD-genes.pdf", width=12, height=16)
-do.call(grid.arrange, c(edgeList2[[1]], ncol=4))
-do.call(grid.arrange, c(edgeList2[[2]], ncol=4))
-do.call(grid.arrange, c(edgeList2[[3]], ncol=4))
-do.call(grid.arrange, c(edgeList2[[4]], ncol=4))
-do.call(grid.arrange, c(edgeList2[[5]], ncol=4))
+do.call(grid.arrange, c(edgeList3[[1]], ncol=4))
+do.call(grid.arrange, c(edgeList3[[2]], ncol=4))
+do.call(grid.arrange, c(edgeList3[[3]], ncol=4))
+do.call(grid.arrange, c(edgeList3[[4]], ncol=4))
+do.call(grid.arrange, c(edgeList3[[5]], ncol=4))
 dev.off()
 cat("Saved to: plots/03_QC/edgeDetection_finalized/edges-detected_3MAD-genes.pdf\n")
 

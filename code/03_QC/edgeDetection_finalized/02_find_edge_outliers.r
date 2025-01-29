@@ -33,6 +33,14 @@ table(sapply(genes_edges, length)>0) #33 samples with detected edges for genes o
 cdata$edge_outlier_genes = FALSE
 cdata[unlist(genes_edges),"edge_outlier_genes"] = TRUE
 
+genes_edges = lapply(sampleList, function(x) {
+  clumpEdges(cdata[cdata$sample_id==x,c("array_row","array_col","genes_3MAD.outlier_binary")], shifted=TRUE)
+})
+length(genes_edges) #120
+table(sapply(genes_edges, length)>0) #33 samples with detected edges for genes outliers
+cdata$edge_outlier_genes.shifted = FALSE
+cdata[unlist(genes_edges),"edge_outlier_genes.shifted"] = TRUE
+
 write.csv(cdata, "processed-data/03_QC/edgeDetection_finalized/colData_found-edges.csv", row.names=T)
 cat("\nNew colData csv with edge outliers saved to: processed-data/03_QC/edgeDetection_finalized/colData_found-edges.csv\n")
 
@@ -45,6 +53,19 @@ table(cd1$sample_id)
 cat("\nSample IDs where UMI edge < # genes edges\n(# of spots identified)\n")
 cd2 = cdata[cdata$edge_outlier_umi==FALSE & cdata$edge_outlier_genes==TRUE,]
 table(cd2$sample_id)
+
+
+
+cat("\nComparison of unshifted (default) and shifted # genes-based edge detection\n(# of spots identified)\n")
+table(cdata[,c("edge_outlier_genes","edge_outlier_genes.shifted")])
+
+cat("\nSample IDs where shifted > unshifted # genes edges\n(# of spots identified)\n")
+cd1 = cdata[cdata$edge_outlier_genes.shifted==TRUE & cdata$edge_outlier_genes==FALSE,]
+if(nrow(cd1)>0) table(cd1$sample_id)
+cat("\nSample IDs where shifted < unshifted # genes edges\n(# of spots identified)\n")
+cd2 = cdata[cdata$edge_outlier_genes.shifted==FALSE & cdata$edge_outlier_genes==TRUE,]
+if(nrow(cd2)>0) table(cd2$sample_id)
+
 
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")
