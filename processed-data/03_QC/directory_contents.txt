@@ -1,0 +1,4 @@
+archive/ #directory containing files from previous rounds of analysis that we didn't want to delete yet
+colData_edges-problem-areas.csv #colData of spe objects that includes 3MAD results for log10(UMI) and log10(# genes) with batch=slide and batch=sample_id, the edges detected from the 3MAD log10(# genes) metric, and the problem area id and size based on the 3MAD log10(# genes) metric 
+directory_contents.txt
+edgeDetection_finalized/ #directory containing files used when optimizing/ finalizing edge detection method 
