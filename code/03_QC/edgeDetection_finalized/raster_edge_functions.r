@@ -47,9 +47,11 @@ focal_transformations <- function(raster_object) {
   rev_r3[r3_s==1] = 0
   rev_c3 = clump(rev_r3)
   tbl = table(as.matrix(rev_c3))
-  not_clump = as.numeric(names(tbl)[tbl==max(tbl)])
+  #not_clump = as.numeric(names(tbl)[tbl==max(tbl)])
+  flip_clump = as.numeric(names(tbl)[tbl<40]) #new version has spots flipped is rev clump size <40 based on manually checking
   r4 = r3_s
-  r4[rev_c3!=not_clump] = 1
+  #r4[rev_c3!=not_clump] = 1
+  r4[rev_c3 %in% flip_clump] = 1
   return(r4)
 }
 
@@ -66,7 +68,9 @@ lookupKey <- function(.xy, results_df) { #.xy is a dataframe with rownames equal
   return(edge_spots)
 }
 
-clumpEdges <- function(.xyz, shifted=FALSE) { #.xyz is a dataframe with rownames equal to spot codes with array_row, array_col, then the binary outlier variable
+clumpEdges <- function(.xyz, offTissue, shifted=FALSE) { 
+ #.xyz is a dataframe with rownames equal to spot codes with array_row, array_col, then the binary outlier variable
+ #offTissue is a vector of spotcodes that are off tissue
  if(sum(.xyz[,3])==0) return(c())
  if(shifted==TRUE) {
     odds = seq(1,max(.xyz[,"array_col"]), by=2)
@@ -98,7 +102,9 @@ clumpEdges <- function(.xyz, shifted=FALSE) { #.xyz is a dataframe with rownames
  }
  res.df = do.call(rbind, res) 
  
- return(lookupKey(.xyz[,1:2], res.df))
+ #return(lookupKey(.xyz[,1:2], res.df))
+ edgeSpots = lookupKey(.xyz[,1:2], res.df)
+ return(setdiff(edgeSpots, offTissue))
 }
 
 lookupKeyDF <- function(.xy, results_df) { #.xyz is a dataframe with rownames equal to spot codes with array_row, array_col and results_df is a sample specific df with 3 columns for row, col, and clump ID
@@ -113,7 +119,11 @@ lookupKeyDF <- function(.xy, results_df) { #.xyz is a dataframe with rownames eq
   return(cbind.data.frame("spotcode"=rownames(key1)[matching], "clumpID"=num_key$clump_id, "clumpSize"=num_key$size))
 }
 
-problemAreas <- function(.xyz, uniqueIdentifier=NA, shifted=FALSE) { #.xyz is a dataframe with rownames equal to spot codes with array_row, array_col, then the binary outlier variable
+problemAreas <- function(.xyz, offTissue, uniqueIdentifier=NA, shifted=FALSE) { 
+  #.xyz is a dataframe with rownames equal to spot codes with array_row, array_col, then the binary outlier variable
+  #offTissue is a character vector of off tissue spotcodes to be excluded 
+  #uniqueIdentifier is an optional character to be used when naming clusters
+  #shifted=TRUE will result in the array_col being shifted by 1 so there is a continuous matrix of spatialCoords rather than offset
   if(sum(.xyz[,3])==0) return(c())
   if(shifted==TRUE) {
     odds = seq(1,max(.xyz[,"array_col"]), by=2)
@@ -135,5 +145,7 @@ problemAreas <- function(.xyz, uniqueIdentifier=NA, shifted=FALSE) { #.xyz is a 
 
   res.df = do.call(rbind.data.frame, res) 
   
-  return(lookupKeyDF(.xyz[,1:2], res.df))
+  #return(lookupKeyDF(.xyz[,1:2], res.df))
+  pAreas = lookupKeyDF(.xyz[,1:2], res.df)
+  return(pAreas[!pAreas$spotcode %in% offTissue,])
 }
