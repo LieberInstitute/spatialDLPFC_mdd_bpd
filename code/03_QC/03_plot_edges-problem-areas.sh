@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=10G
-#SBATCH --job-name=plot_edges_problem-areas
+#SBATCH --job-name=plot_edges-problem-areas
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/03_QC/logs/%x_%j.log
 
 echo "**** Job starts ****"

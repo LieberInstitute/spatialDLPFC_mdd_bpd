@@ -21,15 +21,15 @@ colData(spe)$genes_3MAD.outlier_slide = isOutlier(spe$lg10.genes, subset=spe$in_
 colData(spe)$umi_3MAD.outlier_sample = isOutlier(spe$lg10.umi, subset=spe$in_tissue, batch=spe$sample_id, type="lower", nmads=3)
 colData(spe)$genes_3MAD.outlier_sample = isOutlier(spe$lg10.genes, subset=spe$in_tissue, batch=spe$sample_id, type="lower", nmads=3)
 
-colData(spe)$umi_3MAD.outlier = ifelse(spe$in_tissue==FALSE, "off tissue", paste(spe$umi_3MAD.outlier_sample, spe$umi_3MAD.outlier_slide))
-colData(spe)$umi_3MAD.outlier = factor(spe$umi_3MAD.outlier,
-                                       levels=c("off tissue","FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE TRUE"),
-                                       labels=c("off tissue","none","slide","sample","both"))
+#colData(spe)$umi_3MAD.outlier = ifelse(spe$in_tissue==FALSE, "off tissue", paste(spe$umi_3MAD.outlier_sample, spe$umi_3MAD.outlier_slide))
+#colData(spe)$umi_3MAD.outlier = factor(spe$umi_3MAD.outlier,
+#                                       levels=c("off tissue","FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE TRUE"),
+#                                       labels=c("off tissue","none","slide","sample","both"))
 
-colData(spe)$genes_3MAD.outlier = ifelse(spe$in_tissue==FALSE, "off tissue", paste(spe$genes_3MAD.outlier_sample, spe$genes_3MAD.outlier_slide))
-colData(spe)$genes_3MAD.outlier = factor(spe$genes_3MAD.outlier,
-                                         levels=c("off tissue","FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE TRUE"),
-                                         labels=c("off tissue","none","slide","sample","both"))
+#colData(spe)$genes_3MAD.outlier = ifelse(spe$in_tissue==FALSE, "off tissue", paste(spe$genes_3MAD.outlier_sample, spe$genes_3MAD.outlier_slide))
+#colData(spe)$genes_3MAD.outlier = factor(spe$genes_3MAD.outlier,
+#                                         levels=c("off tissue","FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE TRUE"),
+#                                         labels=c("off tissue","none","slide","sample","both"))
 
 colData(spe)$genes_3MAD.outlier_binary = colData(spe)$genes_3MAD.outlier_slide | colData(spe)$genes_3MAD.outlier_sample
 colData(spe)$genes_3MAD.outlier_binary = ifelse(colData(spe)$in_tissue==FALSE, FALSE, colData(spe)$genes_3MAD.outlier_binary)
@@ -39,7 +39,8 @@ names(sampleList) <- sampleList
 
 cat("\nDetect edges:", format(Sys.time()),"\n")
 genes_edges = lapply(sampleList, function(x) {
-	clumpEdges(colData(spe)[spe$sample_id==x,c("array_row","array_col","genes_3MAD.outlier_binary")])
+	tmp = colData(spe)[spe$sample_id==x,c("in_tissue","array_row","array_col","genes_3MAD.outlier_binary")]
+	clumpEdges(tmp[,-1], rownames(tmp)[tmp$in_tissue==FALSE])
 })
 
 cat("\nNumber of samples with edges detected")
@@ -51,7 +52,9 @@ colData(spe)[unlist(genes_edges),"edge_outlier_genes"] = TRUE
 
 cat("\nFind problem areas:", format(Sys.time()),"\n")
 genes_probs = lapply(sampleList, function(x) {
-	problemAreas(colData(spe)[spe$sample_id==x,c("array_row","array_col","genes_3MAD.outlier_binary")], uniqueIdentifier=x, shifted=F)
+	tmp = colData(spe)[spe$sample_id==x,c("in_tissue","array_row","array_col","genes_3MAD.outlier_binary")]
+	problemAreas(tmp[,-1], 
+		rownames(tmp)[tmp$in_tissue==FALSE], uniqueIdentifier=x, shifted=F)
 })
 genes_probs = do.call(rbind, genes_probs)
 colData(spe)$problem_areas_genes.id = NA
