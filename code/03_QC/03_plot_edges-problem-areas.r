@@ -67,6 +67,7 @@ slideList2 = lapply(slideList2, function(x) {
 color.palette = c("navy","#00a000","grey80")
 names(color.palette) <- c("edge","problem area","none")
 
+#raw results (edges vs problem areas)
 cat("\nGenerating raw results spot plots...\n")
 plotList = lapply(slideList2, function(x) {
         l1 = x; names(l1) = x
@@ -123,7 +124,7 @@ dev.off()
 cat("\nPlot saved to: plots/03_QC/edges-problem-areas_grouped_spot-plots.pdf\n")
 
 
-
+#low UMI bar plot
 cat("\nGenerating # low UMI bar plot...\n")
 x_ordered = sort(unique(spe2$facet_spots))
 colData(spe2)$x_facets = ""
@@ -150,7 +151,8 @@ p2 <- ggplot(tmp, aes(x=facet_spots, y=n_lowumi, fill=problem_areas_grouped))+
 ggsave(filename="plots/03_QC/edges-problem-areas_lowumi-spots_barplot.png", p2, bg="white", units="in", height=12, width=9)
 cat("\nPlot saved to: plots/03_QC/edges-problem-areas_lowumi-spots_barplot.png\n")
 
-cat("\nGenerating QC metric violin plots...\n")
+#condition x sex qc violin plots
+cat("\nGenerating condition x sex QC metric violin plots...\n")
 spe2$problem_areas_grouped2 = ifelse(spe2$sum_umi<=100, "low UMI", "keep/flag")
 spe2$problem_areas_grouped2 = ifelse(spe2$problem_areas_grouped %in% c("edge","remove"), "remove", spe2$problem_areas_grouped2)
 spe2$problem_areas_grouped2 = as.factor(spe2$problem_areas_grouped2)
@@ -163,8 +165,12 @@ names(color.palette3) = c("remove","keep/flag","low UMI")
 p3 <- ggplot(df, aes(x=factor(condition, levels=c("NTC","MDD","BPD")), y=sum_umi, fill=problem_areas_grouped2))+
   geom_violin(position="dodge", scale="width")+
   scale_fill_manual(values=color.palette3)+
+  geom_text(data=filter(df, problem_areas_grouped2=="keep/flag") %>% group_by(condition, sex) %>% tally(),
+            aes(label=n, y=50000, fill=NULL), size=3, color="black", position=position_nudge(x=-.3))+
   geom_text(data=filter(df, problem_areas_grouped2=="low UMI") %>% group_by(condition, sex) %>% tally(),
-            aes(label=paste(n, "spots"), y=200, fill=NULL), size=3, color="red3")+
+            aes(label=n, y=200, fill=NULL), size=3, color="red3")+
+  geom_text(data=filter(df, problem_areas_grouped2=="remove") %>% group_by(condition, sex) %>% tally(),
+            aes(label=n, y=2000, fill=NULL), size=3, color="goldenrod", position=position_nudge(x=.3))+
   facet_wrap(vars(sex), ncol=1, scales="free_x")+
   scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 1),
                      breaks=c(10^(0:5)), labels=c("1","10","100","1k","10k","100k"))+
@@ -212,9 +218,9 @@ p6 <- ggplot(tmp, aes(x=factor(condition, levels=c("NTC","MDD","BPD")), y=n,
   labs(x="condition", y="# of spots", fill="", title="Spots passed QC (per sample)")+
   theme_bw()
 
-ggsave(filename="plots/03_QC/edges-problem-areas_filtered-qc-metric_violin-plots.png", gridExtra::grid.arrange(p3, p4, p5, print(p6), ncol=2), 
+ggsave(filename="plots/03_QC/edges-problem-areas_qc-metrics_cond-sex_violin-plots.png", gridExtra::grid.arrange(p3, p4, p5, print(p6), ncol=2), 
        bg="white", units="in", height=9, width=12)
-cat("\nPlot saved to: plots/03_QC/edges-problem-areas_filtered-qc-metric_violin-plots.png\n")
+cat("\nPlot saved to: plots/03_QC/edges-problem-areas_qc-metrics_cond-sex_violin-plots.png\n")
 
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")

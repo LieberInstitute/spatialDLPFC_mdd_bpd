@@ -17,30 +17,55 @@ spe$dummy_slide = spe$slide
 colData(spe)[spe$slide=="V13B23-283","dummy_slide"] = "joint-283-339"
 colData(spe)[spe$slide=="V13B23-339","dummy_slide"] = "joint-283-339"
 
-#QC metrics summary
 colData(spe)$facet_violin = paste(spe$round, spe$dummy_slide)
 colData(spe)$facet_violin = ifelse(spe$dummy_slide=="joint-283-339", "joint-283-339", spe$facet_violin)
-colData(spe)$x_lab = ifelse(spe$slide=="V13B23-283", "283 B1", spe$array)
 
-p1 <- ggcells(spe, aes(x=x_lab, y=sum_umi, fill=condition, lty=sex))+
-  geom_violin()+facet_wrap(vars(facet_violin), scales="free_x")+
-  scale_y_log10()+theme_bw()+ggtitle("Library size")
+colData(spe)$facet_spots = paste(spe$round, spe$sample_id)
+colData(spe)$facet_spots = ifelse(spe$brnum=="Br5366", paste(spe$facet_spots, spe$brnum), spe$facet_spots)
 
-p2 <- ggcells(spe, aes(x=x_lab, y=sum_gene, fill=condition, lty=sex))+
-  geom_violin()+facet_wrap(vars(facet_violin), scales="free_x")+
-  theme_bw()+ggtitle("Detected genes")
-  
-p3 <- ggcells(spe, aes(x=x_lab, y=expr_chrM_ratio, fill=condition, lty=sex))+
-  geom_violin()+facet_wrap(vars(facet_violin), scales="free_x")+
-  theme_bw()+ggtitle("Mitochondrial fraction")
+x_ordered = sort(unique(spe$facet_spots))
+colData(spe)$x_facets = ""
+colData(spe)[spe$facet_spots %in% x_ordered[1:30],"x_facets"] = "g1"
+colData(spe)[spe$facet_spots %in% x_ordered[31:60],"x_facets"] = "g2"
+colData(spe)[spe$facet_spots %in% x_ordered[61:90],"x_facets"] = "g3"
+colData(spe)[spe$facet_spots %in% x_ordered[91:120],"x_facets"] = "g4"
 
-cat("Compiling QC summary plots...",format(Sys.time()),"\n")
-pdf(file="plots/03_QC/unfiltered_qc-metrics_violin-plots.pdf", width=8.5, height=11)
+#QC metrics summary
+cat("Plotting QC boxplots...",format(Sys.time()),"\n")
+p1 <- ggplot(as.data.frame(colData(spe)), aes(x=facet_spots, y=sum_umi, fill=condition, lty=sex))+
+  geom_boxplot(outlier.size=.5, linewidth=.5)+geom_hline(aes(yintercept=1000), color="grey50", linewidth=1.5, alpha=.6)+
+  scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 1), limits=c(0,50000),
+                     breaks=c(10^(0:5)), labels=c("1","10","100","1k","10k","100k"))+
+  facet_wrap(vars(x_facets), ncol=1, scales="free_x")+
+  labs(x="", y="sum_umi (log10 scale)", title="Library size", fill="", lty="")+theme_bw()+
+  theme_bw()+theme(#legend.position="bottom",
+    axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=7),
+    strip.placement = "inside", strip.text=element_blank(),
+    strip.background = element_blank())
+p2 <- ggplot(as.data.frame(colData(spe)), aes(x=facet_spots, y=sum_gene, fill=condition, lty=sex))+
+  geom_boxplot(outlier.size=.5, linewidth=.5)+
+  facet_wrap(vars(x_facets), ncol=1, scales="free_x")+
+  labs(x="", y="sum_gene", title="Detected genes", fill="", lty="")+theme_bw()+
+  theme_bw()+theme(#legend.position="bottom",
+    axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=7),
+    strip.placement = "inside", strip.text=element_blank(),
+    strip.background = element_blank())
+p3 <- ggplot(as.data.frame(colData(spe)), aes(x=facet_spots, y=expr_chrM_ratio, fill=condition, lty=sex))+
+  geom_boxplot(outlier.size=.5, linewidth=.5)+
+  facet_wrap(vars(x_facets), ncol=1, scales="free_x")+
+  labs(x="", y="expr_chrM_ratio", title="Mitochondrial fraction", fill="", lty="")+theme_bw()+
+  theme_bw()+theme(#legend.position="bottom",
+    axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=7),
+    strip.placement = "inside", strip.text=element_blank(),
+    strip.background = element_blank())
+
+
+pdf(file="plots/03_QC/unfiltered_qc-metrics_boxplot.pdf", width=9, height=12)
 p1
 p2
 p3
 dev.off()
-cat("Saved to: plots/03_QC/unfiltered_qc-metrics_violin-plots.pdf\n")
+cat("Saved to: plots/03_QC/unfiltered_qc-metrics_boxplot.pdf\n")
 
 #QC metrics spot plots
 colData(spe)$facet_spots = paste(spe$round, spe$sample_id)
@@ -128,82 +153,6 @@ do.call(grid.arrange, c(mitoList[[4]], ncol=4))
 do.call(grid.arrange, c(mitoList[[5]], ncol=4))
 dev.off()
 cat("Saved to: plots/03_QC/unfiltered_chrM-ratio_spot-plots.pdf\n")
-
-#plot marker genes
-cat("\nPlotting MBP...",format(Sys.time()),"\n")
-markerList = lapply(slideList, function(x) {
-        #cat("Plotting MBP...",format(Sys.time()),"\n")
-        l1 = x; names(l1) = x
-        l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
-
-        lapply(1:length(l1), function(z)
-                suppressMessages(plotSpots(l1[[z]], annotate="MBP", point_size=0.2, feature_names="gene_name", assay_name="counts")+
-                        scale_color_gradient(low="white", high="navy")+
-                        labs(title=names(l1)[[z]], color="MBP")+
-                        theme(legend.text=element_text(size=8), legend.title=element_text(size=10),
-                                panel.background=element_rect(fill="grey30"))
-        ))
-})
-
-cat("Compiling MBP plots...",format(Sys.time()),"\n")
-pdf(file="plots/03_QC/unfiltered_MBP-raw-counts_spot-plots.pdf", width=12, height=16)
-do.call(grid.arrange, c(markerList[[1]], ncol=4))
-do.call(grid.arrange, c(markerList[[2]], ncol=4))
-do.call(grid.arrange, c(markerList[[3]], ncol=4))
-do.call(grid.arrange, c(markerList[[4]], ncol=4))
-do.call(grid.arrange, c(markerList[[5]], ncol=4))
-dev.off()
-cat("Saved to: plots/03_QC/unfiltered_MBP-raw-counts_spot-plots.pdf\n")
-
-cat("\nPlotting GAPDH...",format(Sys.time()),"\n")
-markerList = lapply(slideList, function(x) {
-        #cat("Plotting GAPDH...",format(Sys.time()),"\n")
-        l1 = x; names(l1) = x
-        l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
-
-        lapply(1:length(l1), function(z)
-                suppressMessages(plotSpots(l1[[z]], annotate="GAPDH", point_size=0.2, feature_names="gene_name", assay_name="counts")+
-                        scale_color_gradient(low="white", high="navy")+
-                        labs(title=names(l1)[[z]], color="GAPDH")+
-                        theme(legend.text=element_text(size=8), legend.title=element_text(size=10),
-                                panel.background=element_rect(fill="grey30"))
-        ))
-})
-
-cat("Compiling GAPDH plots...",format(Sys.time()),"\n")
-pdf(file="plots/03_QC/unfiltered_GAPDH-raw-counts_spot-plots.pdf", width=12, height=16)
-do.call(grid.arrange, c(markerList[[1]], ncol=4))
-do.call(grid.arrange, c(markerList[[2]], ncol=4))
-do.call(grid.arrange, c(markerList[[3]], ncol=4))
-do.call(grid.arrange, c(markerList[[4]], ncol=4))
-do.call(grid.arrange, c(markerList[[5]], ncol=4))
-dev.off()
-cat("Saved to: plots/03_QC/unfiltered_GAPDH-raw-counts_spot-plots.pdf\n")
-
-cat("\nPlotting SYT1...",format(Sys.time()),"\n")
-markerList = lapply(slideList, function(x) {
-        #cat("Plotting SYT1...",format(Sys.time()),"\n")
-        l1 = x; names(l1) = x
-        l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
-
-        lapply(1:length(l1), function(z)
-                suppressMessages(plotSpots(l1[[z]], annotate="SYT1", point_size=0.2, feature_names="gene_name", assay_name="counts")+
-                        scale_color_gradient(low="white", high="navy")+
-                        labs(title=names(l1)[[z]], color="SYT1")+
-                        theme(legend.text=element_text(size=8), legend.title=element_text(size=10),
-                                panel.background=element_rect(fill="grey30"))
-        ))
-})
-
-cat("Compiling SYT1 plots...",format(Sys.time()),"\n")
-pdf(file="plots/03_QC/unfiltered_SYT1-raw-counts_spot-plots.pdf", width=12, height=16)
-do.call(grid.arrange, c(markerList[[1]], ncol=4))
-do.call(grid.arrange, c(markerList[[2]], ncol=4))
-do.call(grid.arrange, c(markerList[[3]], ncol=4))
-do.call(grid.arrange, c(markerList[[4]], ncol=4))
-do.call(grid.arrange, c(markerList[[5]], ncol=4))
-dev.off()
-cat("Saved to: plots/03_QC/unfiltered_SYT1-raw-counts_spot-plots.pdf\n")
 
 
 ## Reproducibility information

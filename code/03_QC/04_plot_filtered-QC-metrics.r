@@ -44,20 +44,68 @@ spe$remove_spots = spe$problem_areas_binary | spe$true_edges | spe$lowumi
 cat("Total spots for removal:")
 table(spe$remove_spots)
 
-spe = spe[,spe$remove_spots==FALSE]
-cat("\nDim spe remaining:",dim(spe),"\n")
-
+#plotting vars
 spe$dummy_slide = spe$slide
 colData(spe)[spe$slide=="V13B23-283","dummy_slide"] = "joint-283-339"
 colData(spe)[spe$slide=="V13B23-339","dummy_slide"] = "joint-283-339"
 
-##QC metrics summary
 colData(spe)$facet_violin = paste(spe$round, spe$dummy_slide)
 colData(spe)$facet_violin = ifelse(spe$dummy_slide=="joint-283-339", "joint-283-339", spe$facet_violin)
 
-
 colData(spe)$facet_spots = paste(spe$round, spe$sample_id)
 colData(spe)$facet_spots = ifelse(spe$brnum=="Br5366", paste(spe$facet_spots, spe$brnum), spe$facet_spots)
+
+x_ordered = sort(unique(spe$facet_spots))
+colData(spe)$x_facets = ""
+colData(spe)[spe$facet_spots %in% x_ordered[1:30],"x_facets"] = "g1"
+colData(spe)[spe$facet_spots %in% x_ordered[31:60],"x_facets"] = "g2"
+colData(spe)[spe$facet_spots %in% x_ordered[61:90],"x_facets"] = "g3"
+colData(spe)[spe$facet_spots %in% x_ordered[91:120],"x_facets"] = "g4"
+
+#boxplots
+df = group_by(as.data.frame(colData(spe)), sample_id) %>% mutate(n_spots_removed=sum(remove_spots)) %>%
+  ungroup() %>% filter(remove_spots==FALSE)
+cat("Plotting QC boxplots...",format(Sys.time()),"\n")
+p1 <- ggplot(df, aes(x=facet_spots, y=sum_umi, fill=n_spots_removed))+
+  geom_boxplot(color="grey", outlier.size=.5)+geom_hline(aes(yintercept=1000), lty=2, color="red3")+
+  scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 1), limits=c(100,50000),
+                     breaks=c(10^(2:5)), labels=c("100","1k","10k","100k"))+
+  facet_wrap(vars(x_facets), ncol=1, scales="free_x")+
+  scale_fill_viridis_c(option="F")+
+  labs(x="", y="sum_umi (log10 scale)", title="Library size - kept spots only", fill="# spots\ndiscarded")+theme_bw()+
+  theme_bw()+theme(#legend.position="bottom", 
+    axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=7),
+    strip.placement = "inside", strip.text=element_blank(),
+    strip.background = element_blank())
+p2 <- ggplot(df, aes(x=facet_spots, y=sum_gene, fill=n_spots_removed))+
+  geom_boxplot(color="grey", outlier.size=.5)+
+  facet_wrap(vars(x_facets), ncol=1, scales="free_x")+
+  scale_fill_viridis_c(option="F")+
+  labs(x="", y="sum_gene", title="Detected genes - kept spots only", fill="# spots\ndiscarded")+theme_bw()+
+  theme_bw()+theme(#legend.position="bottom", 
+    axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=7),
+    strip.placement = "inside", strip.text=element_blank(),
+    strip.background = element_blank())
+p3 <- ggplot(df, aes(x=facet_spots, y=expr_chrM_ratio, fill=n_spots_removed))+
+  geom_boxplot(color="grey", outlier.size=.5)+
+  facet_wrap(vars(x_facets), ncol=1, scales="free_x")+
+  scale_fill_viridis_c(option="F")+
+  labs(x="", y="expr_chrM_ratio", title="Mitochondrial fraction - kept spots only", fill="# spots\ndiscarded")+theme_bw()+
+  theme_bw()+theme(#legend.position="bottom", 
+    axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=7),
+    strip.placement = "inside", strip.text=element_blank(),
+    strip.background = element_blank())
+
+pdf(file="plots/03_QC/filtered_qc-metrics_boxplot.pdf", width=9, height=12)
+p1
+p2
+p3
+dev.off()
+cat("Saved to: plots/03_QC/filtered_qc-metrics_boxplot.pdf\n")
+
+#by slide spot plots
+spe = spe[,spe$remove_spots==FALSE]
+cat("\nDim spe remaining:",dim(spe),"\n")
 
 seed = levels(as.factor(spe$facet_violin))
 slideList = c(c(seed[2:6],seed[1]),seed[7:12], seed[13:18], seed[19:24], seed[25:30])
