@@ -17,7 +17,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/4.4.x
 module list
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/03_QC/05_spotsweeper.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/03_QC/04_spotsweeper.r
 
 echo "**** Job ends ****"
 date

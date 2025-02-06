@@ -39,12 +39,12 @@ spe$problem_areas_genes.size = cdata$problem_areas_genes.size
 spe$problem_areas_binary = spe$problem_areas_genes.id %in% remove.areas
 
 spe$lowumi = spe$sum_umi<=100
-spe$remove_spots = spe$problem_areas_binary | spe$true_edges | spe$lowumi
+spe$remove_problem.areas = spe$problem_areas_binary | spe$true_edges | spe$lowumi
 
 #copy removal vars to cdata for saving after spotsweeper
-cdata$problem_aras_binary = spe$problem_areas_binary
+cdata$problem_areas_binary = spe$problem_areas_binary
 cdata$lowumi = spe$lowumi
-cdata$remove_spots = spe$remove_spots
+cdata$remove_problem.areas = spe$remove_problem.areas
 spe = spe[,spe$in_tissue]
 cat("Dim spe (in tissue):",dim(spe),"\n")
 
@@ -52,9 +52,9 @@ cat("Criteria for spot removal\n")
 table(colData(spe)[,c("problem_areas_binary","lowumi","true_edges")])
 
 cat("Total spots for removal:")
-table(spe$remove_spots)
+table(spe$remove_problem.areas)
 
-spe = spe[,spe$remove_spots==FALSE]
+spe = spe[,spe$remove_problem.areas==FALSE]
 cat("Dim spe (after filtering):",dim(spe),"\n")
 
 #run spotsweeper
@@ -74,7 +74,7 @@ spe <- localOutliers(spe, metric = "expr_chrM_ratio", direction = "higher", log 
 colnames(colData(spe))[ncol(colData(spe))-1] = "chrM.ratio_local.outlier"
 
 #update coldata
-true.spots = cdata$remove_spots==FALSE & cdata$in_tissue==TRUE
+true.spots = cdata$remove_problem.areas==FALSE & cdata$in_tissue==TRUE
 stopifnot(identical(rownames(cdata)[true.spots], rownames(colData(spe))))
 cdata$umi_local.outlier = NA
 cdata[true.spots, "umi_local.outlier"] = colData(spe)$umi_local.outlier
