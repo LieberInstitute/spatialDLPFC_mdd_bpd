@@ -9,40 +9,44 @@ suppressPackageStartupMessages({
   library(scater)
 })
 
+#final cdata
+cdata = read.csv("processed-data/03_QC/colData_edges-problem-areas_spotsweeper.csv", row.names=1)
+cdata$spotsweeper_outlier = cdata$umi_local.outlier | cdata$genes_local.outlier | cdata$chrM.ratio_local.outlier
+cdata[is.na(cdata$spotsweeper_outlier),"spotsweeper_outlier"] = FALSE
+
+cdata$remove_spots = cdata$in_tissue==FALSE | cdata$remove_problem.areas | cdata$spotsweeper_outlier
+cdata$problem_area_flag = ifelse(cdata$problem_areas_genes.size>5, TRUE, FALSE)
+
+cat("\n\nRemove spots (off tissue):")
+table(cdata[,c("in_tissue","remove_spots")])
+tmp = cdata[cdata$in_tissue,]
+cat("\n\nRemove in_tissue spots (individual problem area criteria):")
+table(tmp[,c("true_edges","remove_spots")])
+table(tmp[,c("problem_areas_binary","remove_spots")])
+table(tmp[,c("lowumi","remove_spots")])
+cat("Remove in_tissue spots (summary problem area criteria):")
+table(tmp[,c("remove_problem.areas","remove_spots")])
+cat("\n\nRemove in_tissue spots (individual SpotSweeper criteria):")
+table(tmp[,c("umi_local.outlier","remove_spots")])
+table(tmp[,c("genes_local.outlier","remove_spots")])
+table(tmp[,c("chrM.ratio_local.outlier","remove_spots")])
+cat("Remove in_tissue spots (summary SpotSweeper criteria):")
+table(tmp[,c("spotsweeper_outlier","remove_spots")])
+
+cat("\n\nTotal number of spots removed for any reason:")
+table(cdata$remove_spots)
+cat("Remaining spots flagged by problem areas:")
+table(cdata[cdata$remove_spots==FALSE,"problem_area_flag"])
+
+write.csv(cdata, "processed-data/03_QC/colData_edges-problem-areas_spotsweeper_FINAL.csv", row.names=T)
+cat("\nFinal colData saved to: processed-data/03_QC/colData_edges-problem-areas_spotsweeper_FINAL.csv\n")
+
+#load spe
 system.time(spe <- loadHDF5SummarizedExperiment(dir="processed-data/02_build_spe/", prefix="spe_n120_"))
 cat("\nDim spe:",dim(spe),"\n")
 
-cdata = read.csv("processed-data/03_QC/colData_edges-problem-areas.csv", row.names=1)
-#all edges are appropriately identified except for from the following samples
-### V13B23-302_A1 and V13B23-302_C1
-cdata$true_edges = ifelse(cdata$slide=="V13B23-302", FALSE, cdata$edge_outlier_genes)
-
-tmp = filter(cdata, in_tissue==TRUE, true_edges==FALSE) %>% mutate(lowumi = sum_umi<=100) %>%
-  group_by(problem_areas_genes.id) %>%
-  summarise(n_lowumi=sum(lowumi), n_spots=n(), prop_lowumi=n_lowumi/n_spots) %>%
-  filter(n_spots>5, !is.na(problem_areas_genes.id))
-remove.areas = unique(filter(tmp, prop_lowumi>=.5)$problem_areas_genes.id)
-length(unique(remove.areas))
-
 stopifnot(identical(rownames(cdata),rownames(colData(spe))))
-
-spe$edge_outlier_genes = cdata$edge_outlier_genes
-spe$true_edges = cdata$true_edges
-
-spe$problem_areas_genes.id = cdata$problem_areas_genes.id
-spe$problem_areas_genes.size = cdata$problem_areas_genes.size
-spe$problem_areas_binary = spe$problem_areas_genes.id %in% remove.areas
-
-spe$lowumi = spe$sum_umi<=100
-
-spe = spe[,spe$in_tissue]
-cat("Dim spe (in tissue):",dim(spe),"\n")
-cat("Criteria for spot removal\n")
-table(colData(spe)[,c("problem_areas_binary","lowumi","true_edges")])
-
-spe$remove_spots = spe$problem_areas_binary | spe$true_edges | spe$lowumi
-cat("Total spots for removal:")
-table(spe$remove_spots)
+spe$remove_spots = cdata$remove_spots
 
 #plotting vars
 spe$dummy_slide = spe$slide
@@ -118,7 +122,6 @@ slideList = lapply(slideList, function(x) {
 
 cat("\nPlotting library size...",format(Sys.time()),"\n")
 libList = lapply(slideList, function(x) {
-  #cat("Plotting library size...",format(Sys.time()),"\n")
   l1 = x; names(l1) = x
   l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
   
@@ -132,7 +135,6 @@ libList = lapply(slideList, function(x) {
 
 cat("\nPlotting # genes detected...",format(Sys.time()),"\n")
 geneList = lapply(slideList, function(x) {
-  #cat("Plotting genes...",format(Sys.time()),"\n")
   l1 = x; names(l1) = x
   l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
   
@@ -145,84 +147,78 @@ geneList = lapply(slideList, function(x) {
 })
 
 cat("\nPlotting chrM ratio...",format(Sys.time()),"\n")
-cat("*** Max color limit set to second highest expr_chrM_ratio per sample to help with 100% chrM ratio spots\n")
 mitoList = lapply(slideList, function(x) {
-  #cat("Plotting chrM ratio",format(Sys.time()),"\n")
   l1 = x; names(l1) = x
   l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
   
   lapply(1:length(l1), function(z) {
-    max_value = sort(unique(colData(l1[[z]])$expr_chrM_ratio), decreasing=T)[2]
     suppressMessages(plotSpots(l1[[z]], annotate="expr_chrM_ratio", point_size=0.2)+
-                       scale_color_gradient(low="white", high="navy", limits=c(0,max_value))+
+                       scale_color_gradient(low="white", high="navy")+
                        labs(title=names(l1)[[z]], color="chrM")+
                        theme(legend.text=element_text(size=8), panel.background=element_rect(fill="grey30"))
     )})
 })
 
-cat("\nPlotting MBP...",format(Sys.time()),"\n")
-markerList1 = lapply(slideList, function(x) {
-  #cat("Plotting MBP...",format(Sys.time()),"\n")
-  l1 = x; names(l1) = x
-  l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
-  
-  lapply(1:length(l1), function(z)
-    suppressMessages(plotSpots(l1[[z]], annotate="MBP", point_size=0.2, feature_names="gene_name", assay_name="counts")+
-                       scale_color_gradient(low="white", high="navy")+
-                       labs(title=names(l1)[[z]], color="MBP")+
-                       theme(legend.text=element_text(size=8), legend.title=element_text(size=10),
-                             panel.background=element_rect(fill="grey30"))
-    ))
-})
+#cat("\nPlotting MBP...",format(Sys.time()),"\n")
+#markerList1 = lapply(slideList, function(x) {
+#  l1 = x; names(l1) = x
+#  l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
+#  
+#  lapply(1:length(l1), function(z)
+#    suppressMessages(plotSpots(l1[[z]], annotate="MBP", point_size=0.2, feature_names="gene_name", assay_name="counts")+
+#                       scale_color_gradient(low="white", high="navy")+
+#                       labs(title=names(l1)[[z]], color="MBP")+
+#                       theme(legend.text=element_text(size=8), legend.title=element_text(size=10),
+#                             panel.background=element_rect(fill="grey30"))
+#    ))
+#})
 
-cat("\nPlotting GAPDH...",format(Sys.time()),"\n")
-markerList2 = lapply(slideList, function(x) {
-  #cat("Plotting GAPDH...",format(Sys.time()),"\n")
-  l1 = x; names(l1) = x
-  l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
-  
-  lapply(1:length(l1), function(z)
-    suppressMessages(plotSpots(l1[[z]], annotate="GAPDH", point_size=0.2, feature_names="gene_name", assay_name="counts")+
-                       scale_color_gradient(low="white", high="navy")+
-                       labs(title=names(l1)[[z]], color="GAPDH")+
-                       theme(legend.text=element_text(size=8), legend.title=element_text(size=10),
-                             panel.background=element_rect(fill="grey30"))
-    ))
-})
+#cat("\nPlotting GAPDH...",format(Sys.time()),"\n")
+#markerList2 = lapply(slideList, function(x) {
+#  l1 = x; names(l1) = x
+#  l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
+#  
+#  lapply(1:length(l1), function(z)
+#    suppressMessages(plotSpots(l1[[z]], annotate="GAPDH", point_size=0.2, feature_names="gene_name", assay_name="counts")+
+#                       scale_color_gradient(low="white", high="navy")+
+#                       labs(title=names(l1)[[z]], color="GAPDH")+
+#                       theme(legend.text=element_text(size=8), legend.title=element_text(size=10),
+#                             panel.background=element_rect(fill="grey30"))
+#    ))
+#})
 
-cat("\nPlotting SYT1...",format(Sys.time()),"\n")
-markerList3 = lapply(slideList, function(x) {
-  #cat("Plotting SYT1...",format(Sys.time()),"\n")
-  l1 = x; names(l1) = x
-  l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
+#cat("\nPlotting SYT1...",format(Sys.time()),"\n")
+#markerList3 = lapply(slideList, function(x) {
+#  l1 = x; names(l1) = x
+#  l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
   
-  lapply(1:length(l1), function(z)
-    suppressMessages(plotSpots(l1[[z]], annotate="SYT1", point_size=0.2, feature_names="gene_name", assay_name="counts")+
-                       scale_color_gradient(low="white", high="navy")+
-                       labs(title=names(l1)[[z]], color="SYT1")+
-                       theme(legend.text=element_text(size=8), legend.title=element_text(size=10),
-                             panel.background=element_rect(fill="grey30"))
-    ))
-})
+#  lapply(1:length(l1), function(z)
+#    suppressMessages(plotSpots(l1[[z]], annotate="SYT1", point_size=0.2, feature_names="gene_name", assay_name="counts")+
+#                       scale_color_gradient(low="white", high="navy")+
+#                       labs(title=names(l1)[[z]], color="SYT1")+
+#                       theme(legend.text=element_text(size=8), legend.title=element_text(size=10),
+#                             panel.background=element_rect(fill="grey30"))
+#    ))
+#})
 
 rearrangePlots <- function(slide_id) {
   p1 <- libList[[slide_id]]
   p2 <- geneList[[slide_id]]
   p3 <- mitoList[[slide_id]]
-  p4 <- markerList1[[slide_id]]
-  p5 <- markerList2[[slide_id]]
-  p6 <- markerList3[[slide_id]]
-  list(p1[[1]],p2[[1]],p3[[1]],p4[[1]],p5[[1]],p6[[1]],
-       p1[[2]],p2[[2]],p3[[2]],p4[[2]],p5[[2]],p6[[2]],
-       p1[[3]],p2[[3]],p3[[3]],p4[[3]],p5[[3]],p6[[3]],
-       p1[[4]],p2[[4]],p3[[4]],p4[[4]],p5[[4]],p6[[4]])
+  #p4 <- markerList1[[slide_id]]
+  #p5 <- markerList2[[slide_id]]
+  #p6 <- markerList3[[slide_id]]
+  list(p1[[1]],p2[[1]],p3[[1]], #p4[[1]],p5[[1]],p6[[1]],
+       p1[[2]],p2[[2]],p3[[2]], #p4[[2]],p5[[2]],p6[[2]],
+       p1[[3]],p2[[3]],p3[[3]], #p4[[3]],p5[[3]],p6[[3]],
+       p1[[4]],p2[[4]],p3[[4]]) #,p4[[4]],p5[[4]],p6[[4]])
 }
 
 
 for(i in names(slideList)) {
   ggsave(file=paste0("plots/03_QC/slide_filtered-QC_pngs/",i,".png"), 
-         do.call(grid.arrange, c(rearrangePlots(i), ncol=6)), 
-         bg="white", unit="in", width=16, height=12) 
+         do.call(grid.arrange, c(rearrangePlots(i), ncol=3)), 
+         bg="white", unit="in", width=8, height=12) 
 }
 cat("\nSaved to: plots/03_QC/slide_filtered-QC_pngs/\n")
 
