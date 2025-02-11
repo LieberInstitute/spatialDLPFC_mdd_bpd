@@ -75,33 +75,33 @@ colData(spe)[spe$facet_spots %in% x_ordered[61:90],"x_facets"] = "g3"
 colData(spe)[spe$facet_spots %in% x_ordered[91:120],"x_facets"] = "g4"
 
 #boxplots
-df = group_by(as.data.frame(colData(spe)), sample_id) %>% mutate(n_spots_removed=sum(remove_spots)) %>%
-  ungroup() %>% filter(remove_spots==FALSE)
+df = filter(as.data.frame(colData(spe)), in_tissue==TRUE) %>% group_by(sample_id) %>% mutate(n_spots_removed=sum(remove_spots)) %>%
+  ungroup() %>% filter(remove_spots==FALSE) %>% mutate(n_spots_removed_discrete=cut(n_spots_removed, breaks=c(0,50,100,300,600,1200)))
 cat("Plotting QC boxplots...",format(Sys.time()),"\n")
-p1 <- ggplot(df, aes(x=facet_spots, y=sum_umi, fill=n_spots_removed))+
+p1 <- ggplot(df, aes(x=facet_spots, y=sum_umi, fill=n_spots_removed_discrete))+
   geom_boxplot(color="grey", outlier.size=.5)+geom_hline(aes(yintercept=1000), lty=2, color="red3")+
   scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 1), limits=c(100,50000),
                      breaks=c(10^(2:5)), labels=c("100","1k","10k","100k"))+
   facet_wrap(vars(x_facets), ncol=1, scales="free_x")+
-  scale_fill_viridis_c(option="F")+
+  scale_fill_viridis_d(option="F")+
   labs(x="", y="sum_umi (log10 scale)", title="Library size - kept spots only", fill="# spots\ndiscarded")+theme_bw()+
   theme_bw()+theme(#legend.position="bottom", 
     axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=7),
     strip.placement = "inside", strip.text=element_blank(),
     strip.background = element_blank())
-p2 <- ggplot(df, aes(x=facet_spots, y=sum_gene, fill=n_spots_removed))+
+p2 <- ggplot(df, aes(x=facet_spots, y=sum_gene, fill=n_spots_removed_discrete))+
   geom_boxplot(color="grey", outlier.size=.5)+
   facet_wrap(vars(x_facets), ncol=1, scales="free_x")+
-  scale_fill_viridis_c(option="F")+
+  scale_fill_viridis_d(option="F")+
   labs(x="", y="sum_gene", title="Detected genes - kept spots only", fill="# spots\ndiscarded")+theme_bw()+
   theme_bw()+theme(#legend.position="bottom", 
     axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=7),
     strip.placement = "inside", strip.text=element_blank(),
     strip.background = element_blank())
-p3 <- ggplot(df, aes(x=facet_spots, y=expr_chrM_ratio, fill=n_spots_removed))+
+p3 <- ggplot(df, aes(x=facet_spots, y=expr_chrM_ratio, fill=n_spots_removed_discrete))+
   geom_boxplot(color="grey", outlier.size=.5)+
   facet_wrap(vars(x_facets), ncol=1, scales="free_x")+
-  scale_fill_viridis_c(option="F")+
+  scale_fill_viridis_d(option="F")+
   labs(x="", y="expr_chrM_ratio", title="Mitochondrial fraction - kept spots only", fill="# spots\ndiscarded")+theme_bw()+
   theme_bw()+theme(#legend.position="bottom", 
     axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=7),
@@ -114,6 +114,8 @@ p2
 p3
 dev.off()
 cat("Saved to: plots/03_QC/filtered_qc-metrics_boxplot.pdf\n")
+
+#stop("Did not need to regenerate by slide spot plots.")
 
 #by slide spot plots
 spe = spe[,spe$remove_spots==FALSE]
