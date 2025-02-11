@@ -18,7 +18,7 @@ cdata$true_edges = ifelse(cdata$slide=="V13B23-302", FALSE, cdata$edge_outlier_g
 tmp = filter(cdata, in_tissue==TRUE, true_edges==FALSE) %>% mutate(lowumi = sum_umi<=100) %>%
   group_by(problem_areas_genes.id) %>%
   summarise(n_lowumi=sum(lowumi), n_spots=n(), prop_lowumi=n_lowumi/n_spots) %>%
-  filter(n_spots>5, !is.na(problem_areas_genes.id))
+  filter(n_spots>20, !is.na(problem_areas_genes.id))
 remove.areas = unique(filter(tmp, prop_lowumi>=.5)$problem_areas_genes.id)
 length(unique(remove.areas))
 
@@ -33,7 +33,7 @@ spe$problem_areas_genes.size = cdata$problem_areas_genes.size
 spe$edges_problem.areas_binary = ifelse(!is.na(spe$problem_areas_genes.id), "problem area", "none")
 colData(spe)[spe$edge_outlier_genes, "edges_problem.areas_binary"] = "edge"
 
-spe$problem_areas_grouped = ifelse(spe$problem_areas_genes.size<=5, "small", "flag")
+spe$problem_areas_grouped = ifelse(spe$problem_areas_genes.size<=20, "small", "flag")
 spe$problem_areas_grouped = ifelse(spe$problem_areas_genes.size==0, "none", spe$problem_areas_grouped)
 colData(spe)[spe$problem_areas_genes.id %in% remove.areas,"problem_areas_grouped"] = "remove"
 colData(spe)[spe$true_edges,"problem_areas_grouped"] = "edge"

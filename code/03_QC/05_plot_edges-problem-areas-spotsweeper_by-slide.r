@@ -14,6 +14,16 @@ cdata$spotsweeper_outlier = cdata$umi_local.outlier | cdata$genes_local.outlier 
 cdata$spotsweeper_outlier2 = cdata$spotsweeper_outlier #make copy that contains NAs so when plotting I can make those empty to illustrate SpotSweeper was run after excluding those spots
 cdata[is.na(cdata$spotsweeper_outlier),"spotsweeper_outlier"] = FALSE
 
+#identify flag areas to color in spotsweeper spotplot
+tmp = filter(cdata, in_tissue==TRUE, true_edges==FALSE) %>% mutate(lowumi = sum_umi<=100) %>%
+  group_by(problem_areas_genes.id) %>%
+  summarise(n_lowumi=sum(lowumi), n_spots=n(), prop_lowumi=n_lowumi/n_spots) %>%
+  filter(n_spots>20, !is.na(problem_areas_genes.id))
+flag.areas = unique(filter(tmp, prop_lowumi<.5)$problem_areas_genes.id)
+
+cdata$spotsweeper_outlier3 = ifelse(cdata$problem_areas_genes.id %in% flag.areas, "flag", cdata$spotsweeper_outlier)
+
+#remove spots
 cdata$remove_spots = cdata$in_tissue==FALSE | cdata$remove_problem.areas | cdata$spotsweeper_outlier
 
 #load spe
@@ -26,15 +36,17 @@ stopifnot(identical(cdata$in_tissue, spe$in_tissue))
 spe$true_edges = cdata$true_edges
 spe$problem_areas_binary = cdata$problem_areas_binary
 spe$problem_areas_genes.size = cdata$problem_areas_genes.size
+spe$problem_areas_genes.id = cdata$problem_areas_genes.id
 #spotsweeper column with NAs so that I can set NAs-->empty to reflect spots removed prior to running spotsweeper
-spe$spotsweeper_outlier = ifelse(is.na(cdata$spotsweeper_outlier2), "empty", cdata$spotsweeper_outlier2)
-spe$spotsweeper_outlier = factor(spe$spotsweeper_outlier, levels=c("FALSE","TRUE","empty"), labels=c("F","T","empty"))
+spe$spotsweeper_outlier = ifelse(is.na(cdata$spotsweeper_outlier2), "empty", cdata$spotsweeper_outlier3)
+#colData(spe)[spe$problem_areas_genes.id %in% flag.areas,"spotsweeper_outlier"] = "flag"
+spe$spotsweeper_outlier = factor(spe$spotsweeper_outlier, levels=c("FALSE","flag","TRUE","empty"), labels=c("F","flag","T","empty"))
 
 #QC/problem area coldata
 spe <- spe[,spe$in_tissue]
 cat("Dim spe (in tissue):",dim(spe),"\n")
 
-spe$problem_areas_grouped = ifelse(spe$problem_areas_genes.size<=5, "small", "flag")
+spe$problem_areas_grouped = ifelse(spe$problem_areas_genes.size<=20, "small", "flag")
 spe$problem_areas_grouped = ifelse(spe$problem_areas_genes.size==0, "none", spe$problem_areas_grouped)
 colData(spe)[spe$problem_areas_binary,"problem_areas_grouped"] = "remove"
 colData(spe)[spe$true_edges,"problem_areas_grouped"] = "edge"
@@ -121,7 +133,7 @@ umiList = lapply(slideList, function(x) {
   lapply(1:length(l1), function(z) {
     tmp = l1[[z]]
     tmp$lowumi = factor(tmp$lowumi, levels=c("FALSE","TRUE"), labels=c("F","T"))
-    suppressMessages(plotSpots(tmp, annotate="lowumi", point_size=0.3)+
+    suppressMessages(plotSpots(tmp, annotate="lowumi", point_size=0.2)+
                        scale_color_manual(values=c("grey80","red"))+
                        labs(title=names(l1)[[z]], color="<=100\nUMI")+
                        theme(legend.text=element_text(size=8, margin=margin(l=3, unit="pt")), legend.title=element_text(size=10),
@@ -139,7 +151,7 @@ filtList = lapply(slideList, function(x) {
   l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
   
   lapply(1:length(l1), function(z)
-    suppressMessages(plotSpots(l1[[z]], annotate="problem_areas_grouped", point_size=0.3)+
+    suppressMessages(plotSpots(l1[[z]], annotate="problem_areas_grouped", point_size=0.2)+
                        scale_color_manual(values=color.palette)+
                        labs(title=names(l1)[[z]], color="")+
                        theme(legend.text=element_text(size=8, margin=margin(l=3, unit="pt")), legend.title=element_text(size=10),
@@ -148,15 +160,15 @@ filtList = lapply(slideList, function(x) {
     ))
 })
 
-color.palette2 = c("grey80","red","white")
-names(color.palette2) = c("F","T","empty")
+color.palette2 = c("grey80","lightgreen","red","white")
+names(color.palette2) = c("F","flag","T","empty")
 cat("\nPlotting SpotSweeper outliers...",format(Sys.time()),"\n")
 spotList = lapply(slideList, function(x) {
   l1 = x; names(l1) = x
   l1 = lapply(l1, function(y) spe[,colData(spe)$facet_spots==y])
 
   lapply(1:length(l1), function(z) {
-    suppressMessages(plotSpots(l1[[z]], annotate="spotsweeper_outlier", point_size=0.3)+
+    suppressMessages(plotSpots(l1[[z]], annotate="spotsweeper_outlier", point_size=0.2)+
                        scale_color_manual(values=color.palette2)+
                        labs(title=names(l1)[[z]], color="local")+
                        theme(legend.text=element_text(size=8, margin=margin(l=3, unit="pt")), legend.title=element_text(size=10),

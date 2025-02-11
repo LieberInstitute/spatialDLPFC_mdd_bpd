@@ -15,27 +15,35 @@ cdata$spotsweeper_outlier = cdata$umi_local.outlier | cdata$genes_local.outlier 
 cdata[is.na(cdata$spotsweeper_outlier),"spotsweeper_outlier"] = FALSE
 
 cdata$remove_spots = cdata$in_tissue==FALSE | cdata$remove_problem.areas | cdata$spotsweeper_outlier
-cdata$problem_area_flag = ifelse(cdata$problem_areas_genes.size>5, TRUE, FALSE)
+#cdata$problem_area_flag = ifelse(cdata$problem_areas_genes.size>20, TRUE, FALSE)
+tmp = filter(cdata, in_tissue==TRUE, true_edges==FALSE) %>% #mutate(lowumi = sum_umi<=100) %>%
+  group_by(problem_areas_genes.id) %>%
+  summarise(n_lowumi=sum(lowumi), n_spots=n(), prop_lowumi=n_lowumi/n_spots) %>%
+  filter(n_spots>20, !is.na(problem_areas_genes.id))
+flag.areas = unique(filter(tmp, prop_lowumi<.5)$problem_areas_genes.id)
+cdata$problem_area_flag = ifelse(cdata$problem_areas_genes.id %in% flag.areas, TRUE, FALSE)
 
-cat("\n\nRemove spots (off tissue):")
+cat("\n\nRemove spots (off tissue):\n")
 table(cdata[,c("in_tissue","remove_spots")])
 tmp = cdata[cdata$in_tissue,]
-cat("\n\nRemove in_tissue spots (individual problem area criteria):")
+
+cat("\n\nRemove in_tissue spots (individual problem area criteria):\n")
 table(tmp[,c("true_edges","remove_spots")])
 table(tmp[,c("problem_areas_binary","remove_spots")])
 table(tmp[,c("lowumi","remove_spots")])
-cat("Remove in_tissue spots (summary problem area criteria):")
+cat("Remove in_tissue spots (summary problem area criteria):\n")
 table(tmp[,c("remove_problem.areas","remove_spots")])
-cat("\n\nRemove in_tissue spots (individual SpotSweeper criteria):")
+
+cat("\n\nRemove in_tissue spots (individual SpotSweeper criteria):\n")
 table(tmp[,c("umi_local.outlier","remove_spots")])
 table(tmp[,c("genes_local.outlier","remove_spots")])
 table(tmp[,c("chrM.ratio_local.outlier","remove_spots")])
-cat("Remove in_tissue spots (summary SpotSweeper criteria):")
+cat("Remove in_tissue spots (summary SpotSweeper criteria):\n")
 table(tmp[,c("spotsweeper_outlier","remove_spots")])
 
-cat("\n\nTotal number of spots removed for any reason:")
+cat("\n\nTotal number of spots removed for any reason:\n")
 table(cdata$remove_spots)
-cat("Remaining spots flagged by problem areas:")
+cat("Remaining spots flagged by problem areas:\n")
 table(cdata[cdata$remove_spots==FALSE,"problem_area_flag"])
 
 write.csv(cdata, "processed-data/03_QC/colData_edges-problem-areas_spotsweeper_FINAL.csv", row.names=T)
