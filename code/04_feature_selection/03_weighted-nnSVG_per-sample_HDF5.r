@@ -32,15 +32,17 @@ assays(tmp)$counts <- sparse_matrix_counts
 	#cat(names(spe.list)[i])
 	cat("\nFilter out zero genes (if present) and generate logcounts on subset of genes...\n")
 	keep_rows = rowSums(counts(tmp))!=0
-	length(keep_rows)
+	table(keep_rows)
 	tmp_sub = tmp[keep_rows,]
 	tmp_sub <- computeLibraryFactors(tmp_sub)
 	tmp_sub <- logNormCounts(tmp_sub)
 
 	cat("\nAll spots have at least 1 non-zero gene\n")
 	sum(colSums(logcounts(tmp_sub)) > 0)==dim(tmp_sub)[2]
+	cat("\nMin. number of genes across all spots:",min(colSums(logcounts(tmp_sub)>0),"\n")
 	cat("All genes have at least 1 non-zero spot\n")
 	sum(rowSums(logcounts(tmp_sub)) > 0)==dim(tmp_sub)[1]
+	cat("\nMin. number of spots across all genes:",min(rowSums(logcounts(tmp_sub)>0),"\n")
 	
 	cat("\ngenerate_weights...",format(Sys.time(),tz="EST"),"\n")
 	weights <- generate_weights(input = tmp_sub, stabilize = TRUE, n_threads=12)
