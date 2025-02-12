@@ -1,6 +1,7 @@
 #!/bin/bash
 #SBATCH --ntasks=12
 #SBATCH --mem=30G
+#SBATCH --time=0-05:00:00
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
 #SBATCH --job-name=weighted-nnSVG_per-sample
