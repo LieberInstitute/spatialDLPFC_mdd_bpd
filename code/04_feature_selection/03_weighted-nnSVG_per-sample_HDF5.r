@@ -1,0 +1,72 @@
+args = commandArgs(TRUE)
+print(args[[1]])
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd')
+
+suppressPackageStartupMessages({
+  library(SpatialExperiment)
+  library(HDF5Array)
+  library(DelayedArray)
+  library(scran)
+  library(nnSVG)
+  library(spoon)
+})
+set.seed(123)
+
+load(file=paste0("processed-data/04_feature_selection/per-sample_spe/",args[[1]]))
+dim(tmp)
+
+cat("\n\nConvert to dgCMatrix...")
+format(Sys.time(), tz="EST")
+regular_matrix_counts <- as.matrix(assays(tmp)[["counts"]])
+sparse_matrix_counts <- as(regular_matrix_counts, "dgCMatrix")
+assays(tmp)$counts <- sparse_matrix_counts
+
+#cat("\nSubsetting to individual samples...\n")
+#format(Sys.time(), tz="EST")
+#l1 = unique(tmp$sample_id)
+#names(l1) = l1
+#spe.list = lapply(l1, function(x) tmp[,tmp$sample_id==x])
+
+#cat("\nLooping nnSVG...\n")
+#for(i in seq_along(spe.list)) {
+	#cat(names(spe.list)[i])
+	cat("\nFilter out zero genes (if present) and generate logcounts on subset of genes...\n")
+	keep_rows = rowSums(counts(tmp))!=0
+	length(keep_rows)
+	tmp_sub = tmp[keep_rows,]
+	tmp_sub <- computeLibraryFactors(tmp_sub)
+	tmp_sub <- logNormCounts(tmp_sub)
+
+	cat("\nAll spots have at least 1 non-zero gene\n")
+	sum(colSums(logcounts(tmp_sub)) > 0)==dim(tmp_sub)[2]
+	cat("All genes have at least 1 non-zero spot\n")
+	sum(rowSums(logcounts(tmp_sub)) > 0)==dim(tmp_sub)[1]
+	
+	cat("\ngenerate_weights...",format(Sys.time(),tz="EST"),"\n")
+	weights <- generate_weights(input = tmp_sub, stabilize = TRUE, n_threads=12)
+	cat("\nSave weights...", format(Sys.time(), tz="EST"),"\n")
+	saveRDS(weights, paste0("processed-data/04_feature_selection/per-sample_weights/",unique(tmp_sub$sample_id),"_spoon-weights.rda"))
+	format(Sys.time(), tz="EST")
+
+	if(class(logcounts(tmp_sub))[1]=="DelayedMatrix") weights <- DelayedArray(weights)
+	source("code/04_feature_selection/spoon-tutorial_test/weighted-nnSVG_re-write_iterative-cov-matrix.r")
+	weighted_logcounts <- t(weights)*assays(tmp_sub)[['logcounts']]
+	assay(tmp_sub, "weighted_logcounts") <- weighted_logcounts
+
+	cat("\nweightedJT_nnSVG...",format(Sys.time(),tz="EST"),"\n")
+	set.seed(123)
+	results <- weightedJT_nnSVG(tmp_sub, X=weights, assay_name="weighted_logcounts", n_threads=12)
+	svg = rowData(results)
+	cat("\nSave weighted_nnSVG output...", format(Sys.time(),tz="EST"),"\n")
+	write.csv(svg, paste0("processed-data/04_feature_selection/per-sample_svgs/",unique(tmp_sub$sample_id), "_weighted-nnSVG-results.csv"), row.names=T)
+	cat("Saved to:",paste0("processed-data/04_feature_selection/per-sample_svgs/",unique(tmp_sub$sample_id), "_weighted-nnSVG-results.csv"))
+#}
+
+
+
+## Reproducibility information
+cat("\n\nReproducibility information:\n")
+format(Sys.time(), tz="EST")
+proc.time()
+options(width = 120)
+sessionInfo()
