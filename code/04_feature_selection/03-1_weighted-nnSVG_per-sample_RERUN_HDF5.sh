@@ -18,7 +18,7 @@ echo "Node(s): ${SLURM_NODELIST}"
 echo "Node memory requested: ${SLURM_MEM_PER_NODE}"
 echo "n Tasks: ${SLURM_NTASKS}"
 
-input=$(head -n $SLURM_ARRAY_TASK_ID /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/04_feature_selection/per-sample_spe_RERUN_list.txt | tail -n 1)
+input=$(head -n $SLURM_ARRAY_TASK_ID /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/04_feature_selection/per-sample_spe_weighted-RERUN_list.txt | tail -n 1)
 echo $input
 module load conda_R/4.4.x
 module list

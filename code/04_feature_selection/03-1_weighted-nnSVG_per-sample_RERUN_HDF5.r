@@ -44,9 +44,9 @@ assays(tmp)$counts <- sparse_matrix_counts
 	sum(rowSums(logcounts(tmp_sub)) > 0)==dim(tmp_sub)[1]
 	cat("\nMin. number of spots across all genes:",min(rowSums(logcounts(tmp_sub)>0)),"\n")
 	
-if(file.exists(paste0("processed-data/04_feature_selection/per-sample_weights/",unique(tmp_sub$sample_id),"_spoon-weights.rda")) {
+if(file.exists(paste0("processed-data/04_feature_selection/per-sample_weights/",unique(tmp_sub$sample_id),"_spoon-weights.rda"))) {
 	cat("\nLoading saved weights...",format(Sys.time(), tz="EST"),"\n")
-	weights <- readRDS(paste0("processed-data/04_feature_selection/per-sample_weights/",unique(tmp_sub$sample_id),"_spoon-weights.rda")
+	weights <- readRDS(paste0("processed-data/04_feature_selection/per-sample_weights/",unique(tmp_sub$sample_id),"_spoon-weights.rda"))
 } else {
 	cat("\ngenerate_weights...",format(Sys.time(),tz="EST"),"\n")
 	weights <- generate_weights(input = tmp_sub, stabilize = TRUE, n_threads=12)
