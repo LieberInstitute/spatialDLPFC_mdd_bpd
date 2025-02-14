@@ -3,22 +3,22 @@ getMBvSampleInfo <- function(REDCapFile, demoFile) {
 	if(length(grep(".csv", REDCapFile))==0) REDCapFile = paste0(REDCapFile,".csv")
 	if(length(grep("raw-data", REDCapFile))==0) REDCapFile = paste0("raw-data/sample_info/",REDCapFile)
 	if(file.exists(REDCapFile)==FALSE) {
-		stop(paste("No file of name",REDCapFile,"found. Check file name or move file into raw-data/sample_info dir."))
+		stop(paste("No file of name",REDCapFile,"found. Check file name or move file into raw-data/sample_info/ dir."))
 	} else {REDCap <- read.csv(REDCapFile)}
 	
 	#demographic checks and load
 	if(length(grep(".csv", demoFile))==0) demoFile = paste0(demoFile,".csv")
 	if(length(grep("raw-data", demoFile))==0) demoFile = paste0("raw-data/sample_info/",demoFile)
 	if(file.exists(demoFile)==FALSE) {
-		stop(paste("No file of name",demoFile,"found. Check file name or move file into raw-data/sample_info dir."))
+		stop(paste("No file of name",demoFile,"found. Check file name or move file into raw-data/sample_info/ dir."))
 	} else {demo <- read.csv(demoFile)}
 
 	#format REDCap
-	A1 <- subset(REDCap, select = c("slide", "sample_a1", "project_a1"))
-	B1 <- subset(REDCap, select = c("slide", "sample_b1", "project_b1"))
-	C1 <- subset(REDCap, select = c("slide", "sample_c1", "project_c1"))
-	D1 <- subset(REDCap, select = c("slide", "sample_d1", "project_d1"))
-	colnames(A1) <- colnames(B1) <- colnames(C1) <- colnames(D1) <- c("slide", "sample", "project")
+	A1 <- subset(REDCap, select = c("slide", "sample_a1", "project_a1","sample_number1_a1"))
+	B1 <- subset(REDCap, select = c("slide", "sample_b1", "project_b1","sample_number1_b1"))
+	C1 <- subset(REDCap, select = c("slide", "sample_c1", "project_c1","sample_number1_c1"))
+	D1 <- subset(REDCap, select = c("slide", "sample_d1", "project_d1","sample_number1_d1"))
+	colnames(A1) <- colnames(B1) <- colnames(C1) <- colnames(D1) <- c("slide", "sample", "project","MBv_sample")
 	A1$array <- "A1"
 	B1$array <- "B1"
 	C1$array <- "C1"
@@ -30,7 +30,7 @@ getMBvSampleInfo <- function(REDCapFile, demoFile) {
 	REDCap_MBv <- REDCap_table[which(REDCap_table$project == "spatialDLPFC_MBv_4100"), ]
 
 	#combine with demo data
-	outDF = merge(demo, REDCap_MBv[,c("sample","slide","array")], by.x="brnum", by.y="sample")
+	outDF = merge(demo, REDCap_MBv[,c("sample","slide","array","MBv_sample")], by.x="brnum", by.y="sample")
 	
 	#add some extra columns
 	outDF$sample_id = paste(outDF$slide, outDF$array, sep="_")
