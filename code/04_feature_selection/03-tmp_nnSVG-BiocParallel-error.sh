@@ -4,7 +4,7 @@
 #SBATCH --time=0-05:00:00
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=nnSVG_BiocParallel-error
+#SBATCH --job-name=nnSVG_min-100_BiocParallel-error-slide333-serial
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_feature_selection/logs/%x_%j.log
 
 echo "**** Job starts ****"
