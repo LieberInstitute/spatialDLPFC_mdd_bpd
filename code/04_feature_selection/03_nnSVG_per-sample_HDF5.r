@@ -29,12 +29,13 @@ assays(tmp)$counts <- sparse_matrix_counts
 #cat("\nLooping nnSVG...\n")
 #for(i in seq_along(spe.list)) {
 	#cat(names(spe.list)[i])
-	cat("\nFilter out zero genes (if present) and generate logcounts on subset of genes...\n")
-	keep_rows = rowSums(counts(tmp))!=0
+	cat("\nFilter out zero genes that are present in <100 spots (per nnSVG documentation recommendation)\nhttps://bioconductor.org/packages/3.21/bioc/vignettes/nnSVG/inst/doc/nnSVG.html#5_Troubleshooting\n")#(if present) and generate logcounts on subset of genes...\n")
+	keep_rows = rowSums(counts(tmp)>0)>100
 	table(keep_rows)
 	tmp_sub = tmp[keep_rows,]
 	tmp_sub <- computeLibraryFactors(tmp_sub)
 	tmp_sub <- logNormCounts(tmp_sub)
+	rowData(tmp_sub)$n_spots_nonzero = rowSums(counts(tmp_sub)>0)
 
 	cat("\nAll spots have at least 1 non-zero gene\n")
 	sum(colSums(logcounts(tmp_sub)) > 0)==dim(tmp_sub)[2]
