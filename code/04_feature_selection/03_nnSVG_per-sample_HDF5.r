@@ -9,7 +9,8 @@ suppressPackageStartupMessages({
   library(scran)
   library(nnSVG)
 })
-set.seed(123)
+#set.seed(123) #initial run seed == 123
+set.seed(456) #re-run seed == 456 to see if that helps with completion of 302_B1 and 333_C1
 
 load(file=paste0("processed-data/04_feature_selection/per-sample_spe/",args[[1]]))
 dim(tmp)
