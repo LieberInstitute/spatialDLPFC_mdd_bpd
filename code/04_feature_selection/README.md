@@ -28,46 +28,8 @@ Searching for this error produced the following suggestions (all related to spat
     - This is not the case, all rows in `logcounts` are `double` (`table(apply(logcounts(tmp2), 1, typeof))`)
   - Problems in the input data, such as highly correlated variables or outliers, can result in a non-positive definite matrix. 
 
+After a lot of testing and checking for the source of the error, I tried changing the seed for those two samples (`V13B23-302_B1` and `V13B23-333_C1`) and that worked ¯\_(ツ)_/¯
 Both these samples (`V13B23-302_B1` and `V13B23-333_C1`) previously ran with when subsetting per-slide spe and using `conda_R/devel` module. Attempted to replicate the archived code (`03-tmp_nnSVG-slide333_replicate-per-sample`) while using `conda_R/4.4.x` and found that package versions were not back compatible (see log `nnSVG_slide333_per-sample-replicate_13868217.log`). Looked at version differences for necessary packages and found enough differences to try running these samples with `conda_R/devel`.
-```
-$ module load conda_R/4.4.x
-> packageVersion("BiocParallel")
-[1] '1.40.0'
-> packageVersion("nnSVG")
-[1] ‘1.10.2
-> packageVersion("HDF5Array")
-[1] ‘1.34.0’
-> packageVersion("DelayedArray")
-[1] ‘0.32.0’
-> packageVersion("BRISC")
-[1] ‘1.0.6’
-> packageVersion("SpatialExperiment")
-[1] ‘1.16.0’
-
-$ module load conda_R/devel
-> packageVersion("BiocParallel")
-[1] ‘1.41.0’
-> packageVersion("nnSVG")
-[1] ‘1.11.0’
-> packageVersion("HDF5Array")
-[1] ‘1.35.13’
-> packageVersion("DelayedArray")
-[1] ‘0.33.6’
-> packageVersion("BRISC")
-[1] ‘1.0.6’
-> packageVersion("SpatialExperiment")
-[1] ‘1.17.0’
-```
-
-First try running the same nnSVG script but now in the `conda_R/devel` environment (`03-dev_nnSVG_per-sample_RERUN.sh`) produced this error for both jobs:
-(see logs `standard-nnSVG_per-sample_min-100_RERUN-devel_13882012_1.log` and `standard-nnSVG_per-sample_min-100_RERUN-devel_13880316_4.log`)
-```
-Error in reducer$value.cache[[as.character(idx)]] <- values :
-  wrong args for environment subassignment
-Calls: nnSVG ... .bploop_impl -> .collect_result -> .reducer_add -> .reducer_add
-```
-
-Currently trying to run again but forcing the job to occur on only 1 node. Next step would be to build single-sample spe in the dev environment and try again. Another try could be to update select packages in `conda_R/4.4.x` module (start with BiocParallel to dev version?)
 
 ### Log output
 Looking at the logs is really clunky because of the verbose output so I use the following code in `R` to navigate/pull information:

@@ -57,7 +57,7 @@ assays(tmp)$counts <- sparse_matrix_counts
 #assay(tmp_sub, "weighted_logcounts") <- weighted_logcounts
 
 	cat("\nStandard nnSVG...",format(Sys.time(),tz="EST"),"\n")
-	set.seed(123)
+	#set.seed(123)
 	results <- nnSVG(tmp_sub, assay_name="logcounts", n_threads=12)
 	svg = rowData(results)
 	cat("\nSave standard nnSVG output...", format(Sys.time(),tz="EST"),"\n")
