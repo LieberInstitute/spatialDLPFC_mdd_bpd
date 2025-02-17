@@ -28,8 +28,7 @@ Searching for this error produced the following suggestions (all related to spat
     - This is not the case, all rows in `logcounts` are `double` (`table(apply(logcounts(tmp2), 1, typeof))`)
   - Problems in the input data, such as highly correlated variables or outliers, can result in a non-positive definite matrix. 
 
-After a lot of testing and checking for the source of the error, I tried changing the seed for those two samples (`V13B23-302_B1` and `V13B23-333_C1`) and that worked ¯\_(ツ)_/¯
-Both these samples (`V13B23-302_B1` and `V13B23-333_C1`) previously ran with when subsetting per-slide spe and using `conda_R/devel` module. Attempted to replicate the archived code (`03-tmp_nnSVG-slide333_replicate-per-sample`) while using `conda_R/4.4.x` and found that package versions were not back compatible (see log `nnSVG_slide333_per-sample-replicate_13868217.log`). Looked at version differences for necessary packages and found enough differences to try running these samples with `conda_R/devel`.
+***After a lot of testing and checking for the source of the error with no insight, I tried changing the seed for those two samples (`V13B23-302_B1` and `V13B23-333_C1`) and that worked ¯\\\_(ツ)\_/¯***
 
 ### Log output
 Looking at the logs is really clunky because of the verbose output so I use the following code in `R` to navigate/pull information:
