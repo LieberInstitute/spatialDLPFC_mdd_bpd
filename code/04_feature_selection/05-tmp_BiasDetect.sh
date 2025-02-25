@@ -2,7 +2,7 @@
 #SBATCH --mem=3G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=tmp_BiasDetect
+#SBATCH --job-name=tmp_BiasDetect-with-seq
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_feature_selection/logs/%x_%j.log
 
 echo "**** Job starts ****"

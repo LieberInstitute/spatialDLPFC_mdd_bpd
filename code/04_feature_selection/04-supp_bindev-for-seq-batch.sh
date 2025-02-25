@@ -2,7 +2,7 @@
 #SBATCH --mem=10G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=test_bindev_HDF5
+#SBATCH --job-name=test_bindev-seq-rnd_HDF5
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_feature_selection/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -19,7 +19,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 module load conda_R/4.4.x
 module list
 
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_feature_selection/04_bindev-for-batch.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_feature_selection/04-supp_bindev-for-seq-batch.r
 
 echo "**** Job ends ****"
 date
