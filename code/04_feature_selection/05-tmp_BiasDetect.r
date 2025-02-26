@@ -56,11 +56,11 @@ names(geneList$sample_dev) <- filter(dfList[[2]], nSD_dev>=5)$gene_name
 geneList$sample_rank = filter(dfList[[2]], nSD_rank>=5)$gene
 names(geneList$sample_rank) = filter(dfList[[2]], nSD_rank>=5)$gene_name
 
-cat("\nSeq. round: nSD_dev>=5 and nSD_rank>=5\n")
-geneList$seq_dev = filter(dfList[[3]], nSD_dev>=5)$gene
-names(geneList$seq_dev) <- filter(dfList[[3]], nSD_dev>=5)$gene_name
-geneList$seq_rank = filter(dfList[[3]], nSD_rank>=5)$gene
-names(geneList$seq_rank) = filter(dfList[[3]], nSD_rank>=5)$gene_name
+cat("\nSeq. round: nSD_dev>=6 and nSD_rank>=6\n")
+geneList$seq_dev = filter(dfList[[3]], nSD_dev>=6)$gene
+names(geneList$seq_dev) <- filter(dfList[[3]], nSD_dev>=6)$gene_name
+geneList$seq_rank = filter(dfList[[3]], nSD_rank>=6)$gene
+names(geneList$seq_rank) = filter(dfList[[3]], nSD_rank>=6)$gene_name
 
 cat("\nSex: nSD_dev>=10 and nSD_rank>=5\n")
 geneList$sex_dev = filter(dfList[[4]], nSD_dev>=10)$gene
@@ -92,16 +92,16 @@ cat("\nUpset plot saved to: plots/04_feature_selection/bindev-batch-effect_dummy
 p1 = ggplot(dfList[["dummy.slide"]], aes(x=dev_default, y=dev_batch, color=gene %in% geneList$dummy.slide_dev))+
   geom_point(size=.5)+scale_color_manual(values=c("grey50","red3"))+
   scale_x_log10() + scale_y_log10()+
-  ggrepel::geom_text_repel(data=filter(dfList[["dummy.slide"]], gene %in% geneList$dummy.slide_dev),
-                           aes(label = gene_name), size = 3)+
+  #ggrepel::geom_text_repel(data=filter(dfList[["dummy.slide"]], gene %in% geneList$dummy.slide_dev),
+  #                         aes(label = gene_name), size = 3)+
   geom_abline(aes(slope = 1, intercept = 0), lty = 2)+
   labs(x= "dev (no batch)", y="dev (batch)", title="dummy.slide: deviance (nSD>=5)")+
   theme_bw()+theme(legend.position="none", plot.title=element_text(size=12))
 p2 = ggplot(dfList[["dummy.slide"]], aes(x=rank_default, y=rank_batch, color=gene %in% geneList$dummy.slide_rank))+
   geom_point(size=.5)+scale_color_manual(values=c("grey50","red3"))+
   scale_y_reverse()+
-  ggrepel::geom_text_repel(data=filter(dfList[["dummy.slide"]], gene %in% geneList$dummy.slide_rank),
-                           aes(label = gene_name), size = 3)+
+  #ggrepel::geom_text_repel(data=filter(dfList[["dummy.slide"]], gene %in% geneList$dummy.slide_rank),
+  #                         aes(label = gene_name), size = 3)+
   geom_abline(aes(slope = -1, intercept = 0), lty = 2)+
   labs(x= "rank (no batch)", y="rank (batch)", title="dummy.slide: rank (nSD>=5)")+
   theme_bw()+theme(legend.position="none", plot.title=element_text(size=12))
@@ -109,16 +109,16 @@ p2 = ggplot(dfList[["dummy.slide"]], aes(x=rank_default, y=rank_batch, color=gen
 p3 = ggplot(dfList[["sample"]], aes(x=dev_default, y=dev_batch, color=gene %in% geneList$sample_dev))+
   geom_point(size=.5)+scale_color_manual(values=c("grey50","red3"))+
   scale_x_log10() + scale_y_log10()+
-  ggrepel::geom_text_repel(data=filter(dfList[["sample"]], gene %in% geneList$sample_dev),
-                           aes(label = gene_name), size = 3)+
+  #ggrepel::geom_text_repel(data=filter(dfList[["sample"]], gene %in% geneList$sample_dev),
+  #                         aes(label = gene_name), size = 3)+
   geom_abline(aes(slope = 1, intercept = 0), lty = 2)+
   labs(x= "dev (no batch)", y="dev (batch)", title="sample: deviance (nSD>=5)")+
   theme_bw()+theme(legend.position="none", plot.title=element_text(size=12))
 p4 = ggplot(dfList[["sample"]], aes(x=rank_default, y=rank_batch, color=gene %in% geneList$sample_rank))+
   geom_point(size=.5)+scale_color_manual(values=c("grey50","red3"))+
   scale_y_reverse()+
-  ggrepel::geom_text_repel(data=filter(dfList[["sample"]], gene %in% geneList$sample_rank),
-                           aes(label = gene_name), size = 3)+
+  #ggrepel::geom_text_repel(data=filter(dfList[["sample"]], gene %in% geneList$sample_rank),
+  #                         aes(label = gene_name), size = 3)+
   geom_abline(aes(slope = -1, intercept = 0), lty = 2)+
   labs(x= "rank (no batch)", y="rank (batch)", title="sample: rank (nSD>=5)")+
   theme_bw()+theme(legend.position="none", plot.title=element_text(size=12))
@@ -127,34 +127,34 @@ p4 = ggplot(dfList[["sample"]], aes(x=rank_default, y=rank_batch, color=gene %in
 p5 = ggplot(dfList[["seq"]], aes(x=dev_default, y=dev_batch, color=gene %in% geneList$seq_dev))+
   geom_point(size=.5)+scale_color_manual(values=c("grey50","red3"))+
   scale_x_log10() + scale_y_log10()+
-  ggrepel::geom_text_repel(data=filter(dfList[["seq"]], gene %in% geneList$seq_dev),
-                           aes(label = gene_name), size = 3)+
+  #ggrepel::geom_text_repel(data=filter(dfList[["seq"]], gene %in% geneList$seq_dev),
+  #                         aes(label = gene_name), size = 3)+
   geom_abline(aes(slope = 1, intercept = 0), lty = 2)+
-  labs(x= "dev (no batch)", y="dev (batch)", title="seq: deviance (nSD>=5)")+
+  labs(x= "dev (no batch)", y="dev (batch)", title="seq: deviance (nSD>=6)")+
   theme_bw()+theme(legend.position="none", plot.title=element_text(size=12))
 p6 = ggplot(dfList[["seq"]], aes(x=rank_default, y=rank_batch, color=gene %in% geneList$seq_rank))+
   geom_point(size=.5)+scale_color_manual(values=c("grey50","red3"))+
   scale_y_reverse()+
-  ggrepel::geom_text_repel(data=filter(dfList[["seq"]], gene %in% geneList$seq_rank),
-                           aes(label = gene_name), size = 3)+
+  #ggrepel::geom_text_repel(data=filter(dfList[["seq"]], gene %in% geneList$seq_rank),
+  #                         aes(label = gene_name), size = 3)+
   geom_abline(aes(slope = -1, intercept = 0), lty = 2)+
-  labs(x= "rank (no batch)", y="rank (batch)", title="seq: rank (nSD>=5)")+
+  labs(x= "rank (no batch)", y="rank (batch)", title="seq: rank (nSD>=6)")+
   theme_bw()+theme(legend.position="none", plot.title=element_text(size=12))
 
 
 p7 = ggplot(dfList[["sex"]], aes(x=dev_default, y=dev_batch, color=gene %in% geneList$sex_dev))+
   geom_point(size=.5)+scale_color_manual(values=c("grey50","red3"))+
   scale_x_log10() + scale_y_log10()+
-  ggrepel::geom_text_repel(data=filter(dfList[["sex"]], gene %in% geneList$sex_dev),
-                           aes(label = gene_name), size = 3)+
+  #ggrepel::geom_text_repel(data=filter(dfList[["sex"]], gene %in% geneList$sex_dev),
+  #                         aes(label = gene_name), size = 3)+
   geom_abline(aes(slope = 1, intercept = 0), lty = 2)+
   labs(x= "dev (no batch)", y="dev (batch)", title="sex: deviance (nSD>=10)")+
   theme_bw()+theme(legend.position="none", plot.title=element_text(size=12))
 p8 = ggplot(dfList[["sex"]], aes(x=rank_default, y=rank_batch, color=gene %in% geneList$sex_rank))+
   geom_point(size=.5)+scale_color_manual(values=c("grey50","red3"))+
   scale_y_reverse()+
-  ggrepel::geom_text_repel(data=filter(dfList[["sex"]], gene %in% geneList$sex_rank),
-                           aes(label = gene_name), size = 3)+
+  #ggrepel::geom_text_repel(data=filter(dfList[["sex"]], gene %in% geneList$sex_rank),
+  #                         aes(label = gene_name), size = 3)+
   geom_abline(aes(slope = -1, intercept = 0), lty = 2)+
   labs(x= "rank (no batch)", y="rank (batch)", title="sex: rank (nSD>=5)")+
   theme_bw()+theme(legend.position="none", plot.title=element_text(size=12))
@@ -162,16 +162,16 @@ p8 = ggplot(dfList[["sex"]], aes(x=rank_default, y=rank_batch, color=gene %in% g
 p9 = ggplot(dfList[["condition"]], aes(x=dev_default, y=dev_batch, color=gene %in% geneList$condition_dev))+
   geom_point(size=.5)+scale_color_manual(values=c("grey50","red3"))+
   scale_x_log10() + scale_y_log10()+
-  ggrepel::geom_text_repel(data=filter(dfList[["condition"]], gene %in% geneList$condition_dev),
-                           aes(label = gene_name), size = 3)+
+  #ggrepel::geom_text_repel(data=filter(dfList[["condition"]], gene %in% geneList$condition_dev),
+  #                         aes(label = gene_name), size = 3)+
   geom_abline(aes(slope = 1, intercept = 0), lty = 2)+
   labs(x= "dev (no batch)", y="dev (batch)", title="condition: deviance (nSD>=25)")+
   theme_bw()+theme(legend.position="none", plot.title=element_text(size=12))
 p10 = ggplot(dfList[["condition"]], aes(x=rank_default, y=rank_batch, color=gene %in% geneList$condition_rank))+
   geom_point(size=.5)+scale_color_manual(values=c("grey50","red3"))+
   scale_y_reverse()+
-  ggrepel::geom_text_repel(data=filter(dfList[["condition"]], gene %in% geneList$condition_rank),
-                           aes(label = gene_name), size = 3)+
+  #ggrepel::geom_text_repel(data=filter(dfList[["condition"]], gene %in% geneList$condition_rank),
+  #                         aes(label = gene_name), size = 3)+
   geom_abline(aes(slope = -1, intercept = 0), lty = 2)+
   labs(x= "rank (no batch)", y="rank (batch)", title="condition: rank (nSD>=15)")+
   theme_bw()+theme(legend.position="none", plot.title=element_text(size=12))
