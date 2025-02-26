@@ -56,11 +56,11 @@ names(geneList$sample_dev) <- filter(dfList[[2]], nSD_dev>=5)$gene_name
 geneList$sample_rank = filter(dfList[[2]], nSD_rank>=5)$gene
 names(geneList$sample_rank) = filter(dfList[[2]], nSD_rank>=5)$gene_name
 
-cat("\nSeq. round: nSD_dev>=6 and nSD_rank>=6\n")
-geneList$seq_dev = filter(dfList[[3]], nSD_dev>=6)$gene
-names(geneList$seq_dev) <- filter(dfList[[3]], nSD_dev>=6)$gene_name
-geneList$seq_rank = filter(dfList[[3]], nSD_rank>=6)$gene
-names(geneList$seq_rank) = filter(dfList[[3]], nSD_rank>=6)$gene_name
+cat("\nSeq. round: nSD_dev>=60 and nSD_rank>=15\n")
+geneList$seq_dev = filter(dfList[[3]], nSD_dev>=60)$gene
+names(geneList$seq_dev) <- filter(dfList[[3]], nSD_dev>=60)$gene_name
+geneList$seq_rank = filter(dfList[[3]], nSD_rank>=15)$gene
+names(geneList$seq_rank) = filter(dfList[[3]], nSD_rank>=15)$gene_name
 
 cat("\nSex: nSD_dev>=10 and nSD_rank>=5\n")
 geneList$sex_dev = filter(dfList[[4]], nSD_dev>=10)$gene
@@ -130,7 +130,7 @@ p5 = ggplot(dfList[["seq"]], aes(x=dev_default, y=dev_batch, color=gene %in% gen
   #ggrepel::geom_text_repel(data=filter(dfList[["seq"]], gene %in% geneList$seq_dev),
   #                         aes(label = gene_name), size = 3)+
   geom_abline(aes(slope = 1, intercept = 0), lty = 2)+
-  labs(x= "dev (no batch)", y="dev (batch)", title="seq: deviance (nSD>=6)")+
+  labs(x= "dev (no batch)", y="dev (batch)", title="seq: deviance (nSD>=60)")+
   theme_bw()+theme(legend.position="none", plot.title=element_text(size=12))
 p6 = ggplot(dfList[["seq"]], aes(x=rank_default, y=rank_batch, color=gene %in% geneList$seq_rank))+
   geom_point(size=.5)+scale_color_manual(values=c("grey50","red3"))+
@@ -138,7 +138,7 @@ p6 = ggplot(dfList[["seq"]], aes(x=rank_default, y=rank_batch, color=gene %in% g
   #ggrepel::geom_text_repel(data=filter(dfList[["seq"]], gene %in% geneList$seq_rank),
   #                         aes(label = gene_name), size = 3)+
   geom_abline(aes(slope = -1, intercept = 0), lty = 2)+
-  labs(x= "rank (no batch)", y="rank (batch)", title="seq: rank (nSD>=6)")+
+  labs(x= "rank (no batch)", y="rank (batch)", title="seq: rank (nSD>=15)")+
   theme_bw()+theme(legend.position="none", plot.title=element_text(size=12))
 
 

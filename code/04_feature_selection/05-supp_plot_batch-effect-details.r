@@ -12,7 +12,7 @@ set.seed(123)
 #load in necessary info
 cat("\nNumber of batch effect genes:\n")
 exclude.genes = readRDS("processed-data/04_feature_selection/batch-effect-genes_dummyslide-sample-seq-sex-condition_list.rds")
-length(unique(unlist(exclude.genes))) #52
+length(unique(unlist(exclude.genes))) #47
 
 avg.expr = read.csv("processed-data/04_feature_selection/nnSVG-filtered-genes_avg-logcounts.csv", row.names=1) %>%
   tibble::rownames_to_column(var="gene_id")
@@ -73,13 +73,13 @@ all.ordered = c("C3","DDIT4","C5orf63","MTRNR2L1","gap7",
 	#iegs
 	"NPAS4", "ARC", "NR4A1", "FOS", "DUSP1", "JUNB", "EGR1","gap6",
 	#angio-forward stroke group
-	"ANGPTL4","VEGFA","CHI3L1","IFITM2","SERPINA3",
+	"ANGPTL4","VEGFA","CHI3L1","SERPINA3",
 	#metallothionein stroke group
-	"MT1X","MT2A",
+	"MT1X",
 	#pure stroke genes
-	"HAMP","CDKN1A","CCL2","ZFP36","C11orf96","GADD45B",
+	"HAMP","CCL2","ZFP36","C11orf96","GADD45B",
 	#oxidative stress stroke group
-	"HSPA1B","HSPB1","DNAJB1","HSPA1A","HSPA6","gap5",
+	"HSPA1B","DNAJB1","HSPA1A","HSPA6","gap5",
 	#slide batch
 	"AVP","OXT","PURA","PLCG2","ALDOA","gap4",
 	#WM/ tissue composition genes (not removing)
@@ -87,7 +87,7 @@ all.ordered = c("C3","DDIT4","C5orf63","MTRNR2L1","gap7",
 	#ubiquitous and messy
 	"MTRNR2L8","LINC00632","AL627171.2","MALAT1","MAP1B","MTRNR2L12","gap2",
 	#L6 and messy
-	"PCSK1N","TMSB10","CST3","MT3","RPL17","gap1",
+	"PCSK1N","TMSB10","MT3","RPL17","gap1",
 	#sex
 	"XIST","RPS4Y1","USP9Y")
 
