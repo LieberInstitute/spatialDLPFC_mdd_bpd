@@ -96,8 +96,24 @@ p1 <- ggplot(dotplot.df2 %>% mutate(y_order3=factor(gene_name, levels=all.ordere
 	geom_count()+scale_color_viridis_c(option="F", direction=-1)+
 	scale_size(range=c(1,4), limits=c(0,1))+labs(color="Avg. expr.\n(scaled)", y="")+
 	theme_minimal()+theme(axis.text.x=element_blank())
-ggsave("plots/04_feature_selection/batch-effect-genes_dotplot.png", p1, bg="white", height=12, width=16, units="in")
+ggsave("plots/04_feature_selection/batch-effect-genes_dotplot.png", p1, bg="white", height=11, width=16, units="in")
 cat("\nSave dotplot to: plots/04_feature_selection/batch-effect-genes_dotplot.png\n")
+
+#scatter plot of continuous exp vars
+summ_cdata = left_join(filter(dotplot.df, gene_name %in% c("MTRNR2L8","LINC00632","AL627171.2","MALAT1","MAP1B","MTRNR2L12","PCSK1N","TMSB10","MT3","RPL17")),
+                       as.data.frame(colData(spe))[,c("sample_id2", "sample_id","age", "PMI", "RIN","problem_area_flag")] %>%
+                         group_by(sample_id2, sample_id, age, PMI, RIN) %>% summarise(n_flagged_spots=sum(problem_area_flag))) %>% 
+  left_join(sample.libsize) %>%
+  tidyr::pivot_longer(c("age","PMI","RIN","med_libsize","n_flagged_spots"), names_to="tech_var", values_to="metric")
+
+p1 <- ggplot(summ_cdata %>% mutate(tech_var=factor(tech_var, levels=c("age","PMI","RIN","med_libsize","n_flagged_spots")),
+                                   gene_name=factor(gene_name, levels=c("RPL17","MT3","TMSB10","PCSK1N","MTRNR2L12","MAP1B","MALAT1","AL627171.2","LINC00632","MTRNR2L8"))), 
+       aes(x=metric, y=mean_expr_scaled))+
+  geom_point(size=.5)+facet_grid(rows=vars(gene_name), cols=vars(tech_var), scales="free_x")+
+  theme_minimal()+theme(panel.background = element_rect(color="grey50"))
+ggsave("plots/04_feature_selection/batch-effect-genes_continuous-variables_scatter.png",
+       p1, bg="white", width=8.5, height=11, units="in")
+cat("\nSave dotplot to: plots/04_feature_selection/batch-effect-genes_continuous-variables_scatter.png\n")
 
 #pull in MBv sample info for metadata section of plots (to be combined in AI)
 source("code/02_build_spe/getMBvSampleInfo_function.r")
