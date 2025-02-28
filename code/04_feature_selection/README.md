@@ -41,3 +41,8 @@ length(grep("BRISC model fit with 4951 observations",x)) #gives you the number o
 ```
 # spoon/ weighted_nnSVG
 Looked into using spoon/weighted_nnSVG to further adjust for the mean-rank relationship but found that the difference between weighted_nnSVG and standard nnSVG wasn't obvious. Since we still would've wanted to select top SVGs from expression quantiles manually, decided to stick with standard nnSVG. In the `archive/` dir of `code/04_feature_selection/` and `processed-data/04_feature_selection/` there are many files related to running spoon/weighted_nnSVG.
+
+# BiasDetect/ Batch effect genes
+The `BiasDetect` aka `BatchSVG` package aka the feature QC method I developed is still not finalized as of Feb. 2025 when this analysis was completed. Therefore work-arounds were used to perform the required binomial deviance tests (`04-1_bindev-for-batch`) and to determine the nSD thresholds for each batch variable (`04-2_BiasDetect`).
+
+After the package is completed and live on `BiocConductor` these scripts should be updated to align with the new functionality of the package. 

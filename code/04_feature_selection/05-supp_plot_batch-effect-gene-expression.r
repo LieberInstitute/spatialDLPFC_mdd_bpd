@@ -120,6 +120,30 @@ pdf(file=paste0("plots/04_feature_selection/",marker1,"-logcounts_spot-plots.pdf
 dev.off()
 cat("\nSaved",marker1,"plots to:", paste0("plots/04_feature_selection/",marker1,"-logcounts_spot-plots.pdf"),"\n")
 
+#not run
+##weird slide effect
+#raw_spe <- loadHDF5SummarizedExperiment(dir="processed-data/02_build_spe", prefix="spe_n120_")
+#spe_example = raw_spe[,raw_spe$slide=="V13B23-301"] #AVP and OXT slide
+#avp.spots = colnames(spe_example)[counts(spe_example)[rowData(spe_example)$gene_name=="AVP",]>3]
+#spe_example$avp.spots = colnames(spe_example) %in% avp.spots
+#oxt.spots = colnames(spe_example)[counts(spe_example)[rowData(spe_example)$gene_name=="OXT",]>3]
+#spe_example$oxt.spots = colnames(spe_example) %in% oxt.spots
+
+#plotVisium(spe_example[,spe_example$array=="D1"], spots=T, image=T, annotate=rownames(spe_example)[rowData(spe_example)$gene_name=="AVP"], 
+#           highlight="avp.spots", 
+#           facets="sample_id", assay = "counts")+
+#  facet_wrap(vars(sample_id), ncol=4)+
+#  scale_fill_gradient2(low=alpha("white",0), mid="white",high="black", midpoint=10)+
+#  scale_color_manual(values=c(alpha("white",0), "navy"))
+
+#plotVisium(spe_example[,spe_example$array=="A1"], spots=T, image=T, 
+#           annotate=rownames(spe_example)[rowData(spe_example)$gene_name=="OXT"], 
+#           highlight="oxt.spots", 
+#           facets="sample_id", assay = "counts")+
+#  facet_wrap(vars(sample_id), ncol=4)+
+#  scale_fill_gradient2(low=alpha("white",0), mid="white",high="black", midpoint=10)+
+#  scale_color_manual(values=c(alpha("white",0), "navy"))
+
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")
 format(Sys.time(), tz="EST")
