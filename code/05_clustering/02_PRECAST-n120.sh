@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --mem=80G
+#SBATCH --mem=200GB
 #SBATCH --ntasks=12
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=precast_n120_test
+#SBATCH --job-name=precast_n120_n1050-repeat_k9
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/logs/%x_%j.log
 
 set -e
@@ -26,7 +26,7 @@ module list
 #ulimit -s unlimited
 #ulimit -s
 
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/02_PRECAST-n120_test.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/02_PRECAST-n120.r
 
 echo "**** Job ends ****"
 date
