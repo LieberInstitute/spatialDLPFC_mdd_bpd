@@ -3,7 +3,7 @@
 #SBATCH --ntasks=12
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=precast_n120_n1050-repeat_k9
+#SBATCH --job-name=precast_n120_n1051_k9
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/logs/%x_%j.log
 
 set -e

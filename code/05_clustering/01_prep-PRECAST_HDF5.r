@@ -12,7 +12,7 @@ names(sampleList) = substr(sampleList, start=0, stop=13)
 
 #keep.genes = read.csv("processed-data/04_feature_selection/tmp_smaller-feature-list_n1721.csv")
 #keep.genes = read.csv("processed-data/04_feature_selection/tmp_larger-feature-list_n3198.csv")
-keep.genes = read.csv("processed-data/04_feature_selection/selected-SVGs_n1053.csv")
+keep.genes = read.csv("processed-data/04_feature_selection/selected-SVGs_n1051.csv")
 
 srt.sets = lapply(sampleList, function(x) {
 #for(i in slideList) {
@@ -44,7 +44,7 @@ srt.sets = lapply(sampleList, function(x) {
 })
 cat("\n\nFinal srt.sets structure:\n")
 str(srt.sets, 3)
-save(srt.sets, file="processed-data/05_clustering/srt-list_spe-HDF5_n1053_counts.Rdata")
+save(srt.sets, file="processed-data/05_clustering/srt-list_spe-HDF5_n1051_counts.Rdata")
 
 ## Reproducibility information
 print("Reproducibility information:")
