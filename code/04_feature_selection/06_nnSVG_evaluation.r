@@ -33,22 +33,23 @@ resList = lapply(fileList, function(x) {
 })
 results.df = do.call(rbind, resList)
 
-#padj distribution and min number of spots per sample per gene
-padj.df = bind_rows(select(results.df, sample_id, gene_name, padj) %>% mutate(n_spots_nonzero=">100"),
-                    filter(results.df, n_spots_nonzero>300) %>% select(sample_id, gene_name, padj) %>% mutate(n_spots_nonzero=">300"),
-                    filter(results.df, n_spots_nonzero>500) %>% select(sample_id, gene_name, padj) %>% mutate(n_spots_nonzero=">500")) %>%
+#p value distribution and min number of spots per sample per gene -- NOT ADJUSTED P VAL
+#http://varianceexplained.org/statistics/interpreting-pvalue-histogram/
+pval.df = bind_rows(select(results.df, sample_id, gene_name, pval) %>% mutate(n_spots_nonzero=">100"),
+                    filter(results.df, n_spots_nonzero>300) %>% select(sample_id, gene_name, pval) %>% mutate(n_spots_nonzero=">300"),
+                    filter(results.df, n_spots_nonzero>500) %>% select(sample_id, gene_name, pval) %>% mutate(n_spots_nonzero=">500")) %>%
   mutate(n_spots_nonzero=factor(n_spots_nonzero, levels=c(">100",">300",">500"),
                                 labels=c(">100 spots per sample",">300 spots per sample",">500 spots per sample")))
 
-p1 <- ggplot(padj.df, aes(x=padj, group=sample_id))+
+p1 <- ggplot(pval.df, aes(x=pval, group=sample_id))+
   stat_ecdf()+facet_grid(cols=vars(n_spots_nonzero))+
   scale_x_continuous(expand=expansion(add=c(0)))+
   theme_minimal()+theme(plot.margin=margin(0.5,1,.5,.5, unit="cm"),
                         panel.spacing = unit(1,"cm"),
                         strip.text=element_text(size=12), panel.ontop = T)
 
-padj.df2 = left_join(padj.df, avg.expr) %>% group_by(n_spots_nonzero, decile, gene_name) %>% tally()
-p2 <- ggplot(padj.df2, aes(x=as.factor(decile), y=n, color=as.factor(decile)))+
+pval.df2 = left_join(pval.df, avg.expr) %>% group_by(n_spots_nonzero, decile, gene_name) %>% tally()
+p2 <- ggplot(pval.df2, aes(x=as.factor(decile), y=n, color=as.factor(decile)))+
   ggbeeswarm::geom_quasirandom(size=.7)+facet_grid(cols=vars(n_spots_nonzero))+
   scale_color_viridis_d(option="turbo")+
   labs(x="logcount expr decile", y="# nnSVG models with gene")+
@@ -56,12 +57,13 @@ p2 <- ggplot(padj.df2, aes(x=as.factor(decile), y=n, color=as.factor(decile)))+
                         panel.spacing = unit(1,"cm"),
                         legend.position="none", strip.text=element_text(size=12))
 
-ggsave("plots/04_feature_selection/nnSVG-eval_padj-distribution_num-nonzero-spots.png", gridExtra::grid.arrange(p1, p2, ncol=1),
+ggsave("plots/04_feature_selection/nnSVG-eval_pval-distribution_num-nonzero-spots.png", gridExtra::grid.arrange(p1, p2, ncol=1),
 	bg="white", width=12, height=8, units="in")
-cat("\nNon-zero spot filter plot saved to: plots/04_feature_selection/nnSVG-eval_padj-distribution_num-nonzero-spots.png\n")
+cat("\nNon-zero spot filter plot saved to: plots/04_feature_selection/nnSVG-eval_pval-distribution_num-nonzero-spots.png\n")
 
-#set # of nonzero spots
-results.df = filter(results.df, n_spots_nonzero>500)
+#set # of nonzero spots and calculate FDR based on this new filtered set
+results.df = filter(results.df, n_spots_nonzero>500) %>% group_by(sample_id) %>%
+  mutate(padj=p.adjust(pval, method="fdr"))
 
 geneList <- list()
 cat("\nGenes removed because nonzero in <500 spots in every sample:\n")
@@ -95,12 +97,12 @@ p3 <- ggplot(filter(avg.expr, gene_name %in% include.genes) %>%
                      trans="log2", limits=c(0.005, 4), breaks=c(.03125, .25, 2.0),
                      labels=c("0.03125","0.25","2.0"))+
   labs(x="", title=paste("Remove",length(geneList$nsig_less10), "out of", length(include.genes),"remaining genes"))+
-  theme_minimal()+theme(plot.title=element_text(size=11), 
+  theme_minimal()+theme(plot.title=element_text(size=11), plot.title.position="plot",
                         plot.margin=margin(.5,1,.5,.5, unit="cm"),
                         axis.text.x=element_text(size=12),
                         axis.title.y=element_text(size=10), axis.text.y=element_text(size=8))
 
-#5305 genes remaining
+#genes remaining
 cat("\nGenes remaining:\n")
 include.genes = setdiff(include.genes, unlist(geneList))
 length(include.genes)
@@ -120,12 +122,12 @@ p4 <- ggplot(filter(avg.expr, gene_name %in% include.genes) %>%
                      trans="log2", limits=c(0.005, 4), breaks=c(.03125, .25, 2.0),
                      labels=c("0.03125","0.25","2.0"))+
   labs(x="", title=paste("Remove",length(geneList$prop.sig_less33perc), "out of", length(include.genes),"remaining genes"))+
-  theme_minimal()+theme(plot.title=element_text(size=11), 
+  theme_minimal()+theme(plot.title=element_text(size=11), plot.title.position="plot",
                         plot.margin=margin(.5,1,.5,.5, unit="cm"),
                         axis.text.x=element_text(size=12),
                         axis.title.y=element_text(size=10), axis.text.y=element_text(size=8))
 
-#4300 genes remaining
+#genes remaining
 cat("\nGenes remaining:\n")
 include.genes = setdiff(include.genes, unlist(geneList))
 length(include.genes)
@@ -147,12 +149,12 @@ p5 <- ggplot(filter(avg.expr, gene_name %in% include.genes) %>%
                      trans="log2", limits=c(0.005, 4), breaks=c(.03125, .25, 2.0),
                      labels=c("0.03125","0.25","2.0"))+
   labs(x="", title=paste("Remove",length(geneList$best.rank_more500), "out of", length(include.genes),"remaining genes"))+
-  theme_minimal()+theme(plot.title=element_text(size=11), 
+  theme_minimal()+theme(plot.title=element_text(size=11), plot.title.position="plot",
                         plot.margin=margin(.5,1,.5,.5, unit="cm"),
                         axis.text.x=element_text(size=12),
                         axis.title.y=element_text(size=10), axis.text.y=element_text(size=8))
 
-#1637 genes remaining
+#1638 genes remaining
 cat("\nGenes remaining:\n")
 include.genes = setdiff(include.genes, unlist(geneList))
 length(include.genes)
@@ -175,12 +177,12 @@ p6 <- ggplot(filter(avg.expr, gene_name %in% include.genes) %>%
                      trans="log2", limits=c(0.005, 4), breaks=c(.03125, .25, 2.0),
                      labels=c("0.03125","0.25","2.0"))+
   labs(x="", title=paste("Remove",length(geneList$qual_batch_effect), "out of", length(include.genes),"remaining genes"))+
-  theme_minimal()+theme(plot.title=element_text(size=11),
+  theme_minimal()+theme(plot.title=element_text(size=11), plot.title.position="plot",
                         plot.margin=margin(.5,1,.5,.5, unit="cm"),
                         axis.text.x=element_text(size=12),
                         axis.title.y=element_text(size=10), axis.text.y=element_text(size=8))
 
-#1603 gene remaining
+#1604 gene remaining
 cat("\nGenes remaining:\n")
 include.genes = setdiff(include.genes, unlist(geneList))
 length(include.genes)
@@ -192,21 +194,21 @@ geneList$qual_genes = include.genes
 tmp.df = filter(results.df, gene_name %in% geneList$qual_genes) %>% mutate(is_qual= padj<.05 & rank<=500) %>%
   left_join(avg.expr)
 
-p7 <- ggplot(left_join(tmp.df, distinct(tmp.df, decile, gene_name) %>% group_by(decile) %>% tally(name="n_genes_per_decile")),
+p7 <- ggplot(left_join(tmp.df, filter(avg.expr, gene_name %in% geneList$qual_genes) %>% group_by(decile) %>% tally(name="n_genes_per_decile")),
        aes(x=rank, y=as.factor(decile), fill=n_genes_per_decile, lty=factor(is_qual, levels=c("TRUE","FALSE"))))+
   ggridges::geom_density_ridges(color="black")+
   scale_fill_gradientn(colors=c("grey90","lightblue","steelblue","navy"), values=c(0,.15,.4,.8,1))+
   labs(y="logcount expr decile\n(avg. over all 530k spots)", x="rank", 
-       title="Candidate SVGs (n=1603)", fill="# top genes\nin decile",
+       title=paste0("Candidate SVGs (n=",length(geneList$qual_genes),")"), fill="# top genes\nin decile",
        lty="qual. samples")+
   theme_minimal()+theme(axis.title.y=element_text(size=10))
 #boxplot of spcov by decile of qual and nonqual genes
-p8 <- ggplot(left_join(tmp.df, distinct(tmp.df, decile, gene_name) %>% group_by(decile) %>% tally(name="n_genes_per_decile")),
+p8 <- ggplot(left_join(tmp.df, filter(avg.expr, gene_name %in% geneList$qual_genes) %>% group_by(decile) %>% tally(name="n_genes_per_decile")),
        aes(x=spcov, y=as.factor(decile), fill=n_genes_per_decile, lty=factor(is_qual, levels=c("TRUE","FALSE"))))+
-  geom_boxplot(outliers=F)+#scale_y_continuous(trans="log2")+
+  geom_boxplot(outliers=F)+
   scale_fill_gradientn(colors=c("grey90","lightblue","steelblue","navy"), values=c(0,.15,.4,.8,1))+
   labs(x="spatial coeff. of variance", y="logcount expr decile\n(avg. over all 530k spots)", 
-       title="Candidate SVGs (n=1603)", fill="# top genes\nin decile",
+       title=paste0("Candidate SVGs (n=",length(geneList$qual_genes),")"), fill="# top genes\nin decile",
        lty="qual. samples")+
   theme_minimal()+theme(axis.title.y=element_text(size=10))
 
@@ -252,10 +254,10 @@ p10 <- ggplot(filter(tmp.df, gene_name %in% geneList$top_decile) %>%
                mutate(high.spcov=gene_name %in% geneList$top.decile_high.spcov), 
        aes(x=spcov, color=high.spcov, group=gene_name))+
   stat_ecdf()+scale_color_manual(values=c("black","red3"))+
-  labs(x="spatial coefficient of variance (spcov)", title="Keep only high spcov (>=0.40)")+
+  labs(x="spatial coefficient of variance (spcov)", title="Keep only high spcov (med>=0.40)")+
   theme_minimal()+theme(legend.position="inside", legend.position.inside = c(.85,.25),
                         legend.background = element_rect(fill="white", color="grey50"),
-                        plot.margin=margin(.5,.5,0,.5, unit="cm"))
+                        plot.margin=margin(.5,.5,0,.5, unit="cm"), plot.title.position="plot")
 
 p11 <- pheatmap(m2[geneList$top.decile_high.spcov,], show_rownames=T, show_colnames=F, 
                treeheight_row = 25, fontsize_row = 8, silent=T)
@@ -306,11 +308,24 @@ ggsave("plots/04_feature_selection/nnSVG-eval_refine-candidate-SVGs_dotplot.png"
        bg="white", width=12, height=8, units="in")
 cat("\nNarrowing highly expressed candidate SVG dot plots saved to: plots/04_feature_selection/nnSVG-eval_refine-candidate-SVGs_dotplot.png\n")
 
+#remove any additional ribo genes
+### without this extra step (before i fixed the FDR), there were 1053 bc of 3 RPS|RPL genes
+### i found that the addition of those 3 genes really messed up precast (results saved in processed data)
+cat("\nGenes remaining after removing highly expressed genes with low spcov:\n")
+tmpList = setdiff(geneList$qual_genes, geneList$top.decile_low.spcov)
+length(tmpList)
+
+cat("\nRemaining RPS or RPL genes:\n")
+geneList$ribo <- grep("RPS|RPL", geneList$qual_genes, value=T)
+length(intersect(tmpList, geneList$ribo))
 
 #final gene list
-cat("\n\n################### FINAL SVG LIST ###################\n")
-geneList$final_svgs = setdiff(geneList$qual_genes, geneList$top.decile_low.spcov)
+cat("\n\n#######################################################################################")
+cat("\n################### FINAL SVG LIST\n\n")
+geneList$final_svgs = setdiff(geneList$qual_genes, c(geneList$top.decile_low.spcov, geneList$ribo))
 length(geneList$final_svgs)
+cat("\n")
+filter(avg.expr, gene_name %in% geneList$final_svgs) %>% group_by(decile) %>% tally()
 
 p14 <- ggplot(filter(avg.expr, !gene_name %in% c(geneList$less500_all, geneList$never_sig)) %>%
          mutate(final.svgs=gene_name %in% geneList$final_svgs, cand.svgs=gene_name %in% geneList$qual_genes), 
@@ -321,7 +336,7 @@ p14 <- ggplot(filter(avg.expr, !gene_name %in% c(geneList$less500_all, geneList$
                      trans="log2", limits=c(0.005, 4), breaks=c(.03125, .25, 2.0),
                      labels=c("0.03125","0.25","2.0"))+
   labs(x="", title=paste("Final SVG list:",length(geneList$final_svgs), "out of", nrow(avg.expr)-length(unlist(geneList[1:2])),"genes"))+
-  theme_minimal()+theme(plot.title=element_text(size=11), 
+  theme_minimal()+theme(plot.title=element_text(size=11), plot.title.position="plot",
                         plot.margin=margin(.5,1,.5,.5, unit="cm"),
                         axis.text.x=element_text(size=12),
                         axis.title.y=element_text(size=10), axis.text.y=element_text(size=8))
@@ -341,8 +356,8 @@ for(i in layerList) {
   final.svgs[[i]] = final.svgs$gene_name %in% filter(layer.markers, domain_simple==i)$gene
 }
 
-write.csv(final.svgs, "processed-data/04_feature_selection/selected-SVGs_n1053.csv", row.names = F)
-cat("\nFinal SVG dframe saved to: processed-data/04_feature_selection/selected-SVGs_n1053.csv\n")
+write.csv(final.svgs, "processed-data/04_feature_selection/selected-SVGs_n1051.csv", row.names = F)
+cat("\n\nFinal SVG dframe saved to: processed-data/04_feature_selection/selected-SVGs_n1051.csv\n")
 
 final.svgs2 = tidyr::pivot_longer(final.svgs, all_of(layerList), names_to="domain_simple", values_to="status") %>%
   filter(status==T) %>% mutate(domain_simple=as.character(domain_simple))
@@ -367,14 +382,15 @@ p15 <- ggplot(final.svgs2, aes(x=domain_simple, y=avg_expr, color=n_sig_markers)
                         axis.title.y=element_text(size=10), axis.text.y=element_text(size=8))
 
 
-ggsave("plots/04_feature_selection/nnSVG-eval_final-SVG-list-n1053_dot-violin.png",
+ggsave("plots/04_feature_selection/nnSVG-eval_final-SVG-list-n1051_dot-violin.png",
        gridExtra::grid.arrange(p14, p15, layout_matrix=matrix(c(1,2,2), nrow=1)),
        bg="white", width=12, height=4, units="in")
-cat("\nFinal SVG list dot/violin plots by layer markers saved to: plots/04_feature_selection/nnSVG-eval_final-SVG-list-n1053_dot-violin.png\n")
+cat("\nFinal SVG list dot/violin plots by layer markers saved to: plots/04_feature_selection/nnSVG-eval_final-SVG-list-n1051_dot-violin.png\n")
 
 
 ############ Look for highly expressed (decile==10) genes to supplement SVG list with
-cat("\n\nLook for highly expressed (decile==10) genes to supplement SVG list with\n")
+cat("\n\n#######################################################################################")
+cat("\nLook for highly expressed (decile==10) genes to supplement SVG list with\n")
 
 qual_summary = filter(tmp.df, gene_name %in% geneList$top.decile_low.spcov) %>% group_by(gene_name) %>%
   summarise(n_qual=sum(is_qual), n_sig=sum(padj<.05), n_notsig=sum(padj>.05),
@@ -387,7 +403,7 @@ p16 <- ggplot(qual_summary, aes(x=n_qual, y=n_notsig, color=ribo))+
   labs(title=paste("Highly expressed genes with low spcov:",length(geneList$top.decile_low.spcov),"genes"),
        x="# samples with gene ranked top 500 and padj<.05", y="# samples with gene padj>.05",
        color="RPS | RPL")+
-  theme_minimal()+theme(plot.title=element_text(size=12), legend.title=element_text(size=10),
+  theme_minimal()+theme(plot.title=element_text(size=11), plot.title.position="plot", legend.title=element_text(size=10),
                         plot.margin=margin(.5,.5,.5,.5, unit="cm"),
                         axis.text=element_text(size=8),
                         axis.title=element_text(size=10))
@@ -424,7 +440,7 @@ p17 <- ggplot(excluded.svgs2, aes(x=domain_simple, y=avg_expr, color=high_notsig
 ggsave("plots/04_feature_selection/nnSVG-eval_supplemental-gene-options.png",
        gridExtra::grid.arrange(p16, p17, layout_matrix=matrix(c(1,2,2), nrow=1)),
        bg="white", width=12, height=4, units="in")
-cat("\nHighly expressed supplemental gene plots saved to: plots/04_feature_selection/nnSVG-eval_supplemental-gene-options.png\n")
+cat("\nHighly expressed supplemental gene plots saved to: plots/04_feature_selection/nnSVG-eval_supplemental-gene-options.png\n\n")
 
 
 saveRDS(geneList, "processed-data/04_feature_selection/nnSVG-eval_geneList.rds")
