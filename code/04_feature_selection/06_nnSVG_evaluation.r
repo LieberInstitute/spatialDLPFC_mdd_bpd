@@ -342,7 +342,7 @@ p14 <- ggplot(filter(avg.expr, !gene_name %in% c(geneList$less500_all, geneList$
                         axis.title.y=element_text(size=10), axis.text.y=element_text(size=8))
 
 #layer marker representation
-layer.markers = read.csv("processed-data/04_feature_selection/EXT_TableS8_sig_genes_FDR5perc_enrichment.csv") %>%
+layer.markers = read.csv("processed-data/04_feature_selection/EXT_TableS9_sig_genes_FDR5perc_enrichment.csv") %>%
   filter(stat>0, spatial_domain_resolution=="Sp09") %>%
   mutate(domain_simple=factor(test, 
                               levels=paste0("Sp09D0",c(1,2,3,5,8,4,7,6,9)), 
