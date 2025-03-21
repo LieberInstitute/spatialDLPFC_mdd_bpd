@@ -70,36 +70,45 @@ dotplot.df = left_join(tibble::rownames_to_column(as.data.frame(assay(spe_summ, 
 #make empty genes for y axis gap
 gap.df = filter(dotplot.df, gene_name=="MOBP") %>% mutate(gene_id="gap", mean_expr=0, mean_expr_scaled=0, 
 	prop_spots=NA, gene_name="gap", avg_expr=0)
-dotplot.df2 = bind_rows(dotplot.df, mutate(gap.df, gene_name="gap1"), mutate(gap.df, gene_name="gap2"), mutate(gap.df, gene_name="gap3"),
-	mutate(gap.df, gene_name="gap4"), mutate(gap.df, gene_name="gap5"),mutate(gap.df, gene_name="gap6"), mutate(gap.df, gene_name="gap7"))
+needed.gaps = c(paste0("gap",0:8,".1"),paste0("gap",0:8,".2"))
+gap.df = do.call(rbind, lapply(needed.gaps, function(x) mutate(gap.df, gene_name=x)))
+dotplot.df2 = bind_rows(dotplot.df, gap.df)
 
 #order genes for plotting
-all.ordered = c("C3","DDIT4","C5orf63","MTRNR2L1","gap7",
-	#iegs
-	"NPAS4", "ARC", "NR4A1", "FOS", "DUSP1", "JUNB", "EGR1","gap6",
-	#angio-forward stroke group
-	"ANGPTL4","VEGFA","CHI3L1","SERPINA3",
-	#metallothionein stroke group
-	"MT1X",
-	#pure stroke genes
-	"HAMP","CCL2","ZFP36","C11orf96","GADD45B",
-	#oxidative stress stroke group
-	"HSPA1B","DNAJB1","HSPA1A","HSPA6","gap5",
-	#slide batch
-	"AVP","OXT","PURA","PLCG2","ALDOA","gap4",
-	#WM/ tissue composition genes (not removing)
-	"AQP1", "CERCAM", "NKX6-2","MYRF", "MOBP","gap3",
-	#ubiquitous and messy
-	"MTRNR2L8","LINC00632","AL627171.2","MALAT1","MAP1B","MTRNR2L12","gap2",
-	#L6 and messy
-	"PCSK1N","TMSB10","MT3","RPL17","gap1",
-	#sex
-	"XIST","RPS4Y1","USP9Y")
+all.ordered = c(#WM/ tissue composition genes (not removing),
+  "AQP1", "CERCAM", "NKX6-2","MYRF", "MOBP","gap8.2","gap8.1",
+  #iegs
+  "NPAS4", "ARC", "NR4A1", "FOS", "DUSP1", "JUNB", "EGR1","gap7.2","gap7.1",
+  #angio-forward stroke group
+  "ANGPTL4","VEGFA","CHI3L1","SERPINA3","MT1X","gap6.2","gap6.1",
+  #pure stroke genes
+  "HAMP","CCL2","ZFP36","C11orf96","GADD45B","gap5.2","gap5.1",
+  #oxidative stress stroke group
+  "HSPA1B","DNAJB1","HSPA1A","HSPA6","gap4.2","gap4.1",
+  #sample patterned batch
+  "C3","DDIT4","C5orf63","gap3.2","gap3.1",
+  #slide patterned
+  "AVP","OXT","PURA","PLCG2","ALDOA","gap2.2","gap2.1",
+  #decile==10 low spcov
+  "MTRNR2L1","PCSK1N","TMSB10","MT3","RPL17","MTRNR2L8","MALAT1","MAP1B","MTRNR2L12",
+  #decile==10 high spcov
+  "LINC00632","AL627171.2","gap1.2","gap1.1",
+  #sex
+  "XIST","RPS4Y1","USP9Y","gap0.2","gap0.1")
 
-p1 <- ggplot(dotplot.df2 %>% mutate(y_order=factor(gene_name, levels=all.ordered)), 
+#add asterisk to indicate if genes qual as SVG and if they would've been removed based on low spcov
+geneList <- readRDS("processed-data/04_feature_selection/nnSVG-eval_geneList.rds")
+dotplot.df2$gene_name1 = ifelse(dotplot.df2$gene_name %in% geneList$qual_genes, paste0("*", dotplot.df2$gene_name), dotplot.df2$gene_name)
+all.ordered1 = ifelse(all.ordered %in% geneList$qual_genes, paste0("*", all.ordered), all.ordered)
+dotplot.df2$gene_name2 = ifelse(dotplot.df2$gene_name %in% setdiff(geneList$qual_genes, geneList$top.decile_low.spcov), 
+	paste0("*",dotplot.df2$gene_name1), dotplot.df2$gene_name1)
+all.ordered2 = ifelse(all.ordered %in% setdiff(geneList$qual_genes,	geneList$top.decile_low.spcov),	paste0("*",all.ordered1), all.ordered1)
+
+p1 <- ggplot(dotplot.df2 %>% mutate(y_order=factor(gene_name2, levels=all.ordered2)), 
 		aes(x=sample_id2, y=y_order, color=mean_expr_scaled, size=prop_spots))+
 	geom_count()+scale_color_viridis_c(option="F", direction=-1)+
-	scale_size(range=c(1,4), limits=c(0,1))+labs(color="Avg. expr.\n(scaled)", y="")+
+	scale_size(range=c(1,4), limits=c(0,1))+
+	labs(color="Avg. expr.\n(scaled)", y="", subtitle="* = candidate SVG; ** = otherwise considered final SVG")+
 	theme_minimal()+theme(axis.text.x=element_blank())
 ggsave("plots/04_feature_selection/batch-effect-genes_dotplot.png", p1, bg="white", 
 	height=10, width=16, units="in")

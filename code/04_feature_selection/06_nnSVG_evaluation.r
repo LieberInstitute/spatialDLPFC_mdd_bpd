@@ -165,32 +165,32 @@ include.genes = setdiff(include.genes, unlist(geneList))
 length(include.genes)
 
 
-cat("\nNumber of total batch effect genes removed:\n")
+cat("\nNumber of total batch effect genes found:\n")
 geneList$all_batch_effect = exclude.names2
 length(geneList$all_batch_effect)
-cat("\nNumber of qualifying batch effect genes removed:\n")
-geneList$qual_batch_effect <- intersect(exclude.names2, include.genes)
-length(geneList$qual_batch_effect)
-sort(geneList$qual_batch_effect)
+#cat("\nNumber of qualifying batch effect genes removed:\n")
+#geneList$qual_batch_effect <- intersect(exclude.names2, include.genes)
+#length(geneList$qual_batch_effect)
+#sort(geneList$qual_batch_effect)
 
-p6 <- ggplot(filter(avg.expr, gene_name %in% include.genes) %>%
-         mutate(batch_effect=gene_name %in% geneList$qual_batch_effect),
-       aes(x=factor(batch_effect, levels=c("FALSE","TRUE"), labels=c("retain","batch effect")),
-           y=avg_expr))+
-  ggbeeswarm::geom_quasirandom(width=.5, size=.5)+
-  scale_y_continuous("logcount expr (avg. over all 530k spots)",
-                     trans="log2", limits=c(0.005, 4), breaks=c(.03125, .25, 2.0),
-                     labels=c("0.03125","0.25","2.0"))+
-  labs(x="", title=paste("Remove",length(geneList$qual_batch_effect), "out of", length(include.genes),"remaining genes"))+
-  theme_minimal()+theme(plot.title=element_text(size=11), plot.title.position="plot",
-                        plot.margin=margin(.5,1,.5,.5, unit="cm"),
-                        axis.text.x=element_text(size=12),
-                        axis.title.y=element_text(size=10), axis.text.y=element_text(size=8))
+#p6 <- ggplot(filter(avg.expr, gene_name %in% include.genes) %>%
+#         mutate(batch_effect=gene_name %in% geneList$qual_batch_effect),
+#       aes(x=factor(batch_effect, levels=c("FALSE","TRUE"), labels=c("retain","batch effect")),
+#           y=avg_expr))+
+#  ggbeeswarm::geom_quasirandom(width=.5, size=.5)+
+#  scale_y_continuous("logcount expr (avg. over all 530k spots)",
+#                     trans="log2", limits=c(0.005, 4), breaks=c(.03125, .25, 2.0),
+#                     labels=c("0.03125","0.25","2.0"))+
+#  labs(x="", title=paste("Remove",length(geneList$qual_batch_effect), "out of", length(include.genes),"remaining genes"))+
+#  theme_minimal()+theme(plot.title=element_text(size=11), plot.title.position="plot",
+#                        plot.margin=margin(.5,1,.5,.5, unit="cm"),
+#                        axis.text.x=element_text(size=12),
+#                        axis.title.y=element_text(size=10), axis.text.y=element_text(size=8))
 
-#1629 gene remaining
-cat("\nGenes remaining:\n")
-include.genes = setdiff(include.genes, unlist(geneList))
-length(include.genes)
+##1629 gene remaining
+#cat("\nGenes remaining:\n")
+#include.genes = setdiff(include.genes, unlist(geneList))
+#length(include.genes)
 
 
 geneList$qual_genes = include.genes
@@ -217,8 +217,10 @@ p8 <- ggplot(left_join(tmp.df, filter(avg.expr, gene_name %in% geneList$qual_gen
        lty="qual. samples")+
   theme_minimal()+theme(axis.title.y=element_text(size=10))
 
+lay.mat = rbind(c(1,1,2,2,3,3),c(4,4,4,5,5,5))
 ggsave("plots/04_feature_selection/nnSVG-eval_find-candidate-SVGs.png", 
-       gridExtra::grid.arrange(p3, p4, p5, p6, p7, p8, ncol=3),
+       gridExtra::grid.arrange(p3, p4, p5, #p6, 
+		p7, p8, layout_matrix=lay.mat),
        bg="white", width=12, height=8, units="in")
 cat("\nCandidate SVG filters plot(s) saved to: plots/04_feature_selection/nnSVG-eval_find-candidate-SVGs.png\n")
 
@@ -237,15 +239,16 @@ colSums(is.na(corr_test))
 flip_test = corr_test
 colnames(flip_test) = c("gene2","gene1","rho","p.value","FDR","gene2_name","gene2_avg_expr","gene1_name","gene1_avg_expr")
 d1 = bind_rows(corr_test, flip_test)
-length(unique(d1$gene1_name)) #596
+length(unique(d1$gene1_name)) 
 
 d2= tidyr::pivot_wider(d1[,c("gene1_name","gene2_name", "rho")], names_from="gene2_name", values_from="rho")
 m1 = as.matrix(d2[,-1])
 rownames(m1) = d2$gene1_name
-#corr test was run on all highly expressed genes including batch effect genes so remove batch effect genes
+#corr test was run on all highly expressed genes so make sure subset correctly
 m2 = m1[geneList$top_decile, geneList$top_decile]
 
-p9 <- pheatmap(m2, show_rownames=F, show_colnames=F, silent=T)
+p9 <- pheatmap(m2, show_rownames=F, show_colnames=F, silent=T,
+	treeheight_row=10, treeheight_col=10)
 
 geneList$top.decile_high.spcov = filter(tmp.df, gene_name %in% geneList$top_decile) %>% group_by(gene_name) %>%
   summarise(med_spcov=median(spcov)) %>% filter(round(med_spcov,2)>=.4) %>%
@@ -264,9 +267,11 @@ p10 <- ggplot(filter(tmp.df, gene_name %in% geneList$top_decile) %>%
                         legend.background = element_rect(fill="white", color="grey50"),
                         plot.margin=margin(.5,.5,0,.5, unit="cm"), plot.title.position="plot")
 
-p11 <- pheatmap(m2[geneList$top.decile_high.spcov,], show_rownames=T, show_colnames=F, 
-               treeheight_row = 25, fontsize_row = 8, silent=T)
-
+m3 = m2[geneList$top.decile_high.spcov,]
+rownames(m3) = ifelse(rownames(m3) %in% geneList$all_batch_effect, paste(rownames(m3),"*"), rownames(m3))
+p11 <- pheatmap(m3, show_rownames=T, show_colnames=F, 
+               treeheight_row = 5, fontsize_row = 8, silent=T,
+		treeheight_col=10)
 
 ggsave("plots/04_feature_selection/nnSVG-eval_refine-candidate-SVGs_corr-ecdf.png", 
        gridExtra::grid.arrange(p9[[4]], p10, p11[[4]], ncol=3),
@@ -291,8 +296,10 @@ dotplot.df = left_join(tibble::rownames_to_column(as.data.frame(assay(spe_summ, 
   left_join(tibble::rownames_to_column(as.data.frame(assay(spe_summ, "logcounts.prop.detected")), var="gene_id") %>%
               tidyr::pivot_longer(colnames(spe_summ), names_to="sample_id2", values_to="prop_spots")) %>%
   left_join(avg.expr)
-row.order = p9$tree_row$labels[p9$tree_row$order] 
-dotplot.df$y_order = factor(dotplot.df$gene_name, levels=rev(row.order))
+row.order = p11$tree_row$labels[p11$tree_row$order]
+rev.row.order = rev(row.order) 
+dotplot.df$y_order = factor(ifelse(dotplot.df$gene_name %in% geneList$all_batch_effect, 
+	paste(dotplot.df$gene_name,"*"), dotplot.df$gene_name), levels=rev.row.order)
 
 p12 = ggplot(dotplot.df, aes(x=sample_id2, y=y_order, color=mean_expr, size=prop_spots))+
   geom_count()+scale_color_viridis_c(option="F", direction=-1)+
@@ -327,15 +334,16 @@ cat("\nNarrowing highly expressed candidate SVG dot plots saved to: plots/04_fea
 #final gene list
 cat("\n\n#######################################################################################")
 cat("\n################### FINAL SVG LIST\n\n")
-geneList$final_svgs = setdiff(geneList$qual_genes, c(geneList$top.decile_low.spcov))
+geneList$final_svgs = setdiff(geneList$qual_genes, union(geneList$top.decile_low.spcov, geneList$all_batch_effect))
 	#, geneList$ribo))
 length(geneList$final_svgs)
 cat("\n")
 filter(avg.expr, gene_name %in% geneList$final_svgs) %>% group_by(decile) %>% tally()
 
 p14 <- ggplot(filter(avg.expr, !gene_name %in% c(geneList$less10perc_all, geneList$never_sig)) %>%
-         mutate(final.svgs=gene_name %in% geneList$final_svgs, cand.svgs=gene_name %in% geneList$qual_genes), 
-       aes(x=factor(final.svgs, levels=c("TRUE","FALSE"), labels=c("retain","discard")), 
+         mutate(final.svgs=gene_name %in% geneList$final_svgs, cand.svgs=gene_name %in% geneList$qual_genes,
+		final.svgs=ifelse(gene_name %in% geneList$all_batch_effect,"batch",as.character(final.svgs))), 
+       aes(x=factor(final.svgs, levels=c("TRUE","FALSE","batch"), labels=c("retain","discard\n(other)","discard\n(batch)")), 
            y=avg_expr, color=cand.svgs))+
   ggbeeswarm::geom_quasirandom(width=.5, size=.5)+scale_color_manual("candidate\nSVGs",values=c("grey","black"))+
   scale_y_continuous("logcount expr (avg. over all 530k spots)",
@@ -388,8 +396,8 @@ p15 <- ggplot(final.svgs2, aes(x=domain_simple, y=avg_expr, color=n_sig_markers)
                         axis.title.y=element_text(size=10), axis.text.y=element_text(size=8))
 
 
-ggsave(paste0("plots/04_feature_selection/nnSVG-eval_final-SVG-list-n",length(geneList$final_svgs),"_dot-violin.png",
-       gridExtra::grid.arrange(p14, p15, layout_matrix=matrix(c(1,2,2), nrow=1)),
+ggsave(paste0("plots/04_feature_selection/nnSVG-eval_final-SVG-list-n",length(geneList$final_svgs),"_dot-violin.png"),
+       gridExtra::grid.arrange(p14, p15, layout_matrix=matrix(c(1,1,2,2,2), nrow=1)),
        bg="white", width=12, height=4, units="in")
 cat("\nFinal SVG list dot/violin plots by layer markers saved to:",paste0("plots/04_feature_selection/nnSVG-eval_final-SVG-list-n",length(geneList$final_svgs),"_dot-violin.png"),"\n")
 
