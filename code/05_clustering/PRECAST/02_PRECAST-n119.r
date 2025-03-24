@@ -11,7 +11,10 @@ load("processed-data/05_clustering/PRECAST/srt-list_spe_n1663_counts.Rdata")
 #use customGeneList to further filter out low spcov and batch effect genes before normalization
 geneList = readRDS("processed-data/04_feature_selection/nnSVG-eval_geneList.rds")
 avg.expr = read.csv("processed-data/04_feature_selection/nnSVG-filtered-genes_avg-logcounts.csv", row.names=1)
-cglist = rownames(avg.expr)[avg.expr$gene_name %in% geneList$final_svgs]
+#cglist = rownames(avg.expr)[avg.expr$gene_name %in% geneList$final_svgs]
+#cglist = rownames(avg.expr)[avg.expr$gene_name %in% geneList$qual_genes]
+#cglist = rownames(avg.expr)[avg.expr$gene_name %in% setdiff(geneList$qual_genes, geneList$all_batch_effect)]
+cglist = rownames(avg.expr)[avg.expr$gene_name %in% setdiff(geneList$qual_genes, geneList$top.decile_low.spcov)]
 length(cglist)
 
 #run precast
