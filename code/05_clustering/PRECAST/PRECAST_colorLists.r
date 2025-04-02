@@ -1,0 +1,23 @@
+precast.colorList = list(
+  "n1079_k9"= list("colors"=c("#FF7F00","#1F78B4","#33A02C","#A6CEE3","#CAB2D6","#B2DF8A","#FB9A99","#E31A1C","#8B0000"),
+                   "clusters"=c("3","7","5","2","8","9","1","4","6"),
+                   "annotation"=c("Vasc","L1","L2","L3","GABA","L5","L6","WM 1","WM 2")),
+  "n1104_k9"= list("colors"=c("#FF7F00","#1F78B4","#33A02C","#A6CEE3","#6A3D9A","#CAB2D6","#B2DF8A","#FB9A99","#E31A1C"),
+                   "clusters"=c("6","4","2","8","1","5","9","7","3"),
+                   "annotation"=c("Vasc","L1","L2","L3 1","L3 2","GABA","L5","L6","WM")),
+  "n1629_k9"= list("colors"=c("#FF7F00","#1F78B4","#33A02C","#A6CEE3","#CAB2D6","#B2DF8A","#FB9A99","#E31A1C","#FDBF6F"),
+                   "clusters"=c("3","5","2","6","7","1","4","9","8"),
+                   "annotation"=c("Vasc","L1","L2","L3","GABA","L5","L6","WM","low UMI")),
+  "n1663_k9"= list("colors"=c("#FF7F00","#1F78B4","#33A02C","#A6CEE3","#CAB2D6","#B2DF8A","#FB9A99","#E31A1C","#FDBF6F"),
+                   "clusters"=c("5","3","2","7","8","1","6","9","4"),
+                   "annotation"=c("Vasc","L1","L2","L3","GABA","L5","L6","WM","low UMI")),
+  "H-M-markers_k9"= list("colors"=c("#1F78B4","#33A02C","#6A3D9A","#A6CEE3","#CAB2D6","#B2DF8A","#FB9A99","#E31A1C","#FDBF6F"),
+                         "clusters"=c("1","2","4","6","7","9","5","8","3"),
+                         "annotation"=c("L1","L2","?","L3","GABA","L5","L6","WM","low UMI")),
+  "n1079_k12"= list("colors"=c("#FF7F00","#FDBF6F","#1F78B4","navy","#33A02C","#A6CEE3","#6A3D9A","#CAB2D6","#B2DF8A","#FB9A99","#E31A1C","#8B0000"),
+                    "clusters"=c("3","9","4","7","5","2","8","10","12","1","6","11"),
+                    "annotation"=c("Vasc 1","Vasc 2","L1 1","L1 2","L2","L3 1","L3 2","GABA","L5","L6","WM 1","WM 2")),
+  "n1663_k12"= list("colors"=c("#FF7F00","#1F78B4","navy","#33A02C","#A6CEE3","#6A3D9A","#CAB2D6","#B2DF8A","#FB9A99","#E31A1C","#8B0000","#FDBF6F"),
+                    "clusters"=c("12","3","7","2","4","9","10","1","8","11","5","6"),
+                    "annotation"=c("Vasc","L1 1","L1 2","L2","L3 1","L3 2","GABA","L5","L6","WM 1","WM 2","low UMI"))
+)
