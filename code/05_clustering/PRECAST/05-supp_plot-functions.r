@@ -92,7 +92,7 @@ locationSpotPlots <- function(object_small, .dimred) {
   numpal[["GABA"]] = "black"
 
   plist <- lapply(sampleList, function(y) {
-    p <- plotVisium(y, spots=F, image=T) |> add_ground("precast_cluster_f", stroke=.1)
+    p <- plotVisium(y, spots=F, image=T) |> add_ground("precast_cluster_f", stroke=.5)
     p+scale_color_manual(values=numpal, na.value = "transparent")+
       theme(legend.position="none", plot.title=element_text(size=8))
   })
