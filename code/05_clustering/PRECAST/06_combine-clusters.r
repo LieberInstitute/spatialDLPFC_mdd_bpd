@@ -138,7 +138,7 @@ table(spe$Vasc.reassign) #would double size of vasc cluster
 #low UMI        other Vasc (n1079) Vasc (n1663) 
 #  24806       484220        14270        11952 
 vasc_colors = c("#FDBF6F","grey","black","#FF7F00")
-names(vasc_colors) = c("low UMI", "other", "Vasc (n1079)", "Vasc (1663)")
+names(vasc_colors) = c("low UMI", "other", "Vasc (n1079)", "Vasc (n1663)")
 plist <- generateSpotPlots(spe, "Vasc.reassign", vasc_colors)
 pdf(file="plots/05_clustering/PRECAST/PRECAST_Vasc-reassign_spot-plots.pdf", width=12, height=16)
   plist[[1]]
