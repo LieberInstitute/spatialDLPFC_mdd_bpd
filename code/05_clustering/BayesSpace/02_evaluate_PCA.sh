@@ -3,7 +3,7 @@
 #SBATCH --mem=10G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=evaluate_PCA
+#SBATCH --job-name=evaluate_PCA_add-1079-MNN
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/BayesSpace/logs/%x_%j.log
 
 echo "**** Job starts ****"

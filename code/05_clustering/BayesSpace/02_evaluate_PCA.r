@@ -127,23 +127,45 @@ n1663.colorList = list("colors"=c("#FF7F00","#1F78B4","#33A02C","#A6CEE3","#CAB2
 n1079.colorList = list("colors"=c("#FF7F00","#1F78B4","#33A02C","#A6CEE3","#CAB2D6","#B2DF8A","#FB9A99","#E31A1C","#8B0000"),
                        "clusters"=c("3","7","5","2","8","9","1","4","6"),
                        "annotation"=c("Vasc","L1","L2","L3","GABA","L5","L6","WM 1","WM 2"))
+#1104 precast color list
+n1104.colorList = list("colors"=c("#FF7F00","#1F78B4","#33A02C","#A6CEE3","#FDBF6F","#B2DF8A","#FB9A99","#E31A1C","#CAB2D6"),
+                       "clusters"=c("6","4","2","1","8","9","7","3","5"),
+                       "annotation"=c("Vasc","L1","L2","L3 1","L3 2","L5","L6","WM","GABA"))
 
-n1663.plot = plotPCAs(spe, "PCA_1663", n1663.colorList, ylimits=c(-4,4))
-ggsave(file="plots/05_clustering/eval-PCA_n1663.png", gridExtra::grid.arrange(n1663.plot[["page1top"]][[1]], n1663.plot[["page1top"]][[2]], 
-	n1663.plot[["page1bot"]][[1]], n1663.plot[["page1bot"]][[2]], n1663.plot[["page1bot"]][[3]], n1663.plot[["page1bot"]][[4]],
-	layout_matrix=rbind(c(1,1,2,2),c(3,4,5,6),c(3,4,5,6))),
-	height=8, width=11, units="in", bg="white")
+#n1663.plot = plotPCAs(spe, "PCA_1663", n1663.colorList, ylimits=c(-4,4))
+#ggsave(file="plots/05_clustering/eval-PCA_n1663.png", gridExtra::grid.arrange(n1663.plot[["page1top"]][[1]], n1663.plot[["page1top"]][[2]], 
+#	n1663.plot[["page1bot"]][[1]], n1663.plot[["page1bot"]][[2]], n1663.plot[["page1bot"]][[3]], n1663.plot[["page1bot"]][[4]],
+#	layout_matrix=rbind(c(1,1,2,2),c(3,4,5,6),c(3,4,5,6))),
+#	height=8, width=11, units="in", bg="white")
 #do.call(gridExtra::grid.arrange, c(check3[["page2"]], ncol=3))
 #do.call(gridExtra::grid.arrange, c(check3[["page3"]], ncol=3))
 #dev.off()
-cat("\nSaved to: plots/05_clustering/eval-PCA_n1663.png\n")
+#cat("\nSaved to: plots/05_clustering/eval-PCA_n1663.png\n")
 
-n1079.plot = plotPCAs(spe, "PCA_1079", n1079.colorList, ylimits=c(-5,5))
-ggsave(file="plots/05_clustering/eval-PCA_n1079.png", gridExtra::grid.arrange(n1079.plot[["page1top"]][[1]], n1079.plot[["page1top"]][[2]],
+#n1079.plot = plotPCAs(spe, "PCA_1079", n1079.colorList, ylimits=c(-5,5))
+#ggsave(file="plots/05_clustering/eval-PCA_n1079.png", gridExtra::grid.arrange(n1079.plot[["page1top"]][[1]], n1079.plot[["page1top"]][[2]],
+#        n1079.plot[["page1bot"]][[1]], n1079.plot[["page1bot"]][[2]], n1079.plot[["page1bot"]][[3]], n1079.plot[["page1bot"]][[4]],
+#        layout_matrix=rbind(c(1,1,2,2),c(3,4,5,6),c(3,4,5,6))),
+#        height=8, width=11, units="in", bg="white")
+#cat("\nSaved to: plots/05_clustering/eval-PCA_n1079.png\n")
+
+#n1104.plot = plotPCAs(spe, "PCA_1104", n1104.colorList, ylimits=c(-5,5))
+#ggsave(file="plots/05_clustering/eval-PCA_n1104.png", gridExtra::grid.arrange(n1104.plot[["page1top"]][[1]], n1104.plot[["page1top"]][[2]],
+#        n1104.plot[["page1bot"]][[1]], n1104.plot[["page1bot"]][[2]], n1104.plot[["page1bot"]][[3]], n1104.plot[["page1bot"]][[4]],
+#        layout_matrix=rbind(c(1,1,2,2),c(3,4,5,6),c(3,4,5,6))),
+#        height=8, width=11, units="in", bg="white")
+#cat("\nSaved to: plots/05_clustering/eval-PCA_n1104.png\n")
+
+load("processed-data/05_clustering/BayesSpace/spe_fastMNN_n1079-k10-ordered-merge.Rdata")
+stopifnot(identical(rownames(mnn), rownames(colData(spe))))
+reducedDim(spe, "MNN_1079") <- mnn$corrected
+
+n1079.plot = plotPCAs(spe, "MNN_1079", n1079.colorList, ylimits=c(-5,5))
+ggsave(file="plots/05_clustering/eval-MNN_n1079.png", gridExtra::grid.arrange(n1079.plot[["page1top"]][[1]], n1079.plot[["page1top"]][[2]],
         n1079.plot[["page1bot"]][[1]], n1079.plot[["page1bot"]][[2]], n1079.plot[["page1bot"]][[3]], n1079.plot[["page1bot"]][[4]],
         layout_matrix=rbind(c(1,1,2,2),c(3,4,5,6),c(3,4,5,6))),
         height=8, width=11, units="in", bg="white")
-cat("\nSaved to: plots/05_clustering/eval-PCA_n1079.png\n")
+cat("\nSaved to: plots/05_clustering/eval-MNN_n1079.png\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()
