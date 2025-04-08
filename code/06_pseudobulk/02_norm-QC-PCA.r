@@ -5,9 +5,9 @@ suppressPackageStartupMessages({
 	library(edgeR)
 	library(scuttle)
 	library(scater)
-	library(batchelor)
-	library(BiocParallel)
-	library(dplyr)
+	#library(batchelor)
+	#library(BiocParallel)
+	#library(dplyr)
 	library(ggplot2)
 })
 set.seed(123)
@@ -112,7 +112,7 @@ cdata= as.data.frame(colData(spe_pseudo))
 #  geom_boxplot()+scale_y_log10()+
 #  geom_point(data=filter(cdata, detected<8000), color="red3")+
 #  theme_bw()
-cdata2 = filter(cdata, detected>8000)
+cdata2 = cdata[cdata$detected>8000,]
 table(cdata2[,c("combined_cluster","condition","sex")])
 #FEMALE
 #.................condition
@@ -147,7 +147,7 @@ p1 <- ggplot(cdata, aes(x=condition, y=ncells))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+                     
   facet_grid(cols=vars(combined_cluster))+
-  scale_shape_manual(values=c(16,1))+
+  scale_shape_manual(values=c(19,1))+
   scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
   theme_bw()+labs(title="Number of spots per pseudobulked sample", y="ncells")+
   theme(strip.background=element_rect(fill=NA, color=NA))
@@ -156,7 +156,7 @@ p2 <- ggplot(cdata, aes(x=condition, y=sum))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
   facet_grid(cols=vars(combined_cluster))+
-  scale_y_log10()+scale_shape_manual(values=c(16,1))+
+  scale_y_log10()+scale_shape_manual(values=c(19,1))+
   scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
   theme_bw()+labs(title="Library size per pseudobulked sample", y="sum UMI (log10 scale)")+
   theme(strip.background=element_rect(fill=NA, color=NA))
@@ -165,7 +165,7 @@ p3 <- ggplot(cdata, aes(x=condition, y=subsets_mito_percent))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
   facet_grid(cols=vars(combined_cluster))+
-  scale_shape_manual(values=c(16,1))+ylim(0,45)+
+  scale_shape_manual(values=c(19,1))+ylim(0,45)+
   scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
   theme_bw()+labs(title="Fraction of chrM reads per pseudobulked sample", y="subsets_mito_percent")+
   theme(strip.background=element_rect(fill=NA, color=NA))
@@ -174,7 +174,7 @@ p4 <- ggplot(cdata, aes(x=condition, y=subsets_ribo_percent))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
   facet_grid(cols=vars(combined_cluster))+
-  scale_shape_manual(values=c(16,1))+ylim(0,13)+
+  scale_shape_manual(values=c(19,1))+ylim(0,13)+
   scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
   theme_bw()+labs(title="Fraction of RPS|RPL reads per pseudobulked sample", y="subsets_ribo_percent")+
   theme(strip.background=element_rect(fill=NA, color=NA))
@@ -205,65 +205,99 @@ names(exp.vars.colors) = exp.vars
 
 spe_pseudo <- runPCA(spe_pseudo, subset_row=n1663.ids, exprs_values="logcounts", name="PCA_1663")
 p1 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", variables=exp.vars)+
-	scale_y_continuous()+scale_color_manual(values=exp.vars.colors)
+	scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
 p2 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", npcs_to_plot=20, variables=exp.vars)+
-	scale_y_continuous()+scale_color_manual(values=exp.vars.colors)
+	scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
 p3 <- plotReducedDim(spe_pseudo, dimred="PCA_1663", ncomponents=2, colour_by = "combined_cluster", point_alpha=1)+
-	scale_color_manual(values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
+	scale_color_manual("", values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
 p4 <- plotPCA(spe_pseudo, dimred="PCA_1663", ncomponents=4, colour_by = "combined_cluster")+
-	scale_color_manual(values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
+	scale_color_manual("", values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
 
-ggsave("plots/06_pseudobulk/PCA-1663_eval.png", gridExtra::grid.arrange(p1, p2, p3, p4, layout_matrix=cbind(c(1,3,3),c(2,4,4))),
+#retroactively modify linewidth and point size
+change_linewidth = function(.plot) {
+        m = ggplot_build(.plot)
+        m$data[[1]]$size = 2
+        m$data[[2]]$linewidth = 1
+        m1 = ggplot_gtable(m)
+        return(m1)
+}
+q1 <- change_linewidth(p1)
+q2 <- change_linewidth(p2)
+q4 = ggplot_build(p4)
+q4$data[[2]]$size = 1
+q4 = ggplot_gtable(q4)
+
+ggsave("plots/06_pseudobulk/PCA-1663_eval.png", gridExtra::grid.arrange(q1, q2, p3, q4, layout_matrix=cbind(c(1,3,3),c(2,4,4))),
 	bg="white", height=8, width=12, units="in")
 cat("\nPCA eval plots saved to: plots/06_pseudobulk/PCA-1663_eval.png\n")
 
+#look for correlation between important experimental design variables
+var.m = getVarianceExplained(spe_pseudo, variables=exp.vars)
+#par(mfrow=c(4,3))
+#for(i in colnames(var.m)) {
+#  qqnorm(var.m[,i], pch = 1, frame = FALSE, main=i)
+#  qqline(var.m[,i], col = "steelblue", lwd = 2) 
+#}
+#decidedly not normal distribution
+cor.var.m = cor(var.m, method="spearman")
+col_annot = data.frame(colMeans(var.m))
+colnames(col_annot) = "percVar"
+ann_colors = list(
+  percVar = colorRampPalette(c("white", "purple3", "black"), bias=1)(10)
+)
+hmp = pheatmap::pheatmap(cor.var.m,
+	annotation_col = col_annot, annotation_colors = ann_colors,
+	annotation_names_col=FALSE, annotation_legend=T)
+ggsave("plots/06_pseudobulk/variance-explained_experimental-design_heatmap.png",
+       hmp[[4]], bg="white", height=7, width=9, units="in")
+
 #batch correction
-samp.data = distinct(as.data.frame(colData(spe_pseudo)[,c("sample_id","brnum","condition","sex","round","age","PMI","RIN")]))
-ntcM = filter(samp.data, condition=="NTC", sex=="M") %>% mutate(round=factor(round, levels=c("r2","r1","r3"))) %>% arrange(round) %>% pull(brnum)
-ntcF = filter(samp.data, condition=="NTC", sex=="F") %>% mutate(round=factor(round, levels=c("r2","r1","r3"))) %>% arrange(round) %>% pull(brnum)
-mddM = filter(samp.data, condition=="MDD", sex=="M") %>% mutate(round=factor(round, levels=c("r2","r1","r3"))) %>% arrange(round) %>% pull(brnum)
-mddF = filter(samp.data, condition=="MDD", sex=="F") %>% mutate(round=factor(round, levels=c("r2","r2_1","r1","r3"))) %>% arrange(round) %>% pull(brnum)
-bpdM = filter(samp.data, condition=="BPD", sex=="M") %>% mutate(round=factor(round, levels=c("r2","r1","r3"))) %>% arrange(round) %>% pull(brnum)
-bpdF = filter(samp.data, condition=="BPD", sex=="F") %>% mutate(round=factor(round, levels=c("r2","r1","r3"))) %>% arrange(round) %>% pull(brnum)
-m.order = list(ntcM, ntcF, mddM, mddF, bpdM, bpdF)
+#samp.data = distinct(as.data.frame(colData(spe_pseudo)[,c("sample_id","brnum","condition","sex","round","age","PMI","RIN")]))
+#ntcM = filter(samp.data, condition=="NTC", sex=="M") %>% mutate(round=factor(round, levels=c("r2","r1","r3"))) %>% arrange(round) %>% pull(brnum)
+#ntcF = filter(samp.data, condition=="NTC", sex=="F") %>% mutate(round=factor(round, levels=c("r2","r1","r3"))) %>% arrange(round) %>% pull(brnum)
+#mddM = filter(samp.data, condition=="MDD", sex=="M") %>% mutate(round=factor(round, levels=c("r2","r1","r3"))) %>% arrange(round) %>% pull(brnum)
+#mddF = filter(samp.data, condition=="MDD", sex=="F") %>% mutate(round=factor(round, levels=c("r2","r2_1","r1","r3"))) %>% arrange(round) %>% pull(brnum)
+#bpdM = filter(samp.data, condition=="BPD", sex=="M") %>% mutate(round=factor(round, levels=c("r2","r1","r3"))) %>% arrange(round) %>% pull(brnum)
+#bpdF = filter(samp.data, condition=="BPD", sex=="F") %>% mutate(round=factor(round, levels=c("r2","r1","r3"))) %>% arrange(round) %>% pull(brnum)
+#m.order = list(ntcM, ntcF, mddM, mddF, bpdM, bpdF)
 #sapply(m.order, length)
-set.seed(123)
-mnn <- reducedMNN(reducedDim(spe_pseudo,'PCA_1663'), batch=spe_pseudo$brnum, k=5, merge.order=m.order,
-                  BPPARAM=SerialParam())
-
-#check merge order
-lost.var = mnn@metadata$merge.info$lost.var
-
-m.order2 = c(100:119,80:99,61:79,41:60,21:40,1:20)
-names(m.order2) = c(ntcM, ntcF, mddM, mddF, bpdM, bpdF)
-lost.var2 = lost.var[,names(m.order2)[m.order2]]
-rownames(lost.var2) = 1:118
-
-samp.data = distinct(as.data.frame(colData(spe_pseudo)[,c("sample_id","brnum","condition","sex","round","age","PMI","RIN")]))
-col_annot = samp.data[,c("condition","sex")]
-rownames(col_annot) = samp.data$brnum
-annot_colors = list("condition"=c(NTC="black",MDD="#9e771b",BPD="#1b9e77"), "sex"=c(M="white",F="black"))
-
-row_annot = cbind.data.frame("batch.size"=mnn@metadata$merge.info[,"batch.size"])
-hmp = pheatmap::pheatmap(lost.var2, cluster_rows=F, cluster_cols=F, annotation_row = row_annot, show_rownames = F,
-                   annotation_col=col_annot, annotation_colors=annot_colors) 
-ggsave("plots/06_pseudobulk/MNN-1663_merge-order.png", hmp[[4]], bg="white", width=9, height=9, units="in")
-cat("\nMNN merge order heatmap saved to: plots/06_pseudobulk/MNN-1663_merge-order.png\n")
-
-#check impact of sample_id correction
-reducedDim(spe_pseudo, "MNN_1663") <- mnn$corrected
-p1 <- plotExplanatoryPCs(spe_pseudo, dimred="MNN_1663", variables=exp.vars)+
-	scale_y_continuous()+scale_color_manual(values=exp.vars.colors)
-p2 <- plotExplanatoryPCs(spe_pseudo, dimred="MNN_1663", npcs_to_plot=20, variables=exp.vars)+
-	scale_y_continuous()+scale_color_manual(values=exp.vars.colors)
-p3 <- plotReducedDim(spe_pseudo, dimred="MNN_1663", ncomponents=2, colour_by = "combined_cluster", point_alpha=1)+
-	scale_color_manual(values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
-p4 <- plotPCA(spe_pseudo, dimred="MNN_1663", ncomponents=4, colour_by = "combined_cluster")+
-	scale_color_manual(values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
-
-ggsave("plots/06_pseudobulk/MNN-1663_eval.png", gridExtra::grid.arrange(p1, p2, p3, p4, layout_matrix=cbind(c(1,3,3),c(2,4,4))),
-        bg="white", height=8, width=12, units="in")
-cat("\nMNN eval plots saved to: plots/06_pseudobulk/MNN-1663_eval.png\n")
+#set.seed(123)
+#mnn <- reducedMNN(reducedDim(spe_pseudo,'PCA_1663'), batch=spe_pseudo$brnum, k=5, merge.order=m.order,
+#                  BPPARAM=SerialParam())
+#
+##check merge order
+#lost.var = mnn@metadata$merge.info$lost.var
+#
+#m.order2 = c(100:119,80:99,61:79,41:60,21:40,1:20)
+#names(m.order2) = c(ntcM, ntcF, mddM, mddF, bpdM, bpdF)
+#lost.var2 = lost.var[,names(m.order2)[m.order2]]
+#rownames(lost.var2) = 1:118
+#
+#samp.data = distinct(as.data.frame(colData(spe_pseudo)[,c("sample_id","brnum","condition","sex","round","age","PMI","RIN")]))
+#col_annot = samp.data[,c("condition","sex")]
+#rownames(col_annot) = samp.data$brnum
+#annot_colors = list("condition"=c(NTC="black",MDD="#9e771b",BPD="#1b9e77"), "sex"=c(M="white",F="black"))
+#
+#row_annot = cbind.data.frame("batch.size"=mnn@metadata$merge.info[,"batch.size"])
+#hmp = pheatmap::pheatmap(lost.var2, cluster_rows=F, cluster_cols=F, annotation_row = row_annot, show_rownames = F,
+#                   annotation_col=col_annot, annotation_colors=annot_colors) 
+#ggsave("plots/06_pseudobulk/MNN-1663_merge-order.png", hmp[[4]], bg="white", width=9, height=9, units="in")
+#cat("\nMNN merge order heatmap saved to: plots/06_pseudobulk/MNN-1663_merge-order.png\n")
+#
+##check impact of sample_id correction
+#reducedDim(spe_pseudo, "MNN_1663") <- mnn$corrected
+#p1 <- plotExplanatoryPCs(spe_pseudo, dimred="MNN_1663", variables=exp.vars)+
+#	scale_y_continuous()+scale_color_manual(values=exp.vars.colors)
+#p2 <- plotExplanatoryPCs(spe_pseudo, dimred="MNN_1663", npcs_to_plot=20, variables=exp.vars)+
+#	scale_y_continuous()+scale_color_manual(values=exp.vars.colors)
+#p3 <- plotReducedDim(spe_pseudo, dimred="MNN_1663", ncomponents=2, colour_by = "combined_cluster", point_alpha=1)+
+#	scale_color_manual(values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
+#p4 <- plotPCA(spe_pseudo, dimred="MNN_1663", ncomponents=4, colour_by = "combined_cluster")+
+#	scale_color_manual(values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
+#
+#ggsave("plots/06_pseudobulk/MNN-1663_eval.png", gridExtra::grid.arrange(p1, p2, p3, p4, layout_matrix=cbind(c(1,3,3),c(2,4,4))),
+#        bg="white", height=8, width=12, units="in")
+#cat("\nMNN eval plots saved to: plots/06_pseudobulk/MNN-1663_eval.png\n")
 
 
 save(spe_pseudo, file="processed-data/06_pseudobulk/spe_n119_pseudo_sample-comb-clus_norm-filt.Rdata")

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=5G
+#SBATCH --mem=3G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
 #SBATCH --job-name=norm_QC_PCA
