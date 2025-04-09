@@ -141,7 +141,7 @@ table(cdata2[,c("combined_cluster","condition","sex")])
 cat("\nFilter out spots with low # detected genes...\n")
 spe_pseudo = spe_pseudo[,spe_pseudo$detected>8000]
 dim(spe_pseudo)
-
+cdata = as.data.frame(colData(spe_pseudo))
 #boxplots of QC metrics by condition and sex
 p1 <- ggplot(cdata, aes(x=condition, y=ncells))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
@@ -161,7 +161,16 @@ p2 <- ggplot(cdata, aes(x=condition, y=sum))+
   theme_bw()+labs(title="Library size per pseudobulked sample", y="sum UMI (log10 scale)")+
   theme(strip.background=element_rect(fill=NA, color=NA))
 
-p3 <- ggplot(cdata, aes(x=condition, y=subsets_mito_percent))+
+p3 <- ggplot(cdata, aes(x=condition, y=detected))+
+  ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
+  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+  facet_grid(cols=vars(combined_cluster))+
+  scale_shape_manual(values=c(19,1))+
+  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  theme_bw()+labs(title="Unique detected genes per pseudobulked sample", y="detected")+
+  theme(strip.background=element_rect(fill=NA, color=NA))
+
+p4 <- ggplot(cdata, aes(x=condition, y=subsets_mito_percent))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
   facet_grid(cols=vars(combined_cluster))+
@@ -170,14 +179,14 @@ p3 <- ggplot(cdata, aes(x=condition, y=subsets_mito_percent))+
   theme_bw()+labs(title="Fraction of chrM reads per pseudobulked sample", y="subsets_mito_percent")+
   theme(strip.background=element_rect(fill=NA, color=NA))
 
-p4 <- ggplot(cdata, aes(x=condition, y=subsets_ribo_percent))+
-  ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
-  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
-  facet_grid(cols=vars(combined_cluster))+
-  scale_shape_manual(values=c(19,1))+ylim(0,13)+
-  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
-  theme_bw()+labs(title="Fraction of RPS|RPL reads per pseudobulked sample", y="subsets_ribo_percent")+
-  theme(strip.background=element_rect(fill=NA, color=NA))
+#p4 <- ggplot(cdata, aes(x=condition, y=subsets_ribo_percent))+
+#  ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
+#  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+#  facet_grid(cols=vars(combined_cluster))+
+#  scale_shape_manual(values=c(19,1))+ylim(0,13)+
+#  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+#  theme_bw()+labs(title="Fraction of RPS|RPL reads per pseudobulked sample", y="subsets_ribo_percent")+
+#  theme(strip.background=element_rect(fill=NA, color=NA))
 
 ggsave("plots/06_pseudobulk/filtered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
 	bg="white", width=12, height=12, units="in")
