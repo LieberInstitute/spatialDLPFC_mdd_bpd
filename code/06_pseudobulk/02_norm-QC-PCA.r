@@ -312,6 +312,13 @@ ggsave("plots/06_pseudobulk/variance-explained_experimental-design_heatmap.png",
 save(spe_pseudo, file="processed-data/06_pseudobulk/spe_n119_pseudo_sample-comb-clus_norm-filt.Rdata")
 cat("\nFiltered, normalized pseudobulk spe saved to: processed-data/06_pseudobulk/spe_n119_pseudo_sample-comb-clus_norm-filt.Rdata\n")
 
+#update spe tracker
+write(c(paste("********** QC filtered and normalized pseudobulked spe on",format(Sys.time()),"EST"),
+        "********** Old file location: processed-data/06_pseudobulk/spe_n119_pseudo_sample-comb-clus.Rdata",
+        "********** New file location: processed-data/06_pseudobulk/spe_n119_pseudo_sample-comb-clus_norm-filt.Rdata",
+        "********** Source code: code/06_pseudobulk/02_norm-QC-PCA.r",
+        "**********","**********","**********"), "spe_tracker_current.txt", append=TRUE)
+
 cat("\n\nReproducibility information:\n")
 format(Sys.time(), tz="EST")
 proc.time()

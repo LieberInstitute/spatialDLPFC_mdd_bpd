@@ -48,6 +48,14 @@ Sys.time()
 save(spe_pseudo, file="processed-data/06_pseudobulk/spe_n119_pseudo_sample-comb-clus.Rdata")
 cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/spe_n119_pseudo_sample-comb-clus.Rdata")
 
+#update spe tracker
+write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),
+        "******* Old file location: processed-data/04_feature_selection/spe_n120_postQC_norm_",
+        "******* New file location: processed-data/06_pseudobulk/spe_n119_pseudo_sample-comb-clus.Rdata",
+        "******* Source code: code/06_pseudobulk/01_create_pseudobulk.r",
+        "*******","*******","*******"), "spe_tracker_current.txt", append=TRUE)
+
+
 cat("\n\nReproducibility information:\n")
 Sys.time()
 proc.time()
