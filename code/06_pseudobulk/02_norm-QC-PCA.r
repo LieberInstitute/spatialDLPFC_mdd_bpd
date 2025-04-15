@@ -112,40 +112,9 @@ cdata= as.data.frame(colData(spe_pseudo))
 #  geom_boxplot()+scale_y_log10()+
 #  geom_point(data=filter(cdata, detected<8000), color="red3")+
 #  theme_bw()
-cdata2 = cdata[cdata$detected>8000,]
-table(cdata2[,c("combined_cluster","condition","sex")])
-#FEMALE
-#.................condition
-#combined_cluster NTC MDD BPD
-#............Vasc  20  20  20
-#............L1    20  20  20
-#............L2    20  20  20
-#............L3    20  20  20
-#............GABA  19  19  20
-#............L5    20  20  20
-#............L6    20  19  20
-#............WM    20  20  20
-
-#MALE
-#.................condition
-#combined_cluster NTC MDD BPD
-#............Vasc  20  19  20
-#............L1    19  19  20
-#............L2    20  19  20
-#............L3    20  19  20
-#............GABA  18  17  19
-#............L5    20  19  20
-#............L6    20  19  20
-#............WM    20  18  20
-
-cat("\nFilter out spots with low # detected genes...\n")
-spe_pseudo = spe_pseudo[,spe_pseudo$detected>8000]
-dim(spe_pseudo)
-cdata = as.data.frame(colData(spe_pseudo))
-#boxplots of QC metrics by condition and sex
 p1 <- ggplot(cdata, aes(x=condition, y=ncells))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
-  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+                     
+  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
   facet_grid(cols=vars(combined_cluster))+
   scale_shape_manual(values=c(19,1))+
   scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
@@ -179,21 +148,11 @@ p4 <- ggplot(cdata, aes(x=condition, y=subsets_mito_percent))+
   theme_bw()+labs(title="Fraction of chrM reads per pseudobulked sample", y="subsets_mito_percent")+
   theme(strip.background=element_rect(fill=NA, color=NA))
 
-#p4 <- ggplot(cdata, aes(x=condition, y=subsets_ribo_percent))+
-#  ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
-#  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
-#  facet_grid(cols=vars(combined_cluster))+
-#  scale_shape_manual(values=c(19,1))+ylim(0,13)+
-#  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
-#  theme_bw()+labs(title="Fraction of RPS|RPL reads per pseudobulked sample", y="subsets_ribo_percent")+
-#  theme(strip.background=element_rect(fill=NA, color=NA))
+ggsave("plots/06_pseudobulk/unfiltered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
+        bg="white", width=12, height=12, units="in")
+cat("\nQC plots saved to: plots/06_pseudobulk/unfiltered_QC-metrics.png\n")
 
-ggsave("plots/06_pseudobulk/filtered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
-	bg="white", width=12, height=12, units="in")
-cat("\nQC plots saved to: plots/06_pseudobulk/filtered_QC-metrics.png\n")
-
-
-#pca
+#PCA before filtering reveals one component dominated by low detected genes samples
 source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
 geneList <- readRDS("processed-data/04_feature_selection/nnSVG-eval_geneList.rds")
 n1663.ids = rownames(spe_pseudo)[rowData(spe_pseudo)$gene_name %in% geneList$qual_genes]
@@ -214,13 +173,13 @@ names(exp.vars.colors) = exp.vars
 
 spe_pseudo <- runPCA(spe_pseudo, subset_row=n1663.ids, exprs_values="logcounts", name="PCA_1663")
 p1 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", variables=exp.vars)+
-	scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
+        scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
 p2 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", npcs_to_plot=20, variables=exp.vars)+
-	scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
+        scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
 p3 <- plotReducedDim(spe_pseudo, dimred="PCA_1663", ncomponents=2, colour_by = "combined_cluster", point_alpha=1)+
-	scale_color_manual("", values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
+        scale_color_manual("", values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
 p4 <- plotPCA(spe_pseudo, dimred="PCA_1663", ncomponents=4, colour_by = "combined_cluster")+
-	scale_color_manual("", values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
+        scale_color_manual("", values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
 
 #retroactively modify linewidth and point size
 change_linewidth = function(.plot) {
@@ -236,9 +195,113 @@ q4 = ggplot_build(p4)
 q4$data[[2]]$size = 1
 q4 = ggplot_gtable(q4)
 
-ggsave("plots/06_pseudobulk/PCA-1663_eval.png", gridExtra::grid.arrange(q1, q2, p3, q4, layout_matrix=cbind(c(1,3,3),c(2,4,4))),
+ggsave("plots/06_pseudobulk/PCA-1663_unfiltered_eval.png", gridExtra::grid.arrange(q1, q2, p3, q4, layout_matrix=cbind(c(1,3,3),c(2,4,4))),
+        bg="white", height=8, width=12, units="in")
+cat("\nPCA eval plots saved to: plots/06_pseudobulk/PCA-1663_unfiltered_eval.png\n")
+
+
+cdata2 = cdata[cdata$detected>8000,]
+table(cdata2[,c("combined_cluster","condition","sex")])
+#FEMALE
+#.................condition
+#combined_cluster NTC MDD BPD
+#............Vasc  20  20  20
+#............L1    20  20  20
+#............L2    20  20  20
+#............L3    20  20  20
+#............GABA  19  19  20
+#............L5    20  20  20
+#............L6    20  19  20
+#............WM    20  20  20
+
+#MALE
+#.................condition
+#combined_cluster NTC MDD BPD
+#............Vasc  20  19  20
+#............L1    19  19  20
+#............L2    20  19  20
+#............L3    20  19  20
+#............GABA  18  17  19
+#............L5    20  19  20
+#............L6    20  19  20
+#............WM    20  18  20
+
+cat("\nFilter out spots with low # detected genes...\n")
+spe_pseudo = spe_pseudo[,spe_pseudo$detected>8000]
+dim(spe_pseudo)
+
+#boxplots of QC metrics by condition and sex
+p1 <- ggplot(cdata2, aes(x=condition, y=ncells))+
+  ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
+  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+                     
+  facet_grid(cols=vars(combined_cluster))+
+  scale_shape_manual(values=c(19,1))+
+  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  theme_bw()+labs(title="Number of spots per pseudobulked sample", y="ncells")+
+  theme(strip.background=element_rect(fill=NA, color=NA))
+
+p2 <- ggplot(cdata2, aes(x=condition, y=sum))+
+  ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
+  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+  facet_grid(cols=vars(combined_cluster))+
+  scale_y_log10()+scale_shape_manual(values=c(19,1))+
+  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  theme_bw()+labs(title="Library size per pseudobulked sample", y="sum UMI (log10 scale)")+
+  theme(strip.background=element_rect(fill=NA, color=NA))
+
+p3 <- ggplot(cdata2, aes(x=condition, y=detected))+
+  ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
+  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+  facet_grid(cols=vars(combined_cluster))+
+  scale_shape_manual(values=c(19,1))+
+  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  theme_bw()+labs(title="Unique detected genes per pseudobulked sample", y="detected")+
+  theme(strip.background=element_rect(fill=NA, color=NA))
+
+p4 <- ggplot(cdata2, aes(x=condition, y=subsets_mito_percent))+
+  ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
+  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+  facet_grid(cols=vars(combined_cluster))+
+  scale_shape_manual(values=c(19,1))+ylim(0,45)+
+  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  theme_bw()+labs(title="Fraction of chrM reads per pseudobulked sample", y="subsets_mito_percent")+
+  theme(strip.background=element_rect(fill=NA, color=NA))
+
+#p4 <- ggplot(cdata, aes(x=condition, y=subsets_ribo_percent))+
+#  ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
+#  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+#  facet_grid(cols=vars(combined_cluster))+
+#  scale_shape_manual(values=c(19,1))+ylim(0,13)+
+#  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+#  theme_bw()+labs(title="Fraction of RPS|RPL reads per pseudobulked sample", y="subsets_ribo_percent")+
+#  theme(strip.background=element_rect(fill=NA, color=NA))
+
+ggsave("plots/06_pseudobulk/filtered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
+	bg="white", width=12, height=12, units="in")
+cat("\nQC plots saved to: plots/06_pseudobulk/filtered_QC-metrics.png\n")
+
+
+#pca after filtering
+spe_pseudo <- runPCA(spe_pseudo, subset_row=n1663.ids, exprs_values="logcounts", name="PCA_1663")
+p1 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", variables=exp.vars)+
+	scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
+p2 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", npcs_to_plot=20, variables=exp.vars)+
+	scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
+p3 <- plotReducedDim(spe_pseudo, dimred="PCA_1663", ncomponents=2, colour_by = "combined_cluster", point_alpha=1)+
+	scale_color_manual("", values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
+p4 <- plotPCA(spe_pseudo, dimred="PCA_1663", ncomponents=4, colour_by = "combined_cluster")+
+	scale_color_manual("", values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
+
+#retroactively modify linewidth and point size
+q1 <- change_linewidth(p1)
+q2 <- change_linewidth(p2)
+q4 = ggplot_build(p4)
+q4$data[[2]]$size = 1
+q4 = ggplot_gtable(q4)
+
+ggsave("plots/06_pseudobulk/PCA-1663_filtered_eval.png", gridExtra::grid.arrange(q1, q2, p3, q4, layout_matrix=cbind(c(1,3,3),c(2,4,4))),
 	bg="white", height=8, width=12, units="in")
-cat("\nPCA eval plots saved to: plots/06_pseudobulk/PCA-1663_eval.png\n")
+cat("\nPCA eval plots saved to: plots/06_pseudobulk/PCA-1663_filtered_eval.png\n")
 
 #look for correlation between important experimental design variables
 var.m = getVarianceExplained(spe_pseudo, variables=exp.vars)

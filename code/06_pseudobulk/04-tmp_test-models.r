@@ -14,7 +14,7 @@ load("processed-data/06_pseudobulk/spe_n119_pseudo_sample-comb-clus_norm-filt.Rd
 dim(spe_pseudo) # 12397   942
 
 layer_mod <- registration_model(spe_pseudo,
-       covars = c("sex","slide","detected","ncells"),
+       covars = c("sex","slide","detected","ncells", "age"),
        var_registration = "combined_cluster"
 )
 
@@ -23,14 +23,14 @@ layer_block_cor <- registration_block_cor(spe_pseudo, registration_model = layer
 )
 
 layer_res <- registration_stats_enrichment(spe_pseudo, block_cor = layer_block_cor,
-  covars = c("sex","slide","detected","ncells"),
+  covars = c("sex","slide","detected","ncells", "age"),
   var_registration = "combined_cluster",
   gene_ensembl = "gene_id",
   gene_name = "gene_name"
 )
 
-write.csv(layer_res, "processed-data/06_pseudobulk/results_layer-enrichment_covars-detected-ncells-sex-slide.csv", row.names=T)
-cat("\nLayer enrichment test results saved to: processed-data/06_pseudobulk/results_layer-enrichment_covars-detected-ncells-sex-slide.csv\n")
+write.csv(layer_res, "processed-data/06_pseudobulk/results_layer-enrichment_covars-age-detected-ncells-sex-slide.csv", row.names=T)
+cat("\nLayer enrichment test results saved to: processed-data/06_pseudobulk/results_layer-enrichment_covars-age-detected-ncells-sex-slide.csv\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()
