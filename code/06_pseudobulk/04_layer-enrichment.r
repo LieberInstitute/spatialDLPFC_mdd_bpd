@@ -33,7 +33,7 @@ dim(spe_pseudo) # 12397   942
 #cat("\nLayer enrichment test results saved to: processed-data/06_pseudobulk/results_layer-enrichment_covars-detected-sex-slide.csv\n")
 
 ################################################### actual spatial registration
-layer_res = read.csv("processed-data/06_pseudobulk/results_layer-enrichment_covars-detected-ncells-sex-slide.csv", row.names=1)
+layer_res = read.csv("processed-data/06_pseudobulk/results_layer-enrichment_covars-age-detected-ncells-sex-slide.csv", row.names=1)
 
 #follow spatialLIBD spatial registration tutorial 
 layer_modeling_results <- fetch_data(type = "modeling_results")
@@ -48,11 +48,11 @@ cor_layer <- layer_stat_cor(
   top_n = 100
 )
 
-ggsave("plots/06_pseudobulk/layer-enrich_spatial-registration_covars-detected-ncells-sex-slide.png",
+ggsave("plots/06_pseudobulk/layer-enrich_spatial-registration_covars-age-detected-ncells-sex-slide.png",
 	layer_stat_cor_plot(cor_layer[c("Vasc","L1","L2","L3","GABA","L5","L6","WM"),], max = max(cor_layer)),
 	bg="white", height=7, width=7, units="in"
 )
-cat("\nSpatial registration plot saved to: plots/06_pseudobulk/layer-enrich_spatial-registration_covars-detected-ncells-sex-slide.png\n")
+cat("\nSpatial registration plot saved to: plots/06_pseudobulk/layer-enrich_spatial-registration_covars-age-detected-ncells-sex-slide.png\n")
 ################################################### 
 
 #create cluster marker csv and explore top markers
@@ -91,8 +91,8 @@ cluster.markers = bind_rows(clus1.df, filter(clus2.df, sig_clus %in% c("L1/L2", 
 	#c("Vasc","Vasc/L1","L1","L2","L2/GABA","L2/L3","L3","GABA","L5","L6","L6/WM","WM","Vasc/WM","L1/WM")))
 table(cluster.markers$sig_clus)
 
-write.csv(cluster.markers, "processed-data/06_pseudobulk/layer-enrich_covars-detected-ncells-sex-slide_fdr-0001-logfc-1_cluster-markers.csv", row.names=F)
-cat("\nCluster markers dataframe saved to: processed-data/06_pseudobulk/layer-enrich_covars-detected-ncells-sex-slide_fdr-0001-logfc-1_cluster-markers.csv\n")
+write.csv(cluster.markers, "processed-data/06_pseudobulk/layer-enrich_covars-age-detected-ncells-sex-slide_fdr-0001-logfc-1_cluster-markers.csv", row.names=F)
+cat("\nCluster markers dataframe saved to: processed-data/06_pseudobulk/layer-enrich_covars-age-detected-ncells-sex-slide_fdr-0001-logfc-1_cluster-markers.csv\n")
 
 #plot top markers
 plot.genes = c(filter(cluster.markers, !sig_clus %in%  c("Vasc","L1","GABA","WM"))$gene,
@@ -139,8 +139,8 @@ hmp = pheatmap(m1[row_annot$gene_id,], cluster_rows = F,
                    annotation_row = row_annot_df, annotation_col= col_annot, annotation_colors = annot_colors,
                    scale="row", show_rownames = F)
 
-ggsave("plots/06_pseudobulk/layer-enrich_top-cluster-markers_covars-detected-ncells-sex-slide.png", hmp[[4]], bg="white", height=7, width=7, units="in")
-cat("\nTop layer markers heatmap saved to: plots/06_pseudobulk/layer-enrich_top-cluster-markers_covars-detected-ncells-sex-slide.png\n")
+ggsave("plots/06_pseudobulk/layer-enrich_top-cluster-markers_covars-age-detected-ncells-sex-slide.png", hmp[[4]], bg="white", height=7, width=7, units="in")
+cat("\nTop layer markers heatmap saved to: plots/06_pseudobulk/layer-enrich_top-cluster-markers_covars-age-detected-ncells-sex-slide.png\n")
 
 
 cat("\n\nReproducibility information:\n")
