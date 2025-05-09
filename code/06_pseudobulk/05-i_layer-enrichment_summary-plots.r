@@ -4,6 +4,29 @@ library(ggplot2)
 
 load("processed-data/06_pseudobulk/spe_n119_pseudo_sample-comb-clus_norm-filt.Rdata")
 
+#pseudobulk breakdown by sex and condition
+cdata$cond_sex = factor(paste(cdata$condition, cdata$sex), levels=c("NTC M","NTC F","MDD M","MDD F","BPD M","BPD F"))
+source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
+fill.colors = precast.colorList[["n1663_k9"]][["colors"]][1:8]
+names(fill.colors) = precast.colorList[["n1663_k9"]][["annotation"]][1:8]
+
+p1 <- ggplot(group_by(cdata, cond_sex, combined_cluster) %>% summarise(n_total=sum(ncells)), 
+       aes(x=cond_sex, y=n_total, fill=combined_cluster))+
+  geom_bar(stat="identity", position="stack")+
+  scale_fill_manual(values=fill.colors)+
+  labs(y="# spots", x="", fill="")+
+  theme_bw()
+
+p2 <- ggplot(group_by(cdata, cond_sex, combined_cluster) %>% summarise(n_total=sum(ncells)), 
+             aes(x=cond_sex, y=n_total, fill=combined_cluster))+
+  geom_bar(stat="identity", position="fill")+
+  scale_fill_manual(values=fill.colors)+
+  labs(y="prop. spots", x="", fill="")+
+  theme_bw()
+
+gridExtra::grid.arrange(p1, p2, ncol=1)
+
+
 avg.expr = read.csv("processed-data/06_pseudobulk/filtered-genes_avg-logcounts.csv", row.names=1)
 layer_res = read.csv("processed-data/06_pseudobulk/results_layer-enrichment_covars-age-detected-ncells-sex-slide.csv", row.names=1)
 
@@ -144,6 +167,9 @@ ggsave("plots/06_pseudobulk/test_layer-enrichment_violin.png",
 
 #spot plots to highlight
 library(HDF5Array)
+library(escheR)
+source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
+
 spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n120_postQC_norm_")
 clusters = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
 identical(rownames(colData(spe)), rownames(clusters))
@@ -174,7 +200,42 @@ ggsave("plots/06_pseudobulk/test_layer-enrichment_spot-plots.png",
                                layout_matrix=cbind(1:4,5:8)),
        bg="white", width=6, height=8)
 
+#RORB comparison
+feat = c("HPCAL1","CUX1","CUX2","SATB2","RORB","PCP4","KCNIP2","BCL11B","FEZF2","TRABD2A")
+feat.id = rownames(spe_pseudo)[rowData(spe_pseudo)$gene_name %in% feat]
+names(feat.id) = rowData(spe_pseudo)[feat.id, "gene_name"]
 
-library(escheR)
+lgcnts = logcounts(spe_pseudo)
+cdata = colData(spe_pseudo)
+rownames(cdata) = paste(gsub("-","\\.",cdata$sample_id), as.character(cdata$combined_cluster), sep="_")
+colnames(lgcnts) = paste(gsub("-","\\.",cdata$sample_id), as.character(cdata$combined_cluster), sep="_")
+rownames(lgcnts) = rowData(spe_pseudo)$gene_name
+gm = rownames(cdata)[cdata$combined_cluster %in% c("L2","L3","L5","L6")]
+
+mtx1 = lgcnts[feat,gm]
+
+annot_row = data.frame("layer"=cdata[gm,"combined_cluster"])
+rownames(annot_row) = gm
+
 source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
+annot_colors = list("layer"=precast.colorList[["n1663_k9"]]$colors[c(3:4,6:7)])
+names(annot_colors$layer) = precast.colorList[["n1663_k9"]]$annotation[c(3:4,6:7)]
 
+library(pheatmap)
+mtx2 = t(mtx1)
+pheatmap(mtx2, annotation_row = annot_row, annotation_colors= annot_colors,
+         scale="column", center=T, cluster_cols=F, cluster_rows=T, show_rownames=F,
+         angle_col=90)
+pheatmap(mtx2[order(annot_row$layer),c("CUX1","SATB2","HPCAL1","CUX2","KCNIP2","RORB","PCP4","TRABD2A","FEZF2","BCL11B")], 
+         annotation_row = annot_row, annotation_colors= annot_colors,
+         cluster_cols=F, cluster_rows=F, show_rownames = F, angle_col=90)
+
+cdata$rorb = logcounts(spe_pseudo)[feat.id[["RORB"]],]
+ggplot(filter(as.data.frame(cdata), combined_cluster %in% c("L3","L5")) %>% 
+         select(sample_id, brnum, sex, condition, combined_cluster, rorb) %>%
+         tidyr::pivot_wider(names_from="combined_cluster", values_from="rorb"),
+       aes(x=L3, y=L5, color=condition))+
+  geom_point(size=2)+scale_color_manual(values=c("grey50","#9e771b","#1b9e77"))+
+  geom_abline(aes(slope=1, intercept=0))+
+  labs(title="RORB expression", x="L3 (log2 CPM)", y="L5 (log2 CPM)")+
+  theme_bw()+theme(aspect.ratio=.8, text=element_text(size=14))
