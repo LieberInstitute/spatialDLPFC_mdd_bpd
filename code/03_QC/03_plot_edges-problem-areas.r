@@ -46,50 +46,58 @@ table(spe2$edges_problem.areas_binary)
 spe2$problem_areas_grouped = as.factor(spe2$problem_areas_grouped)
 table(spe2$problem_areas_grouped)
 
-spe2$dummy_slide = spe2$slide
-colData(spe2)[spe2$slide=="V13B23-283","dummy_slide"] = "joint-283-339"
-colData(spe2)[spe2$slide=="V13B23-339","dummy_slide"] = "joint-283-339"
+spe2$slide2 = ifelse(spe2$slide=="V13B23-283","V13B23-339",spe2$slide)
+spe2$array2 = ifelse(spe2$slide=="V13B23-283", "B_1", spe2$array)
+spe2$sample_id2 = paste(spe2$slide2, spe2$array2)
 
-colData(spe2)$facet_violin = paste(spe2$round, spe2$dummy_slide)
-colData(spe2)$facet_violin = ifelse(spe2$dummy_slide=="joint-283-339", "joint-283-339", colData(spe2)$facet_violin)
-seed = levels(as.factor(colData(spe2)$facet_violin))
+recode.df = as.data.frame(colData(spe2)) %>% select(brnum, sample_id2, round, sample_id) %>% distinct() %>% arrange(round, sample_id2)
+recode.df$sample_id = ifelse(recode.df$brnum=="Br5366", paste("***",recode.df$sample_id), recode.df$sample_id)
+recode.df$sample_id3 = factor(recode.df$sample_id2, levels=recode.df$sample_id2, labels=paste(recode.df$sample_id, recode.df$round))
 
-colData(spe2)$facet_spots = paste(spe2$round, spe2$sample_id)
-colData(spe2)$facet_spots = ifelse(spe2$brnum=="Br5366", paste(spe2$facet_spots, spe2$brnum), spe2$facet_spots)
+spe2$sample_id2 = factor(spe2$sample_id2, levels=recode.df$sample_id2, labels=paste(recode.df$sample_id, recode.df$round))
 
-slideList2 = list(c(seed[2:6],seed[1]),seed[7:12], seed[13:18], seed[19:24], seed[25:30])
-slideList2 = lapply(slideList2, function(x) {
-	unlist(lapply(x, function(y)
-		sort(unique(colData(spe2)[spe2$facet_violin==y,"facet_spots"]))
-  ))
+
+#split samples into 5 lists of 24 (5 pages of 6 slides each)
+slideList = list(recode.df$sample_id3[1:24], recode.df$sample_id3[25:48], recode.df$sample_id3[49:72],
+                 recode.df$sample_id3[73:96], recode.df$sample_id3[97:120])
+
+slideList = lapply(slideList, function(x) {
+  spe_sub = spe2[,spe2$sample_id2 %in% x]
+  #modify spatialCoords so all capture areas start at 0
+  mod_spatialCoords = spatialCoords(spe_sub)
+  for (i in unique(spe_sub$sample_id)) {
+    tmp = mod_spatialCoords[colData(spe_sub)$sample_id==i,]
+    mod_spatialCoords[colData(spe_sub)$sample_id==i,1] = tmp[,1]-min(tmp[,1])
+    mod_spatialCoords[colData(spe_sub)$sample_id==i,2] = tmp[,2]-min(tmp[,2])
+  }
+  spatialCoords(spe_sub) <- mod_spatialCoords
+  return(spe_sub)
 })
 
 color.palette = c("navy","#00a000","grey80")
 names(color.palette) <- c("edge","problem area","none")
 
 #raw results (edges vs problem areas)
-cat("\nGenerating raw results spot plots...\n")
-plotList = lapply(slideList2, function(x) {
-        l1 = x; names(l1) = x
-        l1 = lapply(l1, function(y) spe2[,colData(spe2)$facet_spots==y])
-
-        lapply(1:length(l1), function(z)
-                suppressMessages(plotSpots(l1[[z]], annotate="edges_problem.areas_binary", #in_tissue=NULL,
-                        point_size=0.2,
+cat("\nGenerating edge results spot plots...\n")
+plotList = lapply(slideList, function(x) {
+        suppressMessages(plotSpots(x, annotate="edges_problem.areas_binary", #in_tissue=NULL,
+                        point_size=0.3, sample_id="sample_id2",
                         pal=color.palette)+
-                        geom_point(show.legend=TRUE, size=.1)+
+                        #geom_point(show.legend=TRUE, size=.1)+
                         scale_color_manual("",values=color.palette, drop=F)+
-                        labs(title=names(l1)[[z]])
-                )
+                        facet_wrap(vars(sample_id2), ncol=4)+
+			theme(plot.title=element_blank(),
+                           strip.background = element_rect(fill="transparent", color="transparent"))#,
+                           #panel.background=element_rect(fill="grey30"))
         )
 })
 
 pdf(file="plots/03_QC/edges-problem-areas_raw_spot-plots.pdf", width=12, height=16)
-PRECAST::drawFigs(plotList[[1]], layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
-PRECAST::drawFigs(plotList[[2]], layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
-PRECAST::drawFigs(plotList[[3]], layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
-PRECAST::drawFigs(plotList[[4]], layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
-PRECAST::drawFigs(plotList[[5]], layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
+	plotList[[1]]
+	plotList[[2]]
+	plotList[[3]]
+	plotList[[4]]
+	plotList[[5]]
 dev.off()
 cat("\nPlot saved to: plots/03_QC/edges-problem-areas_raw_spot-plots.pdf\n")
 
@@ -98,51 +106,48 @@ color.palette2 = c("skyblue","palegoldenrod","#00a000","black","grey80")
 names(color.palette2) <- c("edge","remove","flag","small","none")
 
 cat("\nGenerating grouped spot plots...\n")
-plotList2 = lapply(slideList2, function(x) {
-	l1 = x; names(l1) = x
-	l1 = lapply(l1, function(y) spe2[,colData(spe2)$facet_spots==y])
-
-	lapply(1:length(l1), function(z) 
-		suppressMessages(plotSpots(l1[[z]], annotate="problem_areas_grouped", #in_tissue=NULL, 
-			point_size=0.2,
+plotList2 = lapply(slideList, function(x) {
+	suppressMessages(plotSpots(x, annotate="problem_areas_grouped", #in_tissue=NULL, 
+			point_size=0.3, sample_id="sample_id2",
 			pal=color.palette2)+
-			geom_point(show.legend=TRUE, size=.1)+
+			#geom_point(show.legend=TRUE, size=.1)+
 			scale_color_manual("",values=color.palette2, drop=F)+
-			labs(title=names(l1)[[z]])
-		)
+			facet_wrap(vars(sample_id2), ncol=4)+
+			theme(plot.title=element_blank(),
+                           strip.background = element_rect(fill="transparent", color="transparent"))#,
+                           #panel.background=element_rect(fill="grey30"))
 	)
 })
 
 
 pdf(file="plots/03_QC/edges-problem-areas_grouped_spot-plots.pdf", width=12, height=16)
-PRECAST::drawFigs(plotList2[[1]], layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
-PRECAST::drawFigs(plotList2[[2]], layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
-PRECAST::drawFigs(plotList2[[3]], layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
-PRECAST::drawFigs(plotList2[[4]], layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
-PRECAST::drawFigs(plotList2[[5]], layout.dim = c(6, 4), common.legend = TRUE, legend.position = "right", align = "hv")
+        plotList2[[1]]
+        plotList2[[2]]
+        plotList2[[3]]
+        plotList2[[4]]
+        plotList2[[5]]
 dev.off()
 cat("\nPlot saved to: plots/03_QC/edges-problem-areas_grouped_spot-plots.pdf\n")
 
 
 #low UMI bar plot
 cat("\nGenerating # low UMI bar plot...\n")
-x_ordered = sort(unique(spe2$facet_spots))
-colData(spe2)$x_facets = ""
-colData(spe2)[spe2$facet_spots %in% x_ordered[1:30],"x_facets"] = "g1"
-colData(spe2)[spe2$facet_spots %in% x_ordered[31:60],"x_facets"] = "g2"
-colData(spe2)[spe2$facet_spots %in% x_ordered[61:90],"x_facets"] = "g3"
-colData(spe2)[spe2$facet_spots %in% x_ordered[91:120],"x_facets"] = "g4"
+colData(spe2)$box_facets = ""
+colData(spe2)[spe2$sample_id2 %in% recode.df$sample_id3[1:30],"box_facets"] = "g1"
+colData(spe2)[spe2$sample_id2 %in% recode.df$sample_id3[31:60],"box_facets"] = "g2"
+colData(spe2)[spe2$sample_id2 %in% recode.df$sample_id3[61:90],"box_facets"] = "g3"
+colData(spe2)[spe2$sample_id2 %in% recode.df$sample_id3[91:120],"box_facets"] = "g4"
 
 tmp = mutate(as.data.frame(colData(spe2)), lowumi = sum_umi<=100, 
 	     problem_areas_grouped=factor(problem_areas_grouped, levels=c("remove","flag","edge","small","none"))) %>%
-  group_by(x_facets, facet_spots, problem_areas_grouped) %>%
+  group_by(box_facets, sample_id2, problem_areas_grouped) %>%
   summarise(n_lowumi=sum(lowumi))
 
-p2 <- ggplot(tmp, aes(x=facet_spots, y=n_lowumi, fill=problem_areas_grouped))+
+p2 <- ggplot(tmp, aes(x=sample_id2, y=n_lowumi, fill=problem_areas_grouped))+
   geom_bar(stat="identity", position="stack", color="black", linewidth=.5)+
   scale_y_continuous(expand=expansion(add=c(0,20)))+
   scale_fill_manual(values=color.palette2)+
-  facet_wrap(vars(x_facets), ncol=1, scales="free_x")+
+  facet_wrap(vars(box_facets), ncol=1, scales="free_x")+
   labs(x="", y="# spots", fill="problem\nareas", title="Spots with <100 total UMI reads")+theme_bw()+
   theme_bw()+theme(#legend.position="bottom", 
     axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=7),
