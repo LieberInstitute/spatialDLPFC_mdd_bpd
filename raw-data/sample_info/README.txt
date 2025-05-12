@@ -4,6 +4,7 @@
 
 ### SOURCE 2
 "Visium_DATA_2025-01-22_1406.csv" was pulled from REDCap on January 22, 2025. This data sheet contains the donor brain number, Visium slide codes (e.g., V13B23-XXX), and array positions (e.g., A1) for many samples including the MBv samples.
+*During sample prep samples on slide 301, the samples were mounted in reverse intended order (instead of A-D they were mounted D-A). In May 2025 we discovered that the actual sample order was not reflected in REDCap. SCP corrected REDCap and JRT modified `code/02_build_spe/getMBvSampleInfo_function.r` to correct the metadata.*
 
 # Sequencing rounds
 Round 1: An initial sequencing run was performed on the first 6 non-pilot slides (V13F27-338, V13F27-348, V13Y10-020, V13Y10-021, V13Y10-022, V13Y10-023). 

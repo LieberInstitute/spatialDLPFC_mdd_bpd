@@ -15,7 +15,7 @@ echo "Node(s): ${SLURM_NODELIST}"
 echo "Node memory requested: ${SLURM_MEM_PER_NODE}"
 echo "n Tasks: ${SLURM_NTASKS}"
 
-module load conda_R/devel
+module load conda_R/4.4.x
 module list
 Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/02_build_spe/01_plot_spaceranger.r
 

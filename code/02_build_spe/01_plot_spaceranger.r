@@ -40,39 +40,47 @@ if(sum(error.list)>0) {
 #if want to plot everything from all three rounds separated by round
 mdata$slide2 = paste(mdata$round, mdata$slide)
 mdata$omit = ifelse(mdata$slide %in% c("V13Y10-020","V13B23-331"), TRUE, FALSE)
+mdata$condition = factor(mdata$condition, levels=c("NTC","MDD","BPD"))
 
 p1 <- ggplot(mdata, aes(x=slide2, y=Number.of.Reads))+
-	geom_boxplot(aes(fill=omit))+scale_fill_manual(values=c("grey50","white"))+
-	geom_text(aes(color=condition, label=brnum))+#default scale = ok
+	geom_boxplot(aes(fill=omit), outliers=F)+scale_fill_manual(values=c("grey","white"))+
+	geom_text(aes(color=condition, label=brnum), fontface="bold")+scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
 	labs(title="Number.of.Reads",x="seq. round & slide")+
 	theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1))
 p2 <- ggplot(mdata, aes(x=slide2, y=Valid.Barcodes))+
-	geom_boxplot(aes(fill=omit))+scale_fill_manual(values=c("grey50","white"))+
-	geom_text(aes(color=condition, label=brnum))+ylim(.85,1)+
+	geom_boxplot(aes(fill=omit), outliers=F)+scale_fill_manual(values=c("grey","white"))+
+	geom_text(aes(color=condition, label=brnum), fontface="bold")+scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+	ylim(.85,1)+
 	labs(title="Valid.Barcodes", x="seq. round & slide")+
 	theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1))
 p3 <- ggplot(mdata, aes(x=slide2, y=Sequencing.Saturation))+
-	geom_boxplot(aes(fill=omit))+scale_fill_manual(values=c("grey50","white"))+
-	geom_text(aes(color=condition, label=brnum))+ylim(.8,1)+
+	geom_boxplot(aes(fill=omit), outliers=F)+scale_fill_manual(values=c("grey","white"))+
+	geom_text(aes(color=condition, label=brnum), fontface="bold")+scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+	ylim(.8,1)+
 	labs(title="Sequencing.Saturation", x="seq. round & slide")+
 	theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1))
 p4 <- ggplot(mdata, aes(x=slide2, y=Reads.Mapped.Confidently.to.Genome))+
-	geom_boxplot(aes(fill=omit))+scale_fill_manual(values=c("grey50","white"))+
-	geom_text(aes(color=condition, label=brnum))+ylim(.7,1)+
+	geom_boxplot(aes(fill=omit), outliers=F)+scale_fill_manual(values=c("grey","white"))+
+	geom_text(aes(color=condition, label=brnum), fontface="bold")+scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+	ylim(.7,1)+
 	labs(title="Reads.Mapped.Confidently.to.Genome", x="seq. round & slide")+
 	theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1))
 p5 <- ggplot(mdata, aes(x=slide2, y=Median.UMI.Counts.per.Spot))+
-	geom_boxplot(aes(fill=omit))+scale_fill_manual(values=c("grey50","white"))+
-	geom_text(aes(color=condition, label=brnum))+ylim(0,8000)+
+	geom_boxplot(aes(fill=omit), outliers=F)+scale_fill_manual(values=c("grey","white"))+
+	geom_text(aes(color=condition, label=brnum), fontface="bold")+scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+	ylim(0,8000)+
 	labs(title="Median.UMI.Counts.per.Spot", x="seq. round & slide")+
 	theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1))
 
-pdf("plots/02_build_spe/r1_r2_r3_spaceranger_overview.pdf", #height=12, width=12)
-	height=6, width=36)
+ggsave(filename="plots/02_build_spe/r1_r2_r3_spaceranger_overview.png", 
+	gridExtra::grid.arrange(p1, p2, p3, p4, p5, ncol=1),
+	bg="white", height=30, width=24)
+#pdf("plots/02_build_spe/r1_r2_r3_spaceranger_overview.pdf", #height=12, width=12)
+#	height=6, width=36)
 	#gridExtra::grid.arrange(p1, p2, p3, p4, p5, ncol=2)
-	p1
-	p2
-	p3
-	p4
-	p5
-dev.off()
+#	p1
+#	p2
+#	p3
+#	p4
+#	p5
+#dev.off()
