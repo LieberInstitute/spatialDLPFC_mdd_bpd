@@ -119,6 +119,9 @@ cat("Saved to: plots/03_QC/filtered_qc-metrics_boxplot.pdf\n")
 spe = spe[,spe$remove_spots==FALSE]
 cat("\nDim spe remaining:",dim(spe),"\n")
 
+#make log10 sum_umi
+spe$lg10.umi = log10(spe$sum_umi)
+
 #split samples into 5 lists of 24 (5 pages of 6 slides each)
 slideList = list(recode.df$sample_id3[1:24], recode.df$sample_id3[25:48], recode.df$sample_id3[49:72],
                  recode.df$sample_id3[73:96], recode.df$sample_id3[97:120])
@@ -138,8 +141,8 @@ slideList = lapply(slideList, function(x) {
 
 cat("\nPlotting library size...",format(Sys.time()),"\n")
 libList = lapply(slideList, function(x) {
-	suppressMessages(plotSpots(x, annotate="sum_umi", point_size=0.3, sample_id="sample_id2")+
-		scale_color_gradient(low="white", high="navy", labels=function(y) paste0(y/1000,"k"))+
+	suppressMessages(plotSpots(x, annotate="lg10.umi", point_size=0.4, sample_id="sample_id2")+
+		scale_color_gradient("lg10.umi", low="white", high="navy")+#, labels=function(y) paste0(y/1000,"k"))+
 		facet_wrap(vars(sample_id2), ncol=4)+
 		theme(plot.title=element_blank(),
 			strip.background = element_rect(fill="transparent", color="transparent"),
@@ -159,8 +162,8 @@ cat("Saved to: plots/03_QC/filtered_library-size_spot-plots.pdf\n")
 
 cat("\nPlotting # genes detected...",format(Sys.time()),"\n")
 geneList = lapply(slideList, function(x) {
-	suppressMessages(plotSpots(x, annotate="sum_gene", point_size=0.3, sample_id="sample_id2")+
-		scale_color_gradient(low="white", high="navy", labels=function(y) paste0(y/1000,"k"))+
+	suppressMessages(plotSpots(x, annotate="sum_gene", point_size=0.4, sample_id="sample_id2")+
+		scale_color_gradient("sum_genes", low="white", high="navy", labels=function(y) paste0(y/1000,"k"))+
 		facet_wrap(vars(sample_id2), ncol=4)+
 		theme(plot.title=element_blank(),
                         strip.background = element_rect(fill="transparent", color="transparent"),
@@ -180,7 +183,7 @@ cat("Saved to: plots/03_QC/filtered_n-genes_spot-plots.pdf\n")
 
 cat("\nPlotting chrM ratio",format(Sys.time()),"\n")
 mitoList = lapply(slideList, function(x) {
-	suppressMessages(plotSpots(x, annotate="expr_chrM_ratio", point_size=0.3, sample_id="sample_id2")+
+	suppressMessages(plotSpots(x, annotate="expr_chrM_ratio", point_size=0.4, sample_id="sample_id2")+
 		scale_color_gradient("mito\nfraction", low="white", high="navy")+
 		facet_wrap(vars(sample_id2), ncol=4)+
 		theme(plot.title=element_blank(), 

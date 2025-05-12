@@ -14,6 +14,7 @@ spe <- spe[,spe$in_tissue]
 cat("Dim spe (in tissue):",dim(spe),"\n")
 
 #modify colData for plotting
+spe$lg10.umi = log10(spe$sum_umi)
 spe$condition = factor(spe$condition, levels=c("NTC","MDD","BPD"))
 spe$slide2 = ifelse(spe$slide=="V13B23-283","V13B23-339",spe$slide)
 spe$array2 = ifelse(spe$slide=="V13B23-283", "B_1", spe$array)
@@ -91,8 +92,8 @@ slideList = lapply(slideList, function(x) {
 
 cat("\nPlotting library size...",format(Sys.time()),"\n")
 libList = lapply(slideList, function(x) {
-	suppressMessages(plotSpots(x, annotate="sum_umi", point_size=0.3, sample_id="sample_id2")+
-		scale_color_gradient(low="white", high="navy", labels=function(y) paste0(y/1000,"k"))+
+	suppressMessages(plotSpots(x, annotate="lg10.umi", point_size=0.4, sample_id="sample_id2")+
+		scale_color_gradient("lg10.umi", low="white", high="navy")+#, labels=function(y) paste0(y/1000,"k"))+
 		facet_wrap(vars(sample_id2), ncol=4)+
 		theme(plot.title=element_blank(),
 			strip.background = element_rect(fill="transparent", color="transparent"),
@@ -112,8 +113,8 @@ cat("Saved to: plots/03_QC/unfiltered_library-size_spot-plots.pdf\n")
 
 cat("\nPlotting # genes detected...",format(Sys.time()),"\n")
 geneList = lapply(slideList, function(x) {
-	suppressMessages(plotSpots(x, annotate="sum_gene", point_size=0.3, sample_id="sample_id2")+
-		scale_color_gradient(low="white", high="navy", labels=function(y) paste0(y/1000,"k"))+
+	suppressMessages(plotSpots(x, annotate="sum_gene", point_size=0.4, sample_id="sample_id2")+
+		scale_color_gradient("sum_genes", low="white", high="navy", labels=function(y) paste0(y/1000,"k"))+
 		facet_wrap(vars(sample_id2), ncol=4)+
 		theme(plot.title=element_blank(),
                         strip.background = element_rect(fill="transparent", color="transparent"),
@@ -134,7 +135,7 @@ cat("Saved to: plots/03_QC/unfiltered_n-genes_spot-plots.pdf\n")
 cat("\nPlotting chrM ratio",format(Sys.time()),"\n")
 cat("*** Max color limit fixed across all samples to 0.65 to help with vis of samples where some spots have 100% chrM ratio\n")
 mitoList = lapply(slideList, function(x) {
-	suppressMessages(plotSpots(x, annotate="expr_chrM_ratio", point_size=0.3, sample_id="sample_id2")+
+	suppressMessages(plotSpots(x, annotate="expr_chrM_ratio", point_size=0.4, sample_id="sample_id2")+
 		scale_color_gradient("mito\nfraction", low="white", high="navy", limits=c(0,0.65))+
 		facet_wrap(vars(sample_id2), ncol=4)+
 		theme(plot.title=element_blank(), 
