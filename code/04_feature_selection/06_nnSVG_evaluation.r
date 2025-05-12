@@ -34,7 +34,7 @@ resList = lapply(fileList, function(x) {
 results.df = do.call(rbind, resList)
 
 #switch to prop of spots
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n120_postQC_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 results.df = left_join(results.df, as.data.frame(colData(spe)) %>% group_by(sample_id) %>% tally(name="n_spots_total")) %>%
   mutate(prop_spots_nonzero = n_spots_nonzero/n_spots_total)
 

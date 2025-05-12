@@ -39,7 +39,7 @@ fix.order = order(paste(spe$round, spe$sample_id, spe$array_col, spe$array_row))
 spe = spe[,fix.order]
 
 #normalization
-format(Sys.time(), tz="EST")
+format(Sys.time())
 cat("\nCompute library factors and normalize counts")
 spe <- computeLibraryFactors(spe)
 spe <- logNormCounts(spe)
@@ -48,7 +48,7 @@ spe <- logNormCounts(spe)
 start.time = Sys.time()
 cat("\nStart HDF5SummarizedExperiment save:"); start.time
 
-saveHDF5SummarizedExperiment(spe, dir="processed-data/04_feature_selection", prefix="spe_n120_postQC_norm_",
+saveHDF5SummarizedExperiment(spe, dir="processed-data/04_feature_selection", prefix="spe_n119_postQC_norm_",
         chunkdim=c(100,500),
         verbose=F)
 
@@ -58,7 +58,7 @@ cat("\nTime elapsed (saveHDF5):",
 #update spe tracker
 write(c(paste("**** Created filtered, normalized spe on",format(Sys.time(), tz="EST"),"EST"),
         "**** Old file location: processed-data/02_build_spe/spe_n120_",
-        "**** New file location: processed-data/04_feature_selection/spe_n120_postQC_norm_",
+        "**** New file location: processed-data/04_feature_selection/spe_n119_postQC_norm_",
         "**** Source code: code/04_feature_selection/01_normalization_HDF5.r",
         "****","****","****"), "spe_tracker_current.txt", append=TRUE)
 

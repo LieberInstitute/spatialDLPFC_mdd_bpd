@@ -9,7 +9,7 @@ suppressPackageStartupMessages({
 })
 set.seed(123)
 
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n120_postQC_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 
 fileList = list.files("processed-data/04_feature_selection/per-sample_svgs")
 length(fileList) 

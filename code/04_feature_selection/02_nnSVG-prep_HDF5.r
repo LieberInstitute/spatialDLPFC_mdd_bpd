@@ -12,7 +12,7 @@ setAutoBlockSize(1e9)
 #cat("\nBiocParallel defaults:\n")
 #MulticoreParam()
 
-system.time(spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n120_postQC_norm_"))
+system.time(spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_"))
 cat("\nDim spe:",dim(spe),"\n")
 cat("\ntree:\n")
 showtree(logcounts(spe))

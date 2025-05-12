@@ -17,7 +17,7 @@ length(unique(unlist(exclude.genes))) #47
 avg.expr.exclude =  filter(avg.expr, gene_id %in% unlist(exclude.genes) | gene_name=="MOBP")
 #avg.expr.exclude =  filter(avg.expr, gene_id %in% unlist(exclude.genes) | gene_name %in% c("GFAP","MOBP"))
 
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n120_postQC_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 #spe$dummy_slide = ifelse(spe$slide %in% c("V13B23-339","V13B23-283"), "joint-283-339", spe$slide)
 spe$slide2 = ifelse(spe$slide=="V13B23-283","V13B23-339",spe$slide)
 spe$array2 = ifelse(spe$slide=="V13B23-283", "B_1", spe$array)

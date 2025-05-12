@@ -19,7 +19,7 @@ avg.expr = read.csv("processed-data/04_feature_selection/nnSVG-filtered-genes_av
 avg.expr.exclude =  filter(avg.expr, gene_id %in% unlist(exclude.genes) | gene_name=="MOBP")
 
 #load in spe
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n120_postQC_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 cat("Dim spe:",dim(spe),"\n")
 spe$slide2 = ifelse(spe$slide=="V13B23-283","V13B23-339",spe$slide)
 spe$array2 = ifelse(spe$slide=="V13B23-283", "B_1", spe$array)
