@@ -12,6 +12,13 @@ reducedDimPlots <- function(object, .dimred) {
     ptitle= "n=1079"
   }
   
+  if(.dimred=="PRECAST_1629") {
+    object$precast_cluster_f = object$precast_k9_1629_f
+    fill_color = precast.colorList[["n1629_k9"]][["colors"]]
+    names(fill_color) = precast.colorList[["n1629_k9"]][["annotation"]]
+    ptitle= "n=1629"
+  }
+
   test_variables = c("sample_id","slide","sum_umi","precast_cluster_f")#, 
                      #"sex","condition","PMI","RIN")
   percVar.df = tibble::rownames_to_column(as.data.frame(getExplanatoryPCs(object, dimred=.dimred, n_dimred = 15, 
@@ -81,6 +88,12 @@ locationSpotPlots <- function(object_small, .dimred) {
     fill_color = precast.colorList[["n1079_k9"]][["colors"]]
     names(fill_color) = precast.colorList[["n1079_k9"]][["annotation"]]
     ptitle= "n=1079"
+  }
+  if(.dimred=="PRECAST_1629") {
+    object_small$precast_cluster_f = object_small$precast_k9_1629_f
+    fill_color = precast.colorList[["n1629_k9"]][["colors"]]
+    names(fill_color) = precast.colorList[["n1629_k9"]][["annotation"]]
+    ptitle= "n=1629"
   }
   
   sampleList= unique(object_small$sample_id)

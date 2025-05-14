@@ -13,7 +13,7 @@ suppressPackageStartupMessages({
 })
 
 source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
-source("code/05_clustering/PRECAST/04-supp_plot-functions.r")
+source("code/05_clustering/PRECAST/05-supp_plot-functions.r")
 
 #load in spe
 spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n120_postQC_norm_")

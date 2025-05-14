@@ -2,7 +2,7 @@
 #SBATCH --mem=10G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=plot_n1663-n1079
+#SBATCH --job-name=plot_n1629
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/PRECAST/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -19,7 +19,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 module load conda_R/4.4.x
 module list
 
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/PRECAST/05_evaluate-clusters_final.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/PRECAST/05-supp_evaluate-clusters_add-cluster.r
 
 echo "**** Job ends ****"
 date
