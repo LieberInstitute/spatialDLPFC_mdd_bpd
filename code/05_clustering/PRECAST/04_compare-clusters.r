@@ -122,7 +122,7 @@ cat("\nSaved to: plots/05_clustering/PRECAST/compare-clusters_1663-1079-k9-k12.p
 
 ggsave("plots/05_clustering/PRECAST/compare-clusters_1629-1104-HM-k9.png",
         grid.arrange(plist[[1]], plist[[2]], plist[[6]],
-                tilelist[[2]], tilelist[[2]], tilelist[[6]],
+                tilelist[[1]], tilelist[[2]], tilelist[[6]],
                 ncol=3),
         bg="white", height=6, width=12, units="in" 
 )
