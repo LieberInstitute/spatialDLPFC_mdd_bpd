@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=precast_n1663_k9_no-problem-areas
+#SBATCH --job-name=precast_n1663_k9_no-problem-areas-outliers
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/PRECAST/logs/%x_%j.log
 
 set -e
@@ -27,7 +27,7 @@ module list
 #ulimit -s unlimited
 #ulimit -s
 
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/PRECAST/02_PRECAST-n119.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/PRECAST/tmp_re-run_PRECAST-n119.r
 
 echo "**** Job ends ****"
 date
