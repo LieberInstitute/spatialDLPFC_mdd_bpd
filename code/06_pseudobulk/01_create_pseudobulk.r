@@ -9,7 +9,7 @@ set.seed(123)
 setAutoBlockSize(1e9)
 
 #load spe
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n120_postQC_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 
 #load clusters
 cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
@@ -31,6 +31,7 @@ spe
 cat("\nPseudobulk spe by: sample_id, combined_cluster\n")
 Sys.time()
 spe_pseudo <- aggregateAcrossCells(spe, ids=colData(spe)[,c("sample_id","combined_cluster")], statistics="sum", store.number="nspots", use.assay.type="counts")
+colnames(colData(spe_pseudo))[grep("ncells", colnames(colData(spe_pseudo)))] = "nspots"
 
 #remove reduced dims
 reducedDim(spe_pseudo, "PCA_1663") <- NULL
