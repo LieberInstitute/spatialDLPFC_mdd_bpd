@@ -16,7 +16,7 @@ source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
 source("code/05_clustering/PRECAST/05-supp_plot-functions.r")
 
 #load in spe
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/archive/", prefix="spe_n120_postQC_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/archive/", prefix="spe_n119_postQC_norm_")
 
 spe$precast_k9_1629_f=factor(spe$precast_k9_1629, levels=precast.colorList[["n1629_k9"]][["clusters"]], labels=precast.colorList[["n1629_k9"]][["annotation"]])
 

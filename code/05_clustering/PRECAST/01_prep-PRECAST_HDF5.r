@@ -17,7 +17,7 @@ geneList = readRDS("processed-data/04_feature_selection/nnSVG-eval_geneList.rds"
 avg.expr = read.csv("processed-data/04_feature_selection/nnSVG-filtered-genes_avg-logcounts.csv", row.names=1)# %>%
 #  tibble::rownames_to_column(var="gene_id")
 
-svg_id = rownames(avg.expr)[avg.expr$gene_name %in% union(geneList$qual_batch_effect, geneList$qual_genes)]
+svg_id = rownames(avg.expr)[avg.expr$gene_name %in% geneList$qual_genes]
 length(svg_id)
 
 srt.sets = lapply(sampleList, function(x) {

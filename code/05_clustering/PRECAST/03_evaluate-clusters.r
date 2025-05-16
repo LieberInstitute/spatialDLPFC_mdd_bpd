@@ -12,7 +12,7 @@ suppressPackageStartupMessages({
 source("code/05_clustering/PRECAST/03-supp_plot-functions.r")
 source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
 
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n120_postQC_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 
 #estimate spatial domain
 layer.markers = read.csv("processed-data/04_feature_selection/EXT_TableS9_sig_genes_FDR5perc_enrichment.csv") %>%

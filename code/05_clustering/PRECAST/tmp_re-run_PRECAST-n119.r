@@ -1,3 +1,6 @@
+#this script is used for the post-hoc evaluation of different spot filters (based on 3MAD outliers and flags) to see if there is improvment for the low UMI cluster
+#one of the sets examined requires the known labels of the n1663 k9 low UMI spots (hence the name "re-run")
+
 setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
 suppressPackageStartupMessages({
 	library(Seurat)
@@ -8,6 +11,15 @@ set.seed(123)
 
 load("processed-data/05_clustering/PRECAST/srt-list_spe_n1663_counts.Rdata")
 #load("processed-data/05_clustering/PRECAST/srt-list_spe_H-M-markers_counts.Rdata")
+
+
+#remove problem area spots
+#cat("\nNumber of spots before removing problem areas:\n")
+#rowSums(sapply(srt.sets, dim))[2]
+#srt.sets = lapply(srt.sets, function(x) x[,!x$problem_area_flag])
+#cat("\nNumber of spots after removing problem areas:\n")
+#rowSums(sapply(srt.sets, dim))[2]
+
 
 #remove problem area spots and 3MAD outlier spots that are in low UMI cluster
 flags = read.csv("processed-data/03_QC/colData_edges-problem-areas_spotsweeper_FINAL.csv", row.names=1)
@@ -60,8 +72,9 @@ PRECASTObj <- PRECAST(PRECASTObj, K=9)
 PRECASTObj <- SelectModel(PRECASTObj, criteria="MBIC")
 seuInt <- IntegrateSpaData(PRECASTObj, species = "Human")
 
-#save(seuInt, file=paste0("processed-data/05_clustering/PRECAST/srt_precast_k-12_n",length(cglist),".Rdata"))
-#cat("\n\nSaved to:",paste0("processed-data/05_clustering/PRECAST/srt_precast_k-12_n",length(cglist),".Rdata"))
+#save(seuInt, file="processed-data/05_clustering/PRECAST/srt_no-problem-areas_precast_k-9_n1663.Rdata")
+#cat("\n\nSaved to: processed-data/05_clustering/PRECAST/srt_no-problem-areas_precast_k-9_n1663.Rdata\n")
+
 save(seuInt, file="processed-data/05_clustering/PRECAST/srt_no-problem-areas-outliers_precast_k-9_n1663.Rdata")
 cat("\n\nSaved to: processed-data/05_clustering/PRECAST/srt_no-problem-areas-outliers_precast_k-9_n1663.Rdata\n")
 

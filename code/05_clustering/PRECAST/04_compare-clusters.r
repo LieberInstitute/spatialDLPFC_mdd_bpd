@@ -11,7 +11,7 @@ suppressPackageStartupMessages({
 
 source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
 
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n120_postQC_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 
 spe$precast_k9_1663_f=factor(spe$precast_k9_1663, levels=precast.colorList[["n1663_k9"]][["clusters"]], labels=precast.colorList[["n1663_k9"]][["annotation"]])
 spe$precast_k9_1079_f=factor(spe$precast_k9_1079, levels=precast.colorList[["n1079_k9"]][["clusters"]], labels=precast.colorList[["n1079_k9"]][["annotation"]])
