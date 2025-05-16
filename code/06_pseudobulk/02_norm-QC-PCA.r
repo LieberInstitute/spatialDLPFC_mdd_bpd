@@ -7,10 +7,12 @@ suppressPackageStartupMessages({
 	library(scater)
 	#library(batchelor)
 	#library(BiocParallel)
-	#library(dplyr)
+	library(dplyr)
 	library(ggplot2)
 })
 set.seed(123)
+
+cpList = readRDS("plots/colorPalettes.rds")
 
 load("processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9.Rdata")
 dim(spe_pseudo) #28965   952
@@ -114,46 +116,45 @@ cdata= as.data.frame(colData(spe_pseudo))
 #  theme_bw()
 p1 <- ggplot(cdata, aes(x=condition, y=nspots))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
-  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+  geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
   facet_grid(cols=vars(precast_k9_1663))+
   scale_shape_manual(values=c(19,1))+
-  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Number of spots per pseudobulked sample", y="nspots")+
-  theme(strip.background=element_rect(fill=NA, color=NA))
+  theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
 p2 <- ggplot(cdata, aes(x=condition, y=sum))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
-  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+  geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
   facet_grid(cols=vars(precast_k9_1663))+
   scale_y_log10()+scale_shape_manual(values=c(19,1))+
-  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Library size per pseudobulked sample", y="sum UMI (log10 scale)")+
-  theme(strip.background=element_rect(fill=NA, color=NA))
+  theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
 p3 <- ggplot(cdata, aes(x=condition, y=detected))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
-  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+  geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
   facet_grid(cols=vars(precast_k9_1663))+
   scale_shape_manual(values=c(19,1))+
-  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Unique detected genes per pseudobulked sample", y="detected")+
-  theme(strip.background=element_rect(fill=NA, color=NA))
+  theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
 p4 <- ggplot(cdata, aes(x=condition, y=subsets_mito_percent))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
-  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+  geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
   facet_grid(cols=vars(precast_k9_1663))+
   scale_shape_manual(values=c(19,1))+ylim(0,45)+
-  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Fraction of chrM reads per pseudobulked sample", y="subsets_mito_percent")+
-  theme(strip.background=element_rect(fill=NA, color=NA))
+  theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
 ggsave("plots/06_pseudobulk/sample-n1663-k9_unfiltered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
         bg="white", width=12, height=12, units="in")
 cat("\nQC plots saved to: plots/06_pseudobulk/sample-n1663-k9_unfiltered_QC-metrics.png\n")
 
 #PCA before filtering reveals one component dominated by low detected genes samples
-source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
 geneList <- readRDS("processed-data/04_feature_selection/nnSVG-eval_geneList.rds")
 n1663.ids = rownames(spe_pseudo)[rowData(spe_pseudo)$gene_name %in% geneList$qual_genes]
 length(n1663.ids)
@@ -177,9 +178,9 @@ p1 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", variables=exp.vars)+
 p2 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", npcs_to_plot=20, variables=exp.vars)+
         scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
 p3 <- plotReducedDim(spe_pseudo, dimred="PCA_1663", ncomponents=2, colour_by = "precast_k9_1663", point_alpha=1)+
-        scale_color_manual("", values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
+        scale_color_manual("", values=cpList$earthy.pal2)
 p4 <- plotPCA(spe_pseudo, dimred="PCA_1663", ncomponents=4, colour_by = "precast_k9_1663")+
-        scale_color_manual("", values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
+        scale_color_manual("", values=cpList$earthy.pal2)
 
 #retroactively modify linewidth and point size
 change_linewidth = function(.plot) {
@@ -195,44 +196,36 @@ q4 = ggplot_build(p4)
 q4$data[[2]]$size = 1
 q4 = ggplot_gtable(q4)
 
-ggsave("plots/06_pseudobulk/sample-n1663-k9_PCA-1663_unfiltered_eval.png", gridExtra::grid.arrange(q1, q2, p3, q4, layout_matrix=cbind(c(1,3,3),c(2,4,4))),
-        bg="white", height=8, width=12, units="in")
-cat("\nPCA eval plots saved to: plots/06_pseudobulk/sample-n1663-k9_PCA-1663_unfiltered_eval.png\n")
+#barplot of samples
+cdata = as.data.frame(colData(spe_pseudo))
+cdata$cond_sex = factor(paste(cdata$condition, cdata$sex), levels=c("NTC M","NTC F","MDD M","MDD F","BPD M","BPD F"))
 
+bp1 <- ggplot(group_by(cdata, cond_sex, precast_k9_1663) %>% summarise(n_total=sum(nspots)), 
+       aes(x=cond_sex, y=n_total, fill=precast_k9_1663))+
+  geom_bar(stat="identity", position="stack", width=.7)+
+  scale_y_continuous("# spots", labels=function(x) paste0(x/1000,"k"))+
+  scale_fill_manual("PRECAST\ncluster", values=cpList$earthy.pal2)+
+  labs(title="Cluster abundance")+
+  theme_bw()+theme(text=element_text(size=10), axis.title.x=element_blank(),
+	legend.position="bottom")
+
+#PCA colored by detected
 p5 <- plotPCA(spe_pseudo, dimred="PCA_1663", ncomponents=4, colour_by = "detected")+
-        scale_color_viridis_c(direction=-1)
+        scale_color_viridis_c()
+q5 = ggplot_build(p5)
+q5$data[[2]]$size = 1
+q5 = ggplot_gtable(q5)
 
-ggsave("plots/06_pseudobulk/sample-n1663-k9_PCA-1663_unfiltered_detected-eval.png", p5,
-        bg="white", height=8, width=8, units="in")
-cat("\nPCA eval plots saved to: plots/06_pseudobulk/sample-n1663-k9_PCA-1663_unfiltered_detected-eval.png\n")
+ggsave("plots/06_pseudobulk/sample-n1663-k9_unfiltered_PCA-1663-eval.png",
+	gridExtra::grid.arrange(q1, q2, p3, q4, bp1, q5, layout_matrix=cbind(c(1,3,3,5,5),c(2,4,4,6,6))),
+        bg="white", height=12, width=12, units="in")
+cat("\nPCA eval plots saved to: plots/06_pseudobulk/sample-n1663-k9_unfiltered_PCA-1663-eval.png\n")
 
 #plot(reducedDim(spe_pseudo)[,2], spe_pseudo$detected)
 
+cat("\nSample number per group after removing samples with <8k detected genes:\n")
 cdata2 = cdata[cdata$detected>8000,]
 table(cdata2[,c("precast_k9_1663","condition","sex")])
-#FEMALE
-#.................condition
-#combined_cluster NTC MDD BPD
-#............Vasc  20  20  20
-#............L1    20  20  20
-#............L2    20  20  20
-#............L3    20  20  20
-#............GABA  19  19  20
-#............L5    20  20  20
-#............L6    20  19  20
-#............WM    20  20  20
-
-#MALE
-#.................condition
-#combined_cluster NTC MDD BPD
-#............Vasc  20  19  20
-#............L1    19  19  20
-#............L2    20  19  20
-#............L3    20  19  20
-#............GABA  18  17  19
-#............L5    20  19  20
-#............L6    20  19  20
-#............WM    20  18  20
 
 cat("\nFilter out spots with low # detected genes...\n")
 spe_pseudo = spe_pseudo[,spe_pseudo$detected>8000]
@@ -241,39 +234,39 @@ dim(spe_pseudo)
 #boxplots of QC metrics by condition and sex
 p1 <- ggplot(cdata2, aes(x=condition, y=nspots))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
-  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+                     
+  geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+                     
   facet_grid(cols=vars(precast_k9_1663))+
   scale_shape_manual(values=c(19,1))+
-  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Number of spots per pseudobulked sample", y="nspots")+
-  theme(strip.background=element_rect(fill=NA, color=NA))
+  theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
 p2 <- ggplot(cdata2, aes(x=condition, y=sum))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
-  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+  geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
   facet_grid(cols=vars(precast_k9_1663))+
   scale_y_log10()+scale_shape_manual(values=c(19,1))+
-  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Library size per pseudobulked sample", y="sum UMI (log10 scale)")+
-  theme(strip.background=element_rect(fill=NA, color=NA))
+  theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
 p3 <- ggplot(cdata2, aes(x=condition, y=detected))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
-  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+  geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
   facet_grid(cols=vars(precast_k9_1663))+
   scale_shape_manual(values=c(19,1))+
-  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Unique detected genes per pseudobulked sample", y="detected")+
-  theme(strip.background=element_rect(fill=NA, color=NA))
+  theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
 p4 <- ggplot(cdata2, aes(x=condition, y=subsets_mito_percent))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
-  geom_boxplot(color="grey50", alpha=.5, linewidth=1, outliers=F)+
+  geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
   facet_grid(cols=vars(precast_k9_1663))+
   scale_shape_manual(values=c(19,1))+ylim(0,45)+
-  scale_color_manual(values=c("black","#9e771b","#1b9e77"))+
+  scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Fraction of chrM reads per pseudobulked sample", y="subsets_mito_percent")+
-  theme(strip.background=element_rect(fill=NA, color=NA))
+  theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
 #p4 <- ggplot(cdata, aes(x=condition, y=subsets_ribo_percent))+
 #  ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
@@ -296,9 +289,9 @@ p1 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", variables=exp.vars)+
 p2 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", npcs_to_plot=20, variables=exp.vars)+
 	scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
 p3 <- plotReducedDim(spe_pseudo, dimred="PCA_1663", ncomponents=2, colour_by = "precast_k9_1663", point_alpha=1)+
-	scale_color_manual("", values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
+	scale_color_manual("", values=cpList$earthy.pal2)
 p4 <- plotPCA(spe_pseudo, dimred="PCA_1663", ncomponents=4, colour_by = "precast_k9_1663")+
-	scale_color_manual("", values=precast.colorList[["n1663_k9"]][["colors"]][1:8])
+	scale_color_manual("", values=cpList$earthy.pal2)
 
 #retroactively modify linewidth and point size
 q1 <- change_linewidth(p1)
@@ -307,16 +300,30 @@ q4 = ggplot_build(p4)
 q4$data[[2]]$size = 1
 q4 = ggplot_gtable(q4)
 
-ggsave("plots/06_pseudobulk/sample-n1663-k9_PCA-1663_filtered_eval.png", gridExtra::grid.arrange(q1, q2, p3, q4, layout_matrix=cbind(c(1,3,3),c(2,4,4))),
-	bg="white", height=8, width=12, units="in")
-cat("\nPCA eval plots saved to: plots/06_pseudobulk/sample-n1663-k9_PCA-1663_filtered_eval.png\n")
+#barplot
+cdata =	as.data.frame(colData(spe_pseudo))
+cdata$cond_sex = factor(paste(cdata$condition, cdata$sex), levels=c("NTC M","NTC F","MDD M","MDD F","BPD M","BPD F"))
 
+bp1 <- ggplot(group_by(cdata, cond_sex, precast_k9_1663) %>% summarise(n_total=sum(nspots)),
+       aes(x=cond_sex, y=n_total, fill=precast_k9_1663))+
+  geom_bar(stat="identity", position="stack", width=.7)+
+  scale_y_continuous("#	spots",	labels=function(x) paste0(x/1000,"k"))+
+  scale_fill_manual("PRECAST\ncluster", values=cpList$earthy.pal2)+
+  labs(title="Cluster abundance")+
+  theme_bw()+theme(text=element_text(size=10), axis.title.x=element_blank(), 
+        legend.position="bottom")
+
+#PCA colored by detected
 p5 <- plotPCA(spe_pseudo, dimred="PCA_1663", ncomponents=4, colour_by = "detected")+
-        scale_color_viridis_c(direction=-1)
+        scale_color_viridis_c()
+q5 = ggplot_build(p5)
+q5$data[[2]]$size = 1
+q5 = ggplot_gtable(q5)
 
-ggsave("plots/06_pseudobulk/sample-n1663-k9_PCA-1663_filtered_detected-eval.png", p5,
-        bg="white", height=8, width=8, units="in")
-cat("\nPCA eval plots saved to: plots/06_pseudobulk/sample-n1663-k9_PCA-1663_filtered_detected-eval.png\n")
+ggsave("plots/06_pseudobulk/sample-n1663-k9_filtered_PCA-1663-eval.png", 
+	gridExtra::grid.arrange(q1, q2, p3, q4, bp1, q5, layout_matrix=cbind(c(1,3,3,5,5),c(2,4,4,6,6))),
+	bg="white", height=12, width=12, units="in")
+cat("\nPCA eval plots saved to: plots/06_pseudobulk/sample-n1663-k9_filtered_PCA-1663-eval.png\n")
 
 #look for correlation between important experimental design variables
 var.m = getVarianceExplained(spe_pseudo, variables=exp.vars)
@@ -390,13 +397,12 @@ ggsave("plots/06_pseudobulk/sample-n1663-k9_variance-explained_experimental-desi
 save(spe_pseudo, file="processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9_norm-filt.Rdata")
 cat("\nFiltered, normalized pseudobulk spe saved to: processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9_norm-filt.Rdata\n")
 
-#SKIP SPE TRACKER UPDATE BUT REINSTATE LATER
 #update spe tracker
-#write(c(paste("********** QC filtered and normalized pseudobulked spe on",format(Sys.time()),"EST"),
-#        "********** Old file location: processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9.Rdata",
-#        "********** New file location: processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9_norm-filt.Rdata",
-#        "********** Source code: code/06_pseudobulk/02_norm-QC-PCA.r",
-#        "**********","**********","**********"), "spe_tracker_current.txt", append=TRUE)
+write(c(paste("********** QC filtered and normalized pseudobulked spe on",format(Sys.time())),
+        "********** Old file location: processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9.Rdata",
+        "********** New file location: processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9_norm-filt.Rdata",
+        "********** Source code: code/06_pseudobulk/02_norm-QC-PCA.r",
+        "**********","**********","**********"), "spe_tracker_current.txt", append=TRUE)
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time(), tz="EST")
