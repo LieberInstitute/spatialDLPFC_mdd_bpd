@@ -15,9 +15,10 @@ load("processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9_norm-filt.Rda
 #want to preserve biological variation belonging to diagnosis, sex, and cluster, and want to remove variation belonging to sample_id
 #according to page 10: https://www.bioconductor.org/packages/release/bioc/vignettes/sva/inst/doc/sva.pdf
 #need to make contrast matrix of diagnosis, sex, and cluster, as these will be treated as covariates (# covar levels = n-1; therefore set condition first for NTC)
-cat("\n covars included (to preserve): condition, sex, precast_k9_1663\n")
+cat("\ncovars included (to preserve): condition, sex, precast_k9_1663\n")
 m1 = model.matrix(~condition + sex + precast_k9_1663, data=colData(spe_pseudo))
 #covar_matrix = as.matrix(m1[,-1])
+cat("\nbatch variable to remove: slide\n")
 adjusted_counts = ComBat_seq(counts(spe_pseudo), batch=spe_pseudo$slide, group=NULL, covar_mod=m1)
 dimnames(adjusted_counts) <- dimnames(spe_pseudo)
 assay(spe_pseudo, "counts") <- NULL
@@ -31,8 +32,8 @@ adjusted_counts = assay(spe_pseudo, "adjusted_counts")
 
 #normalize adjusted counts
 dge = DGEList(counts=adjusted_counts)
-x <- cpm(calcNormFactors(dge), log = TRUE, prior.count = 1)
-#stopifnot(identical(rownames(x), rownames(spe_pseudo)))
+x <- cpm(calcNormFactors(dge), log = TRUE, prior.count = 2)
+stopifnot(min(x)>0)
 dimnames(x) <- dimnames(spe_pseudo)
 logcounts(spe_pseudo) <- x
 rm(x)

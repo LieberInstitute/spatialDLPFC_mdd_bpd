@@ -1,0 +1,104 @@
+**** Job starts ****
+Fri May 16 02:38:49 PM EDT 2025
+**** JHPCE info ****
+User: jthompso
+Job id: 16627630
+Job name: pseudobulk_n1663-k9
+Node(s): compute-122
+Node memory requested: 10240
+n Tasks: 
+Loading conda_R/4.4.x
+
+Currently Loaded Modules:
+  1) JHPCE_ROCKY9_DEFAULT_ENV   3) conda/3-24.3.0
+  2) JHPCE_tools/3.0            4) conda_R/4.4.x
+
+ 
+
+automatic block size set to 1e+09 bytes (was 1e+08)
+
+How many spots are dropped with low UMI cluster:
+
+ FALSE   TRUE 
+508999  26249 
+
+Transferred PRECAST k=9 n1663 to spe:
+
+  Vasc     L1     L2     L3   GABA     L5     L6     WM 
+ 11952  58626  96563 139991   7005  70949  83878  40035 
+class: SpatialExperiment 
+dim: 28965 508999 
+metadata(0):
+assays(2): counts logcounts
+rownames(28965): ENSG00000243485 ENSG00000238009 ... ENSG00000278817
+  ENSG00000277196
+rowData names(7): source type ... gene_type gene_search
+colnames(508999): GACCTGGTCTGGGCGT-1_V13F27-338_A1
+  CGTCCAGATGGCTCCA-1_V13F27-338_A1 ... ACCTCAGCGAGGCGCA-1_V13B23-282_D1
+  GGCTGAGCATCGTAAG-1_V13B23-282_D1
+colData names(24): sample_id in_tissue ... sizeFactor precast_k9_1663
+reducedDimNames(0):
+mainExpName: NULL
+altExpNames(0):
+spatialCoords names(2) : pxl_col_in_fullres pxl_row_in_fullres
+imgData names(4): sample_id image_id data scaleFactor
+
+Pseudobulk spe by: sample_id, precast_k9_1663
+[1] 28965   952
+class: SpatialExperiment 
+dim: 28965 952 
+metadata(0):
+assays(1): counts
+rownames(28965): ENSG00000243485 ENSG00000238009 ... ENSG00000278817
+  ENSG00000277196
+rowData names(7): source type ... gene_type gene_search
+colnames: NULL
+colData names(14): sample_id brnum ... precast_k9_1663 nspots
+reducedDimNames(0):
+mainExpName: NULL
+altExpNames(0):
+spatialCoords names(0) :
+imgData names(1): sample_id
+[1] "2025-05-16 15:11:56 EDT"
+
+Pseudobulk spe saved to: processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9.Rdata
+
+Reproducibility information:
+[1] "2025-05-16 15:12:08 EDT"
+    user   system  elapsed 
+1889.311   10.757 1997.711 
+R version 4.4.3 Patched (2025-02-28 r88204)
+Platform: x86_64-conda-linux-gnu
+Running under: Rocky Linux 9.4 (Blue Onyx)
+
+Matrix products: default
+BLAS:   /jhpce/shared/community/core/conda_R/4.4.x/R/lib64/R/lib/libRblas.so 
+LAPACK: /jhpce/shared/community/core/conda_R/4.4.x/R/lib64/R/lib/libRlapack.so;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C               LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8    LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C             LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: US/Eastern
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats4    stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] scuttle_1.16.0              HDF5Array_1.34.0            rhdf5_2.50.2                DelayedArray_0.32.0        
+ [5] SparseArray_1.6.2           S4Arrays_1.6.0              abind_1.4-8                 Matrix_1.7-2               
+ [9] SpatialExperiment_1.16.0    SingleCellExperiment_1.28.1 SummarizedExperiment_1.36.0 Biobase_2.66.0             
+[13] GenomicRanges_1.58.0        GenomeInfoDb_1.42.3         IRanges_2.40.1              S4Vectors_0.44.0           
+[17] BiocGenerics_0.52.0         MatrixGenerics_1.18.1       matrixStats_1.5.0          
+
+loaded via a namespace (and not attached):
+ [1] jsonlite_2.0.0          compiler_4.4.3          rjson_0.2.23            crayon_1.5.3           
+ [5] Rcpp_1.0.14             rhdf5filters_1.18.1     magick_2.8.6            parallel_4.4.3         
+ [9] BiocParallel_1.40.2     lattice_0.22-6          R6_2.6.1                XVector_0.46.0         
+[13] GenomeInfoDbData_1.2.13 magrittr_2.0.3          Rhdf5lib_1.28.0         zlibbioc_1.52.0        
+[17] grid_4.4.3              codetools_0.2-20        beachmat_2.22.0         httr_1.4.7             
+[21] tools_4.4.3             UCSC.utils_1.2.0       
+**** Job ends ****
+Fri May 16 03:12:09 PM EDT 2025
