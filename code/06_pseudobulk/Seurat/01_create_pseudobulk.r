@@ -14,12 +14,17 @@ spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", 
 #load clusters
 res2 = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-MBv_qual-genes-kanchor-50-pc20_red-precast-kweight-50-low-res.csv", row.names=1)
 stopifnot(identical(rownames(colData(spe)), rownames(res2)))
+#res4 = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-MBv_qual-genes-kanchor-50-pc30_red-precast-kweight-50-low-res.csv", row.names=1)
+#stopifnot(identical(rownames(colData(spe)), rownames(res4)))
 
 #transfer label IDs and combine L2/3
-spe$seurat_qual.genes_pc20.kweight50 = factor(res2$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Inhb","Oligo"),
+spe$seurat_qual.genes_pc20.kweight50 = factor(res2$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
 	labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","L5","L6","Oligo","Inhb"))
+#spe$seurat_qual.genes_pc30.kweight50 = factor(res4$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
+#        labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","L5","L6","Oligo","Inhb"))
 cat("\nTransferred label transfer from qual genes results with PC=20 and k.weights=50 to spe:\n")
 table(spe$seurat_qual.genes_pc20.kweight50, useNA="ifany")
+#table(spe$seurat_qual.genes_pc30.kweight50, useNA="ifany")
 
 #pseudobulk raw counts
 spe
@@ -48,7 +53,11 @@ imgData(spe_pseudo) <- NULL
 spatialCoords(spe_pseudo) <-NULL
 
 #keep only sample level coldata
-colData(spe_pseudo) = colData(spe_pseudo)[,c("sample_id","brnum","age","sex","condition","PMI","RIN","slide","array","MBv_sample","seq","round","seurat_qual.genes_pc20.kweight50","nspots")]
+colData(spe_pseudo) = colData(spe_pseudo)[,c("sample_id","brnum","age","sex","condition","PMI","RIN",
+	"slide","array","MBv_sample","seq","round",
+	"seurat_qual.genes_pc20.kweight50",
+	#"seurat_qual.genes_pc30.kweight50",
+	"nspots")]
 colData(spe_pseudo)$condition = factor(spe_pseudo$condition, levels=c("NTC","MDD","BPD"))
 spe_pseudo
 
