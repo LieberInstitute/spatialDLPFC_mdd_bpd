@@ -7,19 +7,18 @@ suppressPackageStartupMessages({
 
 set.seed(123)
 
-load("processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9_norm-filt-combat-seq.Rdata")
+load("processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9_norm-filt.Rdata")
 dim(spe_pseudo)
 
-#spe_pseudo = spe_pseudo[-grep("MT-", rowData(spe_pseudo)$gene_name),]
-#cat("\nDim spe_pseudo after removing MT genome:\n")
-#dim(spe_pseudo)
+s.cdata = read.csv("processed-data/06_pseudobulk/continuous_batch_variable_slide-sample-id.csv")
+colData(spe_pseudo) <- merge(colData(spe_pseudo), s.cdata[,c("sample_id","m40_fitted","k3")])
 
 #dge_pseudo = DGEList(assay(spe_pseudo, "adjusted_counts"))
 #dge_pseudo <- calcNormFactors(dge_pseudo)
 
-cat("\nenrichment model: ~ precast_k9_1663 + condition + sex + nspots\n")
+cat("\nenrichment model: ~ precast_k9_1663 + condition + sex + nspots + m40_fitted\n")
 var_registration = "precast_k9_1663"
-covars = c("condition","sex","nspots")
+covars = c("condition","sex","nspots","m40_fitted")
 
 #following guidance of spatialLIBD function to create contrast matrices
 cluster_idx <- split(seq(along = spe_pseudo[[var_registration]]), spe_pseudo[[var_registration]])
@@ -47,13 +46,13 @@ modelList <- lapply(cluster_idx, function(x) {
 
 
 cat("\nvoom applied = FALSE\n")
-cor_mod = model.matrix(~0 + precast_k9_1663 + condition + sex + nspots, data=colData(spe_pseudo))
+cor_mod = model.matrix(~0 + precast_k9_1663 + condition + sex + nspots + m40_fitted, data=colData(spe_pseudo))
 corfit <- duplicateCorrelation(logcounts(spe_pseudo), design=cor_mod, block=spe_pseudo$sample_id)
 fitList <- bplapply(modelList, function(x) {
 	lmFit(logcounts(spe_pseudo), design=x, block=spe_pseudo$sample_id, correlation=corfit$consensus)
 }, BPPARAM=MulticoreParam(workers=8))
-saveRDS(fitList, "processed-data/06_pseudobulk/lmFit-list_combat-seq_precast-k9-1663_covars-condition-sex-nspots.rda")
-cat("\nlmFit objects with enrichment results saved to: processed-data/06_pseudobulk/lmFit-list_combat-seq_precast-k9-1663_covars-condition-sex-nspots.rda\n")
+saveRDS(fitList, "processed-data/06_pseudobulk/lmFit-list_precast-k9-1663_covars-condition-sex-nspots-m40.rda")
+cat("\nlmFit objects with enrichment results saved to: processed-data/06_pseudobulk/lmFit-list_precast-k9-1663_covars-condition-sex-nspots-m40.rda\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()
