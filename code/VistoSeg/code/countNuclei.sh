@@ -1,37 +1,32 @@
 #!/bin/bash
-#$ -cwd
-#$ -l mem_free=8G,h_vmem=8G,h_fsize=100G
-#$ -pe local 8
-#$ -N spatial_NAc
-#$ -o /dcs04/lieber/marmaypag/spatialNac_LIBD4125/spatial_NAc/code/VistoSeg/code/logs/countNuclei.$TASK_ID.txt
-#$ -e /dcs04/lieber/marmaypag/spatialNac_LIBD4125/spatial_NAc/code/VistoSeg/code/logs/countNuclei.$TASK_ID.txt
-#$ -m e
-#$ -t 14-16
-#$ -tc 10
+#SBATCH --mem=80G
+#SBATCH --job-name=mbv-countNuc
+#SBATCH -o logs/mbv-countNuc250522o-%a.txt
+#SBATCH --array=1-24%4
 
 echo "**** Job starts ****"
 date
 
 echo "**** JHPCE info ****"
 echo "User: ${USER}"
-echo "Job id: ${JOB_ID}"
-echo "Job name: ${JOB_NAME}"
-echo "Hostname: ${HOSTNAME}"
-echo "Task id: ${SGE_TASK_ID}"
+echo "Job id: ${SLURM_JOBID}"
+echo "Job name: ${SLURM_JOB_NAME}"
+echo "Hostname: ${SLURM_NODENAME}"
+echo "Task id: ${SLURM_ARRAY_TASK_ID}"
 echo "****"
-echo "Sample id: $(cat /dcs04/lieber/marmaypag/spatialNac_LIBD4125/spatial_NAc/code/VistoSeg/code/countNuclei_list.txt | awk '{print $NF}' | awk "NR==${SGE_TASK_ID}")"
+echo "Sample id: $(cat /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/VistoSeg/code/countNuclei_list.txt | awk '{print $NF}' | awk "NR==${SLURM_ARRAY_TASK_ID}")"
 echo "****"
 
+## load MATLAB
+module load matlab/R2023b
 
-module load matlab/R2019a
-
-
-toolbox='/dcs04/lieber/marmaypag/spatialNac_LIBD4125/spatial_NAc/code/VistoSeg/code'
+## Load toolbox for VistoSeg
+toolbox='/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/VistoSeg/code'
 
 ## Read parameters
-mask=$(awk 'BEGIN {FS="\t"} {print $1}' countNuclei_list.txt | awk "NR==${SGE_TASK_ID}")
-jsonname=$(awk 'BEGIN {FS="\t"} {print $2}' countNuclei_list.txt | awk "NR==${SGE_TASK_ID}")
-posname=$(awk 'BEGIN {FS="\t"} {print $3}' countNuclei_list.txt | awk "NR==${SGE_TASK_ID}")
+mask=$(awk 'BEGIN {FS="\t"} {print $1}' countNuclei_list.txt | awk "NR==${SLURM_ARRAY_TASK_ID}")
+jsonname=$(awk 'BEGIN {FS="\t"} {print $2}' countNuclei_list.txt | awk "NR==${SLURM_ARRAY_TASK_ID}")
+posname=$(awk 'BEGIN {FS="\t"} {print $3}' countNuclei_list.txt | awk "NR==${SLURM_ARRAY_TASK_ID}")
 
 
 matlab -nodesktop -nosplash -nojvm -r "addpath(genpath('$toolbox')), countNuclei('$mask','$jsonname', '$posname')"

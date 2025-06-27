@@ -1,12 +1,8 @@
 #!/bin/bash
-#$ -cwd
-#$ -l mem_free=100G,h_vmem=100G,h_stack=256M,h_fsize=100G
-#$ -o /dcs04/lieber/marmaypag/spatialNac_LIBD4125/spatial_NAc/code/VistoSeg/code/logs/$TASK_ID.txt
-#$ -e /dcs04/lieber/marmaypag/spatialNac_LIBD4125/spatial_NAc/code/VistoSeg/code/logs/$TASK_ID.txt
-#$ -m e
-#$ -M heenadivecha@gmail.com
-#$ -t 1
-#$ -tc 1
+#SBATCH --mem=80G
+#SBATCH --job-name=mbv-VNS
+#SBATCH -o logs/mbv-VNS250516o-%a.txt
+#SBATCH --array=1-24
 
 echo "**** Job starts ****"
 date
@@ -14,19 +10,19 @@ date
 
 echo "**** JHPCE info ****"
 echo "User: ${USER}"
-echo "Job id: ${JOB_ID}"
-echo "Job name: ${JOB_NAME}"
-echo "Hostname: ${HOSTNAME}"
-echo "Task id: ${SGE_TASK_ID}"
+echo "Job id: ${SLURM_JOBID}"
+echo "Job name: ${SLURM_JOB_NAME}"
+echo "Hostname: ${SLURM_NODENAME}"
+echo "Task id: ${SLURM_ARRAY_TASK_ID}"
 echo "****"
-echo "Sample id: $(cat /dcs04/lieber/marmaypag/spatialNac_LIBD4125/spatial_NAc/code/VistoSeg/code/VNS_list.txt | awk '{print $NF}' | awk "NR==${SGE_TASK_ID}")"
+echo "Sample id: $(cat /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/VistoSeg/code/VNS_list.txt | awk '{print $NF}' | awk "NR==${SLURM_ARRAY_TASK_ID}")"
 echo "****"
 
-module load matlab/R2019a
+module load matlab/R2023b
 
 
-toolbox='/dcs04/lieber/marmaypag/spatialNac_LIBD4125/spatial_NAc/code/VistoSeg/code'
-fname=$(cat /dcs04/lieber/marmaypag/spatialNac_LIBD4125/spatial_NAc/code/VistoSeg/code/VNS_list.txt | awk '{print $NF}' | awk "NR==${SGE_TASK_ID}")
+toolbox='/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/VistoSeg/code'
+fname=$(cat /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/VistoSeg/code/VNS_list.txt | awk '{print $NF}' | awk "NR==${SLURM_ARRAY_TASK_ID}")
 
 matlab -nodesktop -nosplash -nojvm -r "addpath(genpath('$toolbox')), VNS('$fname',5)"
 
