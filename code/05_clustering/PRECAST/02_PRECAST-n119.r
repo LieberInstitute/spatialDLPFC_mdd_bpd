@@ -6,6 +6,9 @@ suppressPackageStartupMessages({
 })
 set.seed(123)
 
+#set k with global var
+set.k = 5
+
 load("processed-data/05_clustering/PRECAST/srt-list_spe_n1663_counts.Rdata")
 #load("processed-data/05_clustering/PRECAST/srt-list_spe_H-M-markers_counts.Rdata")
 
@@ -25,16 +28,17 @@ PRECASTObj <- AddAdjList(preobj, platform = "Visium")
 # define model parameters and run model
 PRECASTObj <- AddParSetting(PRECASTObj, maxIter = 20, verbose = TRUE, Sigma_equal=FALSE, coreNum=12)
 cat("\n\nStart model:",format(Sys.time(), tz="EST"),"\n")
-PRECASTObj <- PRECAST(PRECASTObj, K=9)
+PRECASTObj <- PRECAST(PRECASTObj, K=set.k)
 #save precast object to try and get feature loadings
-save(PRECASTObj, file=paste0("processed-data/05_clustering/PRECAST/precastObj_precast_k-9_n",length(cglist),".Rdata"))
+save(PRECASTObj, file=paste0("processed-data/05_clustering/PRECAST/precastObj_precast_k-", set.k, "_n", length(cglist), ".Rdata"))
+cat("\n\nSaved PRECASTObj to:",paste0("processed-data/05_clustering/PRECAST/precastObj_precast_k-", set.k, "_n", length(cglist), ".Rdata"))
 
 # pick model (necessary but only changes things if more than 1 K) and integrate
-#PRECASTObj <- SelectModel(PRECASTObj, criteria="MBIC")
-#seuInt <- IntegrateSpaData(PRECASTObj, species = "Human")
+PRECASTObj <- SelectModel(PRECASTObj, criteria="MBIC")
+seuInt <- IntegrateSpaData(PRECASTObj, species = "Human")
 
-#save(seuInt, file=paste0("processed-data/05_clustering/PRECAST/srt_precast_k-9_n",length(cglist),".Rdata"))
-#cat("\n\nSaved to:",paste0("processed-data/05_clustering/PRECAST/srt_precast_k-9_n",length(cglist),".Rdata"))
+save(seuInt, file=paste0("processed-data/05_clustering/PRECAST/srt_precast_k-", set.k, "_n", length(cglist), ".Rdata"))
+cat("\n\nSaved to:",paste0("processed-data/05_clustering/PRECAST/srt_precast_k-", set.k, "_n", length(cglist), ".Rdata"))
 
 ## Reproducibility information
 print("Reproducibility information:")

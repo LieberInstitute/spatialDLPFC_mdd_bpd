@@ -1,8 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=30G
-#SBATCH --mail-type=FAIL,END
-#SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=plot_precast_H-M-markers_k9
+#SBATCH --mem=25G
+#SBATCH --job-name=evaluate_precast_n1663_k5
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/PRECAST/logs/%x_%j.log
 
 echo "**** Job starts ****"

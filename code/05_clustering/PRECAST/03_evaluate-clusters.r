@@ -12,6 +12,11 @@ suppressPackageStartupMessages({
 source("code/05_clustering/PRECAST/03-supp_plot-functions.r")
 source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
 
+.gene_set = "n1663"
+#.gene_set = "H-M-markers" #character specifying gene set (starting with 'n' for most instances except for H-M gene set)
+.k_clusters = 5 #numeric
+
+
 spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 
 #estimate spatial domain
@@ -48,28 +53,34 @@ lut = rowData(spe)[rowData(spe)$gene_name %in% top100.unique,]
 rownames(lut) = lut$gene_name
 top100.unique.df$gene_id = lut[top100.unique.df$gene,"gene_id"]
 
-.gene_set = "H-M-markers" #character specifying gene set (starting with 'n' for most instances except for H-M gene set)
-.k_clusters = 9 #numeric
 
-lossPlot(.gene_set, .k_clusters)
 #if i want to loop this i have to use a for loop so that coldata keeps getting updated
 spe <- updateColData(spe, .gene_set, .k_clusters)
 quickResaveHDF5SummarizedExperiment(spe)
 cat("\nPRECAST clusters", .gene_set, "genes, k=", .k_clusters, "updated to spe with quickResave\n")
 
-uniquepal = precast.colorList[[paste0(.gene_set,"_k",.k_clusters)]][["colors"]]
-names(uniquepal) = precast.colorList[[paste0(.gene_set,"_k",.k_clusters)]][["clusters"]]
-plist <- generateSpotPlots(spe, .gene_set, .k_clusters, uniquepal)
-pdf(file=paste0("plots/05_clustering/PRECAST/PRECAST_", .gene_set, "-k", .k_clusters,"_spot-plots.pdf"), width=12, height=16)
-plist[[1]]
-plist[[2]]
-plist[[3]]
-plist[[4]]
-plist[[5]]
-dev.off()
-cat("\nSaved spot plots to:",paste0("plots/05_clustering/PRECAST/PRECAST_", .gene_set, "-k", .k_clusters,"_spot-plots.pdf"), "\n")
-
+#make plots
+pdf(file=paste0("plots/05_clustering/PRECAST/PRECAST_", .gene_set, "-k", .k_clusters, "_loss-plot_layer-heatmap.pdf"),
+	width=6, height=7)
+lossPlot(.gene_set, .k_clusters)
 annotationHeatmap(spe, .gene_set, .k_clusters, top100.unique.df)
+dev.off()
+cat("\nInitial evaluation plots saved to:",
+	paste0("plots/05_clustering/PRECAST/PRECAST_", .gene_set, "-k",	.k_clusters, "_loss-plot_layer-heatmap.pdf"),"\n")
+
+## skip making all spot plots and rather make example spot plots in next step after annotating clusters
+#uniquepal = precast.colorList[[paste0(.gene_set,"_k",.k_clusters)]][["colors"]]
+#names(uniquepal) = precast.colorList[[paste0(.gene_set,"_k",.k_clusters)]][["clusters"]]
+#plist <- generateSpotPlots(spe, .gene_set, .k_clusters, uniquepal)
+#pdf(file=paste0("plots/05_clustering/PRECAST/PRECAST_", .gene_set, "-k", .k_clusters,"_spot-plots.pdf"), width=12, height=16)
+#plist[[1]]
+#plist[[2]]
+#plist[[3]]
+#plist[[4]]
+#plist[[5]]
+#dev.off()
+#cat("\nSaved spot plots to:",paste0("plots/05_clustering/PRECAST/PRECAST_", .gene_set, "-k", .k_clusters,"_spot-plots.pdf"), "\n")
+
 
 cat("\n\nReproducibility information:\n")
 Sys.time()

@@ -5,7 +5,7 @@ lossPlot = function(gene_set, k_clusters, jobid=NA) {
   x = grep(paste0(".*",gene_set), list.files("code/05_clustering/PRECAST/logs"), value=T)
   x = grep(paste0(".*k", k_clusters), x, value=T)
   #remove plotting logs
-  x = x[-grep("plot", x)]
+  x = x[grep("^precast_", x)]
   #quit if multiple files
   if(!is.na(jobid)) {x= grep(paste0(".*",jobid), x, value=T)}
   if(length(x)>1) {
@@ -21,11 +21,12 @@ lossPlot = function(gene_set, k_clusters, jobid=NA) {
                   loglik=as.numeric(sapply(iter.list, function(x) substr(x[[2]], start=9, stop=20))),
                   d.loglik=as.numeric(sapply(iter.list, function(x) substr(x[[3]], start=9, stop=16))))
   
-  png(file=paste0("plots/05_clustering/PRECAST/PRECAST_", gene_set, "-k", k_clusters, "_lglk-loss-plot.png"), bg="white")
+  #modified to be saved with annotation heatmap
+  #png(file=paste0("plots/05_clustering/PRECAST/PRECAST_", gene_set, "-k", k_clusters, "_lglk-loss-plot.png"), bg="white")
   plot(df[["iter"]], -df[["loglik"]], main=paste0("PRECAST ", gene_set, " k=", k_clusters), 
        xlab="iteration", ylab="neg. loglik")
-  dev.off()
-  cat("\nLoss plot saved to:", paste0("plots/05_clustering/PRECAST/PRECAST_", gene_set, "-k", k_clusters, "_lglk-loss-plot.png"),"\n")
+  #dev.off()
+  #cat("\nLoss plot saved to:", paste0("plots/05_clustering/PRECAST/PRECAST_", gene_set, "-k", k_clusters, "_lglk-loss-plot.png"),"\n")
 }
 
 updateColData <- function(object, gene_set, k_clusters) {
@@ -93,7 +94,11 @@ annotationHeatmap <- function(object, gene_set, k_clusters, layer_marker_df) {
   if(gene_set=="H-M-markers") {gene_set2 = "HM"}
   cluster_col = paste0("precast_k", k_clusters,"_", gene_set2)
   #k_clusters = numeric
-  
+  valid.genes = intersect(rownames(object), layer_marker_df$gene_id)
+  cat("\nNumber of valid genes =", length(valid.genes), "\n")
+  valid.genes[1:4]
+  layer_marker_df = layer_marker_df[layer_marker_df$gene_id %in% valid.genes,]
+  dim(layer_marker_df)
   spe_summ = aggregateAcrossCells(object[layer_marker_df$gene_id,], 
                                   #it wouldn't work unless i kep sample_id in coldata so needed to add extra averaging step below
                                   ids=colData(object)[,c("sample_id",cluster_col)], 
@@ -116,7 +121,9 @@ annotationHeatmap <- function(object, gene_set, k_clusters, layer_marker_df) {
                  annotation_row=row_annot, annotation_colors = annot_colors, 
                  show_rownames = F, cluster_rows=F, annotation_names_row = F,
                  scale="row", angle_col = 0, treeheight_col = 10, silent=T)
-  ggsave(paste0("plots/05_clustering/PRECAST/PRECAST_", gene_set, "-k", k_clusters, "_initial-layer-annotation.png"), hmp[[4]], 
-         bg="white", width=6, height=7, units="in")
-  cat("\nInitial layer annotation heatmap saved to:",paste0("plots/05_clustering/PRECAST/PRECAST_", gene_set, "-k", k_clusters, "_initial-layer-annotation.png"),"\n")
+  #modified to be returned and saved with loss plot
+  return(hmp[[4]])
+  #ggsave(paste0("plots/05_clustering/PRECAST/PRECAST_", gene_set, "-k", k_clusters, "_initial-layer-annotation.png"), hmp[[4]], 
+  #       bg="white", width=6, height=7, units="in")
+  #cat("\nInitial layer annotation heatmap saved to:",paste0("plots/05_clustering/PRECAST/PRECAST_", gene_set, "-k", k_clusters, "_initial-layer-annotation.png"),"\n")
 }
