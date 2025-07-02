@@ -11,7 +11,7 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 cpList = readRDS("plots/colorPalettes.rds")
-low.res.pal = c("Astro"="#cfa45c","Micro/Vasc"="#911223",
+low.res.pal = c("Astro"="#cfa45c","Micro.Vasc"="#911223",
                 "Inhb"="#9377AC",
                 "L2"="#5D9940","L3"="#5095CD",
                 "L4"="#85A0A0",

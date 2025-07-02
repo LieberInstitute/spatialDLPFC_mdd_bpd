@@ -21,7 +21,8 @@ table(cdata[cdata$smoothed_k9_1663_f %in% c("low UMI","GABA","Vasc"),"smoothed_k
 
 cdata2 = cdata[!cdata$smoothed_k9_1663_f %in% c("low UMI","GABA","Vasc"),]
 spe = spe[,rownames(cdata2)]
-spe$smoothed_k9_1663 = factor(cdata2$smoothed_k9_1663_f, levels=c("L1","L2","L3/4","L5","L6","WM"))
+spe$smoothed_k9_1663 = factor(cdata2$smoothed_k9_1663_f, levels=c("L1","L2","L3/4","L5","L6","WM"),
+	labels=c("L1","L2","L3.4","L5","L6","WM"))
 cat("\nTransferred smoothed PRECAST k=9 n1663 to spe:\n")
 table(spe$smoothed_k9_1663, useNA="ifany")
 

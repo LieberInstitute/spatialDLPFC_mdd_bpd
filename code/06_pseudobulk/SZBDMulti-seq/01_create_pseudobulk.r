@@ -18,7 +18,7 @@ load("processed-data/05_clustering/Seurat/seurat_SZBDMulti-seq_control_processed
 #transfer cluster labels
 seu_con$seurat_low.res <- factor(as.character(mdata$seurat_low.res), 
 	levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
-	labels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"))
+	labels=c("Micro.Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"))
 
 #to sce
 ### feature/row data
