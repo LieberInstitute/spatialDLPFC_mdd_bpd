@@ -12,9 +12,9 @@ suppressPackageStartupMessages({
 source("code/05_clustering/PRECAST/03-supp_plot-functions.r")
 source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
 
-.gene_set = "n1663"
-#.gene_set = "H-M-markers" #character specifying gene set (starting with 'n' for most instances except for H-M gene set)
-.k_clusters = 5 #numeric
+#.gene_set = "n1663" #character specifying gene set (starting with 'n' for most instances except for H-M gene set)
+.gene_set = "H-M-markers" #character specifying gene set (starting with 'n' for most instances except for H-M gene set)
+.k_clusters = 7 #numeric
 
 
 spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
@@ -63,7 +63,7 @@ cat("\nPRECAST clusters", .gene_set, "genes, k=", .k_clusters, "updated to spe w
 pdf(file=paste0("plots/05_clustering/PRECAST/PRECAST_", .gene_set, "-k", .k_clusters, "_loss-plot_layer-heatmap.pdf"),
 	width=6, height=7)
 lossPlot(.gene_set, .k_clusters)
-annotationHeatmap(spe, .gene_set, .k_clusters, top100.unique.df)
+plot(annotationHeatmap(spe, .gene_set, .k_clusters, top100.unique.df))
 dev.off()
 cat("\nInitial evaluation plots saved to:",
 	paste0("plots/05_clustering/PRECAST/PRECAST_", .gene_set, "-k",	.k_clusters, "_loss-plot_layer-heatmap.pdf"),"\n")
