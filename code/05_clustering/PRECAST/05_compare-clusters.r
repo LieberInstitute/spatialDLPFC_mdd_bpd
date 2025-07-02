@@ -19,7 +19,7 @@ for(i in names(annotations)) {
 
 }
 
-write.csv(colData(spe), "processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names = T)
+write.csv(colData(spe)[,c(1,10,12,13,16,26:36)], "processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names = T)
 cat("\ncolData csv with cluster results saved to: processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv\n")
 
 ################# pairwise jaccard
