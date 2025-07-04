@@ -23,8 +23,27 @@ rowData(spe_pseudo)$high_expr_group_cluster <- filterByExpr(spe_pseudo, group = 
 
 with(rowData(spe_pseudo), table(high_expr_group_sample_id, high_expr_group_cluster))
 
-keep.genes = rowData(spe_pseudo)$high_expr_group_sample_id & rowData(spe_pseudo)$high_expr_group_cluster
-table(keep.genes)
+spe_keep.genes = rownames(spe_pseudo)[rowData(spe_pseudo)$high_expr_group_sample_id & rowData(spe_pseudo)$high_expr_group_cluster]
+cat("\nGenes to keep from edgeR filtered PRECAST (smoothed) gene set:", length(spe_keep.genes), "\n")
+
+#include any genes from MBv seurat label transfer
+load("processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo_indivID-low-res.Rdata")
+rowData(sce_pseudo)$high_expr_group_individualID <- filterByExpr(sce_pseudo, group = sce_pseudo$individualID)
+rowData(sce_pseudo)$high_expr_group_cluster <- filterByExpr(sce_pseudo, group = sce_pseudo$seurat_low.res)
+sce_keep.genes = rownames(sce_pseudo)[rowData(sce_pseudo)$high_expr_group_individualID & rowData(sce_pseudo)$high_expr_group_cluster]
+cat("Genes to keep from edgeR filtered SZBDMulti-seq gene set:", length(sce_keep.genes), "\n")
+
+
+cat("SZBDMulti-seq genes completely missing from PRECAST (smoothed) gene set:", length(setdiff(sce_keep.genes, rownames(spe_pseudo))),"\n")
+sce_keep.genes = intersect(sce_keep.genes, rownames(spe_pseudo))
+cat("Revised genes to keep from edgeR filtered SZBDMulti-seq gene set:", length(sce_keep.genes), "\n")
+
+rowData(spe_pseudo)$high_expr_SZBDMultiseq = rownames(spe_pseudo) %in% sce_keep.genes
+
+keep.genes = union(spe_keep.genes, sce_keep.genes)
+stopifnot(length(setdiff(keep.genes, rownames(spe_pseudo)))==0)
+
+cat("\nNumber of genes to keep (union of PRECAST (smoothed) and eligible SZBDMuli-seq):", length(keep.genes), "\n")
 spe_pseudo <- spe_pseudo[keep.genes, ]
 
 #calculate QC metrics, then remove MT genes prior to normalizing

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --ntasks=8
-#SBATCH --mem=5G
+#SBATCH --mem=10G
 #SBATCH --job-name=layer-enrich_lmFit_seurat-pc30
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/06_pseudobulk/Seurat/logs/%x_%j.log
 

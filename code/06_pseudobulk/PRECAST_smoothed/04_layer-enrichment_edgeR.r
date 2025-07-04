@@ -7,18 +7,13 @@ suppressPackageStartupMessages({
 
 set.seed(123)
 
-load("processed-data/06_pseudobulk/PRECAST/spe_n119_pseudo_sample-n1663-k9_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
 dim(spe_pseudo)
 
 spe_pseudo$pc3 = reducedDim(spe_pseudo)[,"PC3"]
-#s.cdata = read.csv("processed-data/06_pseudobulk/continuous_batch_variable_slide-sample-id.csv")
-#colData(spe_pseudo) <- merge(colData(spe_pseudo), s.cdata[,c("sample_id","m40_fitted","k3")])
 
-#dge_pseudo = DGEList(assay(spe_pseudo, "adjusted_counts"))
-#dge_pseudo <- calcNormFactors(dge_pseudo)
-
-cat("\nenrichment model: ~ precast_k9_1663 + condition + sex + nspots + pc3\n")
-var_registration = "precast_k9_1663"
+cat("\nenrichment model: ~ smoothed_k9_1663 + condition + sex + nspots + pc3\n")
+var_registration = "smoothed_k9_1663"
 covars = c("condition","sex","nspots","pc3")
 
 #following guidance of spatialLIBD function to create contrast matrices
@@ -47,13 +42,13 @@ modelList <- lapply(cluster_idx, function(x) {
 
 
 cat("\nvoom applied = FALSE\n")
-cor_mod = model.matrix(~0 + precast_k9_1663 + condition + sex + nspots + pc3, data=colData(spe_pseudo))
+cor_mod = model.matrix(~0 + smoothed_k9_1663 + condition + sex + nspots + pc3, data=colData(spe_pseudo))
 corfit <- duplicateCorrelation(logcounts(spe_pseudo), design=cor_mod, block=spe_pseudo$sample_id)
 fitList <- bplapply(modelList, function(x) {
 	lmFit(logcounts(spe_pseudo), design=x, block=spe_pseudo$sample_id, correlation=corfit$consensus)
 }, BPPARAM=MulticoreParam(workers=8))
-saveRDS(fitList, "processed-data/06_pseudobulk/PRECAST/lmFit-list_precast-k9-1663_covars-condition-sex-nspots-pc3.rda")
-cat("\nlmFit objects with enrichment results saved to: processed-data/06_pseudobulk/PRECAST/lmFit-list_precast-k9-1663_covars-condition-sex-nspots-pc3.rda\n")
+saveRDS(fitList, "processed-data/06_pseudobulk/PRECAST_smoothed/lmFit-list_smoothed-k9-1663_covars-condition-sex-nspots-pc3.rda")
+cat("\nlmFit objects with enrichment results saved to: processed-data/06_pseudobulk/PRECAST_smoothed/lmFit-list_smoothed-k9-1663_covars-condition-sex-nspots-pc3.rda\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()

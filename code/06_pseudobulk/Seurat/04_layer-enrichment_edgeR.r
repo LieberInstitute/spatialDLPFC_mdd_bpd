@@ -12,8 +12,8 @@ dim(spe_pseudo)
 
 spe_pseudo$pc3 = reducedDim(spe_pseudo)[,"PC3"]
 
-cat("\nenrichment model: ~ seurat_pc30 + condition + sex + nspots + pc3\n")
-var_registration = "seurat_pc30"
+cat("\nenrichment model: ~ seurat_label + condition + sex + nspots + pc3\n")
+var_registration = "seurat_label"
 covars = c("condition","sex","nspots","pc3")
 
 #following guidance of spatialLIBD function to create contrast matrices
@@ -42,7 +42,7 @@ modelList <- lapply(cluster_idx, function(x) {
 
 
 cat("\nvoom applied = FALSE\n")
-cor_mod = model.matrix(~0 + seurat_pc30 + condition + sex + nspots + pc3, data=colData(spe_pseudo))
+cor_mod = model.matrix(~0 + seurat_label + condition + sex + nspots + pc3, data=colData(spe_pseudo))
 corfit <- duplicateCorrelation(logcounts(spe_pseudo), design=cor_mod, block=spe_pseudo$sample_id)
 fitList <- bplapply(modelList, function(x) {
 	lmFit(logcounts(spe_pseudo), design=x, block=spe_pseudo$sample_id, correlation=corfit$consensus)

@@ -28,8 +28,27 @@ rowData(sce_pseudo)$high_expr_group_cluster <- filterByExpr(sce_pseudo, group = 
 
 with(rowData(sce_pseudo), table(high_expr_group_individualID, high_expr_group_cluster))
 
-keep.genes = rowData(sce_pseudo)$high_expr_group_individualID & rowData(sce_pseudo)$high_expr_group_cluster
-table(keep.genes)
+sce_keep.genes = rownames(sce_pseudo)[rowData(sce_pseudo)$high_expr_group_individualID & rowData(sce_pseudo)$high_expr_group_cluster]
+cat("\nGenes to keep from edgeR filtered SZBDMulti-seq gene set:", length(sce_keep.genes), "\n")
+
+#include any genes from MBv seurat label transfer
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30.Rdata")
+rowData(spe_pseudo)$high_expr_group_sample_id <- filterByExpr(spe_pseudo, group = spe_pseudo$sample_id)
+rowData(spe_pseudo)$high_expr_group_cluster <- filterByExpr(spe_pseudo, group = spe_pseudo$seurat_qual.genes_pc30.kweight50)
+spe_keep.genes = rownames(spe_pseudo)[rowData(spe_pseudo)$high_expr_group_sample_id & rowData(spe_pseudo)$high_expr_group_cluster]
+cat("Genes to keep from edgeR filtered MBv label transfer gene set:", length(spe_keep.genes), "\n")
+
+
+cat("SRT genes completely missing from SZBDMulti-seq gene set:", length(setdiff(spe_keep.genes, rownames(sce_pseudo))),"\n")
+spe_keep.genes = intersect(spe_keep.genes, rownames(sce_pseudo))
+cat("Revised genes to keep from	edgeR filtered MBv label transfer gene set:", length(spe_keep.genes), "\n")
+
+rowData(sce_pseudo)$high_expr_MBv_pc30 = rownames(sce_pseudo) %in% spe_keep.genes
+
+keep.genes = union(sce_keep.genes, spe_keep.genes)
+stopifnot(length(setdiff(keep.genes, rownames(sce_pseudo)))==0) 
+
+cat("\nNumber of genes to keep (union of SZBDMuli-seq and eligible MBv label transfer):", length(keep.genes), "\n")
 sce_pseudo <- sce_pseudo[keep.genes, ]
 
 #calculate QC metrics, then remove MT genes prior to normalizing
@@ -59,10 +78,11 @@ cdata= as.data.frame(colData(sce_pseudo)) %>%
 p1 <- ggplot(cdata, aes(x=condition, y=ncells))+
   ggbeeswarm::geom_quasirandom(aes(shape=sex))+
   geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
-  facet_wrap(vars(seurat_low.res), ncol=8, scales="free_y")+
+  facet_wrap(vars(seurat_low.res), ncol=9, scales="free_y")+
   scale_shape_manual(values=c(19,1))+
   theme_bw()+labs(title="Number of nuclei per pseudobulked sample", y="ncells")+
-  theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
+  theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank(),
+	axis.text.y=element_text(size=8))
 
 p2 <- ggplot(cdata, aes(x=condition, y=sum))+
   ggbeeswarm::geom_quasirandom(aes(shape=sex))+
@@ -199,11 +219,12 @@ logcounts(sce_pseudo) <- x
 p1 <- ggplot(cdata2, aes(x=condition, y=ncells))+
   ggbeeswarm::geom_quasirandom(aes(shape=sex))+
   geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+                     
-  facet_wrap(vars(seurat_low.res), ncol=8, scales="free_y")+
+  facet_wrap(vars(seurat_low.res), ncol=9, scales="free_y")+
   scale_shape_manual(values=c(19,1))+
   #scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Number of nuclei per pseudobulked sample", y="ncells")+
-  theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
+  theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank(),
+	axis.text.y=element_text(size=8))
 
 p2 <- ggplot(cdata2, aes(x=condition, y=sum))+
   ggbeeswarm::geom_quasirandom(aes(shape=sex))+
