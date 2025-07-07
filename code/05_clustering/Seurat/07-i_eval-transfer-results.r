@@ -1,6 +1,9 @@
 library(Seurat)
 set.seed(123)
 
+##################
+### found that the kweights=50 was cleaner (less random spotting) than kweights=20
+##################
 
 ### PCs = 20
 ##### kweight=20
