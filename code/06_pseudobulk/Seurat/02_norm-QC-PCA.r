@@ -15,17 +15,18 @@ set.seed(123)
 cpList = readRDS("plots/colorPalettes.rds")
 low.res.pal = c("Astro"="#cfa45c","Micro.Vasc"="#911223",
                 "Inhb"="#9377AC",
-                "L2.3"="#5D9940",
+		"L2"="#5D9940", "L3"="#5095CD",
+                #"L2.3"="#5D9940",
                 "L4"="#85A0A0",
                 "L5"="#ddc94e","L6"="#E45C5F",
                 "Oligo"="#D1C4B0")
 
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc20.Rdata")
 dim(spe_pseudo) #
 
 #filter by expression before recalculating norm counts
 rowData(spe_pseudo)$high_expr_group_sample_id <- filterByExpr(spe_pseudo, group = spe_pseudo$sample_id)
-rowData(spe_pseudo)$high_expr_group_cluster <- filterByExpr(spe_pseudo, group = spe_pseudo$seurat_qual.genes_pc30.kweight50)
+rowData(spe_pseudo)$high_expr_group_cluster <- filterByExpr(spe_pseudo, group = spe_pseudo$seurat_qual.genes_pc20.kweight50)
 
 with(rowData(spe_pseudo), table(high_expr_group_sample_id, high_expr_group_cluster))
 
@@ -77,7 +78,7 @@ cdata= as.data.frame(colData(spe_pseudo))
 p1 <- ggplot(cdata, aes(x=condition, y=nspots))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
-  facet_wrap(vars(seurat_qual.genes_pc30.kweight50), ncol=9, scales="free_y")+
+  facet_wrap(vars(seurat_qual.genes_pc20.kweight50), ncol=9, scales="free_y")+
   scale_shape_manual(values=c(19,1))+
   scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Number of spots per pseudobulked sample", y="nspots")+
@@ -86,7 +87,7 @@ p1 <- ggplot(cdata, aes(x=condition, y=nspots))+
 p2 <- ggplot(cdata, aes(x=condition, y=sum))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
-  facet_grid(cols=vars(seurat_qual.genes_pc30.kweight50))+
+  facet_grid(cols=vars(seurat_qual.genes_pc20.kweight50))+
   scale_y_log10()+scale_shape_manual(values=c(19,1))+
   scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Library size per pseudobulked sample", y="sum UMI (log10 scale)")+
@@ -95,7 +96,7 @@ p2 <- ggplot(cdata, aes(x=condition, y=sum))+
 p3 <- ggplot(cdata, aes(x=condition, y=detected))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
-  facet_grid(cols=vars(seurat_qual.genes_pc30.kweight50))+
+  facet_grid(cols=vars(seurat_qual.genes_pc20.kweight50))+
   scale_shape_manual(values=c(19,1))+
   scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Unique detected genes per pseudobulked sample", y="detected")+
@@ -104,15 +105,15 @@ p3 <- ggplot(cdata, aes(x=condition, y=detected))+
 p4 <- ggplot(cdata, aes(x=condition, y=subsets_mito_percent))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
-  facet_grid(cols=vars(seurat_qual.genes_pc30.kweight50))+
+  facet_grid(cols=vars(seurat_qual.genes_pc20.kweight50))+
   scale_shape_manual(values=c(19,1))+ylim(0,45)+
   scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Fraction of chrM reads per pseudobulked sample", y="subsets_mito_percent")+
   theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
-ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc30_unfiltered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
+ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc20_unfiltered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
         bg="white", width=12, height=12, units="in")
-cat("\nQC plots saved to: plots/06_pseudobulk/Seurat/sample-seurat-pc30_unfiltered_QC-metrics.png\n")
+cat("\nQC plots saved to: plots/06_pseudobulk/Seurat/sample-seurat-pc20_unfiltered_QC-metrics.png\n")
 
 #remove MT- genes prior to calculating norm factors (this improves histogram of norm factors)
 spe_pseudo = spe_pseudo[-grep("MT-", rowData(spe_pseudo)$gene_name),]
@@ -188,10 +189,10 @@ q5 = ggplot_build(p5)
 q5$data[[2]]$size = 1
 q5 = ggplot_gtable(q5)
 
-ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc30_unfiltered_PCA-1663-eval.png",
+ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc20_unfiltered_PCA-1663-eval.png",
 	gridExtra::grid.arrange(q1, q2, p3, q4, bp1, q5, layout_matrix=cbind(c(1,3,3,5,5),c(2,4,4,6,6))),
         bg="white", height=12, width=12, units="in")
-cat("\nPCA eval plots saved to: plots/06_pseudobulk/Seurat/sample-seurat-pc30_unfiltered_PCA-1663-eval.png\n")
+cat("\nPCA eval plots saved to: plots/06_pseudobulk/Seurat/sample-seurat-pc20_unfiltered_PCA-1663-eval.png\n")
 
 ##### stop early to evaluate filters then run again
 #stop("Evaluate plots then continue")
@@ -217,7 +218,7 @@ logcounts(spe_pseudo) <- x
 p1 <- ggplot(cdata2, aes(x=condition, y=nspots))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+                     
-  facet_wrap(vars(seurat_label), ncol=8, scales="free_y")+
+  facet_wrap(vars(seurat_label), ncol=9, scales="free_y")+
   scale_shape_manual(values=c(19,1))+
   scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Number of spots per pseudobulked sample", y="nspots")+
@@ -250,9 +251,9 @@ p4 <- ggplot(cdata2, aes(x=condition, y=subsets_mito_percent))+
   theme_bw()+labs(title="Fraction of chrM reads per pseudobulked sample", y="subsets_mito_percent")+
   theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
-ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc30_filtered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
+ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc20_filtered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
 	bg="white", width=12, height=12, units="in")
-cat("\nQC plots saved to: plots/06_pseudobulk/Seurat/sample-seurat-pc30_filtered_QC-metrics.png\n")
+cat("\nQC plots saved to: plots/06_pseudobulk/Seurat/sample-seurat-pc20_filtered_QC-metrics.png\n")
 
 
 #pca after filtering
@@ -293,10 +294,10 @@ q5 = ggplot_build(p5)
 q5$data[[2]]$size = 1
 q5 = ggplot_gtable(q5)
 
-ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc30_filtered_PCA-1663-eval.png", 
+ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc20_filtered_PCA-1663-eval.png", 
 	gridExtra::grid.arrange(q1, q2, p3, q4, bp1, q5, layout_matrix=cbind(c(1,3,3,5,5),c(2,4,4,6,6))),
 	bg="white", height=12, width=12, units="in")
-cat("\nPCA eval plots saved to: plots/06_pseudobulk/Seurat/sample-seurat-pc30_filtered_PCA-1663-eval.png\n")
+cat("\nPCA eval plots saved to: plots/06_pseudobulk/Seurat/sample-seurat-pc20_filtered_PCA-1663-eval.png\n")
 
 #look for correlation between important experimental design variables
 var.m = getVarianceExplained(spe_pseudo, variables=exp.vars)
@@ -315,7 +316,7 @@ ann_colors = list(
 hmp = pheatmap::pheatmap(cor.var.m,
 	annotation_col = col_annot, annotation_colors = ann_colors,
 	annotation_names_col=FALSE, annotation_legend=T)
-ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc30_variance-explained_experimental-design_heatmap.png",
+ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc20_variance-explained_experimental-design_heatmap.png",
        hmp[[4]], bg="white", height=7, width=9, units="in")
 
 
@@ -325,16 +326,16 @@ q.decile = quantile(avg1, prob=seq(0,1,.1))
 avg.expr = cbind.data.frame("gene_name"=rowData(spe_pseudo)[names(avg1),"gene_name"],
                  "avg_expr"=avg1,
                  "decile" = cut(avg1, breaks=c(0,q.decile[2:11]), labels=F))
-write.csv(avg.expr, "processed-data/06_pseudobulk/Seurat/pseudobulk-sample-seurat-pc30_filtered-genes_avg-logcounts.csv", row.names=T)
-cat("\nAverage expression of",paste0(length(keep.genes)),"genes after filtering saved to: processed-data/06_pseudobulk/Seurat/pseudobulk-sample-seurat-pc30_filtered-genes_avg-logcounts.csv\n")
+write.csv(avg.expr, "processed-data/06_pseudobulk/Seurat/pseudobulk-sample-seurat-pc20_filtered-genes_avg-logcounts.csv", row.names=T)
+cat("\nAverage expression of",paste0(length(keep.genes)),"genes after filtering saved to: processed-data/06_pseudobulk/Seurat/pseudobulk-sample-seurat-pc20_filtered-genes_avg-logcounts.csv\n")
 
-save(spe_pseudo, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
-cat("\nFiltered, normalized pseudobulk spe saved to: processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata\n")
+save(spe_pseudo, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc20_norm-filt.Rdata")
+cat("\nFiltered, normalized pseudobulk spe saved to: processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc20_norm-filt.Rdata\n")
 
 #update spe tracker
 write(c(paste("********** QC filtered and normalized pseudobulked spe on",format(Sys.time())),
-        "********** Old file location: processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30.Rdata",
-        "********** New file location: processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata",
+        "********** Old file location: processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc20.Rdata",
+        "********** New file location: processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc20_norm-filt.Rdata",
         "********** Source code: code/06_pseudobulk/Seurat/02_norm-QC-PCA.r",
         "**********","**********","**********"), "spe_tracker_current.txt", append=TRUE)
 

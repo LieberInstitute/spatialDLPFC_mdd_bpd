@@ -19,7 +19,11 @@ stopifnot(identical(rownames(colData(spe)), rownames(res2)))
 
 #transfer label IDs and combine L2/3
 spe$seurat_qual.genes_pc20.kweight50 = factor(res2$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
-	labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","L5","L6","Oligo","Inhb"))
+########### unmerge L2 and L3 for pc20
+	labels=c("Micro.Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"))
+	#labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","L5","L6","Oligo","Inhb"))
+###########
+
 #spe$seurat_qual.genes_pc30.kweight50 = factor(res4$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
 #        labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","L5","L6","Oligo","Inhb"))
 cat("\nTransferred label transfer from qual genes results with PC=20 and k.weights=50 to spe:\n")
