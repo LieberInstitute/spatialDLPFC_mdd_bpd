@@ -51,7 +51,7 @@ cpList$low.res.light = c("Micro.Vasc"="#d05e46","Astro"="#F5D29E",
                          "L5"="#e5e8a0","L6"="#ef9e9f",
                          "Oligo"="#ede8e0","Inhb"="#b9a7c9")
 
-cpList$low.res.bright =c("Micro/Vasc"="#911223","Astro"="#cfa45c",
+cpList$low.res.bright =c("Micro.Vasc"="#911223","Astro"="#cfa45c",
                          "L2"="#5D9940", "L3"="#5095CD", 
                          "L4"="#c2cfcf", #"L4"="#85A0A0",
                          "L5"="#ddc94e","L6"="#E45C5F",
@@ -71,7 +71,7 @@ cpList$transfer.light = c("Micro.Vasc"="#d05e46","Astro"="#F5D29E",
                          "L5"="#e5e8a0","L6"="#ef9e9f",
                          "Oligo"="#ede8e0","Inhb"="#b9a7c9")
 
-cpList$transfer.bright =c("Micro/Vasc"="#911223","Astro"="#cfa45c",
+cpList$transfer.bright =c("Micro.Vasc"="#911223","Astro"="#cfa45c",
                          "L2.3"="#088F8F", 
                          "L4"="#c2cfcf", #"L4"="#85A0A0",
                          "L5"="#ddc94e","L6"="#E45C5F",
