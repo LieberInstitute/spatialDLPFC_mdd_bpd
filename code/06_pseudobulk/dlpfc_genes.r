@@ -1,0 +1,21 @@
+dlpfc.genes = list(#Micro.Vasc=c("ICAM2","COL1A2","CLDN5","CFH","MECOM"), #https://www.nature.com/articles/s41467-023-38002-w
+  Micro.Vasc=c("ICAM2","COL1A2","CLDN5","MECOM"),
+  #Astro=c("AQP4","SLCO1C1","FGFR3","ETNPPL","GJA1"),#https://pmc.ncbi.nlm.nih.gov/articles/PMC4286632/
+  #https://pubmed.ncbi.nlm.nih.gov/36794261/
+  #https://www.jneurosci.org/content/21/6/1983
+  Astro=c("GJA1","AQP4","SLCO1C1","ETNPPL"),
+  #L2=c("C1QL2","LIPC","C6orf141","TTC6","PCDH8"),
+  L2=c("C6orf141","HPCAL1","RASGRF2","DGKB","PCDH8"),
+  #L3=c("PRAG1","GPR6","DRGX","LAMA2","COL5A2","CARTPT",),
+  L3=c("COL5A2","NTNG1","GPX3"),
+  #L4=c("TNNT2","GAL","VIPR2","NGB","BHLHE22","RORB"),
+  L4=c("TNNT2","VIPR2","GAL","RORB"),
+  #L5=c("PCP4","TRABD2A","FEZF2","NPY2R","HTR2C"),
+  L5=c("PCP4","TRABD2A","HTR2C","FEZF2"),
+  #L6=c("SMIM32","NR4A2","OPRK1","NXPH4","SEMA3D"),
+  L6=c("SMIM32","NR4A2","SEMA3D"),
+  #Oligo=c("MOBP","MOG","MAG","GJB1","ERMN"),
+  Oligo=c("MOBP","GJB1"),
+  #Inhb=c("SLC32A1","GAD1","GAD2","SLC6A1","KIT")
+  Inhb=c("SLC32A1","GAD2","GAD1","SLC6A1")
+)
