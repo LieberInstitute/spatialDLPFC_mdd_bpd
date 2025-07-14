@@ -216,6 +216,44 @@ cat("\n\nSaved dotplots of all 3 annotation strategies for...",
 	"\n>> Top 10 most sig. MBv label transfer genes: plots/06_pseudobulk/top-10-sig-each-annot_MBv-seurat-pc30-genes_dotplot.pdf\n\n") 
 
 
+
+#spot level annotation assignment for MBv label transfer and PRECAST (smoothed)
+cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
+cdata$smoothed_k9_1663_f = factor(cdata$smoothed_k9_1663, levels=c("L1","L2","L3/4","L5","L6","WM","low UMI","Vasc","GABA"), 
+                                labels=c("L1","L2","L3.4","L5","L6","WM","dropped","dropped","dropped"))
+
+res.pc30 = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-MBv_qual-genes-kanchor-50-pc30_red-precast-kweight-50-low-res.csv", row.names=1)
+stopifnot(identical(rownames(cdata), rownames(res.pc30)))
+
+cdata$seurat_pc30 = factor(res.pc30$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
+                           labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","L5","L6","Oligo","Inhb"))
+
+cdata$prediction.score.max = res.pc30$prediction.score.max
+
+spots.df = group_by(cdata, smoothed_k9_1663_f, seurat_pc30) %>% 
+  summarise(n=n(), avg.score = mean(prediction.score.max)) %>%
+  mutate(smoothed_k9_1663_f= factor(smoothed_k9_1663_f, levels=rev(levels(cdata$smoothed_k9_1663_f))))
+
+p <- ggplot(spots.df,  aes(x=seurat_pc30, y=smoothed_k9_1663_f, size=n, color=avg.score))+
+  geom_count()+
+  scale_color_gradientn("Avg. Seurat\nprediction\nscore",
+                        colors=RColorBrewer::brewer.pal(n=5, "Purples"),
+                        limits=c(0,1))+
+  scale_size("# spots", range=c(0,6), breaks=c(10,30,50)*1000,
+             labels=function(x) paste0(x/1000,"k"))+
+  scale_x_discrete("MBv label transfer", labels=c("M/V","Astro","L2.3","L4","L5","L6","Oligo","Inhb"))+
+  scale_y_discrete("PRECAST (smoothed)")+
+  labs(title="Spot-level annotation")+
+  theme_minimal()+theme(panel.grid= element_blank(), aspect.ratio=1,
+                        legend.key.size= unit(10, "pt"), legend.title = element_text(size=8),
+                        legend.text = element_text(size=7),
+                        plot.title=element_text(size=10), plot.subtitle = element_text(size=8),
+                        axis.text.x= element_text(angle=45, hjust=1))
+
+ggsave(file="plots/06_pseudobulk/spot-level-annotation-heatmap_MBv-label-transfer-vs-PRECAST-smoothed.png",
+       p,
+       bg="white", width=3.4, height=3) 
+
 cat("\n\nReproducibility information:\n")
 format(Sys.time())
 proc.time()
