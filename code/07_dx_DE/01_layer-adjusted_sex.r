@@ -8,30 +8,28 @@ suppressPackageStartupMessages({
 
 set.seed(123)
 
-#load("processed-data/06_pseudobulk/spe_n119_pseudo_sample-comb-clus_norm-filt.Rdata")
-load("processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9_norm-filt.Rdata")
-#load("processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9_norm-filt-combat-seq.Rdata")
-dim(spe_pseudo) # 12397   950
-#spe_pseudo$slide_name = gsub("-","\\.", spe_pseudo$slide)
 
+#load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+dim(spe_pseudo)
 spe_pseudo$pc3 = reducedDim(spe_pseudo)[,"PC3"]
 
-s.cdata = read.csv("processed-data/06_pseudobulk/continuous_batch_variable_slide-sample-id.csv")
-colData(spe_pseudo) <- merge(colData(spe_pseudo), s.cdata[,c("sample_id","m40_fitted","k3")])
-spe_pseudo$k3 = as.factor(spe_pseudo$k3)
+#remove lowly expressed genes that were included for comparison with snRNAseq data
+spe_pseudo <- spe_pseudo[rowData(spe_pseudo)$high_expr_group_sample_id==T & rowData(spe_pseudo)$high_expr_group_cluster==T,]
+dim(spe_pseudo)
 
-#see if removing WM helps
-spe_pseudo = spe_pseudo[,spe_pseudo$precast_k9_1663!="WM"]
-
+#make DGE
 dge_pseudo = DGEList(counts(spe_pseudo))
 dge_pseudo <- calcNormFactors(dge_pseudo)
 
-cat("\ndx model: ~ 0 + group + precast_k9_1663 + m40_fitted\n")
+#cat("\ndx model: ~ 0 + group + smoothed_k9_1663 + pc3\n")
+cat("\ndx model: ~ 0 + group + seurat_label + pc3\n")
 
 group = interaction(spe_pseudo$condition, spe_pseudo$sex)
 table(group)
 dx_mod <- model.matrix(
-  ~ 0 + group + precast_k9_1663 + m40_fitted,
+  #~ 0 + group + smoothed_k9_1663 + pc3,
+  ~ 0 + group + seurat_label + pc3,
   colData(spe_pseudo)
 )
 stopifnot(is.fullrank(dx_mod))
@@ -56,21 +54,11 @@ fit <- lmFit(y, block = colData(spe_pseudo)$sample_id, correlation = corfit$cons
 #corfit <- duplicateCorrelation(logcounts(spe_pseudo), design=dx_mod, block=spe_pseudo$sample_id)
 #fit <- lmFit(logcounts(spe_pseudo), design=dx_mod, block=spe_pseudo$sample_id, correlation=corfit$consensus)
 
-saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-adjusted_precast-k9-1663_condition-sex_covars-cluster-m40_no-WM.rda")
-cat("\nlmFit results/ object saved to: processed-data/07_dx_DE/lmFit-voom_layer-adjusted_precast-k9-1663_condition-sex_covars-cluster-m40_no-WM.rda\n")
+#saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_covars-pc3.rda")
+#cat("\nlmFit results/ object saved to: processed-data/07_dx_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_covars-pc3.rda\n")
 
-#cont_mtx = matrix(0, ncol=3, nrow=ncol(coef(fit)), dimnames=list(colnames(coef(fit)), c("NTC.MDD","NTC.BPD","MDD.BPD")))
-#cont_mtx["conditionNTC",c("NTC.MDD","NTC.BPD")] <- c(-1, -1)
-#cont_mtx["conditionMDD",c("NTC.MDD","MDD.BPD")] <- c(1, -1)
-#cont_mtx["conditionBPD",c("NTC.BPD","MDD.BPD")] <- c(1, 1)
-#head(cont_mtx)
-
-#tmp1 = contrasts.fit(fit, cont_mtx)
-#tmp2 = eBayes(tmp1)
-
-#saveRDS(tmp2, "processed-data/07_dx_DE/eBayes_fit_layer-adjusted_condition_covars-age-cluster-detected-sex-slide.rda")
-
-
+saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-adjusted_seurat-pc30_condition-sex_covars-pc3.rda")
+cat("\nlmFit results/ object saved to: processed-data/07_dx_DE/lmFit-voom_layer-adjusted_seurat-pc30_condition-sex_covars-pc3.rda\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()

@@ -1,8 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=5G
-#SBATCH --mail-type=FAIL,END
-#SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=dx_layer-adjusted_lmFit-voom
+#SBATCH --mem=3G
+#SBATCH --job-name=plot_layer-restricted-transfer
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -19,7 +17,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 module load conda_R/4.4.x
 module list
 
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/01_layer-adjusted.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/03_plot-and-format_results.r
 
 echo "**** Job ends ****"
 date
