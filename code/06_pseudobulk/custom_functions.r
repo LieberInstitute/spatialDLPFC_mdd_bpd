@@ -1,4 +1,8 @@
-dotplotDF <- function(source_sce, gene_id_list, summarize_groups=FALSE, cluster_labels=NULL) {
+dotplotDF <- function(source_sce, gene_id_list, summarize_groups=FALSE, cluster_labels=NULL, swap_rownames=NULL) {
+  if(!"rdata" %in% ls()) rdata = as.data.frame(rowData(source_sce))
+  if(!is.null(swap_rownames)) {
+    gene_id_list = rownames(source_sce)[rowData(source_sce)[[swap_rownames]] %in% gene_id_list]
+  }
   dotplot.df = left_join(tibble::rownames_to_column(as.data.frame(assay(source_sce, "logcounts.mean")[gene_id_list,]), var="gene_id") %>%
                            tidyr::pivot_longer(colnames(source_sce), names_to="clusters", values_to="mean_expr"),
                          tibble::rownames_to_column(as.data.frame(t(scale(t(assay(source_sce, "logcounts.mean")[gene_id_list,])))), var="gene_id") %>%

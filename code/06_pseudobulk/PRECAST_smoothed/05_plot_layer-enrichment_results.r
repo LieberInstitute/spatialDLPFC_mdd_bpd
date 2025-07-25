@@ -5,6 +5,7 @@ suppressPackageStartupMessages({
 	library(edgeR)
 	library(dplyr)
 	library(ggplot2)
+	library(scater)
 })
 set.seed(123)
 
@@ -174,6 +175,29 @@ p1
 dev.off()
 
 cat("\nPlots saved to: plots/06_pseudobulk/PRECAST_smoothed/smoothed-k9-1663_layer-enrichment_plots.pdf\n")
+
+
+#top top layer markers
+cat("\nTop layer markers (adj. p<1e-30, logFC>1\n")
+filter(enrich.df_smooth, adj.P.Val<1e-30, sig_group=="large effect") %>%
+  group_by(smoothed) %>% tally()
+
+
+load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+
+top.list = lapply(levels(enrich.df_smooth$smoothed), function(x) {
+  tmp = filter(enrich.df_smooth, adj.P.Val<1e-30, sig_group=="large effect", smoothed==x)$gene_name
+  phm = plotGroupedHeatmap(spe_pseudo, features=tmp, swap_rownames="gene_name",
+                     group="smoothed_k9_1663", center=T, cluster_cols=F, angle_col=0, silent=T)
+  phm[[4]]
+  })
+names(top.list) = levels(enrich.df_smooth$smoothed)
+
+phm.list = gridExtra::marrangeGrob(top.list, ncol=1, nrow=1, top=quote(names(top.list)[g]))
+ggsave("plots/06_pseudobulk/PRECAST_smoothed/smoothed-k9-1663_layer-markers-adjp-1e30-logfc-1_heatmap.pdf", phm.list, width=7, height=11)
+
+cat("\n\nTop layer markers (adj p<1e-30, logFC>1) heatmap saved to: plots/06_pseudobulk/PRECAST_smoothed/smoothed-k9-1663_layer-markers-adjp-1e30-logfc-1_heatmap.pdf\n")
+
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time())
