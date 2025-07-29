@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
 
 set.seed(123)
 
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc20_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
 dim(spe_pseudo)
 
 spe_pseudo$pc3 = reducedDim(spe_pseudo)[,"PC3"]
@@ -47,8 +47,8 @@ corfit <- duplicateCorrelation(logcounts(spe_pseudo), design=cor_mod, block=spe_
 fitList <- bplapply(modelList, function(x) {
 	lmFit(logcounts(spe_pseudo), design=x, block=spe_pseudo$sample_id, correlation=corfit$consensus)
 }, BPPARAM=MulticoreParam(workers=8))
-saveRDS(fitList, "processed-data/06_pseudobulk/Seurat/lmFit-list_seurat-pc20_covars-condition-sex-nspots-pc3.rda")
-cat("\nlmFit objects with enrichment results saved to: processed-data/06_pseudobulk/Seurat/lmFit-list_seurat-pc20_covars-condition-sex-nspots-pc3.rda\n")
+saveRDS(fitList, "processed-data/06_pseudobulk/Seurat/lmFit-list_seurat-pc30-no-lowUMI_covars-condition-sex-nspots-pc3.rda")
+cat("\nlmFit objects with enrichment results saved to: processed-data/06_pseudobulk/Seurat/lmFit-list_seurat-pc30-no-lowUMI_covars-condition-sex-nspots-pc3.rda\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()

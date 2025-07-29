@@ -18,7 +18,7 @@ dim(rdata) #36601 7
 rm(spe)
 
 #load in sce for heatmap/dotplots
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-heatmap_dx-sex-seurat-pc30.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI-heatmap_dx-sex-seurat-pc30.Rdata")
 cond_sex = c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M")
 seurat_levels= c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Oligo","Inhb")
 spe_summ$sample_id = factor(paste(spe_summ$condition, spe_summ$sex, spe_summ$seurat_qual.genes_pc30.kweight50),
@@ -26,7 +26,7 @@ spe_summ$sample_id = factor(paste(spe_summ$condition, spe_summ$sex, spe_summ$seu
 colnames(spe_summ) <- spe_summ$sample_id
 
 #load in enrichment results and format
-resList <- readRDS("processed-data/06_pseudobulk/Seurat/lmFit-list_seurat-pc30_covars-condition-sex-nspots-pc3.rda")
+resList <- readRDS("processed-data/06_pseudobulk/Seurat/lmFit-list_seurat-pc30-no-lowUMI_covars-condition-sex-nspots-pc3.rda")
 enrichList = lapply(names(resList), function(x) {
   tmp = resList[[x]]
   tmp = eBayes(tmp)
@@ -69,14 +69,14 @@ enrich.df_pc30 = left_join(enrich.df, rdata[,c("gene_id","gene_type")], by=c("ge
 spe_summ_pc30 <- spe_summ
 
 #save results
-write.csv(t_pc30, "processed-data/06_pseudobulk/Seurat/layer-enrichment_seurat-pc30_t-stat.csv", row.names=T)
-write.csv(lf_pc30, "processed-data/06_pseudobulk/Seurat/layer-enrichment_seurat-pc30_logFC.csv", row.names=T)
-write.csv(enrich.df_pc30, "processed-data/06_pseudobulk/Seurat/layer-enrichment_seurat-pc30_all-results.csv", row.names=F)
+write.csv(t_pc30, "processed-data/06_pseudobulk/Seurat/layer-enrichment_seurat-pc30-no-lowUMI_t-stat.csv", row.names=T)
+write.csv(lf_pc30, "processed-data/06_pseudobulk/Seurat/layer-enrichment_seurat-pc30-no-lowUMI_logFC.csv", row.names=T)
+write.csv(enrich.df_pc30, "processed-data/06_pseudobulk/Seurat/layer-enrichment_seurat-pc30-no-lowUMI_all-results.csv", row.names=F)
 
 cat("\n\nLayer enrichment results saved to:",
-	"\n>> processed-data/06_pseudobulk/Seurat/layer-enrichment_seurat-pc30_t-stat.csv",
-	"\n>> processed-data/06_pseudobulk/Seurat/layer-enrichment_seurat-pc30_logFC.csv",
-	"\n>> processed-data/06_pseudobulk/Seurat/layer-enrichment_seurat-pc30_all-results.csv\n\n")
+	"\n>> processed-data/06_pseudobulk/Seurat/layer-enrichment_seurat-pc30-no-lowUMI_t-stat.csv",
+	"\n>> processed-data/06_pseudobulk/Seurat/layer-enrichment_seurat-pc30-no-lowUMI_logFC.csv",
+	"\n>> processed-data/06_pseudobulk/Seurat/layer-enrichment_seurat-pc30-no-lowUMI_all-results.csv\n\n")
 
 
 #make plots
@@ -165,14 +165,14 @@ p4 <- ggplot(filter(enrich.df_pc30, gene_type_ptn==T),
   theme_bw()+theme(panel.grid.minor=element_blank(), strip.text.y=element_text(angle=0),
                    plot.margin = margin(.2,2.5,.2,2.5,"cm"))
 
-pdf(file="plots/06_pseudobulk/Seurat/seurat-pc30_layer-enrichment_plots.pdf",
+pdf(file="plots/06_pseudobulk/Seurat/seurat-pc30-no-lowUMI_layer-enrichment_plots.pdf",
     width=6, height=8)
 p2
 p4
 p1
 dev.off()
 
-cat("\nPlots saved to: plots/06_pseudobulk/Seurat/seurat-pc30_layer-enrichment_plots.pdf\n")
+cat("\nPlots saved to: plots/06_pseudobulk/Seurat/seurat-pc30-no-lowUMI_layer-enrichment_plots.pdf\n")
 
 
 #top top layer markers
@@ -181,7 +181,7 @@ filter(enrich.df_pc30, adj.P.Val<1e-30, sig_group=="large effect") %>%
   group_by(seurat_label) %>% tally()
 
 
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
 
 top.list = lapply(levels(enrich.df_pc30$seurat_label), function(x) {
   tmp = filter(enrich.df_pc30, adj.P.Val<1e-30, sig_group=="large effect", seurat_label==x)$gene_name
@@ -192,9 +192,9 @@ top.list = lapply(levels(enrich.df_pc30$seurat_label), function(x) {
 names(top.list) = levels(enrich.df_pc30$seurat_label)
 
 phm.list = gridExtra::marrangeGrob(top.list, ncol=1, nrow=1, top=quote(names(top.list)[g]))
-ggsave("plots/06_pseudobulk/Seurat/seurat-pc30_layer-markers-adjp-1e30-logfc-1_heatmap.pdf", phm.list, width=7, height=11)
+ggsave("plots/06_pseudobulk/Seurat/seurat-pc30-no-lowUMI_layer-markers-adjp-1e30-logfc-1_heatmap.pdf", phm.list, width=7, height=11)
 
-cat("\n\nTop layer markers (adj p<1e-30, logFC>1) heatmap saved to: plots/06_pseudobulk/Seurat/seurat-pc30_layer-markers-adjp-1e30-logfc-1_heatmap.pdf\n")
+cat("\n\nTop layer markers (adj p<1e-30, logFC>1) heatmap saved to: plots/06_pseudobulk/Seurat/seurat-pc30-no-lowUMI_layer-markers-adjp-1e30-logfc-1_heatmap.pdf\n")
 
 
 

@@ -30,6 +30,19 @@ cat("\nTransferred label transfer from qual genes results with PC=30 and k.weigh
 #table(spe$seurat_qual.genes_pc20.kweight50, useNA="ifany")
 table(spe$seurat_qual.genes_pc30.kweight50, useNA="ifany")
 
+
+#remove low UMI cluster
+cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
+stopifnot(identical(rownames(colData(spe)), rownames(cdata)))
+
+spe$lowUMI_cluster = cdata$precast_k9_1663_f=="low UMI"
+
+spe = spe[,spe$lowUMI_cluster==F]
+cat("\n\nRemoved low UMI cluster spots...\n")
+dim(spe)
+table(spe$seurat_qual.genes_pc30.kweight50, useNA="ifany")
+
+
 #realize counts
 cat("\nRealize logcounts matrix...\n")
 format(Sys.time())
@@ -51,7 +64,7 @@ spe_summ = aggregateAcrossCells(sce, ids=colData(sce)[,c("condition","sex","seur
 dim(spe_summ)
 
 #quick save checkpoints
-save(spe_summ, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-heatmap_dx-sex-seurat-pc30.Rdata")
+save(spe_summ, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI-heatmap_dx-sex-seurat-pc30.Rdata")
 
 #remove repeated colData column for sample_id and cluster
 g1 = grep("seurat", colnames(colData(spe_summ)))
@@ -85,8 +98,8 @@ colData(spe_summ)$seurat_label = colData(spe_summ)$seurat_qual.genes_pc30.kweigh
 
 
 Sys.time()
-save(spe_summ, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-heatmap_dx-sex-seurat-pc30.Rdata")
-cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-heatmap_dx-sex-seurat-pc30.Rdata")
+save(spe_summ, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI-heatmap_dx-sex-seurat-pc30.Rdata")
+cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI-heatmap_dx-sex-seurat-pc30.Rdata")
 
 #update spe tracker
 #write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),

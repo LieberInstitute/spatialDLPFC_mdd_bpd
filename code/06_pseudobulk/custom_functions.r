@@ -1,5 +1,5 @@
 dotplotDF <- function(source_sce, gene_id_list, summarize_groups=FALSE, cluster_labels=NULL, swap_rownames=NULL) {
-  if(!"rdata" %in% ls()) rdata = as.data.frame(rowData(source_sce))
+ # if(!"rdata" %in% ls()) rdata = as.data.frame(rowData(source_sce))
   if(!is.null(swap_rownames)) {
     gene_id_list = rownames(source_sce)[rowData(source_sce)[[swap_rownames]] %in% gene_id_list]
   }
