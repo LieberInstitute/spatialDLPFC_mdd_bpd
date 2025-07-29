@@ -9,7 +9,7 @@ set.seed(123)
 #https://ucdavis-bioinformatics-training.github.io/2018-June-RNA-Seq-Workshop/thursday/DE.html
 
 #load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
 spe_pseudo$pc3 = reducedDim(spe_pseudo)[,"PC3"]
 dim(spe_pseudo)
 
@@ -54,8 +54,8 @@ fit <- lmFit(y, block = colData(spe_pseudo)$sample_id, correlation = corfit$cons
 #saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-restricted_smoothed-k9-1663_condition-sex_covars-pc3.rda")
 #cat("\nSaved to: processed-data/07_dx_DE/lmFit-voom_layer-restricted_smoothed-k9-1663_condition-sex_covars-pc3.rda\n")
 
-saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-restricted_seurat-pc30_condition-sex_covars-pc3.rda")
-cat("\nSaved to: processed-data/07_dx_DE/lmFit-voom_layer-restricted_seurat-pc30_condition-sex_covars-pc3.rda\n")
+saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-restricted_seurat-pc30-no-lowUMI_condition-sex_covars-pc3.rda")
+cat("\nSaved to: processed-data/07_dx_DE/lmFit-voom_layer-restricted_seurat-pc30-no-lowUMI_condition-sex_covars-pc3.rda\n")
 
 
 cat("\n\nReproducibility information:\n")
