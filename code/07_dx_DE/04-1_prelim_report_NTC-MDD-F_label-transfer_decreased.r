@@ -77,14 +77,25 @@ gt = as.data.frame(list(group=rep("NTC.MDD", 8),
                                 )
                         )
                    )
-plist = list(tableGrob(gt, rows = NULL))
+
+t1 <- ttheme_default(core=list(
+        bg_params = list(fill=as.character(factor(gt$dir, levels=c("decreased", "increased"), labels=c("dodgerblue", "grey90")))
+			)
+        ))
+
+plist = list(tableGrob(gt, rows = NULL, theme=t1))
 gt
 
 ### L-R genes summary table
 gt = group_by(sig.both, group, sex, seurat_label_f, dir, adj_sig) %>% tally() %>%
   tidyr::pivot_wider(names_from="adj_sig", values_from="n", values_fill=0, names_prefix = "adj_sig_")
 
-plist[[2]] = tableGrob(gt, rows = NULL)
+t2 <- ttheme_default(core=list(
+        bg_params = list(fill=as.character(factor(gt$dir, levels=c("decreased", "increased"), labels=c("dodgerblue", "grey90")))
+			)
+        ))
+
+plist[[2]] = tableGrob(gt, rows = NULL, theme=t2)
 
 ### volcano plot of L-R and L-A results
 plot.df = left_join(filter(restr.results, group=="NTC.MDD", sex=="F"),
@@ -244,6 +255,8 @@ p = cnetplot(merge_results, showCategory=20, layout="fr",
   labs(title="NTC.MDD F: Decreased", subtitle="Green= Reactome; Blue= GO (BP); Red= L-A sig.; Bold= key genes")+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
+set.seed(123) #reset seed
+
 m = ggplot_build(p)
 
 #color category nodes by source
