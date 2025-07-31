@@ -243,6 +243,7 @@ go.gene = cbind.data.frame("ID"=go.id.long, "geneID"=go.gmt$gene)
 go.results = enricher(sig.name, #universe=unique(go.gmt$gene),
                       TERM2GENE = go.gene,
                       TERM2NAME = go.term)
+set.seed(123) #reset seed
 nrow(filter(go.results@result, p.adjust<.05))
 go.results@result <- go.results@result[go.results@result$p.adjust<.05, ]
 
@@ -251,10 +252,11 @@ tidyr::separate_rows(go.results@result, geneID, sep="/") %>%
   group_by(geneID) %>% tally() %>% filter(n>10) %>% arrange(desc(n))
 
 go.results <- pairwise_termsim(go.results)
+set.seed(123) #reset seed
 baseplot = emapplot(go.results, showCategory=nrow(go.results@result))+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
-set.seed(123) #reset seed
+set.seed(123) #reset seed (not necessary here)
 
 modify_cnetplot <- function(cnet_plot, term_list, gene_list=NULL) {
   m = ggplot_build(cnet_plot)
@@ -375,6 +377,7 @@ react.results = enricher(sig.name,
                          #adj.name, #universe=unique(react.gmt$gene), 
                          TERM2GENE = react.gene,
                          TERM2NAME = react.term)
+set.seed(123) #reset seed
 nrow(filter(react.results@result, p.adjust<.05)) 
 react.results@result <- react.results@result[react.results@result$p.adjust<.05, ]
 
@@ -414,6 +417,7 @@ wiki.results = enricher(sig.name,
                         #adj.name, #universe=rowData(spe_pseudo)$gene_name, 
                         TERM2GENE = wiki.gene,
                         TERM2NAME = wiki.term)
+set.seed(123) #reset seed
 nrow(filter(wiki.results@result, p.adjust<.05)) 
 wiki.results@result <- wiki.results@result[wiki.results@result$p.adjust<.05, ]
 
@@ -443,6 +447,7 @@ head(ppi.gmt)
 ppi.results = enricher(sig.name,
                        #adj.name, #universe=rowData(spe_pseudo)$gene_name, 
                        TERM2GENE = ppi.gmt)
+set.seed(123) #reset seed
 nrow(filter(ppi.results@result, p.adjust<.05)) #41
 ppi.results@result <- ppi.results@result[ppi.results@result$p.adjust<.05, ]
 
@@ -467,14 +472,15 @@ sce_pseudo$seurat_low.res2 = factor(sce_pseudo$seurat_low.res,
                                     labels=c("M.V","Astro","Oligo","L2","L3","L4","L5","L6","Inhb"))
 
 
-select.genes = list("Heat shock"=c("HSPA1A", "HSPA1B", "FKBP5", "DNAJB1", "HSP90AA1", "DDIT3"),
+select.genes = list("Heat shock"=c("FKBP5", "HSPA1B", "HSPA1A", "DNAJB1", "HSP90AA1", "DDIT3"),
                     "Inflammation"=c("S100A8","S100A9","SRGN","IFITM3","IL1R1","NFKBIA"),
                     "Hypoxia"=c("VEGFA","HILPDA","DDIT4","CHI3L1"),
                     #"Glucose"=c("IRS2","SORBS1","INSIG2","LPIN1","SLC2A1","PDK4"),
-                    "Apoptosis"=c("GADD45A","GADD45B","CDKN1A","BTG1","NUPR1","CCNG1"),
-                    "TFs"=c("ZFP36","ZFP36L1","CEBPD","ELK1","JUN","FOS")
+                    "Apoptosis"=c("GADD45B","BTG1","CDKN1A","GADD45A","NUPR1"),
+                    "TFs"=c("CEBPD","ZFP36","ZFP36L1","ELK1","JUN"),
+		    "Metallothioneins"= c("MT1X", "MT1M", "MT2A", "MT1A")
                  )
-
+select.genes = select.genes[c(5, 2:4, 6, 1)]
 
 for (i in names(select.genes)) {
 
@@ -561,6 +567,7 @@ plot(plist[[19]])
 plot(plist[[20]])
 plot(plist[[21]])
 plot(plist[[22]])
+plot(plist[[23]])
 dev.off()
 
 cat("\n\nReproducibility information:\n")

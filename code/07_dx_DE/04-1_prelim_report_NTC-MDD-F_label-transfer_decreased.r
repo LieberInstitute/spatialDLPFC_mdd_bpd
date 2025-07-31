@@ -177,6 +177,7 @@ phm = pheatmap(m1[,c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb")],
 plist[[6]] = phm[[4]]
 
 
+top.genes = phm$tree_row$label[phm$tree_row$order][1:14]
 #ORA
 cat("\n>> ORA...\n")
 setEnrichrSite("Enrichr") # Human genes
@@ -225,6 +226,7 @@ go.gene = cbind.data.frame("ID"=go.id.long, "geneID"=go.gmt$gene)
 go.results = enricher(sig.name, #universe=unique(go.gmt$gene), 
                       TERM2GENE = go.gene,
                       TERM2NAME = go.term)
+set.seed(123) #reset seed
 nrow(filter(go.results@result, p.adjust<.05)) 
 go.results@result <- go.results@result[go.results@result$p.adjust<.05, ]
 
@@ -244,6 +246,7 @@ react.gene = cbind.data.frame("ID"=react.id.long, "geneID"=react.gmt$gene)
 react.results = enricher(sig.name, #universe=unique(react.gmt$gene), 
                          TERM2GENE = react.gene,
                          TERM2NAME = react.term)
+set.seed(123) #reset seed
 nrow(filter(react.results@result, p.adjust<.05))
 react.results@result <- react.results@result[react.results@result$p.adjust<.05, ]
 
@@ -252,7 +255,7 @@ merge_results <- react.results
 merge_results@result = rbind(react.results@result, go.results@result)
 p = cnetplot(merge_results, showCategory=20, layout="fr", 
              size_category=.5, cex_label_category=.5)+
-  labs(title="NTC.MDD F: Decreased", subtitle="Green= Reactome; Blue= GO (BP); Red= L-A sig.; Bold= key genes")+
+  labs(title="NTC.MDD F: Decreased", subtitle="Green= Reactome; Blue= GO (BP); Red= top sig. genes; Bold= L-A sig. genes")+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed
@@ -273,9 +276,9 @@ m$data[[2]]$colour <- tmp2$color
 m$data[[1]]$colour <- tmp3$color #edges
 
 #make gene nodes that are sig. in adjusted a different color
-m$data[[4]]$colour = ifelse(m$data[[4]]$label %in% adj.name, "red4", "black")
+m$data[[4]]$colour = ifelse(m$data[[4]]$label %in% top.genes, "red4", "black")
 #make gene nodes italic and key gene nodes bold italic
-m$data[[4]]$fontface = ifelse(m$data[[4]]$label %in%  c("CRH", "CORT", "SST", "VGF", "RAMP2", "GABBR1","SLC6A1","SLC1A6"),
+m$data[[4]]$fontface = ifelse(m$data[[4]]$label %in%  adj.name,
                               "bold.italic", "italic")
 m$data[[4]]$fontface = ifelse(m$data[[4]]$label %in% merge_results@result$Description, "plain", m$data[[4]]$fontface)
 #make category text smaller
@@ -289,9 +292,44 @@ plist[[7]] = p2
 
 ### key genes expression
 spe_sub = spe_pseudo[,spe_pseudo$sex=="F"]
-plot.genes = c("CORT","SST","CRH","RAMP2","VGF","SLC38A5","SLC6A1","SLC1A6")
-for (i in plot.genes) {
-  colData(spe_sub)[[i]] = logcounts(spe_sub)[rowData(spe_sub)$gene_name==i,]
+
+#sce for cell type comparison
+load("processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo_indivID-low-res_norm-filt.Rdata")
+
+sce_pseudo$seurat_low.res2 = factor(sce_pseudo$seurat_low.res, 
+                                    levels=c("Micro.Vasc","Astro","Oligo","L2","L3","L4","L5","L6","Inhb"),
+                                    labels=c("M.V","Astro","Oligo","L2","L3","L4","L5","L6","Inhb"))
+
+select.genes = list("Neuron-neuron signaling"= c("CORT","SST","CRH","VGF"),
+	"GABA processing"= c("SLC38A5","SLC6A1","GABRD","SLC1A6"),
+	"Adenylate Cyclase GPCR"= c("RAMP2","ADGRB1","ADRA1D","PRKAR1A"),
+	"Proton pumps"= c("ATP6V0E2","ATP6V0C","ATP1A3","ATP5F1B")
+)
+
+
+for (i in names(select.genes)) {
+
+p1 <- plotExpression(sce_pseudo, features=intersect(select.genes[[i]], rowData(sce_pseudo)$gene_name),
+               swap_rownames="gene_name", x="seurat_low.res2", 
+               colour_by="seurat_low.res")+
+  scale_color_manual(values=cpList$low.res.bright, guide="none")+
+  facet_wrap(vars(Feature), ncol=2)+
+  geom_violin(draw_quantiles = c(.5), fill="transparent", color="black", scale="width")+
+  labs(title="SZBDMulti-seq snRNA-seq expression")+
+  theme(axis.text.x=element_text(angle=45, hjust=1), axis.title.x=element_blank())
+
+p2 <- plotExpression(spe_pseudo, features=select.genes[[i]],
+               swap_rownames="gene_name", x="seurat_label2", 
+               colour_by="seurat_label")+
+  scale_color_manual(values=cpList$transfer.bright, guide="none")+
+  facet_wrap(vars(Feature), ncol=2)+
+  geom_violin(draw_quantiles = c(.5), fill="transparent", color="black", scale="width")+
+  labs(title="MBv SRT expression")+
+  theme(axis.text.x=element_text(angle=45, hjust=1), axis.title.x=element_blank())
+
+plot.genes = select.genes[[i]]
+for (j in plot.genes) {
+  colData(spe_sub)[[j]] = logcounts(spe_sub)[rowData(spe_sub)$gene_name==j,]
 }
 
 plot.df = as.data.frame(colData(spe_sub)[,c("condition","seurat_label","seurat_label2",plot.genes)]) %>%
@@ -317,19 +355,20 @@ text.df2 = left_join(filter(sig.lr, gene_name %in% plot.genes) %>%
 
 colnames(text.df2) = c("key_genes","seurat_label2","adj.P.Val","logcounts")
 
-p = ggplot(plot.df, aes(x=condition, y=logcounts, color=condition))+
+p3 = ggplot(plot.df, aes(x=condition, y=logcounts, color=condition))+
   ggbeeswarm::geom_quasirandom(width=.4)+
   geom_violin(draw_quantiles = c(.5), fill="transparent", color="black", scale="width")+
   geom_text(data= text.df2, aes(x=1, label=adj.P.Val), color="black", size=3, hjust=0, vjust=0)+
   scale_color_manual(values=cpList$dx.pal, guide="none")+
   facet_grid(cols=vars(seurat_label2), rows=vars(key_genes), scales="free_y", 
              labeller = as_labeller(f_labels))+
-  labs(x="", title="NTC.MDD F Decreased: Key genes", subtitle="Only female samples plotted")+
+  labs(x="", title=paste("NTC.MDD F Decreased:", i), subtitle="Only female samples plotted")+
   theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.5),
                    strip.text.y.right = element_text(angle=0, face="italic"))
 
-plist[[8]] = p
+plist[[length(plist)+1]] = arrangeGrob(p1, p2, rasterize(p3, dpi=200), layout_matrix=rbind(c(1,2), c(3,3), c(3,3)), top=paste(i, "DEGs"))
 
+}
 
 ### other ORA that aren't as helpful
 cat("\n\n>>> PPI...\n")
@@ -339,7 +378,7 @@ ppi.results = enricher(sig.name, #universe=rowData(spe_pseudo)$gene_name,
 gt = ppi.results@result[ppi.results@result$p.adjust<.05, c("Description","GeneRatio","p.adjust","Count","geneID")]
 nrow(gt)
 gt$geneID = stringr::str_wrap(gsub("/"," ", gt$geneID), width=20)
-plist[[9]] = tableGrob(gt, rows = NULL)
+plist[[12]] = tableGrob(gt, rows = NULL)
 
 cat("\n\n>>> WikiPathways...\n")
 wiki.gmt = .read_gmt("WikiPathways_2024_Human")
@@ -360,7 +399,7 @@ gt = wiki.results@result[wiki.results@result$p.adjust<.05, c("Description","Gene
 nrow(gt)
 gt$geneID = stringr::str_wrap(gsub("/"," ", gt$geneID), width=20)
 gt$Description = stringr::str_wrap(gt$Description, width=20)
-plist[[10]] = tableGrob(gt, rows = NULL)
+plist[[13]] = tableGrob(gt, rows = NULL)
 
 #save ntc.mdd f decreased
 cat("\n\nSave NTC.MDD F decreased report: plots/07_dx_DE/prelim-report_NTC-MDD-F_label-transfer_decreased.pdf\n")
@@ -370,8 +409,11 @@ grid.arrange(plist[[1]], plist[[2]])
 grid.arrange(rasterize(plist[[3]], layer="point", dpi=200), plist[[4]], ncol=1)
 grid.arrange(plist[[5]], plist[[6]], ncol=2)
 plot(plist[[7]])
-rasterize(plist[[8]], dpi=150)
-grid.arrange(plist[[9]], plist[[10]], ncol=1, top="Top = PPI results", bottom="Bottom = WikiPathways results")
+grid.arrange(plist[[12]], plist[[13]], ncol=1, top="Top = PPI results", bottom="Bottom = WikiPathways results")
+plot(plist[[8]])
+plot(plist[[9]])
+plot(plist[[10]])
+plot(plist[[11]])
 dev.off()
 
 

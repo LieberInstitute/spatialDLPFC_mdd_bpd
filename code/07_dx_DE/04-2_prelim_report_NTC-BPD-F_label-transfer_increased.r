@@ -391,6 +391,7 @@ wiki.gene = cbind.data.frame("ID"=wiki.id.long, "geneID"=wiki.gmt$gene)
 wiki.results = enricher(sig.name, #universe=rowData(spe_pseudo)$gene_name, 
                         TERM2GENE = wiki.gene,
                         TERM2NAME = wiki.term)
+set.seed(123) #reset seed
 nrow(filter(wiki.results@result, p.adjust<.05)) #12
 wiki.results@result = wiki.results@result[wiki.results@result$p.adjust<.05,]
 
@@ -448,6 +449,7 @@ head(ppi.gmt)
 ppi.results = enricher(sig.name,
                        #adj.name, #universe=rowData(spe_pseudo)$gene_name, 
                        TERM2GENE = ppi.gmt)
+set.seed(123) #reset seed
 nrow(filter(ppi.results@result, p.adjust<.05)) 
 ppi.results@result <- ppi.results@result[ppi.results@result$p.adjust<.05, ]
 
@@ -475,7 +477,7 @@ sce_pseudo$seurat_low.res2 = factor(sce_pseudo$seurat_low.res,
 
 select.genes = list("Non-Oligo specific/ Similar to NTC.MDD F"=c("APOLD1","ELK1","DDIT4","GADD45B"),
 		    #"Autophagy"=c(""UBA52","DYNC1LI2","RB1CC1"),
-		    "Hippo"=c("MAP4K4","JUN","HIPK2","HMGB1"),
+		    "Transciption Regulation"=c("MAP4K4","JUN","HIPK2","HMGB1"),
                     "Heat shock"=c("HSPA1B","HSP90AA1","DNAJB1","EEF1A1"),
                     "RND GTPase"=c("DST", "KTN1", "CCDC88A", "PKP4"),
                     "RhoBTB GTPase"=c("KIF5B","KIF5A","PHIP","SRRM1")

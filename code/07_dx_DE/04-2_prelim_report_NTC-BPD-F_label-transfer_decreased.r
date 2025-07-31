@@ -225,6 +225,7 @@ go.gene = cbind.data.frame("ID"=go.id.long, "geneID"=go.gmt$gene)
 go.results = enricher(sig.name, #universe=unique(go.gmt$gene), 
                       TERM2GENE = go.gene,
                       TERM2NAME = go.term)
+set.seed(123) #reset seed
 nrow(filter(go.results@result, p.adjust<.05)) 
 go.results@result <- go.results@result[go.results@result$p.adjust<.05, ]
 
@@ -244,6 +245,7 @@ react.gene = cbind.data.frame("ID"=react.id.long, "geneID"=react.gmt$gene)
 react.results = enricher(sig.name, #universe=unique(react.gmt$gene), 
                          TERM2GENE = react.gene,
                          TERM2NAME = react.term)
+set.seed(123) #reset seed
 nrow(filter(react.results@result, p.adjust<.05))
 
 
@@ -270,6 +272,7 @@ wiki.gene = cbind.data.frame("ID"=wiki.id.long, "geneID"=wiki.gmt$gene)
 wiki.results = enricher(sig.name, #universe=rowData(spe_pseudo)$gene_name, 
                          TERM2GENE = wiki.gene,
                          TERM2NAME = wiki.term)
+set.seed(123) #reset seed
 nrow(filter(wiki.results@result, p.adjust<.05))
 
 
@@ -277,6 +280,7 @@ cat("\n\n>>> PPI...\n")
 ppi.gmt = .read_gmt("PPI_Hub_Proteins")
 ppi.results = enricher(sig.name, #universe=rowData(spe_pseudo)$gene_name, 
                        TERM2GENE = ppi.gmt)
+set.seed(123) #reset seed
 nrow(filter(ppi.results@result, p.adjust<.05))
 
 ### key genes expression
