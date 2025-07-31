@@ -58,6 +58,10 @@ sig.both = bind_rows(sig.both,
   )
 
 
+if (!"processed-data/07_dx_DE/MDD-BPD-F_label-transfer_LA-LR-sig-DEGs.csv" %in% list.files("processed-data/07_dx_DE/")) {
+  write.csv(sig.both, "processed-data/07_dx_DE/MDD-BPD-F_label-transfer_LA-LR-sig-DEGs.csv", row.names=F)
+}
+
 ### volcano plot of L-R and L-A results
 plist = list()
 

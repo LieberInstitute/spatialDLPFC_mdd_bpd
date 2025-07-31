@@ -57,6 +57,10 @@ sig.both = bind_rows(sig.both,
                                labels=c("M.V","Astro","L2.3","L4","L5","L6","Oligo","Inhb", "L-A"))
   )
 
+if (!"processed-data/07_dx_DE/NTC-MDD-F_label-transfer_LA-LR-sig-DEGs.csv" %in% list.files("processed-data/07_dx_DE/")) {
+  write.csv(sig.both, "processed-data/07_dx_DE/NTC-MDD-F_label-transfer_LA-LR-sig-DEGs.csv", row.names=F)
+}
+
 ### genes summary table 
 restr.name1 = unique(filter(sig.both, dir=="decreased", cluster!="L-A only")$gene_name)
 adj.name1 = unique(filter(sig.both, dir=="decreased", adj_sig==T)$gene_name)
