@@ -118,13 +118,14 @@ plist[[3]] = ggplot(plot.df, aes(x=logFC, y=-log10(adj.P.Val)))+
 fill_pal = c("Layer-adj. down"="skyblue","Layer-adj. up"="tomato",
              "Layer-restr. down"="skyblue3", "Layer-restr. up"="red3")
 
-plot.df = group_by(sig.both, seurat_label_f, dir, fill_color) %>% tally() %>%
+plot.df = group_by(sig.both, seurat_label_f, dir, fill_color, .drop=F) %>% tally() %>%
   mutate(cluster= factor(seurat_label_f, levels=rev(levels(sig.both$seurat_label_f))))
 
 plist[[4]] = ggplot(plot.df, aes(y=cluster, x=n, fill=fill_color))+
-  geom_bar(data=filter(plot.df, dir=="decreased"), aes(x=-n), stat="identity", 
+  geom_bar(data=filter(plot.df, dir=="decreased", fill_color %in% c("Layer-adj. down","Layer-restr. down")), 
+	aes(x=-n), stat="identity", 
            position= position_dodge(preserve="single"), color="black", linewidth=.3)+
-  geom_bar(data=filter(plot.df, dir=="increased"), stat="identity", 
+  geom_bar(data=filter(plot.df, dir=="increased", fill_color %in% c("Layer-adj. up","Layer-restr. up")), stat="identity", 
            position= position_dodge(preserve="single"), color="black", linewidth=.3)+
   #facet_grid(rows=vars(group), cols=vars(sex))+
   scale_fill_manual(values=fill_pal)+
@@ -234,6 +235,7 @@ set.seed(123) #reset seed
 nrow(filter(go.results@result, p.adjust<.05)) 
 go.results@result <- go.results@result[go.results@result$p.adjust<.05, ]
 
+ora.list = list("GO.BP"=go.results@result)
 
 ### Reactome
 cat("\n\n>>> Reactome...\n")
@@ -252,6 +254,10 @@ react.results = enricher(sig.name, #universe=unique(react.gmt$gene),
                          TERM2NAME = react.term)
 set.seed(123) #reset seed
 nrow(filter(react.results@result, p.adjust<.05))
+react.results@result = react.results@result[react.results@result$p.adjust<.05,]
+
+ora.list[["Reactome"]] = react.results@result
+
 
 ### WikiPathways
 cat("\n\n>>> WikiPathways...\n")
@@ -273,6 +279,7 @@ set.seed(123)
 nrow(filter(wiki.results@result, p.adjust<.05)) #4
 wiki.results@result = wiki.results@result[wiki.results@result$p.adjust<.05,]
 
+ora.list[["WikiPathways"]] = wiki.results@result
 
 ### merge results and plot
 merge_results <- go.results
@@ -320,7 +327,12 @@ ppi.results = enricher(sig.name, #universe=rowData(spe_pseudo)$gene_name,
                        TERM2GENE = ppi.gmt)
 set.seed(123) #reset seed
 nrow(filter(ppi.results@result, p.adjust<.05))
+ppi.results@result = ppi.results@result[ppi.results@result$p.adjust<.05,]
 
+ora.list[["PPI"]] = ppi.results@result
+
+
+saveRDS(ora.list, "processed-data/07_dx_DE/NTC-BPD-M_label-transfer_ORA-results_decreased.rda")
 
 ### key genes expression
 spe_sub = spe_pseudo[,spe_pseudo$sex=="M"]

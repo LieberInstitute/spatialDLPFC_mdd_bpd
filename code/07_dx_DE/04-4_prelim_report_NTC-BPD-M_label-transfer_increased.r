@@ -118,13 +118,14 @@ plist[[3]] = ggplot(plot.df, aes(x=logFC, y=-log10(adj.P.Val)))+
 fill_pal = c("Layer-adj. down"="skyblue","Layer-adj. up"="tomato",
              "Layer-restr. down"="skyblue3", "Layer-restr. up"="red3")
 
-plot.df = group_by(sig.both, seurat_label_f, dir, fill_color) %>% tally() %>%
+plot.df = group_by(sig.both, seurat_label_f, dir, fill_color, .drop=F) %>% tally() %>%
   mutate(cluster= factor(seurat_label_f, levels=rev(levels(sig.both$seurat_label_f))))
 
 plist[[4]] = ggplot(plot.df, aes(y=cluster, x=n, fill=fill_color))+
-  geom_bar(data=filter(plot.df, dir=="decreased"), aes(x=-n), stat="identity", 
+  geom_bar(data=filter(plot.df, dir=="decreased", fill_color %in% c("Layer-adj. down","Layer-restr. down")), 
+	aes(x=-n), stat="identity", 
            position= position_dodge(preserve="single"), color="black", linewidth=.3)+
-  geom_bar(data=filter(plot.df, dir=="increased"), stat="identity", 
+  geom_bar(data=filter(plot.df, dir=="increased", fill_color %in% c("Layer-adj. up","Layer-restr. up")), stat="identity", 
            position= position_dodge(preserve="single"), color="black", linewidth=.3)+
   #facet_grid(rows=vars(group), cols=vars(sex))+
   scale_fill_manual(values=fill_pal)+
@@ -235,6 +236,7 @@ set.seed(123) #reset seed
 nrow(filter(go.results@result, p.adjust<.05)) 
 go.results@result <- go.results@result[go.results@result$p.adjust<.05, ]
 
+ora.list = list("GO.BP"=go.results@result)
 
 ### Reactome
 cat("\n\n>>> Reactome...\n")
@@ -255,6 +257,7 @@ set.seed(123) #reset seed
 nrow(filter(react.results@result, p.adjust<.05))
 react.results@result = react.results@result[react.results@result$p.adjust<.05,]
 
+ora.list[["Reactome"]] = react.results@result
 
 ### merge results and plot
 merge_results <- react.results
@@ -317,6 +320,8 @@ set.seed(123) #reset seed
 nrow(filter(wiki.results@result, p.adjust<.05)) 
 wiki.results@result <- wiki.results@result[wiki.results@result$p.adjust<.05, ]
 
+ora.list[["WikiPathways"]] = wiki.results@result
+
 #plot only new
 cat("\n>>>>> WikiPathways terms with genes not present in GO (BP) or Reactome results:\n")
 tmp1 = tidyr::separate_rows(merge_results@result, geneID, sep="/")
@@ -370,6 +375,8 @@ set.seed(123) #reset seed
 nrow(filter(ppi.results@result, p.adjust<.05)) #41
 ppi.results@result <- ppi.results@result[ppi.results@result$p.adjust<.05, ]
 
+ora.list[["PPI"]] = ppi.results@result
+
 cat("\n>>>>> PPI results that are sig. different in MDD vs NTC F:\n")
 nrow(filter(ppi.results@result, p.adjust<.05, ID %in% sig.both$gene_name))
 gt = ppi.results@result
@@ -377,6 +384,8 @@ gt$geneID = stringr::str_wrap(gsub("/"," ", gt$geneID), width=20)
 gt$Description = stringr::str_wrap(gt$Description, width=20)
 plist[[9]] = tableGrob(gt[, c("Description","GeneRatio","p.adjust","Count","geneID")], rows = NULL)
 
+
+saveRDS(ora.list, "processed-data/07_dx_DE/NTC-BPD-M_label-transfer_ORA-results_increased.rda")
 
 ### key genes expression
 cat("\n\nPlot expression of key genes grouped by function...\n")

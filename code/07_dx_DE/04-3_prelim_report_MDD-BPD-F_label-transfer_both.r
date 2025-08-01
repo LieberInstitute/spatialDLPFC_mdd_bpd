@@ -81,13 +81,14 @@ plist[[1]] = ggplot(plot.df, aes(x=logFC, y=-log10(adj.P.Val)))+
 fill_pal = c("Layer-adj. down"="skyblue","Layer-adj. up"="tomato",
              "Layer-restr. down"="skyblue3", "Layer-restr. up"="red3")
 
-plot.df = group_by(sig.both, seurat_label_f, dir, fill_color) %>% tally() %>%
+plot.df = group_by(sig.both, seurat_label_f, dir, fill_color, .drop=F) %>% tally() %>%
   mutate(cluster= factor(seurat_label_f, levels=rev(levels(sig.both$seurat_label_f))))
 
 plist[[2]] = ggplot(plot.df, aes(y=cluster, x=n, fill=fill_color))+
-  geom_bar(data=filter(plot.df, dir=="decreased"), aes(x=-n), stat="identity", 
+  geom_bar(data=filter(plot.df, dir=="decreased", fill_color %in% c("Layer-adj. down","Layer-restr. down")), 
+	aes(x=-n), stat="identity", 
            position= position_dodge(preserve="single"), color="black", linewidth=.3)+
-  geom_bar(data=filter(plot.df, dir=="increased"), stat="identity", 
+  geom_bar(data=filter(plot.df, dir=="increased", fill_color %in% c("Layer-adj. up","Layer-restr. up")), stat="identity", 
            position= position_dodge(preserve="single"), color="black", linewidth=.3)+
   #facet_grid(rows=vars(group), cols=vars(sex))+
   scale_fill_manual(values=fill_pal)+
@@ -472,6 +473,10 @@ set.seed(123) #reset seed
 nrow(filter(go.results@result, p.adjust<.05))
 go.results@result <- go.results@result[go.results@result$p.adjust<.05, ]
 
+
+ora.list = list("GO.BP"=go.results@result)
+
+
 cat("\n>>>>> Genes repeated in most GO BP terms:\n")
 tidyr::separate_rows(go.results@result, geneID, sep="/") %>% 
   group_by(geneID) %>% tally() %>% filter(n>10) %>% arrange(desc(n))
@@ -607,6 +612,8 @@ set.seed(123) #reset seed
 nrow(filter(react.results@result, p.adjust<.05)) 
 react.results@result <- react.results@result[react.results@result$p.adjust<.05, ]
 
+ora.list[["Reactome"]] = react.results@result
+
 #plot new only
 cat("\n>>>>> Reactome terms with genes not present in GO (BP) results:\n")
 tmp1 = tidyr::separate_rows(go.results@result, geneID, sep="/")
@@ -648,6 +655,8 @@ set.seed(123) #reset seed
 nrow(filter(wiki.results@result, p.adjust<.05)) 
 wiki.results@result <- wiki.results@result[wiki.results@result$p.adjust<.05, ]
 
+ora.list[["WikiPathways"]] = wiki.results@result
+
 #plot only new
 cat("\n>>>>> WikiPathways terms with genes not present in GO (BP) results:\n")
 tmp = tidyr::separate_rows(wiki.results@result, geneID, sep="/")
@@ -665,6 +674,23 @@ p = cnetplot(wiki.results2, showCategory=nrow(wiki.results2@result), layout="fr"
 set.seed(123) #reset seed
 
 plist[[19]] = modify_cnetplot(p, wiki.terms, gene_list=wiki.genes)
+
+
+#ppi
+cat("\n\n>>> PPI...\n")
+ppi.gmt = .read_gmt("PPI_Hub_Proteins")
+head(ppi.gmt)
+ppi.results = enricher(sig.name,
+                       #adj.name, #universe=rowData(spe_pseudo)$gene_name, 
+                       TERM2GENE = ppi.gmt)
+set.seed(123) #reset seed
+nrow(filter(ppi.results@result, p.adjust<.05)) #41
+ppi.results@result <- ppi.results@result[ppi.results@result$p.adjust<.05, ]
+
+ora.list[["PPI"]] =  ppi.results@result
+
+
+saveRDS(ora.list, "processed-data/07_dx_DE/MDD-BPD-F_label-transfer_ORA-results_decreased.rda")
 
 ### key genes expression
 cat("\n\nPlot expression of key genes grouped by function...\n")
