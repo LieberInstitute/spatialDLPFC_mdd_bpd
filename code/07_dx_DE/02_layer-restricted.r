@@ -31,10 +31,10 @@ group = interaction(dx, clus, sex)
 cat("\ngroup var produced by interaction():\n")
 table(group)
 
-cat("\ndx model: ~ 0 + group + pc3\n")
+cat("\ndx model: ~ 0 + group + pc3 + age\n")
 
 dx_mod <- model.matrix(
-  ~ 0 + group + pc3,
+  ~ 0 + group + pc3 + age,
   colData(spe_pseudo)
 )
 stopifnot(is.fullrank(dx_mod))
@@ -54,8 +54,8 @@ fit <- lmFit(y, block = colData(spe_pseudo)$sample_id, correlation = corfit$cons
 #saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-restricted_smoothed-k9-1663_condition-sex_covars-pc3.rda")
 #cat("\nSaved to: processed-data/07_dx_DE/lmFit-voom_layer-restricted_smoothed-k9-1663_condition-sex_covars-pc3.rda\n")
 
-saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-restricted_seurat-pc30-no-lowUMI_condition-sex_covars-pc3.rda")
-cat("\nSaved to: processed-data/07_dx_DE/lmFit-voom_layer-restricted_seurat-pc30-no-lowUMI_condition-sex_covars-pc3.rda\n")
+saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-restricted_seurat-pc30-no-lowUMI_condition-sex_covars-pc3-age.rda")
+cat("\nSaved to: processed-data/07_dx_DE/lmFit-voom_layer-restricted_seurat-pc30-no-lowUMI_condition-sex_covars-pc3-age.rda\n")
 
 
 cat("\n\nReproducibility information:\n")

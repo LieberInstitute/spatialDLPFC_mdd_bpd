@@ -19,25 +19,25 @@ load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seura
 cat("\nLoading label transfer results...\n")
 
 # load layer-adjusted results
-adj.results = read.csv("processed-data/07_dx_DE/layer-adjusted_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+adj.results = read.csv("processed-data/07_dx_DE/layer-adjusted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased", "increased")))
 
-sig.la = filter(adj.results, sex=="F", group=="NTC.MDD", adj.P.Val<.05)
+sig.la = filter(adj.results, sex=="F", group=="NTC.MDD", adj.P.Val<.01)
 
 
 # load layer-restricted results
-restr.results <- read.csv("processed-data/07_dx_DE/layer-restricted_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+restr.results <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          seurat_label_f=factor(cluster, levels=c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Oligo","Inhb"),
                                labels=c("M.V","Astro","L2.3","L4","L5","L6","Oligo","Inhb"))
          )
 
-sig.lr = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.05),
-                   filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.05),
-                   filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.001)) %>%
+sig.lr = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.01),
+                   filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.01),
+                   filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.0001)) %>%
   mutate(dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased","increased"))) %>%
   filter(sex=="F", group=="NTC.MDD")
 
@@ -47,7 +47,7 @@ sig.both = left_join(sig.lr, mutate(sig.la[,c("gene_id","gene_name","sex","group
   mutate(adj_sig=ifelse(is.na(adj_sig), F, T))
 
 sig.both = bind_rows(sig.both, 
-          filter(sig.la, adj.P.Val<.05, !gene_id %in% sig.both$gene_id) %>%
+          filter(sig.la, adj.P.Val<.01, !gene_id %in% sig.both$gene_id) %>%
             mutate(cluster= "L-A only", seurat_label_f= "L-A only", adj_sig=T)) %>%
   mutate(fill_color= factor(paste(adj_sig, dir), levels=c("TRUE decreased","TRUE increased",
                                                           "FALSE decreased","FALSE increased"),
@@ -57,8 +57,8 @@ sig.both = bind_rows(sig.both,
                                labels=c("M.V","Astro","L2.3","L4","L5","L6","Oligo","Inhb", "L-A"))
   )
 
-if (!"NTC-MDD-F_label-transfer_LA-LR-sig-DEGs.csv" %in% list.files("processed-data/07_dx_DE/")) {
-  write.csv(sig.both, "processed-data/07_dx_DE/NTC-MDD-F_label-transfer_LA-LR-sig-DEGs.csv", row.names=F)
+if (!"NTC-MDD-F_label-transfer-age_LA-LR-sig-DEGs.csv" %in% list.files("processed-data/07_dx_DE/")) {
+  write.csv(sig.both, "processed-data/07_dx_DE/NTC-MDD-F_label-transfer-age_LA-LR-sig-DEGs.csv", row.names=F)
 }
 
 ### genes summary table 
@@ -156,7 +156,7 @@ spe_pseudo$seurat_label2 = factor(spe_pseudo$seurat_label, levels=c("Micro.Vasc"
                                          "L2.3","L4","L5","L6","Inhb"))
 phm = plotGroupedHeatmap(spe_pseudo, features=sig.name, swap_rownames="gene_name",
                                  group="seurat_label2", cluster_cols=F, center=T, angle_col=45,
-                                 fontsize_row=6, annotation_row=row.annot, annotation_colors=annot_colors,
+                                 show_rownames=F, annotation_row=row.annot, annotation_colors=annot_colors,
                          main="NTC.MDD F: Decreased (scaled logcounts)")
 
 plist[[5]] = phm[[4]]
@@ -174,7 +174,7 @@ v = ceiling(max(abs(m1)))
 phm = pheatmap(m1[,c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb")], 
          cluster_rows=T, cluster_cols=F, 
          annotation_row=row.annot, annotation_colors=annot_colors,
-         fontsize_row=6, angle_col=45, 
+         show_rownames=F, angle_col=45, 
          colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))((v*2)+1),
          breaks=seq(-v, v, length.out=((v*2)+2)),
          legend_breaks = seq(-v, v, by=2),
@@ -183,7 +183,33 @@ phm = pheatmap(m1[,c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb")],
 plist[[6]] = phm[[4]]
 
 
-top.genes = phm$tree_row$label[phm$tree_row$order][1:14]
+top.genes = phm$tree_row$label[phm$tree_row$order][25:52]
+
+
+
+# plot top most consistent genes
+phm = pheatmap(m1[top.genes, c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb")], 
+               cluster_rows=T, cluster_cols=F, 
+               annotation_row=row.annot, annotation_colors=annot_colors,
+               #fontsize_row=6, 
+               angle_col=45, 
+               colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))((v*2)+1),
+               breaks=seq(-v, v, length.out=((v*2)+2)),
+               legend_breaks = seq(-v, v, by=2), silent=T, 
+               main="NTC.MDD F: Top increased genes (t statistics)")
+
+plist[[7]] = phm[[4]]
+
+phm = plotGroupedHeatmap(spe_pseudo, features=top.genes, swap_rownames="gene_name",
+                         group="seurat_label2", 
+                         cluster_cols=F, cluster_rows=T, center=T, angle_col=45,
+                         annotation_row=row.annot, annotation_colors=annot_colors,
+                         silent=T, main="NTC.MDD F: Top increased genes (scaled logcounts)")
+
+
+plist[[8]] = phm[[4]]
+
+
 #ORA
 cat("\n>> ORA...\n")
 setEnrichrSite("Enrichr") # Human genes
@@ -259,52 +285,12 @@ react.results@result <- react.results@result[react.results@result$p.adjust<.05, 
 
 ora.list[["Reactome"]] = react.results@result
 
-### merge results and plot
-merge_results <- react.results
-merge_results@result = rbind(react.results@result, go.results@result)
-p = cnetplot(merge_results, showCategory=20, layout="fr", 
-             size_category=.5, cex_label_category=.5)+
-  labs(title="NTC.MDD F: Decreased", subtitle="Green= Reactome; Blue= GO (BP); Red= top sig. genes; Bold= L-A sig. genes")+
-  guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
-  theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
-set.seed(123) #reset seed
-
-m = ggplot_build(p)
-
-#color category nodes by source
-tmp = m$data[[4]]
-### reactome = palegreen, GO BP = pink
-tmp$color = factor(tmp$label, levels=c(react.results@result$Description, go.results$Description,
-                                       setdiff(tmp$label, merge_results@result$Description)),
-                   labels=c(rep("palegreen",nrow(react.results@result)), 
-                            rep("skyblue",nrow(go.results@result)), 
-                            rep("grey50",nrow(tmp)-(nrow(react.results@result)+nrow(go.results@result)))))
-tmp2 = merge(m$data[[2]], tmp[,c("x","y","color")], sort=F)
-tmp3 = merge(m$data[[1]], tmp[,c("x","y","color")], sort=F) #edges
-m$data[[2]]$colour <- tmp2$color
-m$data[[1]]$colour <- tmp3$color #edges
-
-#make gene nodes that are sig. in adjusted a different color
-m$data[[4]]$colour = ifelse(m$data[[4]]$label %in% top.genes, "red4", "black")
-#make gene nodes italic and key gene nodes bold italic
-m$data[[4]]$fontface = ifelse(m$data[[4]]$label %in%  adj.name,
-                              "bold.italic", "italic")
-m$data[[4]]$fontface = ifelse(m$data[[4]]$label %in% merge_results@result$Description, "plain", m$data[[4]]$fontface)
-#make category text smaller
-m$data[[4]]$size[1:(nrow(react.results@result)+nrow(go.results@result))] = 2
-#wrap category text
-m$data[[4]]$label = stringr::str_wrap(m$data[[4]]$label, width = 30)
-
-p2 = ggplot_gtable(m)
-
-plist[[7]] = p2
-
 
 #wikipathways
 cat("\n\n>>> WikiPathways...\n")
 wiki.gmt = .read_gmt("WikiPathways_2024_Human")
 #separate term and GOID for TERM2NAME
-wiki.term = do.call(rbind.data.frame, strsplit(as.character(wiki.gmt$term), 
+wiki.term = do.call(rbind.data.frame, strsplit(as.character(wiki.gmt$term),
                                                split=" WP"))
 colnames(wiki.term) <- c("Term","ID")
 wiki.term$ID = paste0("WP",wiki.term$ID)
@@ -318,16 +304,55 @@ wiki.results = enricher(sig.name,
                         TERM2GENE = wiki.gene,
                         TERM2NAME = wiki.term)
 set.seed(123) #reset seed
-nrow(filter(wiki.results@result, p.adjust<.05)) 
+nrow(filter(wiki.results@result, p.adjust<.05))
 wiki.results@result <- wiki.results@result[wiki.results@result$p.adjust<.05, ]
 
 ora.list[["WikiPathways"]] = wiki.results@result
 
 
+### merge results and plot
+merge_results <- react.results
+merge_results@result = rbind(react.results@result, go.results@result, wiki.results@result)
+p = cnetplot(merge_results, showCategory=nrow(merge_results@result), layout="fr", 
+             size_category=.5, cex_label_category=.5)+
+  labs(title="NTC.MDD F: Decreased", subtitle="Green= Reactome; Blue= GO (BP); Pink= WikiPathways\nRed= top sig. genes; Bold= L-A sig. genes")+
+  guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
+  theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
+set.seed(123) #reset seed
+
+m = ggplot_build(p)
+
+#color category nodes by source
+tmp = m$data[[4]]
+### reactome = palegreen, GO BP = pink
+tmp$color = factor(tmp$label, levels=c(react.results@result$Description, go.results@result$Description, wiki.results@result$Description,
+                                       setdiff(tmp$label, merge_results@result$Description)),
+                   labels=c(rep("palegreen",nrow(react.results@result)), 
+                            rep("skyblue",nrow(go.results@result)),
+			    rep("pink", nrow(wiki.results@result)), 
+                            rep("grey50",nrow(tmp)-nrow(merge_results@result))))
+tmp2 = merge(m$data[[2]], tmp[,c("x","y","color")], sort=F)
+tmp3 = merge(m$data[[1]], tmp[,c("x","y","color")], sort=F) #edges
+m$data[[2]]$colour <- tmp2$color
+m$data[[1]]$colour <- tmp3$color #edges
+
+#make gene nodes that are sig. in adjusted a different color
+m$data[[4]]$colour = ifelse(m$data[[4]]$label %in% top.genes, "red4", "black")
+#make gene nodes italic and key gene nodes bold italic
+m$data[[4]]$fontface = ifelse(m$data[[4]]$label %in%  adj.name,
+                              "bold.italic", "italic")
+m$data[[4]]$fontface = ifelse(m$data[[4]]$label %in% merge_results@result$Description, "plain", m$data[[4]]$fontface)
+#make category text smaller
+m$data[[4]]$size[1:nrow(merge_results@result)] = 2
+#wrap category text
+m$data[[4]]$label = stringr::str_wrap(m$data[[4]]$label, width = 30)
+
+plist[[9]] = ggplot_gtable(m)
+
+
 #ppi
 cat("\n\n>>> PPI...\n")
 ppi.gmt = .read_gmt("PPI_Hub_Proteins")
-head(ppi.gmt)
 ppi.results = enricher(sig.name,
                        #adj.name, #universe=rowData(spe_pseudo)$gene_name, 
                        TERM2GENE = ppi.gmt)
@@ -337,7 +362,16 @@ ppi.results@result <- ppi.results@result[ppi.results@result$p.adjust<.05, ]
 
 ora.list[["PPI"]] = ppi.results@result
 
-saveRDS(ora.list, "processed-data/07_dx_DE/NTC-MDD-F_label-transfer_ORA-results_decreased.rda")
+
+gt = ppi.results@result[, c("Description","GeneRatio","p.adjust","Count","geneID")]
+nrow(gt)
+gt$geneID = stringr::str_wrap(gsub("/"," ", gt$geneID), width=20)
+plist[[10]] = tableGrob(gt, rows = NULL)
+
+
+saveRDS(ora.list, "processed-data/07_dx_DE/NTC-MDD-F_label-transfer-age_ORA-results_decreased.rda")
+
+
 ### key genes expression
 spe_sub = spe_pseudo[,spe_pseudo$sex=="F"]
 
@@ -349,9 +383,9 @@ sce_pseudo$seurat_low.res2 = factor(sce_pseudo$seurat_low.res,
                                     labels=c("M.V","Astro","Oligo","L2","L3","L4","L5","L6","Inhb"))
 
 select.genes = list("Neuron-neuron signaling"= c("CORT","SST","CRH","VGF"),
-	"GABA processing"= c("SLC38A5","SLC6A1","GABRD","SLC1A6"),
-	"Adenylate Cyclase GPCR"= c("RAMP2","ADGRB1","ADRA1D","PRKAR1A"),
-	"Proton pumps"= c("ATP6V0E2","ATP6V0C","ATP1A3","ATP5F1B")
+	"GABA processing"= c("SLC6A1","GABBR1","GAD2","GABRD"),
+	"Postsynaptic signaling"= c("SLC38A5","NCALD","GRM2","NRGN"),
+	"Synaptic release"= c("CACNA1B","CPLX1","CPLX2","STX1A","SYNGR1")
 )
 
 
@@ -418,50 +452,21 @@ plist[[length(plist)+1]] = arrangeGrob(p1, p2, rasterize(p3, dpi=200), layout_ma
 
 }
 
-### other ORA that aren't as helpful
-cat("\n\n>>> PPI...\n")
-ppi.gmt = .read_gmt("PPI_Hub_Proteins")
-ppi.results = enricher(sig.name, #universe=rowData(spe_pseudo)$gene_name, 
-                       TERM2GENE = ppi.gmt)
-gt = ppi.results@result[ppi.results@result$p.adjust<.05, c("Description","GeneRatio","p.adjust","Count","geneID")]
-nrow(gt)
-gt$geneID = stringr::str_wrap(gsub("/"," ", gt$geneID), width=20)
-plist[[12]] = tableGrob(gt, rows = NULL)
-
-cat("\n\n>>> WikiPathways...\n")
-wiki.gmt = .read_gmt("WikiPathways_2024_Human")
-#separate term and GOID for TERM2NAME
-wiki.term = do.call(rbind.data.frame, strsplit(as.character(wiki.gmt$term), 
-                                               split=" WP"))
-colnames(wiki.term) <- c("Term","ID")
-wiki.term$ID = paste0("WP",wiki.term$ID)
-wiki.id.long = wiki.term$ID
-wiki.term = distinct(wiki.term[,c("ID","Term")])
-#dframe of goID and gene name for TERM2GENE
-wiki.gene = cbind.data.frame("ID"=wiki.id.long, "geneID"=wiki.gmt$gene)
-
-wiki.results = enricher(sig.name, #universe=rowData(spe_pseudo)$gene_name, 
-                         TERM2GENE = wiki.gene,
-                         TERM2NAME = wiki.term)
-gt = wiki.results@result[wiki.results@result$p.adjust<.05, c("Description","GeneRatio","p.adjust","Count","geneID")]
-nrow(gt)
-gt$geneID = stringr::str_wrap(gsub("/"," ", gt$geneID), width=20)
-gt$Description = stringr::str_wrap(gt$Description, width=20)
-plist[[13]] = tableGrob(gt, rows = NULL)
 
 #save ntc.mdd f decreased
-cat("\n\nSave NTC.MDD F decreased report: plots/07_dx_DE/prelim-report_NTC-MDD-F_label-transfer_decreased.pdf\n")
+cat("\n\nSave NTC.MDD F decreased report: plots/07_dx_DE/prelim-report_NTC-MDD-F_label-transfer-age_decreased.pdf\n")
 
-pdf(file="plots/07_dx_DE/prelim-report_NTC-MDD-F_decreased.pdf", width=8.5, height=11)
+pdf(file="plots/07_dx_DE/prelim-report_NTC-MDD-F_label-transfer-age_decreased.pdf", width=8.5, height=11)
 grid.arrange(plist[[1]], plist[[2]])
 grid.arrange(rasterize(plist[[3]], layer="point", dpi=200), plist[[4]], ncol=1)
 grid.arrange(plist[[5]], plist[[6]], ncol=2)
-plot(plist[[7]])
-grid.arrange(plist[[12]], plist[[13]], ncol=1, top="Top = PPI results", bottom="Bottom = WikiPathways results")
-plot(plist[[8]])
+grid.arrange(plist[[7]], plist[[8]], ncol=1)
 plot(plist[[9]])
-plot(plist[[10]])
+grid.arrange(plist[[10]], ncol=1, top="PPI results", bottom="No enriched genes sig. decreased in MDD vs NTC F")
 plot(plist[[11]])
+plot(plist[[12]])
+plot(plist[[13]])
+plot(plist[[14]])
 dev.off()
 
 

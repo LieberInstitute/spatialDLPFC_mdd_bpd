@@ -19,25 +19,25 @@ load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seura
 cat("\nLoading label transfer results...\n")
 
 # load layer-adjusted results
-adj.results = read.csv("processed-data/07_dx_DE/layer-adjusted_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+adj.results = read.csv("processed-data/07_dx_DE/layer-adjusted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased", "increased")))
 
-sig.la = filter(adj.results, sex=="F", group=="NTC.MDD", adj.P.Val<.05)
+sig.la = filter(adj.results, sex=="F", group=="NTC.MDD", adj.P.Val<.01)
 
 
 # load layer-restricted results
-restr.results <- read.csv("processed-data/07_dx_DE/layer-restricted_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+restr.results <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          seurat_label_f=factor(cluster, levels=c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Oligo","Inhb"),
                                labels=c("M.V","Astro","L2.3","L4","L5","L6","Oligo","Inhb"))
          )
 
-sig.lr = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.05),
-                   filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.05),
-                   filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.001)) %>%
+sig.lr = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.01),
+                   filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.01),
+                   filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.0001)) %>%
   mutate(dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased","increased"))) %>%
   filter(sex=="F", group=="NTC.MDD")
 
@@ -47,7 +47,7 @@ sig.both = left_join(sig.lr, mutate(sig.la[,c("gene_id","gene_name","sex","group
   mutate(adj_sig=ifelse(is.na(adj_sig), F, T))
 
 sig.both = bind_rows(sig.both,
-          filter(sig.la, adj.P.Val<.05, !gene_id %in% sig.both$gene_id) %>%
+          filter(sig.la, adj.P.Val<.01, !gene_id %in% sig.both$gene_id) %>%
             mutate(cluster= "L-A only", seurat_label_f= "L-A only", adj_sig=T)) %>%
   mutate(fill_color= factor(paste(adj_sig, dir), levels=c("TRUE decreased","TRUE increased",
                                                           "FALSE decreased","FALSE increased"),
@@ -177,8 +177,8 @@ phm = pheatmap(m1[,c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb")],
 
 plist[[6]] = phm[[4]]
 
-# plot 19 most consistent genes
-top.genes = phm$tree_row$label[phm$tree_row$order[1:19]]
+# plot most consistent genes
+top.genes = phm$tree_row$label[phm$tree_row$order[18:59]]
 phm = pheatmap(m1[top.genes, c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb")], 
                cluster_rows=T, cluster_cols=F, 
                annotation_row=row.annot, annotation_colors=annot_colors,
@@ -318,7 +318,7 @@ go.zfp@result = go.zfp@result[go.zfp@result$Description %in% zfp36.terms, ]
 
 
 p = cnetplot(go.zfp, showCategory=nrow(go.zfp@result), layout="fr")+
-  labs(title="NTC.MDD F: Increased", subtitle="GO (BP) results with ZFP36 (n= 19 sig. terms)\nRed= top L-A sig. genes; Bold= L-A sig.genes")+
+  labs(title="NTC.MDD F: Increased", subtitle="GO (BP) results with ZFP36 (n= 18 sig. terms)\nRed= top sig. genes; Bold= L-A sig.genes")+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed
@@ -326,7 +326,7 @@ set.seed(123) #reset seed
 plist[[9]] = modify_cnetplot(p, zfp36.terms)
 
 
-plist[[10]] = modify_emmapplot(baseplot+labs(title="NTC.MDD F: Increased", subtitle="GO (BP) results with ZFP36 (n= 19 sig. terms)"),
+plist[[10]] = modify_emmapplot(baseplot+labs(title="NTC.MDD F: Increased", subtitle="GO (BP) results with ZFP36 (n= 18 sig. terms)"),
                               zfp36.terms)
 
 #focus on hspa1a
@@ -336,7 +336,7 @@ go.hspa = go.results
 go.hspa@result = go.hspa@result[go.hspa@result$Description %in% hspa1a.terms, ]
 
 p = cnetplot(go.hspa, showCategory=nrow(go.hspa@result), layout="fr")+
-  labs(title="NTC.MDD F: Increased", subtitle="GO (BP) results with HSPA1A (n= 18 sig. terms)\nRed= top L-A sig. genes; Bold= L-A sig. genes")+
+  labs(title="NTC.MDD F: Increased", subtitle="GO (BP) results with HSPA1A (n= 20 sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes")+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed
@@ -344,7 +344,7 @@ set.seed(123) #reset seed
 plist[[11]] = modify_cnetplot(p, hspa1a.terms)
 
 plist[[12]] = modify_emmapplot(baseplot+labs(title="NTC.MDD F: Increased", 
-                                             subtitle="GO (BP) results with HSPA1A (n= 18 sig. terms)"),
+                                             subtitle="GO (BP) results with HSPA1A (n= 20 sig. terms)"),
                                hspa1a.terms)
 
 
@@ -356,7 +356,7 @@ nrow(go.other@result)
 
 p = cnetplot(go.other, showCategory=nrow(go.other@result), layout="fr",
              size_category=.5, cex_label_category=.5)+
-  labs(title="NTC.MDD F: Increased", subtitle="GO (BP) results without ZFP36 or HSPA1A (n= 33 sig. terms)\nRed= top L-A sig. genes; Bold= L-A sig. genes")+
+  labs(title="NTC.MDD F: Increased", subtitle="GO (BP) results without ZFP36 or HSPA1A (n= 33 sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes")+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed 
@@ -402,7 +402,7 @@ react.results2 = react.results
 react.results2@result = react.results2@result[react.results2@result$Description %in% react.terms, ]
 p = cnetplot(react.results2, showCategory=nrow(react.results2@result), layout="fr",
              size_category=.5, cex_label_category=.5)+
-  labs(title="NTC.MDD F: Increased", subtitle="Reactome results with genes not present in GO (BP) results (n= 38 sig. terms)\nRed= top L-A sig. genes; Bold= L-A sig. genes")+
+  labs(title="NTC.MDD F: Increased", subtitle="Reactome results with genes not present in GO (BP) results (n= 37 sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes")+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed
@@ -443,7 +443,7 @@ wiki.results2 = wiki.results
 wiki.results2@result = wiki.results2@result[wiki.results2@result$Description %in% wiki.terms, ]
 p = cnetplot(wiki.results2, showCategory=nrow(wiki.results2@result), layout="fr",
              size_category=.5, cex_label_category=.5)+
-  labs(title="NTC.MDD F: Increased", subtitle="WikiPathways results with genes not present in GO (BP) results (n= 24 sig. terms)\nRed= top L-A sig. genes; Bold= L-A sig. genes")+
+  labs(title="NTC.MDD F: Increased", subtitle="WikiPathways results with genes not present in GO (BP) results (n= 30 sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes")+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed
@@ -454,12 +454,11 @@ plist[[16]] = modify_cnetplot(p, wiki.terms, gene_list=wiki.genes)
 #ppi
 cat("\n\n>>> PPI...\n")
 ppi.gmt = .read_gmt("PPI_Hub_Proteins")
-head(ppi.gmt)
 ppi.results = enricher(sig.name,
                        #adj.name, #universe=rowData(spe_pseudo)$gene_name, 
                        TERM2GENE = ppi.gmt)
 set.seed(123) #reset seed
-nrow(filter(ppi.results@result, p.adjust<.05)) #41
+nrow(filter(ppi.results@result, p.adjust<.05)) #
 
 ora.list[["PPI"]] = ppi.results@result
 
@@ -474,7 +473,7 @@ plist[[17]] = tableGrob(gt[, c("Description","GeneRatio","p.adjust","Count","gen
 
 
 
-saveRDS(ora.list, "processed-data/07_dx_DE/NTC-MDD-F_label-transfer_ORA-results_increased.rda")
+saveRDS(ora.list, "processed-data/07_dx_DE/NTC-MDD-F_label-transfer-age_ORA-results_increased.rda")
 
 
 ### key genes expression
@@ -564,9 +563,9 @@ plist[[length(plist)+1]] = arrangeGrob(p1, p2, rasterize(p3, dpi=200), layout_ma
 
 }
 
-cat("\n\nSave NTC.MDD F decreased report: plots/07_dx_DE/prelim-report_NTC-MDD-F_label-transfer_increased.pdf\n")
+cat("\n\nSave NTC.MDD F decreased report: plots/07_dx_DE/prelim-report_NTC-MDD-F_label-transfer-age_increased.pdf\n")
 
-pdf(file="plots/07_dx_DE/prelim-report_NTC-MDD-F_increased.pdf", width=8.5, height=11)
+pdf(file="plots/07_dx_DE/prelim-report_NTC-MDD-F_label-transfer-age_increased.pdf", width=8.5, height=11)
 grid.arrange(plist[[1]], plist[[2]])
 grid.arrange(rasterize(plist[[3]], layer="point", dpi=200), plist[[4]], ncol=1)
 grid.arrange(plist[[5]], plist[[6]], ncol=2)

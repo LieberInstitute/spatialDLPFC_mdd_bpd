@@ -23,13 +23,13 @@ dge_pseudo = DGEList(counts(spe_pseudo))
 dge_pseudo <- calcNormFactors(dge_pseudo)
 
 #cat("\ndx model: ~ 0 + group + smoothed_k9_1663 + pc3\n")
-cat("\ndx model: ~ 0 + group + seurat_label + pc3\n")
+cat("\ndx model: ~ 0 + group + seurat_label + pc3 + age\n")
 
 group = interaction(spe_pseudo$condition, spe_pseudo$sex)
 table(group)
 dx_mod <- model.matrix(
   #~ 0 + group + smoothed_k9_1663 + pc3,
-  ~ 0 + group + seurat_label + pc3,
+  ~ 0 + group + seurat_label + pc3 + age,
   colData(spe_pseudo)
 )
 stopifnot(is.fullrank(dx_mod))
@@ -57,8 +57,8 @@ fit <- lmFit(y, block = colData(spe_pseudo)$sample_id, correlation = corfit$cons
 #saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_covars-pc3.rda")
 #cat("\nlmFit results/ object saved to: processed-data/07_dx_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_covars-pc3.rda\n")
 
-saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-adjusted_seurat-pc30-no-lowUMI_condition-sex_covars-pc3.rda")
-cat("\nlmFit results/ object saved to: processed-data/07_dx_DE/lmFit-voom_layer-adjusted_seurat-pc30-no-lowUMI_condition-sex_covars-pc3.rda\n")
+saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-adjusted_seurat-pc30-no-lowUMI_condition-sex_covars-pc3-age.rda")
+cat("\nlmFit results/ object saved to: processed-data/07_dx_DE/lmFit-voom_layer-adjusted_seurat-pc30-no-lowUMI_condition-sex_covars-pc3-age.rda\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()
