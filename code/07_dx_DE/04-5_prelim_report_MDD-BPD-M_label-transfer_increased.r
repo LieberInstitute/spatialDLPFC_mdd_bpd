@@ -19,25 +19,25 @@ load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seura
 cat("\nLoading label transfer results...\n")
 
 # load layer-adjusted results
-adj.results = read.csv("processed-data/07_dx_DE/layer-adjusted_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+adj.results = read.csv("processed-data/07_dx_DE/layer-adjusted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased", "increased")))
 
-sig.la = filter(adj.results, sex=="M", group=="MDD.BPD", adj.P.Val<.05)
+sig.la = filter(adj.results, sex=="M", group=="MDD.BPD", adj.P.Val<.01)
 
 
 # load layer-restricted results
-restr.results <- read.csv("processed-data/07_dx_DE/layer-restricted_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+restr.results <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          seurat_label_f=factor(cluster, levels=c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Oligo","Inhb"),
                                labels=c("M.V","Astro","L2.3","L4","L5","L6","Oligo","Inhb"))
          )
 
-sig.lr = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.05),
-                   filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.05),
-                   filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.001)) %>%
+sig.lr = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.01),
+                   filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.01),
+                   filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.0001)) %>%
   mutate(dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased","increased"))) %>%
   filter(sex=="M", group=="MDD.BPD")
 
@@ -47,7 +47,7 @@ sig.both = left_join(sig.lr, mutate(sig.la[,c("gene_id","gene_name","sex","group
   mutate(adj_sig=ifelse(is.na(adj_sig), F, T))
 
 sig.both = bind_rows(sig.both,
-          filter(sig.la, adj.P.Val<.05, !gene_id %in% sig.both$gene_id) %>%
+          filter(sig.la, adj.P.Val<.01, !gene_id %in% sig.both$gene_id) %>%
             mutate(cluster= "L-A only", seurat_label_f= "L-A only", adj_sig=T)) %>%
   mutate(fill_color= factor(paste(adj_sig, dir), levels=c("TRUE decreased","TRUE increased",
                                                           "FALSE decreased","FALSE increased"),
@@ -57,8 +57,8 @@ sig.both = bind_rows(sig.both,
                                labels=c("M.V","Astro","L2.3","L4","L5","L6","Oligo","Inhb", "L-A"))
   )
 
-if (!"MDD-BPD-M_label-transfer_LA-LR-sig-DEGs.csv" %in% list.files("processed-data/07_dx_DE/")) {
-  write.csv(sig.both, "processed-data/07_dx_DE/MDD-BPD-M_label-transfer_LA-LR-sig-DEGs.csv", row.names=F)
+if (!"MDD-BPD-M_label-transfer-age_LA-LR-sig-DEGs.csv" %in% list.files("processed-data/07_dx_DE/")) {
+  write.csv(sig.both, "processed-data/07_dx_DE/MDD-BPD-M_label-transfer-age_LA-LR-sig-DEGs.csv", row.names=F)
 }
 
 ### genes summary table 
@@ -139,12 +139,27 @@ restr.name = unique(filter(sig.both, dir=="increased", cluster!="L-A only")$gene
 adj.name = unique(filter(sig.both, dir=="increased", adj_sig==T)$gene_name)
 sig.name= union(restr.name, adj.name)
 
+
+#consistent with NTC results
+ntc.bpd.up = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.01),
+                       filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.01),
+                       filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.0001)) %>%
+  mutate(dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased","increased"))) %>%
+  filter(sex=="M", group=="NTC.BPD", dir=="increased") %>%
+  bind_rows(filter(adj.results, sex=="M", group=="NTC.BPD", adj.P.Val<.05, dir=="increased"))
+incr.bpd.consistent = intersect(ntc.bpd.up$gene_name, sig.name)
+
 ### expression heatmap
-row.annot = cbind.data.frame("L-A sig."= as.character(sig.name %in% adj.name),
-                             "L-R sig."= as.character(sig.name %in% restr.name))
+row.annot = cbind.data.frame("MDD.BPD L-A sig."= as.character(sig.name %in% adj.name),
+                             "MDD.BPD L-R sig."= as.character(sig.name %in% restr.name))
 rownames(row.annot) = sig.name
-annot_colors = list("L-A sig."=c("FALSE"="white","TRUE"="black"),
-                    "L-R sig."=c("FALSE"="white","TRUE"="black"))
+
+row.annot$NTC.BPD = "FALSE"
+row.annot[incr.bpd.consistent, "NTC.BPD"] = "BPD up"
+
+annot_colors = list("MDD.BPD L-A sig."=c("FALSE"="white","TRUE"="black"),
+                    "MDD.BPD L-R sig."=c("FALSE"="white","TRUE"="black"),
+		    "NTC.BPD"=c("FALSE"="white", "BPD up"="black"))
 
 spe_pseudo$seurat_label2 = factor(spe_pseudo$seurat_label, levels=c("Micro.Vasc","Oligo","Astro",
                                                                 "L2.3","L4","L5","L6","Inhb"),
@@ -152,7 +167,7 @@ spe_pseudo$seurat_label2 = factor(spe_pseudo$seurat_label, levels=c("Micro.Vasc"
                                          "L2.3","L4","L5","L6","Inhb"))
 phm = plotGroupedHeatmap(spe_pseudo, features=sig.name, swap_rownames="gene_name",
                                  group="seurat_label2", cluster_cols=F, center=T, angle_col=45,
-                                 fontsize_row=8, annotation_row=row.annot, annotation_colors=annot_colors, silent=T,
+                                 fontsize_row=6, annotation_row=row.annot, annotation_colors=annot_colors, silent=T,
                          main="MDD.BPD M: Increased (scaled logcounts)")
 
 plist[[5]] = phm[[4]]
@@ -179,7 +194,7 @@ phm = pheatmap(m1[,c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb")],
 plist[[6]] = phm[[4]]
 
 
-top.genes = phm$tree_row$label[phm$tree_row$order][4:10]
+top.genes = incr.bpd.consistent
 
 
 #ORA
@@ -302,7 +317,7 @@ go.zfp@result = go.zfp@result[go.zfp@result$Description %in% zfp36.terms, ]
 
 
 p = cnetplot(go.zfp, showCategory=nrow(go.zfp@result), layout="fr")+
-  labs(title="MDD.BPD M: Increased", subtitle="GO (BP) results with ZFP36 (n= 19 sig. terms)\nRed= top sig. genes; Bold= L-A sig.genes")+
+  labs(title="MDD.BPD M: Increased", subtitle=paste("GO (BP) results with ZFP36 (n=", length(zfp36.terms),  "sig. terms)\nRed= top sig. genes; Bold= L-A sig.genes"))+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed
@@ -310,7 +325,7 @@ set.seed(123) #reset seed
 plist[[7]] = modify_cnetplot(p, zfp36.terms)
 
 
-plist[[8]] = modify_emmapplot(baseplot+labs(title="MDD.BPD M: Increased", subtitle="GO (BP) results with ZFP36 (n= 19 sig. terms)"),
+plist[[8]] = modify_emmapplot(baseplot+labs(title="MDD.BPD M: Increased", subtitle=paste("GO (BP) results with ZFP36 (n=", length(zfp36.terms), "sig. terms)")),
                               zfp36.terms)
 
 
@@ -322,7 +337,7 @@ nrow(go.other@result)
 
 p = cnetplot(go.other, showCategory=nrow(go.other@result), layout="fr",
              size_category=.5, cex_label_category=.5)+
-  labs(title="MDD.BPD M: Increased", subtitle="GO (BP) results without ZFP36 (n= 35 sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes")+
+  labs(title="MDD.BPD M: Increased", subtitle=paste("GO (BP) results without ZFP36 (n=", nrow(go.other@result), "sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes"))+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed 
@@ -330,7 +345,7 @@ set.seed(123) #reset seed
 plist[[9]] = modify_cnetplot(p, go.other@result$Description)
 
 plist[[10]] = modify_emmapplot(baseplot+labs(title="MDD.BPD M: Increased", 
-                                             subtitle="GO (BP) results without ZFP36 (n= 35 sig. terms)"), go.other@result$Description)
+                                             subtitle=paste("GO (BP) results without ZFP36 (n=", nrow(go.other@result), "sig. terms)")), go.other@result$Description)
 
 
 
@@ -356,6 +371,11 @@ react.results@result <- react.results@result[react.results@result$p.adjust<.05, 
 
 ora.list[["Reactome"]] = react.results@result
 
+gt = react.results@result
+gt$geneID = stringr::str_wrap(gsub("/"," ", gt$geneID), width=20)
+gt$Description = stringr::str_wrap(gt$Description, width=20)
+plist[[11]] = tableGrob(gt[, c("Description","GeneRatio","p.adjust","Count","geneID")], rows = NULL)
+
 #plot new only
 cat("\n>>>>> Reactome terms with genes not present in GO (BP) results:\n")
 tmp1 = tidyr::separate_rows(go.results@result, geneID, sep="/")
@@ -364,16 +384,16 @@ react.genes = setdiff(tmp$geneID, tmp1$geneID)
 react.terms = unique(filter(tmp, geneID %in% react.genes)$Description)
 length(react.terms)
 
-react.results2 = react.results
-react.results2@result = react.results2@result[react.results2@result$Description %in% react.terms, ]
-p = cnetplot(react.results2, showCategory=nrow(react.results2@result), layout="fr",
-             size_category=.5, cex_label_category=.5)+
-  labs(title="MDD.BPD M: Increased", subtitle="Reactome results with genes not present in GO (BP) results (n= 4 sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes")+
-  guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
-  theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
-set.seed(123) #reset seed
-
-plist[[11]] = modify_cnetplot(p, react.terms, gene_list=react.genes)
+#react.results2 = react.results
+#react.results2@result = react.results2@result[react.results2@result$Description %in% react.terms, ]
+#p = cnetplot(react.results2, showCategory=nrow(react.results2@result), layout="fr",
+#             size_category=.5, cex_label_category=.5)+
+#  labs(title="MDD.BPD M: Increased", subtitle="Reactome results with genes not present in GO (BP) results (n= 4 sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes")+
+#  guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
+#  theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
+#set.seed(123) #reset seed
+#
+#plist[[11]] = modify_cnetplot(p, react.terms, gene_list=react.genes)
 
 
 #wikipathways
@@ -432,7 +452,7 @@ wiki.cdk@result = wiki.cdk@result[wiki.cdk@result$Description %in% cdk.terms, ]
 
 
 p = cnetplot(wiki.cdk, showCategory=nrow(wiki.cdk@result), layout="fr")+
-  labs(title="MDD.BPD M: Increased", subtitle="WikiPathways results with CDKN1A (n= 26 sig. terms)\nRed= top sig. genes; Bold= L-A sig.genes")+
+  labs(title="MDD.BPD M: Increased", subtitle=paste("WikiPathways results with CDKN1A (n=", length(cdk.terms), "sig. terms)\nRed= top sig. genes; Bold= L-A sig.genes"))+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed
@@ -440,7 +460,7 @@ set.seed(123) #reset seed
 plist[[12]] = modify_cnetplot(p, cdk.terms, gene_list=wiki.genes)
 
 
-plist[[13]] = modify_emmapplot(baseplot+labs(title="MDD.BPD M: Increased", subtitle="WikiPathways results with CDKN1A (n= 26 sig. terms)"),
+plist[[13]] = modify_emmapplot(baseplot+labs(title="MDD.BPD M: Increased", subtitle=paste("WikiPathways results with CDKN1A (n=", length(cdk.terms), "sig. terms)")),
                               cdk.terms)
 
 
@@ -452,7 +472,7 @@ wiki.elk@result = wiki.elk@result[wiki.elk@result$Description %in% elk.terms, ]
 
 
 p = cnetplot(wiki.elk, showCategory=nrow(wiki.elk@result), layout="fr")+
-  labs(title="MDD.BPD M: Increased", subtitle="WikiPathways results with ELK1 (n= 25 sig. terms)\nRed= top sig. genes; Bold= L-A sig.genes")+
+  labs(title="MDD.BPD M: Increased", subtitle=paste("WikiPathways results with ELK1 (n=", length(elk.terms), "sig. terms)\nRed= top sig. genes; Bold= L-A sig.genes"))+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed
@@ -460,7 +480,7 @@ set.seed(123) #reset seed
 plist[[14]] = modify_cnetplot(p, elk.terms, gene_list=wiki.genes)
 
 
-plist[[15]] = modify_emmapplot(baseplot+labs(title="MDD.BPD M: Increased", subtitle="WikiPathways results with ELK1 (n= 25 sig. terms)"),
+plist[[15]] = modify_emmapplot(baseplot+labs(title="MDD.BPD M: Increased", subtitle=paste("WikiPathways results with ELK1 (n=", length(elk.terms), "sig. terms)")),
                               elk.terms)
 
 
@@ -472,7 +492,7 @@ nrow(wiki.other@result)
 
 p = cnetplot(wiki.other, showCategory=nrow(wiki.other@result), layout="fr",
              size_category=.5, cex_label_category=.5)+
-  labs(title="MDD.BPD M: Increased", subtitle="WikiPathways results without CDKN1A or ELK1 (n= 11 sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes")+
+  labs(title="MDD.BPD M: Increased", subtitle=paste("WikiPathways results without CDKN1A or ELK1 (n=", nrow(wiki.other@result), "sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes"))+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed 
@@ -480,7 +500,8 @@ set.seed(123) #reset seed
 plist[[16]] = modify_cnetplot(p, wiki.other@result$Description, gene_list=wiki.genes)
 
 plist[[17]] = modify_emmapplot(baseplot+labs(title="MDD.BPD M: Increased", 
-                                             subtitle="WikiPathways results without CDKN1A or ELK1 (n= 11 sig. terms)"), wiki.other@result$Description)
+                                             subtitle=paste("WikiPathways results without CDKN1A or ELK1 (n=", nrow(wiki.other@result) , "sig. terms)")), 
+		wiki.other@result$Description)
 
 
 
@@ -507,7 +528,7 @@ gt$Description = stringr::str_wrap(gt$Description, width=20)
 plist[[18]] = tableGrob(gt[, c("Description","GeneRatio","p.adjust","Count","geneID")], rows = NULL)
 
 
-saveRDS(ora.list, "processed-data/07_dx_DE/MDD-BPD-M_label-transfer_ORA-results_increased.rda")
+saveRDS(ora.list, "processed-data/07_dx_DE/MDD-BPD-M_label-transfer-age_ORA-results_increased.rda")
 
 ### key genes expression
 cat("\n\nPlot expression of key genes grouped by function...\n")
@@ -521,10 +542,11 @@ sce_pseudo$seurat_low.res2 = factor(sce_pseudo$seurat_low.res,
                                     levels=c("Micro.Vasc","Astro","Oligo","L2","L3","L4","L5","L6","Inhb"),
                                     labels=c("M.V","Astro","Oligo","L2","L3","L4","L5","L6","Inhb"))
 
-select.genes = list("TFs"=c("ZFP36","ZFP36L2","CEBPD","ELK1"),
-                    "p38MAPK/ JNK"= c("GADD45B","GADD45G","MAPK8IP1","EDN1"),
-                    "Interleukin signaling"= c("CDKN1A","TIMP1","NFKBIA","CCL2"),
-                    #"p53 signaling"=c("SLC2A1","DDIT4","BTG2","CDKN1A"),
+select.genes = list("ZFP36"=c("ZFP36","ZFP36L1","ZFP36L2"),
+		    "Inflammatory response"=c("TNFRSF1A","SERPINA3","CCL2","ADM","CEBPB"),
+                    "p38MAPK/ JNK"= c("GADD45B","GADD45G","ELK1","EDN1"),
+                    #"Interleukin signaling"= c("CDKN1A","TIMP1","NFKBIA","CCL2"),
+                    "p53 signaling"=c("SLC2A1","DDIT4","BTG2","CDKN1A"),
                     "Cytokine response"=c("MT1X","MT2A","SOCS3","F3","YBX3")
                     )
 
@@ -592,28 +614,29 @@ plist[[length(plist)+1]] = arrangeGrob(p1, p2, rasterize(p3, dpi=200), layout_ma
 
 }
 
-cat("\n\nSave MDD.BPD M decreased report: plots/07_dx_DE/prelim-report_MDD-BPD-M_label-transfer_increased.pdf\n")
+cat("\n\nSave MDD.BPD M increased report: plots/07_dx_DE/prelim-report_MDD-BPD-M_label-transfer-age_increased.pdf\n")
 
-pdf(file="plots/07_dx_DE/prelim-report_MDD-BPD-M_increased.pdf", width=8.5, height=11)
+pdf(file="plots/07_dx_DE/prelim-report_MDD-BPD-M_label-transfer-age_increased.pdf", width=8.5, height=11)
 grid.arrange(plist[[1]], plist[[2]])
 grid.arrange(rasterize(plist[[3]], layer="point", dpi=200), plist[[4]], ncol=1)
-grid.arrange(plist[[5]], plist[[6]], ncol=2)
+grid.arrange(plist[[5]], layout_matrix=rbind(c(NA,1,1,1,1,NA)))
+grid.arrange(plist[[6]], layout_matrix=rbind(c(NA,1,1,1,1,NA)))
 plot(plist[[7]])
 plot(plist[[8]])
 plot(plist[[9]])
 plot(plist[[10]])
-plot(plist[[11]])
 plot(plist[[12]])
 plot(plist[[13]])
 plot(plist[[14]])
 plot(plist[[15]])
 plot(plist[[16]])
 plot(plist[[17]])
-grid.arrange(plist[[18]], ncol=1, top="PPI results", bottom="Filtered to sig. results that are also DEGs for MDD.BPD M")
+grid.arrange(plist[[11]], plist[[18]], ncol=1, top="Top = sig. Reactome results", bottom="Bottom = PPI results that are also MDD.BPD M DEGs")
 plot(plist[[19]])
 plot(plist[[20]])
 plot(plist[[21]])
 plot(plist[[22]])
+plot(plist[[23]])
 dev.off()
 
 cat("\n\nReproducibility information:\n")

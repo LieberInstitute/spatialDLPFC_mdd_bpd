@@ -19,25 +19,25 @@ load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seura
 cat("\nLoading label transfer results...\n")
 
 # load layer-adjusted results
-adj.results = read.csv("processed-data/07_dx_DE/layer-adjusted_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+adj.results = read.csv("processed-data/07_dx_DE/layer-adjusted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased", "increased")))
 
-sig.la = filter(adj.results, sex=="M", group=="MDD.BPD", adj.P.Val<.05)
+sig.la = filter(adj.results, sex=="M", group=="MDD.BPD", adj.P.Val<.01)
 
 
 # load layer-restricted results
-restr.results <- read.csv("processed-data/07_dx_DE/layer-restricted_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+restr.results <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          seurat_label_f=factor(cluster, levels=c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Oligo","Inhb"),
                                labels=c("M.V","Astro","L2.3","L4","L5","L6","Oligo","Inhb"))
          )
 
-sig.lr = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.05),
-                   filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.05),
-                   filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.001)) %>%
+sig.lr = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.01),
+                   filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.01),
+                   filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.0001)) %>%
   mutate(dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased","increased"))) %>%
   filter(sex=="M", group=="MDD.BPD")
 
@@ -47,7 +47,7 @@ sig.both = left_join(sig.lr, mutate(sig.la[,c("gene_id","gene_name","sex","group
   mutate(adj_sig=ifelse(is.na(adj_sig), F, T))
 
 sig.both = bind_rows(sig.both,
-          filter(sig.la, adj.P.Val<.05, !gene_id %in% sig.both$gene_id) %>%
+          filter(sig.la, adj.P.Val<.01, !gene_id %in% sig.both$gene_id) %>%
             mutate(cluster= "L-A only", seurat_label_f= "L-A only", adj_sig=T)) %>%
   mutate(fill_color= factor(paste(adj_sig, dir), levels=c("TRUE decreased","TRUE increased",
                                                           "FALSE decreased","FALSE increased"),
@@ -57,8 +57,8 @@ sig.both = bind_rows(sig.both,
                                labels=c("M.V","Astro","L2.3","L4","L5","L6","Oligo","Inhb", "L-A"))
   )
 
-if (!"MDD-BPD-M_label-transfer_LA-LR-sig-DEGs.csv" %in% list.files("processed-data/07_dx_DE/")) {
-  write.csv(sig.both, "processed-data/07_dx_DE/MDD-BPD-M_label-transfer_LA-LR-sig-DEGs.csv", row.names=F)
+if (!"MDD-BPD-M_label-transfer-age_LA-LR-sig-DEGs.csv" %in% list.files("processed-data/07_dx_DE/")) {
+  write.csv(sig.both, "processed-data/07_dx_DE/MDD-BPD-M_label-transfer-age_LA-LR-sig-DEGs.csv", row.names=F)
 }
 
 ### genes summary table 
@@ -137,12 +137,28 @@ restr.name = unique(filter(sig.both, dir=="decreased", cluster!="L-A only")$gene
 adj.name = unique(filter(sig.both, dir=="decreased", adj_sig==T)$gene_name)
 sig.name= union(restr.name, adj.name)
 
+
+# consistent with ntc
+ntc.bpd.dn = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.01),
+                       filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.01),
+                       filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.0001)) %>%
+  mutate(dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased","increased"))) %>%
+  filter(sex=="M", group=="NTC.BPD", dir=="decreased") %>%
+  bind_rows(filter(adj.results, sex=="M", group=="NTC.BPD", adj.P.Val<.01, dir=="decreased"))
+decr.bpd.consistent = intersect(ntc.bpd.dn$gene_name, sig.name)
+
 ### expression heatmap
-row.annot = cbind.data.frame("L-A sig."= as.character(sig.name %in% adj.name),
-                             "L-R sig."= as.character(sig.name %in% restr.name))
+row.annot = cbind.data.frame("MDD.BPD L-A sig."= as.character(sig.name %in% adj.name),
+                             "MDD.BPD L-R sig."= as.character(sig.name %in% restr.name))
 rownames(row.annot) = sig.name
-annot_colors = list("L-A sig."=c("FALSE"="white","TRUE"="black"),
-                    "L-R sig."=c("FALSE"="white","TRUE"="black"))
+
+row.annot$NTC.BPD = "FALSE"
+row.annot[decr.bpd.consistent, "NTC.BPD"] = "BPD dn"
+
+annot_colors = list("MDD.BPD L-A sig."=c("FALSE"="white","TRUE"="black"),
+                    "MDD.BPD L-R sig."=c("FALSE"="white","TRUE"="black"),
+		    "NTC.BPD" = c("FALSE"="white", "BPD dn"= "black")
+)
 
 spe_pseudo$seurat_label2 = factor(spe_pseudo$seurat_label, levels=c("Micro.Vasc","Oligo","Astro",
                                                                 "L2.3","L4","L5","L6","Inhb"),
@@ -176,7 +192,7 @@ phm = pheatmap(m1[,c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb")],
 
 plist[[6]] = phm[[4]]
 
-top.genes = phm$tree_row$label[phm$tree_row$order][1:7]
+top.genes = decr.bpd.consistent
 
 
 #ORA
@@ -279,7 +295,7 @@ modify_emmapplot <- function(emmap_plot, term_list) {
 
 
 p = cnetplot(go.results, showCategory=nrow(go.results@result), layout="fr")+
-  labs(title="MDD.BPD M: Decreased", subtitle="GO (BP) results (n= 16 sig. terms)\nRed= top L-A sig. genes; Bold= L-A sig.genes")+
+  labs(title="MDD.BPD M: Decreased", subtitle=paste("GO (BP) results (n=", nrow(go.results@result), "sig. terms)\nRed= top sig. genes; Bold= L-A sig.genes"))+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed
@@ -320,7 +336,7 @@ react.results2 = react.results
 react.results2@result = react.results2@result[react.results2@result$Description %in% react.terms, ]
 p = cnetplot(react.results2, showCategory=nrow(react.results2@result), layout="fr",
              size_category=.5, cex_label_category=.5)+
-  labs(title="MDD.BPD M: Decreased", subtitle="Reactome results with genes not present in GO (BP) results (n= 38 sig. terms)\nRed= top L-A sig. genes; Bold= L-A sig. genes")+
+  labs(title="MDD.BPD M: Decreased", subtitle=paste("Reactome results with genes not present in GO (BP) results (n=", length(react.terms), "sig. terms)\nRed= top L-A sig. genes; Bold= L-A sig. genes"))+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed
@@ -357,6 +373,10 @@ wiki.genes = setdiff(tmp$geneID, tmp1$geneID)
 wiki.terms = unique(filter(tmp, geneID %in% wiki.genes)$Description)
 length(wiki.terms) 
 
+gt = wiki.results@result
+gt$geneID = stringr::str_wrap(gsub("/"," ", gt$geneID), width=20)
+gt$Description = stringr::str_wrap(gt$Description, width=30)
+plist[[9]] = tableGrob(gt[, c("Description","GeneRatio","p.adjust","Count","geneID")], rows = NULL)
 
 #ppi
 cat("\n\n>>> PPI...\n")
@@ -376,10 +396,9 @@ gt = filter(ppi.results@result, p.adjust<.05, ID %in% sig.both$gene_name)
 nrow(gt)
 gt$geneID = stringr::str_wrap(gsub("/"," ", gt$geneID), width=20)
 gt$Description = stringr::str_wrap(gt$Description, width=20)
-plist[[9]] = tableGrob(gt[, c("Description","GeneRatio","p.adjust","Count","geneID")], rows = NULL)
+plist[[10]] = tableGrob(gt[, c("Description","GeneRatio","p.adjust","Count","geneID")], rows = NULL)
 
-
-saveRDS(ora.list, "processed-data/07_dx_DE/MDD-BPD-M_label-transfer_ORA-results_decreased.rda")
+saveRDS(ora.list, "processed-data/07_dx_DE/MDD-BPD-M_label-transfer-age_ORA-results_decreased.rda")
 
 ### key genes expression
 spe_sub = spe_pseudo[,spe_pseudo$sex=="M"]
@@ -392,11 +411,11 @@ sce_pseudo$seurat_low.res2 = factor(sce_pseudo$seurat_low.res,
                                     labels=c("M.V","Astro","Oligo","L2","L3","L4","L5","L6","Inhb"))
 
 
-select.genes = list("Energy production"= c("UGP2","COX7A1","UQCRQ","ATP5F1E"),
-                    "Proteasome"=c("RPS27A","PSMC5","SKP1","NEDD8"),
-                    "Autophagy"=c("TOMM7","DYNLL1","HSPA8","MAP1B"),
+select.genes = list("Energy production"= c("COX7A2","COX7C","NDUFB2","ADGRF5"),
+                    "mTOR signaling"=c("LAMTOR2","LAMTOR4","LAMTOR5","TBC1D7","FBXO9"),
+                    "Autophagy"=c("TOMM7","DYNLL1","HSPA8","PARK7")
                     #"GABA"=c("GAD2","CORT","SST","PVALB"),
-                    "Macrophage/ Interleukin"=c("CX3CR1","P2RY12","DUSP4")
+                    #"Macrophage/ Interleukin"=c("CX3CR1","P2RY12","DUSP4")
 )
 
 for (i in names(select.genes)) {
@@ -469,16 +488,17 @@ plist[[length(plist)+1]] = arrangeGrob(p1, p2, rasterize(p3, dpi=200), layout_ma
 }
 
 
-cat("\n\nSave MDD.BPD M decreased report: plots/07_dx_DE/prelim-report_MDD-BPD-M_label-transfer_decreased.pdf\n")
+cat("\n\nSave MDD.BPD M decreased report: plots/07_dx_DE/prelim-report_MDD-BPD-M_label-transfer-age_decreased.pdf\n")
 
-pdf(file="plots/07_dx_DE/prelim-report_MDD-BPD-M_decreased.pdf", width=8.5, height=11)
+pdf(file="plots/07_dx_DE/prelim-report_MDD-BPD-M_label-transfer-age_decreased.pdf", width=8.5, height=11)
 grid.arrange(plist[[1]], plist[[2]])
 grid.arrange(rasterize(plist[[3]], layer="point", dpi=200), plist[[4]], ncol=1)
-grid.arrange(plist[[5]], plist[[6]], ncol=2)
+grid.arrange(plist[[5]], layout_matrix=rbind(c(NA,1,1,1,1,NA)))
+grid.arrange(plist[[6]], layout_matrix=rbind(c(NA,1,1,1,1,NA)))
 plot(plist[[7]])
 plot(plist[[8]])
-grid.arrange(plist[[9]], ncol=1, top="PPI results", bottom="Filtered to sig. results that are also DEGs for MDD.BPD M")
-plot(plist[[10]])
+grid.arrange(plist[[9]], ncol=1, top="Top = sig. WikiPathways results")
+grid.arrange(plist[[10]], ncol=1, top="Top = sig. PPI results that are MDD.BPD M DEGs")
 plot(plist[[11]])
 plot(plist[[12]])
 plot(plist[[13]])
