@@ -19,25 +19,25 @@ load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seura
 cat("\nLoading label transfer results...\n")
 
 # load layer-adjusted results
-adj.results = read.csv("processed-data/07_dx_DE/layer-adjusted_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+adj.results = read.csv("processed-data/07_dx_DE/layer-adjusted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased", "increased")))
 
-sig.la = filter(adj.results, sex=="F", group=="MDD.BPD", adj.P.Val<.05)
+sig.la = filter(adj.results, sex=="F", group=="MDD.BPD", adj.P.Val<.01)
 
 
 # load layer-restricted results
-restr.results <- read.csv("processed-data/07_dx_DE/layer-restricted_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+restr.results <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          seurat_label_f=factor(cluster, levels=c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Oligo","Inhb"),
                                labels=c("M.V","Astro","L2.3","L4","L5","L6","Oligo","Inhb"))
          )
 
-sig.lr = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.05),
-                   filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.05),
-                   filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.001)) %>%
+sig.lr = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.01),
+                   filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.01),
+                   filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.0001)) %>%
   mutate(dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased","increased"))) %>%
   filter(sex=="F", group=="MDD.BPD")
 
@@ -47,7 +47,7 @@ sig.both = left_join(sig.lr, mutate(sig.la[,c("gene_id","gene_name","sex","group
   mutate(adj_sig=ifelse(is.na(adj_sig), F, T))
 
 sig.both = bind_rows(sig.both, 
-          filter(sig.la, adj.P.Val<.05, !gene_id %in% sig.both$gene_id) %>%
+          filter(sig.la, adj.P.Val<.01, !gene_id %in% sig.both$gene_id) %>%
             mutate(cluster= "L-A only", seurat_label_f= "L-A only", adj_sig=T)) %>%
   mutate(fill_color= factor(paste(adj_sig, dir), levels=c("TRUE decreased","TRUE increased",
                                                           "FALSE decreased","FALSE increased"),
@@ -58,8 +58,8 @@ sig.both = bind_rows(sig.both,
   )
 
 
-if (!"MDD-BPD-F_label-transfer_LA-LR-sig-DEGs.csv" %in% list.files("processed-data/07_dx_DE/")) {
-  write.csv(sig.both, "processed-data/07_dx_DE/MDD-BPD-F_label-transfer_LA-LR-sig-DEGs.csv", row.names=F)
+if (!"MDD-BPD-F_label-transfer-age_LA-LR-sig-DEGs.csv" %in% list.files("processed-data/07_dx_DE/")) {
+  write.csv(sig.both, "processed-data/07_dx_DE/MDD-BPD-F_label-transfer-age_LA-LR-sig-DEGs.csv", row.names=F)
 }
 
 ### volcano plot of L-R and L-A results
@@ -109,39 +109,39 @@ sig.name= union(restr.name, adj.name)
 incr.bpd = unique(filter(sig.both, dir=="increased")$gene_name)
 incr.mdd = unique(filter(sig.both, dir=="decreased")$gene_name)
 
-ntc.mdd.dn = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.05),
-                       filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.05),
-                       filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.001)) %>%
+ntc.mdd.dn = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.01),
+                       filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.01),
+                       filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.0001)) %>%
   mutate(dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased","increased"))) %>%
   filter(sex=="F", group=="NTC.MDD", dir=="decreased") %>%
-  bind_rows(filter(adj.results, sex=="F", group=="NTC.MDD", adj.P.Val<.05, dir=="decreased"))
+  bind_rows(filter(adj.results, sex=="F", group=="NTC.MDD", adj.P.Val<.01, dir=="decreased"))
 decr.mdd.consistent = intersect(ntc.mdd.dn$gene_name, incr.bpd)
 
 
-ntc.mdd.up = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.05),
-                       filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.05),
-                       filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.001)) %>%
+ntc.mdd.up = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.01),
+                       filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.01),
+                       filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.0001)) %>%
   mutate(dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased","increased"))) %>%
   filter(sex=="F", group=="NTC.MDD", dir=="increased") %>%
-  bind_rows(filter(adj.results, sex=="F", group=="NTC.MDD", adj.P.Val<.05, dir=="increased"))
+  bind_rows(filter(adj.results, sex=="F", group=="NTC.MDD", adj.P.Val<.01, dir=="increased"))
 incr.mdd.consistent = intersect(ntc.mdd.up$gene_name, incr.mdd)
 
 
-ntc.bpd.up = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.05),
-                       filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.05),
-                       filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.001)) %>%
+ntc.bpd.up = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.01),
+                       filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.01),
+                       filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.0001)) %>%
   mutate(dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased","increased"))) %>%
   filter(sex=="F", group=="NTC.BPD", dir=="increased") %>%
-  bind_rows(filter(adj.results, sex=="F", group=="NTC.BPD", adj.P.Val<.05, dir=="increased"))
+  bind_rows(filter(adj.results, sex=="F", group=="NTC.BPD", adj.P.Val<.01, dir=="increased"))
 incr.bpd.consistent = intersect(ntc.bpd.up$gene_name, incr.bpd)
 
 
-ntc.bpd.dn = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.05),
-                       filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.05),
-                       filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.001)) %>%
+ntc.bpd.dn = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.01),
+                       filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.01),
+                       filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.0001)) %>%
   mutate(dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased","increased"))) %>%
   filter(sex=="F", group=="NTC.BPD", dir=="decreased") %>%
-  bind_rows(filter(adj.results, sex=="F", group=="NTC.BPD", adj.P.Val<.05, dir=="decreased"))
+  bind_rows(filter(adj.results, sex=="F", group=="NTC.BPD", adj.P.Val<.01, dir=="decreased"))
 decr.bpd.consistent = intersect(ntc.bpd.dn$gene_name, incr.mdd)
 
 ### BPD up first because only 5 genes
@@ -217,7 +217,7 @@ spe_pseudo$seurat_label2 = factor(spe_pseudo$seurat_label, levels=c("Micro.Vasc"
 
 phm = plotGroupedHeatmap(spe_pseudo, features=incr.bpd, swap_rownames="gene_name",
                          group="seurat_label2", cluster_cols=F, center=T, angle_col=45,
-                         #fontsize_row=6, 
+                         fontsize_row=8, 
                          annotation_row=row.annot, annotation_colors=annot_colors,
                          main="MDD.BPD F: Increased (scaled logcounts)")
 
@@ -236,7 +236,7 @@ v = ceiling(max(abs(m1)))
 phm = pheatmap(m1[incr.bpd, c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb")], 
                cluster_rows=T, cluster_cols=F, 
                annotation_row=row.annot, annotation_colors=annot_colors,
-               #fontsize_row=6, 
+               fontsize_row=8, 
                angle_col=45, 
                colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))((v*2)+1),
                breaks=seq(-v, v, length.out=((v*2)+2)),
@@ -246,7 +246,130 @@ phm = pheatmap(m1[incr.bpd, c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb"
 plist[[6]] = phm[[4]]
 
 
+top.genes = c("TTYH1","TMEM132A","CRTC1", "KIF5A")
+
+# ORA (MDD > BPD) --------------------------------------------------------
+# in order to take advantage of the many gmt objects for enrichR but also the easy plotting with clusterProfiler
+# i made a custom workflow that pulls the enrichR gmt and formats it for use with clusterProfiler::enricher
+setEnrichrSite("Enrichr") # Human genes
+dbs <- listEnrichrDbs()
+#dbs[grep("GO",dbs$libraryName),]
+
+
+
+### modify enrichR .read_gmt to return it gmt file of enrichr database as a gson 
+#https://github.com/wjawaid/enrichR/blob/master/R/functions.R#L232
+
+#### modify this function so it checks a jhpce dir for the gmt file and if not there finds it online and saves it to jhpce
+.read_gmt <- function(db) {
+  dbs <- listEnrichrDbs()
+  if(!db %in% dbs$libraryName) stop("Requested database not in enrichR. Use enrichR::listEnrichrDbs() to check for available resources.")
+  gmtDir = "code/enrichR_gmts"
+  if(paste0(db,".rda") %in% list.files(gmtDir)) {
+    gmt = readRDS(paste0(gmtDir, "/", db,".rda"))
+  } else {
+    base.address <- getOption("enrichR.base.address")
+    url <- paste0(base.address, "geneSetLibrary?mode=text&libraryName=", db)
+    tf <- tempfile(pattern = db, fileext = ".gmt")
+    cat("   - Download GMT file...\n")
+    tryCatch(download.file(url, tf, mode = "w", quiet = TRUE),
+             warning = function(warn) { message(warn); message("") },
+             error = function(err) { message(err); message("") })
+    gmt = read.gmt(tf)
+    attr(gmt, 'snapshot') = c("retrieved"=format(Sys.time()), enrichR_version=packageVersion("enrichR"))
+    attr(gmt, 'dbs_details') = as.list(dbs[grep(db, dbs$libraryName),])
+    saveRDS(gmt, paste0(gmtDir, "/", db, ".rda"))
+    cat("   - Saved to:", paste0(gmtDir, "/", db, ".rda"),"\n")
+  }
+
+  return(gmt)
+}
+
+
+### GO BP
+cat("\n\n>>> GO (BP)...\n")
+go.gmt = .read_gmt("GO_Biological_Process_2025")
+#separate term and GOID for TERM2NAME
+go.term = do.call(rbind.data.frame, strsplit(as.character(go.gmt$term), split=" \\(GO:"))
+colnames(go.term) <- c("Term","ID")
+go.term$ID = gsub("\\)", "", paste0("GO:",go.term$ID))
+go.id.long = go.term$ID
+go.term = distinct(go.term[,c("ID","Term")])
+
+#dframe of goID and gene name for TERM2GENE
+go.gene = cbind.data.frame("ID"=go.id.long, "geneID"=go.gmt$gene)
+
+go.results = enricher(incr.bpd, #universe=unique(go.gmt$gene), 
+                      TERM2GENE = go.gene,
+                      TERM2NAME = go.term)
+set.seed(123) #reset seed
+nrow(filter(go.results@result, p.adjust<.05)) 
+go.results@result <- go.results@result[go.results@result$p.adjust<.05, ]
+
+
+ora.list = list("GO.BP"=go.results@result)
+
+
+### Reactome
+cat("\n\n>>> Reactome...\n")
+react.gmt = .read_gmt("Reactome_2022")
+#separate term and GOID for TERM2NAME
+react.term = do.call(rbind.data.frame, strsplit(as.character(react.gmt$term), split=" R-HSA"))
+colnames(react.term) <- c("Term","ID")
+react.term$ID = gsub("\\)", "", paste0("R-HSA",react.term$ID))
+react.id.long = react.term$ID
+react.term = distinct(react.term[,c("ID","Term")])
+#dframe of goID and gene name for TERM2GENE
+react.gene = cbind.data.frame("ID"=react.id.long, "geneID"=react.gmt$gene)
+ 
+react.results = enricher(incr.bpd, #universe=unique(react.gmt$gene), 
+                         TERM2GENE = react.gene,
+                         TERM2NAME = react.term)
+set.seed(123) #reset seed
+nrow(filter(react.results@result, p.adjust<.05))
+react.results@result = react.results@result[react.results@result$p.adjust<.05,]
+
+ora.list[["Reactome"]] = react.results@result
+
+
+### WikiPathways
+cat("\n\n>>> WikiPathways...\n")
+wiki.gmt = .read_gmt("WikiPathways_2024_Human")
+#separate term and GOID for TERM2NAME
+wiki.term = do.call(rbind.data.frame, strsplit(as.character(wiki.gmt$term), 
+                                               split=" WP"))
+colnames(wiki.term) <- c("Term","ID")
+wiki.term$ID = paste0("WP",wiki.term$ID)
+wiki.id.long = wiki.term$ID
+wiki.term = distinct(wiki.term[,c("ID","Term")])
+#dframe of goID and gene name for TERM2GENE
+wiki.gene = cbind.data.frame("ID"=wiki.id.long, "geneID"=wiki.gmt$gene)
+
+wiki.results = enricher(incr.bpd, #universe=rowData(spe_pseudo)$gene_name, 
+                         TERM2GENE = wiki.gene,
+                         TERM2NAME = wiki.term)
+set.seed(123) #reset seed
+nrow(filter(wiki.results@result, p.adjust<.05))
+wiki.results@result = wiki.results@result[wiki.results@result$p.adjust<.05,]
+
+ora.list[["WikiPathways"]] = wiki.results@result
+
+
+### PPI
+cat("\n\n>>> PPI...\n")
+ppi.gmt = .read_gmt("PPI_Hub_Proteins")
+ppi.results = enricher(incr.bpd, #universe=rowData(spe_pseudo)$gene_name, 
+                       TERM2GENE = ppi.gmt)
+set.seed(123) #reset seed
+nrow(filter(ppi.results@result, p.adjust<.05))
+ppi.results@result = ppi.results@result[ppi.results@result$p.adjust<.05,]
+
+ora.list[["PPI"]] = ppi.results@result
+
+saveRDS(ora.list, "processed-data/07_dx_DE/MDD-BPD-F_label-transfer-age_ORA-results_increased.rda")
+
 #plot expression
+
 spe_sub = spe_pseudo[,spe_pseudo$sex=="F"]
 
 #sce for cell type comparison
@@ -257,7 +380,7 @@ sce_pseudo$seurat_low.res2 = factor(sce_pseudo$seurat_low.res,
                                     labels=c("M.V","Astro","Oligo","L2","L3","L4","L5","L6","Inhb"))
 
 
-p1 <- plotExpression(sce_pseudo, features=intersect(incr.bpd, rowData(sce_pseudo)$gene_name),
+p1 <- plotExpression(sce_pseudo, features=intersect(top.genes, rowData(sce_pseudo)$gene_name),
                      swap_rownames="gene_name", x="seurat_low.res2", 
                      colour_by="seurat_low.res")+
   scale_color_manual(values=cpList$low.res.bright, guide="none")+
@@ -266,7 +389,7 @@ p1 <- plotExpression(sce_pseudo, features=intersect(incr.bpd, rowData(sce_pseudo
   labs(title="SZBDMulti-seq snRNA-seq expression")+
   theme(axis.text.x=element_text(angle=45, hjust=1), axis.title.x=element_blank())
 
-p2 <- plotExpression(spe_pseudo, features=incr.bpd,
+p2 <- plotExpression(spe_pseudo, features=top.genes,
                      swap_rownames="gene_name", x="seurat_label2", 
                      colour_by="seurat_label")+
   scale_color_manual(values=cpList$transfer.bright, guide="none")+
@@ -276,7 +399,7 @@ p2 <- plotExpression(spe_pseudo, features=incr.bpd,
   theme(axis.text.x=element_text(angle=45, hjust=1), axis.title.x=element_blank())
 
 
-plot.genes = incr.bpd
+plot.genes = top.genes
 for (j in plot.genes) {
   colData(spe_sub)[[j]] = logcounts(spe_sub)[rowData(spe_sub)$gene_name==j,]
 }
@@ -313,7 +436,7 @@ p3 = ggplot(plot.df, aes(x=condition, y=logcounts, color=condition))+
   scale_color_manual(values=cpList$dx.pal, guide="none")+
   facet_grid(cols=vars(seurat_label2), rows=vars(key_genes), scales="free_y",
              labeller = as_labeller(f_labels))+
-  labs(x="", title="MDD.BPD F Increased", subtitle="Only female samples plotted")+
+  labs(x="", title="MDD.BPD F Increased: Select genes", subtitle="Only female samples plotted")+
   theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.5),
                    strip.text.y.right = element_text(angle=0, face="italic"))
 
@@ -389,7 +512,7 @@ annot_colors = list("MDD.BPD L-A sig."=c("FALSE"="white","MDD up"=cpList$dx.pal[
 
 phm = plotGroupedHeatmap(spe_pseudo, features=incr.mdd, swap_rownames="gene_name",
                          group="seurat_label2", cluster_cols=F, center=T, angle_col=45,
-                         fontsize_row=8, 
+                         fontsize_row=6, 
                          annotation_row=row.annot, annotation_colors=annot_colors,
                          main="MDD.BPD F: Decreased (scaled logcounts)")
 
@@ -399,7 +522,7 @@ plist[[10]] = phm[[4]]
 phm = pheatmap(m1[incr.mdd, c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb")], 
                cluster_rows=T, cluster_cols=F, 
                annotation_row=row.annot, annotation_colors=annot_colors,
-               fontsize_row=8, 
+               fontsize_row=6, 
                angle_col=45, 
                colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))((v*2)+1),
                breaks=seq(-v, v, length.out=((v*2)+2)),
@@ -410,44 +533,7 @@ phm = pheatmap(m1[incr.mdd, c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb"
 plist[[11]] = phm[[4]]
 
 
-
 # ORA (MDD > BPD) --------------------------------------------------------
-# in order to take advantage of the many gmt objects for enrichR but also the easy plotting with clusterProfiler
-# i made a custom workflow that pulls the enrichR gmt and formats it for use with clusterProfiler::enricher
-setEnrichrSite("Enrichr") # Human genes
-dbs <- listEnrichrDbs()
-#dbs[grep("GO",dbs$libraryName),]
-
-
-
-### modify enrichR .read_gmt to return it gmt file of enrichr database as a gson 
-#https://github.com/wjawaid/enrichR/blob/master/R/functions.R#L232
-
-#### modify this function so it checks a jhpce dir for the gmt file and if not there finds it online and saves it to jhpce
-.read_gmt <- function(db) {
-  dbs <- listEnrichrDbs()
-  if(!db %in% dbs$libraryName) stop("Requested database not in enrichR. Use enrichR::listEnrichrDbs() to check for available resources.")
-  gmtDir = "code/enrichR_gmts"
-  if(paste0(db,".rda") %in% list.files(gmtDir)) {
-    gmt = readRDS(paste0(gmtDir, "/", db,".rda"))
-  } else {
-    base.address <- getOption("enrichR.base.address")
-    url <- paste0(base.address, "geneSetLibrary?mode=text&libraryName=", db)
-    tf <- tempfile(pattern = db, fileext = ".gmt")
-    cat("   - Download GMT file...\n")
-    tryCatch(download.file(url, tf, mode = "w", quiet = TRUE), 
-             warning = function(warn) { message(warn); message("") },
-             error = function(err) { message(err); message("") })
-    gmt = read.gmt(tf)
-    attr(gmt, 'snapshot') = c("retrieved"=format(Sys.time()), enrichR_version=packageVersion("enrichR"))
-    attr(gmt, 'dbs_details') = as.list(dbs[grep(db, dbs$libraryName),])
-    saveRDS(gmt, paste0(gmtDir, "/", db, ".rda"))
-    cat("   - Saved to:", paste0(gmtDir, "/", db, ".rda"),"\n")
-  }
-  
-  return(gmt)
-}
-
 
 top.genes = intersect(union(adj.name, restr.name), incr.mdd.consistent)
 cat("\nTop genes are genes that are MDD > BPD L-A or L-R and also MDD > NTC L-R:\n")
@@ -684,20 +770,20 @@ ppi.results = enricher(sig.name,
                        #adj.name, #universe=rowData(spe_pseudo)$gene_name, 
                        TERM2GENE = ppi.gmt)
 set.seed(123) #reset seed
-nrow(filter(ppi.results@result, p.adjust<.05)) #41
+nrow(filter(ppi.results@result, p.adjust<.05))
 ppi.results@result <- ppi.results@result[ppi.results@result$p.adjust<.05, ]
 
 ora.list[["PPI"]] =  ppi.results@result
 
-
-saveRDS(ora.list, "processed-data/07_dx_DE/MDD-BPD-F_label-transfer_ORA-results_decreased.rda")
+saveRDS(ora.list, "processed-data/07_dx_DE/MDD-BPD-F_label-transfer-age_ORA-results_decreased.rda")
 
 ### key genes expression
 cat("\n\nPlot expression of key genes grouped by function...\n")
 
-select.genes = list("Microglia"=c("S100A9","CD74","IFITM2","AIF1"),
+select.genes = list("Microglia"=c("S100A9","S100A8","FCER1G","CD74"),
+	"Microglial signaling"=c("SPP1","RGS1","IFITM2"),
 	"Complement Component"=c("C1QB","C1QC","C1QA","C3AR1"),
-	"Complement System"=c("SPP1","VSIG4","FPR1","LRP2")
+	"Actin and Rac"=c("RHOG","TPM4","DTNA","AIF1")
 )
 
 for (i in names(select.genes)) {
@@ -765,16 +851,15 @@ plist[[length(plist)+1]] = arrangeGrob(p1, p2, rasterize(p3, dpi=200), layout_ma
 }
 
 
-cat("\n\nSave MDD.BPD F report: plots/07_dx_DE/prelim-report_MDD-BPD-F_label-transfer_both.pdf\n")
+cat("\n\nSave MDD.BPD F report: plots/07_dx_DE/prelim-report_MDD-BPD-F_label-transfer-age_both.pdf\n")
 
-pdf(file="plots/07_dx_DE/prelim-report_MDD-BPD-F_both.pdf", width=8.5, height=11)
+pdf(file="plots/07_dx_DE/prelim-report_MDD-BPD-F_label-transfer-age_both.pdf", width=8.5, height=11)
 grid.arrange(rasterize(plist[[1]], layer="point", dpi=200), plist[[2]], ncol=1)
 grid.arrange(plist[[3]], plist[[4]], ncol=1)
 grid.arrange(plist[[5]], plist[[6]], ncol=1)
 plot(plist[[7]])
 grid.arrange(plist[[8]], plist[[9]], ncol=1)
-grid.arrange(plist[[10]], layout_matrix=rbind(c(NA,1,1,1,1,NA)))
-grid.arrange(plist[[11]], layout_matrix=rbind(c(NA,1,1,1,1,NA)))
+grid.arrange(plist[[10]], plist[[11]], ncol=1)
 plot(plist[[12]])
 plot(plist[[13]])
 plot(plist[[14]])
@@ -786,6 +871,7 @@ plot(plist[[19]])
 plot(plist[[20]])
 plot(plist[[21]])
 plot(plist[[22]])
+plot(plist[[23]])
 dev.off()
 
 cat("\n\nReproducibility information:\n")
