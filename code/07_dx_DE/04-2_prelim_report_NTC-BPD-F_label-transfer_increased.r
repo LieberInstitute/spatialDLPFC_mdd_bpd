@@ -19,25 +19,25 @@ load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seura
 cat("\nLoading label transfer results...\n")
 
 # load layer-adjusted results
-adj.results = read.csv("processed-data/07_dx_DE/layer-adjusted_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+adj.results = read.csv("processed-data/07_dx_DE/layer-adjusted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased", "increased")))
 
-sig.la = filter(adj.results, sex=="F", group=="NTC.BPD", adj.P.Val<.05)
+sig.la = filter(adj.results, sex=="F", group=="NTC.BPD", adj.P.Val<.01)
 
 
 # load layer-restricted results
-restr.results <- read.csv("processed-data/07_dx_DE/layer-restricted_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+restr.results <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          seurat_label_f=factor(cluster, levels=c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Oligo","Inhb"),
                                labels=c("M.V","Astro","L2.3","L4","L5","L6","Oligo","Inhb"))
          )
 
-sig.lr = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.05),
-                   filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.05),
-                   filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.001)) %>%
+sig.lr = bind_rows(filter(restr.results, cluster!="Oligo", adj.P.Val<.01),
+                   filter(restr.results, cluster=="Oligo", sex=="M", adj.P.Val<.01),
+                   filter(restr.results, cluster=="Oligo", sex=="F", adj.P.Val<.0001)) %>%
   mutate(dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased","increased"))) %>%
   filter(sex=="F", group=="NTC.BPD")
 
@@ -47,7 +47,7 @@ sig.both = left_join(sig.lr, mutate(sig.la[,c("gene_id","gene_name","sex","group
   mutate(adj_sig=ifelse(is.na(adj_sig), F, T))
 
 sig.both = bind_rows(sig.both, 
-          filter(sig.la, adj.P.Val<.05, !gene_id %in% sig.both$gene_id) %>%
+          filter(sig.la, adj.P.Val<.01, !gene_id %in% sig.both$gene_id) %>%
             mutate(cluster= "L-A only", seurat_label_f= "L-A only", adj_sig=T)) %>%
   mutate(fill_color= factor(paste(adj_sig, dir), levels=c("TRUE decreased","TRUE increased",
                                                           "FALSE decreased","FALSE increased"),
@@ -57,8 +57,8 @@ sig.both = bind_rows(sig.both,
                                labels=c("M.V","Astro","L2.3","L4","L5","L6","Oligo","Inhb", "L-A"))
   )
 
-if (!"NTC-BPD-F_label-transfer_LA-LR-sig-DEGs.csv" %in% list.files("processed-data/07_dx_DE/")) {
-        write.csv(sig.both, "processed-data/07_dx_DE/NTC-BPD-F_label-transfer_LA-LR-sig-DEGs.csv", row.names=F)
+if (!"NTC-BPD-F_label-transfer-age_LA-LR-sig-DEGs.csv" %in% list.files("processed-data/07_dx_DE/")) {
+        write.csv(sig.both, "processed-data/07_dx_DE/NTC-BPD-F_label-transfer-age_LA-LR-sig-DEGs.csv", row.names=F)
 }
 ### genes summary table 
 restr.name1 = unique(filter(sig.both, dir=="decreased", cluster!="L-A only")$gene_name)
@@ -143,6 +143,7 @@ sig.name= union(restr.name, adj.name)
 
 #60 of these are RPS|RPL genes 
 rpl.name = sig.name[grep("RPS|RPL", sig.name)]
+cat("\nOf the", length(sig.name), "increased genes,", length(rpl.name),"are RPS|RPL genes...\n")
 sig.name = sig.name[-grep("RPS|RPL", sig.name)]
 
 
@@ -185,7 +186,7 @@ phm = pheatmap(m1[,c("M.V","Oligo","Astro","L2.3","L4","L5","L6","Inhb")],
 
 plist[[6]] = phm[[4]]
 
-top.genes = c("ELK1","FTL","APOLD1","S100A13","NR1D1","HBB","TEF")
+top.genes = phm$tree_row$label[phm$tree_row$order][1:10]
 
 
 
@@ -276,17 +277,6 @@ react.results@result <- react.results@result[react.results@result$p.adjust<.05, 
 
 ora.list = list("Reactome"=react.results@result)
 
-cat("\n>>>>> Genes repeated in most Reactome terms:\n")
-tidyr::separate_rows(react.results@result, geneID, sep="/") %>% 
-  group_by(geneID) %>% tally() %>% filter(n>10) %>% arrange(desc(n))
-#//geneID       n
-#1 UBA52       34
-#2 MAPK3       29
-#3 HSP90AA1    24
-#4 JUN         21
-#5 HMGB1       11
-#6 TNRC6B      11
-cat("\n21 Reactome terms are shared between UBA52 and MAPK3.\n")
 
 react.results <- pairwise_termsim(react.results)
 set.seed(123) #reset seed
@@ -338,44 +328,18 @@ modify_emmapplot <- function(emmap_plot, term_list) {
   return(ggplot_gtable(m))
 }
 
-#focus on mapk3 terms
-mapk3.terms = tidyr::separate_rows(react.results@result, geneID, sep="/") %>% 
-  filter(geneID=="MAPK3") %>% pull(Description) %>% unique()
-react.mapk = react.results
-react.mapk@result = react.mapk@result[react.mapk@result$Description %in% mapk3.terms, ]
 
-
-p = cnetplot(react.mapk, showCategory=nrow(react.mapk@result), layout="fr")+
-  labs(title="NTC.BPD F: Increased", subtitle="Reactome results with MAPK3 (n= 29 sig. terms)\nRed= top sig. genes; Bold= L-A sig.genes")+
+p = cnetplot(react.results, showCategory=nrow(react.results@result), layout="fr")+
+  labs(title="NTC.BPD F: Increased", subtitle="Reactome results (n= 18 sig. terms)\nRed= top sig. genes; Bold= L-A sig.genes")+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed
 
-plist[[9]] = modify_cnetplot(p, mapk3.terms)
-plot(modify_cnetplot(p, mapk3.terms))
+plist[[9]] = modify_cnetplot(p, react.results@result$Description)
 
-plist[[10]] = modify_emmapplot(baseplot+labs(title="NTC.BPD F: Increased", subtitle="Reactome results MAPK3 (n= 29 sig. terms)"),
-                               mapk3.terms)
+#plist[[10]] = modify_emmapplot(baseplot+labs(title="NTC.BPD F: Increased", subtitle="Reactome results MAPK3 (n= 29 sig. terms)"),
+#                               mapk3.terms)
 
-
-
-#other terms 
-cat("\n\n>>>>> Reactome terms without MAPK3:\n")
-react.other = react.results
-react.other@result = react.other@result[!react.other@result$Description %in% mapk3.terms, ]
-nrow(react.other@result)
-
-p = cnetplot(react.other, showCategory=nrow(react.other@result), layout="fr",
-             size_category=.5, cex_label_category=.5)+
-  labs(title="NTC.BPD F: Increased", subtitle="Reactome results without MAPK3 (n= 33 sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes")+
-  guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
-  theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
-set.seed(123) #reset seed 
-
-plist[[11]] = modify_cnetplot(p, react.other@result$Description)
-
-plist[[12]] = modify_emmapplot(baseplot+labs(title="NTC.BPD F: Increased", 
-                                             subtitle="Reactome results without MAPK3 (n= 33 sig. terms)"), react.other@result$Description)
 
 
 
@@ -397,30 +361,23 @@ wiki.results = enricher(sig.name, #universe=rowData(spe_pseudo)$gene_name,
                         TERM2GENE = wiki.gene,
                         TERM2NAME = wiki.term)
 set.seed(123) #reset seed
-nrow(filter(wiki.results@result, p.adjust<.05)) #12
+nrow(filter(wiki.results@result, p.adjust<.05))
 wiki.results@result = wiki.results@result[wiki.results@result$p.adjust<.05,]
 
 ora.list[["WikiPathways"]] = wiki.results@result
 
-#plot new only
-cat("\n>>>>> WikiPathways terms with genes not present in Reactome results:\n")
 tmp1 = tidyr::separate_rows(react.results@result, geneID, sep="/")
 tmp = tidyr::separate_rows(wiki.results@result, geneID, sep="/")
 wiki.genes = setdiff(tmp$geneID, tmp1$geneID)
-wiki.terms = unique(filter(tmp, geneID %in% wiki.genes)$Description)
-length(wiki.terms)
 
-
-wiki.results2 = wiki.results
-wiki.results2@result = wiki.results2@result[wiki.results2@result$Description %in% wiki.terms, ]
-p = cnetplot(wiki.results2, showCategory=nrow(wiki.results2@result), layout="fr",
+p = cnetplot(wiki.results, showCategory=nrow(wiki.results@result), layout="fr",
              size_category=.5, cex_label_category=.5)+
-  labs(title="NTC.BPD F: Increased", subtitle="WikiPathways results with genes not present in Reactome results (n= 11 sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes")+
+  labs(title="NTC.BPD F: Increased", subtitle=paste("WikiPathways results (n=", nrow(wiki.results@result), "sig. terms)\nRed= top sig. genes; Bold= L-A sig. genes"))+
   guides("size"=guide_legend("# genes", override.aes = list(color="#B3B3B3")))+
   theme(plot.margin = margin(.5,.5,.5,.5, "cm"))
 set.seed(123) #reset seed
 
-plist[[13]] = modify_cnetplot(p, wiki.terms, gene_list=wiki.genes)
+plist[[10]] = modify_cnetplot(p, wiki.results@result$Description, gene_list=wiki.genes)
 
 
 ### GO (BP)
@@ -439,7 +396,7 @@ go.results = enricher(sig.name, #universe=unique(go.gmt$gene),
                       TERM2GENE = go.gene,
                       TERM2NAME = go.term)
 set.seed(123) #reset seed
-nrow(filter(go.results@result, p.adjust<.05)) #6
+nrow(filter(go.results@result, p.adjust<.05)) 
 go.results@result = go.results@result[go.results@result$p.adjust<.05,]
 
 ora.list[["GO.BP"]] = go.results@result
@@ -448,7 +405,7 @@ gt = go.results@result[, c("Description","GeneRatio","p.adjust","Count","geneID"
 nrow(gt)
 gt$geneID = stringr::str_wrap(gsub("/"," ", gt$geneID), width=20)
 gt$Description = stringr::str_wrap(gt$Description, width=30)
-plist[[14]] = tableGrob(gt, rows = NULL)
+plist[[11]] = tableGrob(gt, rows = NULL)
 
 
 #ppi
@@ -469,10 +426,10 @@ gt = filter(ppi.results@result, p.adjust<.05, ID %in% sig.both$gene_name)
 nrow(gt)
 gt$geneID = stringr::str_wrap(gsub("/"," ", gt$geneID), width=20)
 gt$Description = stringr::str_wrap(gt$Description, width=20)
-plist[[15]] = tableGrob(gt[, c("Description","GeneRatio","p.adjust","Count","geneID")], rows = NULL)
+plist[[12]] = tableGrob(gt[, c("Description","GeneRatio","p.adjust","Count","geneID")], rows = NULL)
 
 
-saveRDS(ora.list[c("GO.BP","Reactome","WikiPathways","PPI")], "processed-data/07_dx_DE/NTC-BPD-F_label-transfer_ORA-results_increased.rda")
+saveRDS(ora.list[c("GO.BP","Reactome","WikiPathways","PPI")], "processed-data/07_dx_DE/NTC-BPD-F_label-transfer-age_ORA-results_increased.rda")
 
 ### key genes expression
 cat("\n\nPlot expression of key genes grouped by function...\n")
@@ -490,10 +447,10 @@ sce_pseudo$seurat_low.res2 = factor(sce_pseudo$seurat_low.res,
 
 select.genes = list("Non-Oligo specific/ Similar to NTC.MDD F"=c("APOLD1","ELK1","DDIT4","GADD45B"),
 		    #"Autophagy"=c(""UBA52","DYNC1LI2","RB1CC1"),
-		    "Transciption Regulation"=c("MAP4K4","JUN","HIPK2","HMGB1"),
-                    "Heat shock"=c("HSPA1B","HSP90AA1","DNAJB1","EEF1A1"),
+		    "NCOR1"=c("NCOR1","BCL6","BAZ1B","NR1D1"),
+                    "Heat shock"=c("HSPA1B","HSP90AA1","DNAJB1","EEF1A1","ST13"),
                     "RND GTPase"=c("DST", "KTN1", "CCDC88A", "PKP4"),
-                    "RhoBTB GTPase"=c("KIF5B","KIF5A","PHIP","SRRM1")
+                    "RhoBTB GTPase"=c("PHIP","SRRM1","RBBP6")
 )
 
 for (i in names(select.genes)) {
@@ -560,24 +517,21 @@ plist[[length(plist)+1]] = arrangeGrob(p1, p2, rasterize(p3, dpi=200), layout_ma
 
 }
 
-cat("\n\nSave NTC.BPD F decreased report: plots/07_dx_DE/prelim-report_NTC-BPD-F_label-transfer_increased.pdf\n")
+cat("\n\nSave NTC.BPD F decreased report: plots/07_dx_DE/prelim-report_NTC-BPD-F_label-transfer-age_increased.pdf\n")
 
-pdf(file="plots/07_dx_DE/prelim-report_NTC-BPD-F_increased.pdf", width=8.5, height=11)
+pdf(file="plots/07_dx_DE/prelim-report_NTC-BPD-F_label-transfer-age_increased.pdf", width=8.5, height=11)
 grid.arrange(plist[[1]], plist[[2]])
 grid.arrange(rasterize(plist[[3]], layer="point", dpi=200), plist[[4]], ncol=1)
 grid.arrange(plist[[5]], plist[[6]], ncol=2)
 grid.arrange(plist[[7]], plist[[8]], ncol=2)
 plot(plist[[9]])
 plot(plist[[10]])
-plot(plist[[11]])
-plot(plist[[12]])
+grid.arrange(plist[[11]], plist[[12]], ncol=1, top="Top = GO (BP) results", bottom="Bottom = PPI results where sig. term is also NTC.BPD F DEG")
 plot(plist[[13]])
-grid.arrange(plist[[14]], plist[[15]], ncol=1, top="Top = GO (BP) results", bottom="Bottom = PPI results where sig. term is also NTC.BPD F DEG")
+plot(plist[[14]])
+plot(plist[[15]])
 plot(plist[[16]])
 plot(plist[[17]])
-plot(plist[[18]])
-plot(plist[[19]])
-plot(plist[[20]])
 dev.off()
 
 cat("\n\nReproducibility information:\n")
