@@ -27,7 +27,7 @@ module list
 
 repo_dir=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd
 sample_csv=$repo_dir/raw-data/sample_info/VistoSeg_samples_n24.csv
-SAMPLE=$(awk -F',' 'NR>1 {print $1}' "$sample_csv" | sed -n "${SLURM_ARRAY_TASK_ID}p")
+SAMPLE=$(awk -F',' 'NR>1 {print $1}' "$sample_csv" | sed -n "${SLURM_ARRAY_TASK_ID}p" | tr -d '"')
 IMG_PATH=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/images/${SAMPLE}.tif
 OUT_DIR=$repo_dir/processed-data/spaceranger_segment/${SAMPLE}
 
