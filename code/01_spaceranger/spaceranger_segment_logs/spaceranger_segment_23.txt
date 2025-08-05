@@ -1,8 +1,8 @@
 **** Job starts ****
-Tue Aug  5 10:50:35 AM EDT 2025
+Tue Aug  5 11:01:14 AM EDT 2025
 **** JHPCE info ****
 User: mtippani
-Job id: 21212019
+Job id: 21212065
 Job name: spaceranger_segment
 Hostname: 
 Task id: 23
@@ -15,9 +15,57 @@ Currently Loaded Modules:
 
  
 
-Processing sample "V13B23-382_C1"
-error: invalid value '"V13B23-382_C1"' for '--id <ID>': must contain only letters, digits, underscores, and dashes.
+Processing sample V13B23-382_C1
+Thank you for using spaceranger. To help us improve our product,
+anonymized telemetry data has been collected and sent to 10X Genomics.
+This data helps us understand usage patterns, diagnose issues,
+and prioritize improvements.
 
-For more information, try '--help'.
+You can inspect the telemetry metrics sent by looking in
+/users/mtippani/.cache/tenx/telemetry/spaceranger/spaceranger-4.0.1
+
+For more details on what data is collected and how it's used, please visit
+https://10xgen.com/sr-pipeline-telemetry
+
+You can disable telemetry at any time by running the following command:
+	spaceranger telemetry disable
+
+
+Martian Runtime - v4.0.14
+Running preflight checks (please wait)...
+2025-08-05 11:01:21 [runtime] (ready)           ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.GET_SEGMENT_WEBSUMMARY_IMAGE
+2025-08-05 11:01:21 [runtime] (run:local)       ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.GET_SEGMENT_WEBSUMMARY_IMAGE.fork0.split
+2025-08-05 11:01:21 [runtime] (ready)           ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENT_NUCLEI.NORMALIZE_TISSUE_IMAGE
+2025-08-05 11:01:21 [runtime] (run:local)       ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENT_NUCLEI.NORMALIZE_TISSUE_IMAGE.fork0.split
+2025-08-05 11:01:22 [runtime] (split_complete)  ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.GET_SEGMENT_WEBSUMMARY_IMAGE
+2025-08-05 11:01:22 [runtime] (run:local)       ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.GET_SEGMENT_WEBSUMMARY_IMAGE.fork0.join
+2025-08-05 11:01:22 [runtime] (split_complete)  ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENT_NUCLEI.NORMALIZE_TISSUE_IMAGE
+2025-08-05 11:01:22 [runtime] (run:local)       ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENT_NUCLEI.NORMALIZE_TISSUE_IMAGE.fork0.join
+2025-08-05 11:02:25 [runtime] (join_complete)   ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENT_NUCLEI.NORMALIZE_TISSUE_IMAGE
+2025-08-05 11:02:30 [runtime] (ready)           ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENT_NUCLEI.RUN_NUCLEI_SEGMENTATION
+2025-08-05 11:02:30 [runtime] (run:local)       ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENT_NUCLEI.RUN_NUCLEI_SEGMENTATION.fork0.split
+2025-08-05 11:02:30 [runtime] (join_complete)   ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.GET_SEGMENT_WEBSUMMARY_IMAGE
+2025-08-05 11:03:07 [runtime] (split_complete)  ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENT_NUCLEI.RUN_NUCLEI_SEGMENTATION
+2025-08-05 11:03:15 [runtime] (run:local)       ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENT_NUCLEI.RUN_NUCLEI_SEGMENTATION.fork0.join
+2025-08-05 11:09:16 [runtime] (update)          ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENT_NUCLEI.RUN_NUCLEI_SEGMENTATION.fork0 join_running
+2025-08-05 11:13:29 [runtime] (join_complete)   ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENT_NUCLEI.RUN_NUCLEI_SEGMENTATION
+2025-08-05 11:13:29 [runtime] (ready)           ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENTATION_SPATIAL_PLOTS
+2025-08-05 11:13:29 [runtime] (run:local)       ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENTATION_SPATIAL_PLOTS.fork0.chnk0.main
+2025-08-05 11:13:42 [runtime] (chunks_complete) ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.SEGMENTATION_SPATIAL_PLOTS
+2025-08-05 11:13:42 [runtime] (ready)           ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.GENERATE_SEGMENT_WEBSUMMARY
+2025-08-05 11:13:42 [runtime] (run:local)       ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.GENERATE_SEGMENT_WEBSUMMARY.fork0.chnk0.main
+2025-08-05 11:13:42 [runtime] (chunks_complete) ID.V13B23-382_C1.SPATIAL_SEGMENT_NUCLEI_CS.GENERATE_SEGMENT_WEBSUMMARY
+
+Outputs:
+- nucleus_instance_mask: /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/spaceranger_segment/V13B23-382_C1/outs/nucleus_instance_mask.tiff
+- nucleus_segmentations: /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/spaceranger_segment/V13B23-382_C1/outs/nucleus_segmentations.geojson
+- websummary:            /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/spaceranger_segment/V13B23-382_C1/outs/websummary.html
+
+Pipestance completed successfully!
+
+2025-08-05 11:13:42 Shutting down.
+Saving pipestance info to "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/spaceranger_segment/V13B23-382_C1/V13B23-382_C1.mri.tgz"
+tar: Removing leading `/' from member names
+tar: Removing leading `/' from hard link targets
 **** Job ends ****
-Tue Aug  5 10:50:35 AM EDT 2025
+Tue Aug  5 11:13:43 AM EDT 2025
