@@ -86,11 +86,15 @@ load("processed-data/05_clustering/Seurat/seurat_SZBDMulti-seq_control_MBv-filte
 
 #plot annotations
 cat("\nUMAP plots of annotations...\n")
+cpList <- readRDS("plots/colorPalettes.rds")
+seu_con@meta.data$seurat_low.res = factor(as.character(seu_con@meta.data$seurat_low.res), 
+                                          levels=c("Micro/Vasc","Astro","Oligo","L2","L3","L4","L5","L6","Inhb"),
+                                          labels=c("Micro.Vasc","Astro","Oligo","L2","L3","L4","L5","L6","Inhb"))
 p1 <- DimPlot(seu_con, group.by=c("azimuth","azimuth_broad","seurat_annotated","seurat_low.res"),
 	pt.size=.1, raster=F, label=T, combine=F)
 ggsave(file="plots/05_clustering/Seurat/seu-con_umap_cell-type-annotations.png",
 	gridExtra::grid.arrange(p1[[1]]+NoLegend(), p1[[2]]+NoLegend(),
-		p1[[3]]+NoLegend(), p1[[4]]+NoLegend(),
+		p1[[3]]+NoLegend(), p1[[4]]+scale_color_manual(values=cpList$low.res.bright)+NoLegend(),
 		ncol=2),
 	bg="white", height=16, width=12)
 cat("\nSaved to: plots/05_clustering/Seurat/seu-con_umap_cell-type-annotations.png\n")
