@@ -10,15 +10,15 @@ set.seed(123)
 source("code/07_dx_DE/custom_functions.r")
 cpList = readRDS("plots/colorPalettes.rds")
 
-#load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
-#results_set = "smoothed-k9-1663"
-#comp_names = c("L1","L2","L3dot4","L5","L6","WM")
-#names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
+load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+results_set = "smoothed-k9-1663"
+comp_names = c("L1","L2","L3dot4","L5","L6","WM")
+names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
 
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
-results_set = "seurat-pc30-no-lowUMI"
-comp_names = c("MicrodotVasc","Astro","L2dot3","L4","L5","L6","Oligo","Inhb")
-names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Oligo","Inhb")
+#load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
+#results_set = "seurat-pc30-no-lowUMI"
+#comp_names = c("MicrodotVasc","Astro","L2dot3","L4","L5","L6","Oligo","Inhb")
+#names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Oligo","Inhb")
 
 ## layer adjusted
 results <- readRDS(paste0("processed-data/07_dx_DE/lmFit-voom_layer-adjusted_", results_set, "_condition-sex_covars-pc3-age.rda"))

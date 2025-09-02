@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=5G
-#SBATCH --job-name=dx-sex_layer-adjusted-transfer-no-lowUMI_lmFit-voom_with-age
+#SBATCH --job-name=dx-sex_layer-adjusted-smoothed_lmFit-voom_with-age
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/logs/%x_%j.log
 
 echo "**** Job starts ****"
