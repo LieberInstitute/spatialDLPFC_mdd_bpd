@@ -58,7 +58,7 @@ spe_se$seurat_label_f = factor(spe_se$seurat_label, levels=c("Micro.Vasc","Astro
 
 # define dx*sex dir to plot
 
-dx_sex_dir = "NTC.BPD_F_dn"
+dx_sex_dir = "NTC.BPD_F_up"
 
 
 tmp = unlist(strsplit(dx_sex_dir, "_"))
