@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=plot_LA-LR-overlap_NTC.MDD-F-up
+#SBATCH --job-name=plot_LA-LR-overlap_NTC.BPD-M-dn
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/logs/%x_%j.log
 
 echo "**** Job starts ****"

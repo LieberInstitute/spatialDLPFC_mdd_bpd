@@ -58,7 +58,7 @@ spe_se$seurat_label_f = factor(spe_se$seurat_label, levels=c("Micro.Vasc","Astro
 
 # define dx*sex dir to plot
 
-dx_sex_dir = "NTC.MDD_F_up"
+dx_sex_dir = "NTC.BPD_M_dn"
 
 
 tmp = unlist(strsplit(dx_sex_dir, "_"))
@@ -242,8 +242,8 @@ plist <- lapply(test_genes, function(x) {
   
 })
 
-#for NTC.MDD F up, because there are so many, make 2 rows per page and make pages bigger
-plist = marrangeGrob(plist, nrow=2, ncol=1, top = NULL)
+##for NTC.MDD F up, because there are so many, make 2 rows per page and make pages bigger
+#plist = marrangeGrob(plist, nrow=2, ncol=1, top = NULL)
 
 plotList = c(plotList, plist)
 
@@ -252,8 +252,8 @@ plotList = c(plotList, plist)
 
 ggsave(file=paste0("plots/07_dx_DE/LA-LR-overlap_", target_group, "-", target_sex, "-", target_dir2, ".pdf"),
        marrangeGrob(plotList, nrow=1, ncol=1, top = NULL),
-       #height=5, width=8)
-	height=11, width=8)
+       height=5, width=8)
+	#height=11, width=8)
 cat("\n\nSaved compiled pdf to:", paste0("plots/07_dx_DE/LA-LR-overlap_", target_group, "-", target_sex, "-", target_dir2, ".pdf"))
 
 
