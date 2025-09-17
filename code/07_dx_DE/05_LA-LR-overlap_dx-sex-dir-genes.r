@@ -58,7 +58,7 @@ spe_se$seurat_label_f = factor(spe_se$seurat_label, levels=c("Micro.Vasc","Astro
 
 # define dx*sex dir to plot
 
-dx_sex_dir = "NTC.BPD_F_up"
+dx_sex_dir = "NTC.MDD_F_up"
 
 
 tmp = unlist(strsplit(dx_sex_dir, "_"))
@@ -130,9 +130,12 @@ for (j in test_genes) {
   colData(spe_tmp)[[j]] = logcounts(spe_tmp)[rowData(spe_tmp)$gene_name==j,]
 }
 
+#preserve names so if any names have '-' character they don't throw an error
+preserve.names = gsub("-", "\\.", test_genes)
+
 plot.df = as.data.frame(colData(spe_tmp)[,c("condition", "sex", "smoothed_k9_1663", "sample_id", test_genes)]) %>%
-  tidyr::pivot_longer(all_of(test_genes), names_to="key_genes", values_to="logcounts") %>%
-  mutate(key_genes= factor(key_genes, levels=test_genes),
+  tidyr::pivot_longer(all_of(preserve.names), names_to="key_genes", values_to="logcounts") %>%
+  mutate(key_genes= factor(key_genes, levels=preserve.names, labels=test_genes),
          x_labels=as.character(smoothed_k9_1663))
 
 
@@ -144,8 +147,8 @@ for (j in test_genes) {
 }
 
 plot.df2 = as.data.frame(colData(spe_tmp2)[,c("condition", "sex", "seurat_label_f", "sample_id", test_genes)]) %>%
-  tidyr::pivot_longer(all_of(test_genes), names_to="key_genes", values_to="logcounts") %>%
-  mutate(key_genes= factor(key_genes, levels=test_genes),
+  tidyr::pivot_longer(all_of(preserve.names), names_to="key_genes", values_to="logcounts") %>%
+  mutate(key_genes= factor(key_genes, levels=preserve.names, labels=test_genes),
          x_labels= as.character(seurat_label_f))
 
 ## combine
@@ -173,14 +176,18 @@ plist <- lapply(test_genes, function(x) {
       scale_fill_manual(values=cpList$dx.pal)+
       labs(title="PRECAST (smoothed)", subtitle=subt)+ylim(ylim1)+
       theme_bw()+theme(legend.position="bottom", legend.title = element_blank(), axis.title.x=element_blank())
+    gbp1 = ggplot_build(bp1)$data[[1]]
+    gbp1$x_labels = rep(levels(droplevels(filter(tmp, annotation=="PRECAST (smoothed)")$x_labels)), each=2)
+
     tmp1 = filter(restr.results_sm, gene_name==x, group==target_group, sex==target_sex) %>%
       mutate(group1=unlist(strsplit(target_group, "\\."))[[1]], group2=unlist(strsplit(target_group, "\\."))[[2]],
              p.signif = cut(adj.P.Val, breaks=c(0, .001, .01, .05, .1), labels=c("***","**","*","^"))
       )
     tmp.stats = filter(plot.both, key_genes==x, annotation=="PRECAST (smoothed)", condition %in% unlist(strsplit(target_group, "\\.")), sex==target_sex) %>%
       group_by(condition, sex, x_labels) %>% 
-      summarise(med_test=median(logcounts)) %>%
-      left_join(ggplot_build(bp1)$data[[1]], by=c("med_test"="middle")) %>%
+      summarise(n=n(), med_test=median(logcounts),
+	nup= med_test+1.58*IQR(logcounts)/sqrt(n)) %>%
+      left_join(gbp1, by=c("x_labels","med_test"="middle","nup"="notchupper")) %>%
       group_by(x_labels) %>% summarise(max_ymax= max(ymax), more_ymax= max_ymax*1.01)
     stat.test = left_join(tmp1[,c("group1","group2","gene_name","sex","smoothed","adj.P.Val","p.signif")],
                           tmp.stats, by=c("smoothed"="x_labels"))
@@ -201,6 +208,9 @@ plist <- lapply(test_genes, function(x) {
       scale_fill_manual(values=cpList$dx.pal)+
       labs(title="Seurat labels", subtitle=subt)+ylim(ylim1)+
       theme_bw()+theme(legend.position="bottom", legend.title = element_blank(), axis.title.x=element_blank())
+    gbp2 = ggplot_build(bp2)$data[[1]]
+    gbp2$x_labels = rep(levels(droplevels(filter(tmp, annotation=="Seurat labels")$x_labels)), each=2)
+
     tmp2 = filter(restr.results_se, gene_name==x, group==target_group, sex==target_sex) %>%
       mutate(group1=unlist(strsplit(target_group, "\\."))[[1]], group2=unlist(strsplit(target_group, "\\."))[[2]],
              p.signif = cut(adj.P.Val, breaks=c(0, .001, .01, .05, .1), labels=c("***","**","*","^")),
@@ -208,8 +218,9 @@ plist <- lapply(test_genes, function(x) {
       )
     tmp.stats = filter(plot.both, key_genes==x, annotation=="Seurat labels", condition %in% unlist(strsplit(target_group, "\\.")), sex==target_sex) %>%
       group_by(condition, sex, x_labels) %>% 
-      summarise(med_test=median(logcounts)) %>%
-      left_join(ggplot_build(bp2)$data[[1]], by=c("med_test"="middle")) %>%
+      summarise(n=n(), med_test=median(logcounts),
+	nup= med_test+1.58*IQR(logcounts)/sqrt(n)) %>%
+      left_join(gbp2, by=c("x_labels","med_test"="middle","nup"="notchupper")) %>%
       group_by(x_labels) %>% summarise(max_ymax= max(ymax), more_ymax= max_ymax*1.01)
     stat.test = left_join(tmp2[,c("group1","group2","gene_name","sex","seurat_label_f","adj.P.Val","p.signif")],
                           tmp.stats, by=c("seurat_label_f"="x_labels"))
@@ -231,6 +242,8 @@ plist <- lapply(test_genes, function(x) {
   
 })
 
+#for NTC.MDD F up, because there are so many, make 2 rows per page and make pages bigger
+plist = marrangeGrob(plist, nrow=2, ncol=1, top = NULL)
 
 plotList = c(plotList, plist)
 
@@ -239,7 +252,8 @@ plotList = c(plotList, plist)
 
 ggsave(file=paste0("plots/07_dx_DE/LA-LR-overlap_", target_group, "-", target_sex, "-", target_dir2, ".pdf"),
        marrangeGrob(plotList, nrow=1, ncol=1, top = NULL),
-       height=5, width=8)
+       #height=5, width=8)
+	height=11, width=8)
 cat("\n\nSaved compiled pdf to:", paste0("plots/07_dx_DE/LA-LR-overlap_", target_group, "-", target_sex, "-", target_dir2, ".pdf"))
 
 
