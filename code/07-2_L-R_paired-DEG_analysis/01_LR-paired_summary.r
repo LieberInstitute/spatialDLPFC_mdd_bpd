@@ -7,6 +7,7 @@ suppressPackageStartupMessages({
 	library(grid)
 	library(gtable)
 	library(gridtext)
+	library(ggrastr)
 })
 
 set.seed(123)
@@ -23,7 +24,8 @@ restr.results_sm <- read.csv("processed-data/07_dx_DE/layer-restricted-age_smoot
 ## filter to sig thresholds
 restr_sm_tmp = bind_rows(filter(restr.results_sm, cluster!="WM", adj.P.Val<.05),
                          filter(restr.results_sm, cluster=="WM", sex=="M", adj.P.Val<.05),
-                         filter(restr.results_sm, cluster=="WM", sex=="F", adj.P.Val<.01))
+                         filter(restr.results_sm, cluster=="WM", sex=="F", adj.P.Val<.01)) %>%
+	filter(abs(logFC)>.3)
 # Seurat label transfer
 restr.results_se <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
@@ -35,7 +37,8 @@ restr.results_se <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seura
 ## filter to sig thresholds
 restr_se_tmp = bind_rows(filter(restr.results_se, cluster!="Oligo", adj.P.Val<.05),
                          filter(restr.results_se, cluster=="Oligo", sex=="M", adj.P.Val<.05),
-                         filter(restr.results_se, cluster=="Oligo", sex=="F", adj.P.Val<.01))
+                         filter(restr.results_se, cluster=="Oligo", sex=="F", adj.P.Val<.01)) %>%
+	filter(abs(logFC)>.3)
 
 # correlation heatmap to find matching groups
 gene_set = intersect(restr.results_sm$gene_id, restr.results_se$gene_id)
@@ -173,10 +176,75 @@ pairList = lapply(nlist, function(x) {
   return(outList)
 })
 
-saveRDS(pairList, file="processed-data/07-2_L-R_paired-DEG_analysis/LR-paired_lists.rds")
-cat("\n\nSaved paired DEG list to: processed-data/07-2_L-R_paired-DEG_analysis/LR-paired_lists.rds\n")
+saveRDS(pairList, file="processed-data/07-2_L-R_paired-DEG_analysis/LR-paired_logFC-0.3_lists.rds")
+cat("\n\nSaved paired DEG list to: processed-data/07-2_L-R_paired-DEG_analysis/LR-paired_logFC-0.3_lists.rds\n")
 
-
+# make volcano plots list
+vlist <- lapply(coefList, function(x) {
+  tmp = unlist(strsplit(x, "_"))
+  target_group = tmp[[1]]
+  target_sex = tmp[[2]]
+  
+  suppressMessages({
+    sm1 = bind_rows(anti_join(filter(restr.results_sm, group==target_group, sex==target_sex),
+                              filter(restr_sm_tmp, group==target_group, sex==target_sex, abs(logFC)>.3)) %>%
+                      mutate(is_sig=F),
+                    filter(restr_sm_tmp, group==target_group, sex==target_sex, abs(logFC)>.3) %>%
+                      mutate(is_sig=T)) %>%
+      mutate(paired_sig="False")
+    se1 = bind_rows(anti_join(filter(restr.results_se, group==target_group, sex==target_sex),
+                              filter(restr_se_tmp, group==target_group, sex==target_sex, abs(logFC)>.3)) %>%
+                      mutate(is_sig=F),
+                    filter(restr_se_tmp, group==target_group, sex==target_sex, abs(logFC)>.3) %>%
+                      mutate(is_sig=T)) %>%
+      mutate(paired_sig="False")
+  })
+  
+  
+  #paired LR sig
+  match_names = c("L2_L3_L4","L5","L6","WM")
+  for(i in match_names) {
+    paired_genes_dn = pairList[[paste(target_group, target_sex, "dn", sep="_")]][["LR_sig_paired"]][[i]]
+    paired_genes_up = pairList[[paste(target_group, target_sex, "up", sep="_")]][["LR_sig_paired"]][[i]]
+    #precast
+    orig_names_sm = sm_match[grep(i, names(sm_match))]
+    for(j in orig_names_sm) {
+      sm1 = mutate(sm1, paired_sig = ifelse(smoothed==j & gene_name %in% paired_genes_dn & dir=="decreased", "True", paired_sig),
+                   paired_sig = ifelse(smoothed==j & gene_name %in% paired_genes_up & dir=="increased", "True", paired_sig))
+    }
+    #seurat
+    orig_names_se = se_match[grep(i, names(se_match))]
+    for(j in orig_names_se) {
+      se1 = mutate(se1, paired_sig = ifelse(seurat_label_f==j & gene_name %in% paired_genes_dn & dir=="decreased", "True", paired_sig),
+                   paired_sig = ifelse(seurat_label_f==j & gene_name %in% paired_genes_up & dir=="increased", "True", paired_sig))
+    }
+  }
+  sm1$any_sig = factor(paste(sm1$is_sig, sm1$paired_sig), levels=c("FALSE False", "FALSE True",
+                                                                   "TRUE False", "TRUE True"),
+                       labels=c("NS","NS","PRECAST only","Paired DEG"))
+  
+  v1 <- ggplot(sm1, aes(x=logFC, y=-log10(adj.P.Val), color=any_sig))+
+    geom_point(size=.5)+
+    scale_color_manual("", values=c("NS"="grey", "PRECAST only"="dodgerblue4", "Paired DEG"="black"))+
+    facet_wrap(vars(smoothed), ncol=2)+
+    xlim(-max(abs(sm1$logFC)), max(abs(sm1$logFC)))+
+    labs(title="PRECAST smoothed L-R results", subtitle="(age, PC3 covar)")+
+    theme_bw()+theme(text=element_text(size=10), legend.position="bottom")
+  
+  se1$any_sig = factor(paste(se1$is_sig, se1$paired_sig), levels=c("FALSE False", "FALSE True",
+                                                                   "TRUE False", "TRUE True"),
+                       labels=c("NS","NS","Seurat only","Paired DEG"))
+  
+  v2 <- ggplot(se1, aes(x=logFC, y=-log10(adj.P.Val), color=any_sig))+
+    geom_point(size=.5)+
+    scale_color_manual("", values=c("NS"="grey", "Seurat only"="orange", "Paired DEG"="black"))+
+    facet_wrap(vars(seurat_label_f), ncol=2)+
+    xlim(-max(abs(se1$logFC)), max(abs(se1$logFC)))+
+    labs(title="Seurat labels L-R results", subtitle="(age, PC3 covar)")+
+    theme_bw()+theme(text=element_text(size=10), legend.position="bottom")
+  
+  arrangeGrob(grobs=list(rasterize(v1, dpi=150), rasterize(v2, dpi=150)), ncol=2, top=x)
+})
 
 # make bar plot of paired genes
 bar.df = do.call(rbind, lapply(names(pairList), function(x) {
@@ -414,10 +482,16 @@ glist = lapply(names(pairList), function(x){
 
 
 #save summary PDF
-pdf(file="plots/07-2_L-R_paired-DEG_analysis/LR-paired_summary.pdf", width=8, height=6)
+pdf(file="plots/07-2_L-R_paired-DEG_analysis/LR-paired_logFC-0.3_summary.pdf", width=8, height=6)
 grid.arrange(arrangeGrob(grobs=plist, ncol=2), 
              arrangeGrob(grobs=tlist, layout_matrix=matrix(c(1,2,3,3,4))), 
              layout_matrix=matrix(c(1,1,2), ncol=3), top="t statistic correlation between L-R annotations")
+plot(vlist[[1]])
+plot(vlist[[2]])
+plot(vlist[[3]])
+plot(vlist[[4]])
+plot(vlist[[5]])
+plot(vlist[[6]])
 grid.arrange(p1,
              arrangeGrob(grobs=tlist2, layout_matrix=matrix(c(1,1,1,2,2,3,3))),
              layout_matrix=matrix(c(1,1,2), ncol=3), top="Number of paired L-R DEGs across matching groups")
@@ -431,7 +505,7 @@ grid.arrange(arrangeGrob(grobs=glist[5:6], ncol=2, top="NTC.BPD F"),
 grid.arrange(arrangeGrob(grobs=glist[9:10], ncol=2, top="MDD.BPD F"),
              arrangeGrob(grobs=glist[11:12], ncol=2, top="MDD.BPD M"), ncol=1)
 dev.off()
-cat("\n\nSaved summary PDF to: plots/07-2_L-R_paired-DEG_analysis/LR-paired_summary.pdf\n")
+cat("\n\nSaved summary PDF to: plots/07-2_L-R_paired-DEG_analysis/LR-paired_logFC-0.3_summary.pdf\n")
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time())

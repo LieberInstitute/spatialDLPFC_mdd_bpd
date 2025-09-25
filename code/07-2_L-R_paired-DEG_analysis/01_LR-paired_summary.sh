@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=LR-paired_summary
+#SBATCH --job-name=LR-paired_logFC-0.3_summary_with-volcano
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07-2_L-R_paired-DEG_analysis/logs/%x_%j.log
 
 echo "**** Job starts ****"
