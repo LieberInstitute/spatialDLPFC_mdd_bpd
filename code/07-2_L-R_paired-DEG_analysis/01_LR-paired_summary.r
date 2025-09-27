@@ -124,7 +124,7 @@ pairList = lapply(nlist, function(x) {
   names(out2) = se_match
   
   ## concat
-  outList$LR_sig_any = list(smoothed = out1, seurat= out2)
+  outList$LR_sig = list(smoothed = out1, seurat= out2)
   
   #paired LR sig
   match_names = c("L2_L3_L4","L5","L6","WM")
@@ -316,15 +316,15 @@ tmp = do.call(rbind, lapply(names(pairList), function(x) {
   target_sex = tmp[[2]]
   target_dir = tmp[[3]]
   
-  nrn.degs = unique(c(unlist(pairList[[x]][["LR_sig_any"]][["smoothed"]][c("L2","L3.4","L5","L6")]),
-                      unlist(pairList[[x]][["LR_sig_any"]][["seurat"]][c("L2.3","L4","L5","L6")]))
+  nrn.degs = unique(c(unlist(pairList[[x]][["LR_sig"]][["smoothed"]][c("L2","L3.4","L5","L6")]),
+                      unlist(pairList[[x]][["LR_sig"]][["seurat"]][c("L2.3","L4","L5","L6")]))
                     )
   m1 = matrix(NA, nrow=4, ncol=2, dimnames= list(c("nrn_total","L1","Astro","M.V"), c("prop","total")))
   m1["nrn_total",] = c(1, length(nrn.degs))
   for(i in c("L1","Astro","M.V")) {
     if(i=="L1") {
-      n_set = length(intersect(nrn.degs, unlist(pairList[[x]][["LR_sig_any"]][["smoothed"]][[i]])))
-    } else n_set = length(intersect(nrn.degs, unlist(pairList[[x]][["LR_sig_any"]][["seurat"]][[i]])))
+      n_set = length(intersect(nrn.degs, unlist(pairList[[x]][["LR_sig"]][["smoothed"]][[i]])))
+    } else n_set = length(intersect(nrn.degs, unlist(pairList[[x]][["LR_sig"]][["seurat"]][[i]])))
     m1[i,] = c(n_set/length(nrn.degs), n_set)
   }
   m1[,1] = round(m1[,1], 3)
@@ -396,8 +396,8 @@ glist = lapply(names(pairList), function(x){
                             ))
   )
   
-  df1 = rbind.data.frame(as.data.frame(lapply(pairList[[x]][["LR_sig_any"]]$smoothed, length)),
-                         c(rep("", length(pairList[[x]][["LR_sig_any"]]$smoothed)))
+  df1 = rbind.data.frame(as.data.frame(lapply(pairList[[x]][["LR_sig"]]$smoothed, length)),
+                         c(rep("", length(pairList[[x]][["LR_sig"]]$smoothed)))
   )
   rownames(df1) = c("PRECAST DEG", "PRECAST only")
   
@@ -419,8 +419,8 @@ glist = lapply(names(pairList), function(x){
                             core= list(bg_params=list(fill=fills2),
                                        fg_params=list(fontface=c("plain","plain","bold")))))
   
-  df2 = rbind.data.frame(as.data.frame(lapply(pairList[[x]][["LR_sig_any"]]$seurat, length)),
-                         c(rep("", length(pairList[[x]][["LR_sig_any"]]$seurat)))
+  df2 = rbind.data.frame(as.data.frame(lapply(pairList[[x]][["LR_sig"]]$seurat, length)),
+                         c(rep("", length(pairList[[x]][["LR_sig"]]$seurat)))
   )
   
   for(i in names(pairList[[x]][["LR_sig_solo"]]$seurat)) {
