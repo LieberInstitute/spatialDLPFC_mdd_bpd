@@ -20,6 +20,14 @@ coefList = c("NTC.MDD_F",#"NTC.MDD_M",
              "NTC.BPD_F","NTC.BPD_M","MDD.BPD_F","MDD.BPD_M")
 names(coefList) = coefList
 
+# make safe legend position list (based on plotting igraph with seed 123)
+lpList = list()
+lpList[["NTC.MDD_F"]] = c("sm_L2"="bottomleft","sm_L3.4"="bottomleft","se_L2.3"="bottomleft","se_L4"="topleft","sm_L5"="bottomleft","se_L5"="topleft","sm_L6"="bottomleft","se_L6"="topleft")
+lpList[["NTC.BPD_F"]] = c("sm_L2"="bottomleft","sm_L3.4"="bottomleft","se_L2.3"="bottomleft","se_L4"="topleft","sm_L5"="bottomleft","se_L5"="bottomleft","sm_L6"="topleft","se_L6"="bottomleft")
+lpList[["NTC.BPD_M"]] = c("sm_L2"="bottomleft","sm_L3.4"="left","se_L2.3"="bottomleft","sm_L5"="topleft","se_L5"="bottomleft","sm_L6"="topleft","se_L6"="bottomleft")
+lpList[["MDD.BPD_F"]] = c("sm_L2"="bottomright","se_L2.3"="topleft","se_L6"="topleft")
+lpList[["MDD.BPD_M"]] = c("sm_L2"="bottomleft","sm_L3.4"="bottomleft","se_L2.3"="bottomleft","se_L4"="bottomleft","sm_L5"="bottomleft","se_L5"="left","se_L6"="bottomleft")
+
 # set gsea results to plot
 gmt_db = "Reactome"
 #gmt_db = "WikiPathways"
@@ -59,7 +67,15 @@ for(z in coefList) {
   if(gmt_db=="WikiPathways") {
     p.names = sapply(strsplit(LR.terms$pathway, " WP"), function(x) x[[1]])
   }
-  p.names = sapply(p.names, function(x) paste(strwrap(x, width=75), collapse="\n"))
+  #p.names = sapply(p.names, function(x) paste(strwrap(x, width=75), collapse="\n"))
+  p.names = sapply(p.names, function(x) {
+    c1 = unlist(strwrap(x, width=75))
+    if(length(c1)>1) {
+      return(paste(c1[[1]],"[...]"))
+    } else {
+      return(c1[[1]])
+    }
+  })
   rownames(LR.terms.m) <- p.names
   #find and place missing columns
   missing.cols = setdiff(names(gmtLR), colnames(LR.terms.m))
@@ -91,22 +107,22 @@ for(z in coefList) {
   igraphList <- lapply(og, generateIGRAPH, .gmt_db=gmt_db)
   names(igraphList) <- og
   
-  pdf(file=paste0("plots/07-2_L-R_paired-DEG_analysis/LR_fgsea_", gmt_db, "_", z, "_pathway-igraph.pdf"), 
+  pdf(file=paste0("plots/07-2_L-R_paired-DEG_analysis/LR_fgsea_", gmt_db, "_", gsub("_", "-", gsub("\\.", "-", z)), "_pathway-igraph.pdf"), 
       height=8, width=8)
   grid.arrange(phm[[4]], top=paste(gsub("_"," ", z), gmt_db))
-  for(i in 1:length(igraphList)) {
+  for(i in names(igraphList)) {
     plot(simplify(igraphList[[i]][["igraph"]]), layout=igraphList[[i]][["layout"]], 
          edge.width=E(igraphList[[i]][["igraph"]])$jc*5, 
          vertex.label.family="sans", #vertex.label.font=2, 
-         vertex.frame.color=NA, main=igraphList[[i]][["title_text"]],
+         vertex.frame.color=NA, main=paste(paste0(gsub("_", " ", z),":"), igraphList[[i]][["title_text"]]),
          sub=igraphList[[i]][["sub_text"]])
-    legend('bottomleft', legend=c("Depleted (with LR DEG)","Depleted (with LR paired DEG)",
+    legend(lpList[[z]][[i]], legend=c("Depleted (with LR DEG)","Depleted (with LR paired DEG)",
                                   "Enriched (with LR DEG)","Enriched (with LR paired DEG)"),
            pch=16, pt.cex=1, cex=.7,
            col=c("#CFEBF7","skyblue","#FFC0B5","tomato"))
   }
   dev.off()
-  cat("\nSaved pathway igraph to:", paste0("plots/07-2_L-R_paired-DEG_analysis/LR_fgsea_", gmt_db, "_", z, "_pathway-igraph.pdf"), "\n")
+  cat("\nSaved pathway igraph to:", paste0("plots/07-2_L-R_paired-DEG_analysis/LR_fgsea_", gmt_db, "_", gsub("_", "-", gsub("\\.", "-", z)), "_pathway-igraph.pdf"), "\n")
 }
 
 cat("\n\nReproducibility information:\n")
