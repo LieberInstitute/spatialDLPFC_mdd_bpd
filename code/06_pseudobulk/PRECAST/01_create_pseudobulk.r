@@ -15,13 +15,16 @@ spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", 
 cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
 stopifnot(identical(rownames(colData(spe)), rownames(cdata)))
 
-#drop low UMI spots that couldn't be saved
-cat("\nHow many spots are dropped with low UMI cluster:\n")
-table(cdata$precast_k9_1663_f=="low UMI")
+spe$precast_k9_1663 = factor(cdata$precast_k9_1663_f, levels=c("Vasc","L1","L2","L3/4","GABA","L5","L6","WM","low UMI"),
+	labels=c("Vasc","L1","L2","L3.4","GABA","L5","L6","WM","low UMI"))
 
-cdata2 = cdata[!cdata$precast_k9_1663_f=="low UMI",]
-spe = spe[,rownames(cdata2)]
-spe$precast_k9_1663 = factor(cdata2$precast_k9_1663_f, levels=c("Vasc","L1","L2","L3","GABA","L5","L6","WM"))
+##drop low UMI spots that couldn't be saved
+#cat("\nHow many spots are dropped with low UMI cluster:\n")
+#table(cdata$precast_k9_1663_f=="low UMI")
+
+#cdata2 = cdata[!cdata$precast_k9_1663_f=="low UMI",]
+#spe = spe[,rownames(cdata2)]
+#spe$precast_k9_1663 = factor(cdata2$precast_k9_1663_f, levels=c("Vasc","L1","L2","L3","GABA","L5","L6","WM"))
 cat("\nTransferred PRECAST k=9 n1663 to spe:\n")
 table(spe$precast_k9_1663, useNA="ifany")
 
@@ -54,15 +57,15 @@ colData(spe_pseudo)$condition = factor(spe_pseudo$condition, levels=c("NTC","MDD
 spe_pseudo
 
 Sys.time()
-save(spe_pseudo, file="processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9.Rdata")
-cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9.Rdata")
+save(spe_pseudo, file="processed-data/06_pseudobulk/PRECAST/spe_n119_pseudo-with-lowUMI_sample-n1663-k9.Rdata")
+cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/PRECAST/spe_n119_pseudo-with-lowUMI_sample-n1663-k9.Rdata")
 
-#update spe tracker
-write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),
-        "******* Old file location: processed-data/04_feature_selection/spe_n119_postQC_norm_",
-        "******* New file location: processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9.Rdata",
-        "******* Source code: code/06_pseudobulk/01_create_pseudobulk.r",
-        "*******","*******","*******"), "spe_tracker_current.txt", append=TRUE)
+##update spe tracker
+#write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),
+#        "******* Old file location: processed-data/04_feature_selection/spe_n119_postQC_norm_",
+#        "******* New file location: processed-data/06_pseudobulk/spe_n119_pseudo_sample-n1663-k9.Rdata",
+#        "******* Source code: code/06_pseudobulk/01_create_pseudobulk.r",
+#        "*******","*******","*******"), "spe_tracker_current.txt", append=TRUE)
 
 
 cat("\n\nReproducibility information:\n")

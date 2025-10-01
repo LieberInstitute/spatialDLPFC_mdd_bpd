@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=10G
-#SBATCH --job-name=pseudobulk_smoothed-n1663-k9
+#SBATCH --job-name=pseudobulk_smoothed-n1663-k9_with-lowUMI
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/06_pseudobulk/PRECAST_smoothed/logs/%x_%j.log
 
 echo "**** Job starts ****"

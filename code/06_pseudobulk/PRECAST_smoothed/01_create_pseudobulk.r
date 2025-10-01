@@ -15,14 +15,24 @@ spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", 
 cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
 stopifnot(identical(rownames(colData(spe)), rownames(cdata)))
 
-#drop low UMI spots that couldn't be saved
-cat("\nHow many spots are dropped after smoothing clusters:\n")
-table(cdata[cdata$smoothed_k9_1663_f %in% c("low UMI","GABA","Vasc"),"smoothed_k9_1663_f"])
+##drop low UMI spots that couldn't be saved
+#cat("\nHow many spots are dropped after smoothing clusters:\n")
+#table(cdata[cdata$smoothed_k9_1663_f %in% c("low UMI","GABA","Vasc"),"smoothed_k9_1663_f"])
+#
+#cdata2 = cdata[!cdata$smoothed_k9_1663_f %in% c("low UMI","GABA","Vasc"),]
+#spe = spe[,rownames(cdata2)]
+#spe$smoothed_k9_1663 = factor(cdata2$smoothed_k9_1663_f, levels=c("L1","L2","L3/4","L5","L6","WM"),
+#	labels=c("L1","L2","L3.4","L5","L6","WM"))
+#cat("\nTransferred smoothed PRECAST k=9 n1663 to spe:\n")
+#table(spe$smoothed_k9_1663, useNA="ifany")
 
-cdata2 = cdata[!cdata$smoothed_k9_1663_f %in% c("low UMI","GABA","Vasc"),]
+# drop spots but keep low UMI
+cat("\nHow many spots are dropped after smoothing clusters (keep low UMI):\n")
+table(cdata[cdata$smoothed_k9_1663_f %in% c("GABA","Vasc"),"smoothed_k9_1663_f"])
+cdata2 = cdata[!cdata$smoothed_k9_1663_f %in% c("GABA","Vasc"),]
 spe = spe[,rownames(cdata2)]
-spe$smoothed_k9_1663 = factor(cdata2$smoothed_k9_1663_f, levels=c("L1","L2","L3/4","L5","L6","WM"),
-	labels=c("L1","L2","L3.4","L5","L6","WM"))
+spe$smoothed_k9_1663 = factor(cdata2$smoothed_k9_1663_f, levels=c("L1","L2","L3/4","L5","L6","WM","low UMI"),
+        labels=c("L1","L2","L3.4","L5","L6","WM","low UMI"))
 cat("\nTransferred smoothed PRECAST k=9 n1663 to spe:\n")
 table(spe$smoothed_k9_1663, useNA="ifany")
 
@@ -57,15 +67,15 @@ colData(spe_pseudo)$condition = factor(spe_pseudo$condition, levels=c("NTC","MDD
 spe_pseudo
 
 Sys.time()
-save(spe_pseudo, file="processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9.Rdata")
-cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9.Rdata")
+save(spe_pseudo, file="processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-with-lowUMI_sample-smoothed-n1663-k9.Rdata")
+cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-with-lowUMI_sample-smoothed-n1663-k9.Rdata")
 
 #update spe tracker
-write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),
-        "******* Old file location: processed-data/04_feature_selection/spe_n119_postQC_norm_",
-        "******* New file location: processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9.Rdata",
-        "******* Source code: code/06_pseudobulk/PRECAST_smoothed/01_create_pseudobulk.r",
-        "*******","*******","*******"), "spe_tracker_current.txt", append=TRUE)
+#write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),
+#        "******* Old file location: processed-data/04_feature_selection/spe_n119_postQC_norm_",
+#        "******* New file location: processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9.Rdata",
+#        "******* Source code: code/06_pseudobulk/PRECAST_smoothed/01_create_pseudobulk.r",
+#        "*******","*******","*******"), "spe_tracker_current.txt", append=TRUE)
 
 
 cat("\n\nReproducibility information:\n")
