@@ -10,16 +10,16 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 #load in supp files
-avg.expr = read.csv("processed-data/04_feature_selection/nnSVG-filtered-genes_avg-logcounts.csv", row.names=1) %>%
+avg.expr = read.csv("processed-data/04_feature_selection/nnSVG-filtered-genes_conservative_avg-logcounts.csv", row.names=1) %>%
   tibble::rownames_to_column(var="gene_id")
 
 #load in nnSVG results
-fileList = list.files("processed-data/04_feature_selection/per-sample_svgs")
+fileList = list.files("processed-data/04_feature_selection/per-sample_svgs-conservative")
 length(fileList) #119!!!
 
 resList = lapply(fileList, function(x) {
   name1 = substr(x, start=0, stop=13)
-  df = read.csv(paste0("processed-data/04_feature_selection/per-sample_svgs/",x), row.names=1)
+  df = read.csv(paste0("processed-data/04_feature_selection/per-sample_svgs-conservative/",x), row.names=1)
   rownames(df) <- NULL
   df$sample_id = name1
   return(df)
@@ -27,7 +27,7 @@ resList = lapply(fileList, function(x) {
 results.df = do.call(rbind, resList)
 
 #switch to prop of spots
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC-conservative_norm_")
 results.df = left_join(results.df, as.data.frame(colData(spe)) %>% group_by(sample_id) %>% tally(name="n_spots_total")) %>%
   mutate(prop_spots_nonzero = n_spots_nonzero/n_spots_total)
 
@@ -55,9 +55,9 @@ p2 <- ggplot(pval.df2, aes(x=as.factor(decile), y=n, color=as.factor(decile)))+
                         panel.spacing = unit(1,"cm"),
                         legend.position="none", strip.text=element_text(size=12))
 
-ggsave("plots/04_feature_selection/nnSVG-eval_pval-distribution_num-nonzero-spots.png", gridExtra::grid.arrange(p1, p2, ncol=1),
+ggsave("plots/04_feature_selection/nnSVG-eval_conservative_pval-distribution_num-nonzero-spots.png", gridExtra::grid.arrange(p1, p2, ncol=1),
 	bg="white", width=12, height=8, units="in")
-cat("\nNon-zero spot filter plot saved to: plots/04_feature_selection/nnSVG-eval_pval-distribution_num-nonzero-spots.png\n")
+cat("\nNon-zero spot filter plot saved to: plots/04_feature_selection/nnSVG-eval_conservative_pval-distribution_num-nonzero-spots.png\n")
 
 #set # of nonzero spots and calculate FDR based on this new filtered set
 results.df = filter(results.df, prop_spots_nonzero>.1) %>% group_by(sample_id) %>%
@@ -182,11 +182,11 @@ p8 <- ggplot(left_join(tmp.df, filter(avg.expr, gene_name %in% geneList$qual_gen
   theme_minimal()+theme(axis.title.y=element_text(size=10))
 
 lay.mat = rbind(c(1,1,2,2,3,3),c(4,4,4,5,5,5))
-ggsave("plots/04_feature_selection/nnSVG-eval_find-candidate-SVGs.png", 
+ggsave("plots/04_feature_selection/nnSVG-eval_conservative_find-candidate-SVGs.png", 
        gridExtra::grid.arrange(p3, p4, p5, #p6, 
 		p7, p8, layout_matrix=lay.mat),
        bg="white", width=12, height=8, units="in")
-cat("\nCandidate SVG filters plot(s) saved to: plots/04_feature_selection/nnSVG-eval_find-candidate-SVGs.png\n")
+cat("\nCandidate SVG filters plot(s) saved to: plots/04_feature_selection/nnSVG-eval_conservative_find-candidate-SVGs.png\n")
 
 #layer marker heatmap
 layer.markers = read.csv("processed-data/04_feature_selection/EXT_TableS9_sig_genes_FDR5perc_enrichment.csv") %>%
@@ -204,17 +204,17 @@ colnames(df1)
 m1 = as.matrix(df1[,-1])
 rownames(m1) = df1$gene
 hmp = pheatmap(m1[,c(1,2,3,5,8,4,7,6,9)], show_rownames = F, cluster_cols=F, angle_col = 0,
-              main=paste(dim(m1)[[1]],"of 1663 SVGs are DLPFC layer marker genes\n(enrichment t stat fill color;\ngenes with FDR>.05 set to 0)"),
+              main=paste(dim(m1)[[1]],"of", length(geneList$qual_genes), "SVGs are DLPFC layer marker genes\n(enrichment t stat fill color;\ngenes with FDR>.05 set to 0)"),
               )
 
-ggsave(filename="plots/04_feature_selection/nnSVG-eval_1663-SVGs_layer-marker-heatmap.png",
+ggsave(filename=paste0("plots/04_feature_selection/nnSVG-eval_conservative_", length(geneList$qual_genes), "-SVGs_layer-marker-heatmap.png"),
        hmp[[4]], width=6, height=8.5, bg="white")
-cat("\nLayer marker heatmap saved to: plots/04_feature_selection/nnSVG-eval_1663-SVGs_layer-marker-heatmap.png\n")
+cat("\nLayer marker heatmap saved to:", paste0("plots/04_feature_selection/nnSVG-eval_conservative_", length(geneList$qual_genes), "-SVGs_layer-marker-heatmap.png"), "\n")
 
-saveRDS(geneList, "processed-data/04_feature_selection/nnSVG-eval_geneList.rds")
+saveRDS(geneList, "processed-data/04_feature_selection/nnSVG-eval_conservative_geneList.rds")
 length(unlist(geneList))
 sapply(geneList, length)
-cat("\nComplete list of all genes from 6111 that were filtered out has been saved to: processed-data/04_feature_selection/nnSVG-eval_geneList.rds\n")
+cat("\nComplete list of all genes from", nrow(avg.expr), "that were filtered out has been saved to: processed-data/04_feature_selection/nnSVG-eval_conservative_geneList.rds\n")
 
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")

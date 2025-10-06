@@ -5,7 +5,8 @@
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
 #SBATCH --nodes=1
-#SBATCH --job-name=standard-nnSVG_per-sample_min-100_RERUN
+#SBATCH --array=1-5
+#SBATCH --job-name=standard-nnSVG_per-sample_min-100_conservative_RERUN
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_feature_selection/array_logs/%x_%j_%a.log
 
 echo "**** Job starts ****"
@@ -19,7 +20,7 @@ echo "Node(s): ${SLURM_NODELIST}"
 echo "Node memory requested: ${SLURM_MEM_PER_NODE}"
 echo "n Tasks: ${SLURM_NTASKS}"
 
-input=$(head -n $SLURM_ARRAY_TASK_ID /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/04_feature_selection/per-sample_spe_RERUN_list.txt | tail -n 1)
+input=$(head -n $SLURM_ARRAY_TASK_ID /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/04_feature_selection/per-sample_spe_conservative_RERUN_list.txt | tail -n 1)
 echo $input
 module load conda_R/4.4.x
 module list
