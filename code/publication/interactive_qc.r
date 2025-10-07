@@ -217,3 +217,99 @@ p6
 p7
 p8
 dev.off()
+
+
+################ per-sample plots
+cpList <- readRDS("plots/colorPalettes.rds")
+
+cdata = read.csv("processed-data/03_QC/colData_edges-problem-areas_spotsweeper_FINAL.csv", row.names=1)
+colnames(cdata)
+table(cdata[,c("remove_problem.areas","lowumi","in_tissue")])
+
+cdata$cond_sex= factor(paste(cdata$condition, cdata$sex), levels=c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M"))
+cdata$condition= factor(cdata$condition, levels=c("NTC","MDD","BPD"))
+
+cdata_orig = cdata
+dim(cdata_orig) # 599034     41
+cdata_orig = filter(cdata_orig, in_tissue==T, sum_umi>0, sample_id!="V13F27-338_C1")
+dim(cdata_orig) # 548517     41
+cdata = filter(cdata_orig, in_tissue==T, sum_umi>0, sample_id!="V13F27-338_C1", remove_spots==F)
+dim(cdata) #535248     41
+
+order1 = group_by(cdata, sample_id) %>% summarise(med_umi = median(sum_umi)) %>% 
+  arrange(desc(med_umi))
+
+p1 <- ggplot(mutate(cdata, x_lab= factor(sample_id, levels=order1$sample_id)), 
+             aes(x=x_lab, y=sum_umi, fill=condition))+
+  geom_boxplot(outlier.size = .1, width=.6)+
+  scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 1), limits=c(1,75000),
+                     breaks=c(10^(0:5)), labels=c("1","10","100","1k","10k","100k"))+
+  scale_fill_manual(values=cpList$dx.pal)+
+  facet_wrap(vars(cond_sex), ncol=2, scales="free_x")+
+  labs(subtitle="Spots that passed QC: Library size", x="sample ID", y="sum_umi (log10 scale)")+
+  theme_bw()+theme(axis.text.x= element_blank())
+
+p2 <- ggplot(mutate(cdata, x_lab= factor(sample_id, levels=order1$sample_id)), 
+             aes(x=x_lab, y=sum_gene, fill=condition))+
+  geom_boxplot(outlier.size = .1, width=.6)+
+  scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 1), limits=c(1,10000),
+                     breaks=c(10^(0:4)), labels=c("1","10","100","1k","10k"))+
+  scale_fill_manual(values=cpList$dx.pal)+
+  facet_wrap(vars(cond_sex), ncol=2, scales="free_x")+
+  labs(subtitle="Spots that passed QC: Detected genes", x="sample ID", y="sum_gene (log10 scale)")+
+  theme_bw()+theme(axis.text.x= element_blank())
+
+p3 <- ggplot(mutate(cdata, x_lab= factor(sample_id, levels=order1$sample_id)), 
+             aes(x=x_lab, y=expr_chrM_ratio, fill=condition))+
+  geom_boxplot(outlier.size = .1, width=.6)+
+  ylim(0,1)+
+  #scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 1), limits=c(1,10000),
+  #                   breaks=c(10^(0:4)), labels=c("1","10","100","1k","10k"))+
+  scale_fill_manual(values=cpList$dx.pal)+
+  facet_wrap(vars(cond_sex), ncol=2, scales="free_x")+
+  labs(subtitle="Spots that passed QC: Mitochondrial fraction", x="sample ID", y="expr_chrM_ratio")+
+  theme_bw()+theme(axis.text.x= element_blank())
+
+pdf(file="plots/publication/qc_per-sample_kept-only.pdf", width=7, height=9)
+p1
+p2
+p3
+dev.off()
+
+
+p1 <- ggplot(mutate(cdata_orig, x_lab= factor(sample_id, levels=order1$sample_id)), 
+             aes(x=x_lab, y=sum_umi, fill=condition))+
+  geom_boxplot(outlier.size = .1, width=.6)+
+  scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 1), limits=c(1,75000),
+                     breaks=c(10^(0:5)), labels=c("1","10","100","1k","10k","100k"))+
+  scale_fill_manual(values=cpList$dx.pal)+
+  facet_wrap(vars(cond_sex), ncol=2, scales="free_x")+
+  labs(subtitle="Before QC filtering: Library size", x="sample ID", y="sum_umi (log10 scale)")+
+  theme_bw()+theme(axis.text.x= element_blank())
+
+p2 <- ggplot(mutate(cdata_orig, x_lab= factor(sample_id, levels=order1$sample_id)), 
+             aes(x=x_lab, y=sum_gene, fill=condition))+
+  geom_boxplot(outlier.size = .1, width=.6)+
+  scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 1), limits=c(1,10000),
+                     breaks=c(10^(0:4)), labels=c("1","10","100","1k","10k"))+
+  scale_fill_manual(values=cpList$dx.pal)+
+  facet_wrap(vars(cond_sex), ncol=2, scales="free_x")+
+  labs(subtitle="Before QC filtering: Detected genes", x="sample ID", y="sum_gene (log10 scale)")+
+  theme_bw()+theme(axis.text.x= element_blank())
+
+p3 <- ggplot(mutate(cdata_orig, x_lab= factor(sample_id, levels=order1$sample_id)), 
+             aes(x=x_lab, y=expr_chrM_ratio, fill=condition))+
+  geom_boxplot(outlier.size = .1, width=.6)+
+  ylim(0,1)+
+  #scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 1), limits=c(1,10000),
+  #                   breaks=c(10^(0:4)), labels=c("1","10","100","1k","10k"))+
+  scale_fill_manual(values=cpList$dx.pal)+
+  facet_wrap(vars(cond_sex), ncol=2, scales="free_x")+
+  labs(subtitle="Before QC filtering: Mitochondrial fraction", x="sample ID", y="expr_chrM_ratio")+
+  theme_bw()+theme(axis.text.x= element_blank())
+
+pdf(file="plots/publication/qc_per-sample_before-filtering.pdf", width=7, height=9)
+p1
+p2
+p3
+dev.off()
