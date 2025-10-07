@@ -11,14 +11,17 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 cpList = readRDS("plots/colorPalettes.rds")
-fill.palette = c(cpList$smoothed.light, "low UMI"="grey50", "GABA"="white", "Vasc"="white")
+#fill.palette = c(cpList$smoothed.light, "low UMI"="grey50", "GABA"="white", "Vasc"="white")
+fill.palette = c(cpList$smoothed.light, "low UMI"="grey50")
 
-cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
+cdata = read.csv("processed-data/05_clustering/PRECAST/colData_conservative_all-precast-clusters.csv", row.names=1)
 
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC-conservative_norm_")
 stopifnot(identical(rownames(cdata), colnames(spe)))
-spe$smoothed_k9_1663 = factor(cdata$smoothed_k9_1663_f, levels=c("L1","L2","L3/4","L5","L6","WM","low UMI","GABA","Vasc"),
-	labels=c("L1","L2","L3.4","L5","L6","WM","low UMI","GABA","Vasc"))
+#spe$smoothed_k9_1663 = factor(cdata$smoothed_k9_1663_f, levels=c("L1","L2","L3/4","L5","L6","WM","low UMI","GABA","Vasc"),
+#	labels=c("L1","L2","L3.4","L5","L6","WM","low UMI","GABA","Vasc"))
+spe$smoothed_k7_1626 = factor(cdata$smoothed_k7_1626, levels=c("L1","L2","L3/4","L5","L6","WM","low UMI"),
+                                labels=c("L1","L2","L3.4","L5","L6","WM","low UMI"))
 
 #create spe_sub for each page of plots to modify coordinates for prettier plots
 #to not have 31 slides, move V13B23-283 with its original group
@@ -58,8 +61,8 @@ plotList = lapply(slideList, function(x) {
 	return(rasterize(p1, dpi=150))
 })
 
-ggsave(file="plots/05_clustering/PRECAST/PRECAST_n1663-k9_smoothed_low-UMI-cluster.pdf", marrangeGrob(plotList, ncol=1, nrow=1, top=NULL), height=10, width=8)
-cat("\nPlots saved to: plots/05_clustering/PRECAST/PRECAST_n1663-k9_smoothed_low-UMI-cluster.pdf\n")
+ggsave(file="plots/05_clustering/PRECAST/PRECAST_conservative_n1626-k7_smoothed_low-UMI-cluster.pdf", marrangeGrob(plotList, ncol=1, nrow=1, top=NULL), height=10, width=8)
+cat("\nPlots saved to: plots/05_clustering/PRECAST/PRECAST_conservative_n1626-k7_smoothed_low-UMI-cluster.pdf\n")
 
 
 cat("\n\nReproducibility information:\n")

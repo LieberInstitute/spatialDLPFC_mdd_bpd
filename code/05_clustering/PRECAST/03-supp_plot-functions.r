@@ -29,17 +29,32 @@ lossPlot = function(gene_set, k_clusters, jobid=NA) {
   #cat("\nLoss plot saved to:", paste0("plots/05_clustering/PRECAST/PRECAST_", gene_set, "-k", k_clusters, "_lglk-loss-plot.png"),"\n")
 }
 
-updateColData <- function(object, gene_set, k_clusters) {
+updateColData <- function(object, gene_set, k_clusters, conservative=F) {
   #object = spe
   #gene_set = character specifying gene set (starting with 'n' for most instances except for H-M gene set)
   #k_clusters = numeric
   if(substr(gene_set, start=0, stop=1)=="n") {gene_set2 = substr(gene_set, start=2, stop=6)} 
   if(gene_set=="H-M-markers") {gene_set2 = "HM"}
   
-  load(paste0("processed-data/05_clustering/PRECAST/srt_precast_k-", k_clusters, "_", gene_set,".Rdata"))
+  if(conservative==T) {
+    cat("\nLoading conservative QC filter results...\n")
+    load(paste0("processed-data/05_clustering/PRECAST/srt_precast-conservative_k-", k_clusters, "_", gene_set,".Rdata"))
+  } else {
+    load(paste0("processed-data/05_clustering/PRECAST/srt_precast_k-", k_clusters, "_", gene_set,".Rdata"))
+  }
   
   object$seurat_key = paste(object$sample_id, colnames(object), sep="_")
-  mdata = seuInt@meta.data[object$seurat_key,]
+
+  #modifications for if spots dropped from PRECAST
+  if(dim(seuInt)[[2]]<dim(object)[[2]]) {
+    cat("\nSpots were dropped during PRECAST:", dim(object)[[2]]-dim(seuInt[[2]]), "spots total\n")
+    missing.spots = setdiff(object$seurat_key, rownames(seuInt@meta.data))
+    missing.mtx = matrix(NA, ncol=ncol(seuInt@meta.data), nrow=length(missing.spots), dimnames=list(missing.spots, colnames(seuInt@meta.data)))
+    mdata = rbind.data.frame(seuInt@meta.data, missing.mtx)
+    mdata = mdata[object$seurat_key,]
+  } else {
+    mdata = seuInt@meta.data[object$seurat_key,]
+  }
   stopifnot(identical(rownames(mdata), object$seurat_key))
   colData(object)[[paste0("precast_k", k_clusters,"_", gene_set2)]] = as.factor(mdata$cluster)
   

@@ -7,14 +7,14 @@ suppressPackageStartupMessages({
 })
 set.seed(123)
 
-sampleList = list.files("processed-data/04_feature_selection/per-sample_spe")
+sampleList = list.files("processed-data/04_feature_selection/per-sample_spe-conservative")
 names(sampleList) = substr(sampleList, start=0, stop=13)
 
 #keep.genes = read.csv("processed-data/04_feature_selection/tmp_smaller-feature-list_n1721.csv")
 #keep.genes = read.csv("processed-data/04_feature_selection/tmp_larger-feature-list_n3198.csv")
 #keep.genes = read.csv("processed-data/04_feature_selection/selected-SVGs_n1051.csv")
-geneList = readRDS("processed-data/04_feature_selection/nnSVG-eval_geneList.rds")
-avg.expr = read.csv("processed-data/04_feature_selection/nnSVG-filtered-genes_avg-logcounts.csv", row.names=1)# %>%
+geneList = readRDS("processed-data/04_feature_selection/nnSVG-eval_conservative_geneList.rds")
+avg.expr = read.csv("processed-data/04_feature_selection/nnSVG-filtered-genes_conservative_avg-logcounts.csv", row.names=1)# %>%
 #  tibble::rownames_to_column(var="gene_id")
 
 svg_id = rownames(avg.expr)[avg.expr$gene_name %in% geneList$qual_genes]
@@ -23,7 +23,7 @@ length(svg_id)
 srt.sets = lapply(sampleList, function(x) {
 #for(i in slideList) {
 	cat(x,"\n")
-	load(paste0("processed-data/04_feature_selection/per-sample_spe/",x))
+	load(paste0("processed-data/04_feature_selection/per-sample_spe-conservative/",x))
 	
 	#keep.gene.id = rownames(tmp)[rowData(tmp)$gene_name %in% keep.genes$gene_name]
 	tmp = tmp[svg_id,]
@@ -50,7 +50,7 @@ srt.sets = lapply(sampleList, function(x) {
 })
 cat("\n\nFinal srt.sets structure:\n")
 str(srt.sets, 3)
-save(srt.sets, file=paste0("processed-data/05_clustering/PRECAST/srt-list_spe_n",length(svg_id),"_counts.Rdata"))
+save(srt.sets, file=paste0("processed-data/05_clustering/PRECAST/srt-list_spe-conservative_n",length(svg_id),"_counts.Rdata"))
 
 ## Reproducibility information
 print("Reproducibility information:")

@@ -13,32 +13,38 @@ setAutoBlockSize(1e9)
 cpList = readRDS("plots/colorPalettes.rds")
 
 #save name 
-save.name = "k9-1663-smooth-final"
+save.name = "k7-1626-smooth-final"
 fill.palette = cpList$smoothed.bright
 
 #load spe
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC-conservative_norm_")
 
 #load clusters
-cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
+cdata = read.csv("processed-data/05_clustering/PRECAST/colData_conservative_all-precast-clusters.csv", row.names=1)
 stopifnot(identical(rownames(colData(spe)), rownames(cdata)))
 
 #drop low UMI spots that couldn't be saved
 cat("\nHow many spots are dropped after smoothing clusters:\n")
-table(cdata[cdata$smoothed_k9_1663_f %in% c("low UMI","GABA","Vasc"),"smoothed_k9_1663_f"])
+#table(cdata[cdata$smoothed_k9_1663_f %in% c("low UMI","GABA","Vasc"),"smoothed_k9_1663_f"])
+table(cdata[cdata$smoothed_k7_1626=="low UMI","smoothed_k7_1626"])
 
-cdata2 = cdata[!cdata$smoothed_k9_1663_f %in% c("low UMI","GABA","Vasc"),]
+#cdata2 = cdata[!cdata$smoothed_k9_1663_f %in% c("low UMI","GABA","Vasc"),]
+cdata2 = cdata[cdata$smoothed_k7_1626!="low UMI",]
+
 spe = spe[,rownames(cdata2)]
-spe$smoothed_k9_1663 = factor(cdata2$smoothed_k9_1663_f, levels=c("L1","L2","L3/4","L5","L6","WM"),
-	labels=c("L1","L2","L3.4","L5","L6","WM"))
-cat("\nTransferred smoothed PRECAST k=9 n1663 to spe:\n")
-table(spe$smoothed_k9_1663, useNA="ifany")
+#spe$smoothed_k9_1663 = factor(cdata2$smoothed_k9_1663_f, levels=c("L1","L2","L3/4","L5","L6","WM"),
+#	labels=c("L1","L2","L3.4","L5","L6","WM"))
+spe$smoothed_k7_1626 = factor(cdata2$smoothed_k7_1626, levels=c("L1","L2","L3/4","L5","L6","WM"),
+       labels=c("L1","L2","L3.4","L5","L6","WM"))
+
+cat("\nTransferred smoothed PRECAST k=7 n1626 to spe:\n")
+table(spe$smoothed_k7_1626, useNA="ifany")
 
 
 # proportion of annotations in samples (bar)
 
 cdata = group_by(as.data.frame(colData(spe)), sample_id) %>% add_tally(name="n_total") %>%
-  group_by(sample_id, condition, sex, n_total, smoothed_k9_1663) %>%
+  group_by(sample_id, condition, sex, n_total, smoothed_k7_1626) %>%
   tally(name="nspots") %>%
   mutate(prop_spots=nspots/n_total, 
 	 condition=factor(condition, levels=c("NTC","MDD","BPD")),
@@ -46,14 +52,14 @@ cdata = group_by(as.data.frame(colData(spe)), sample_id) %>% add_tally(name="n_t
   )
 
 
-tmp1 = group_by(cdata, smoothed_k9_1663) %>% mutate(r1=rank(prop_spots)) %>%
-  select(smoothed_k9_1663, sample_id, r1)
-tmp2 = tidyr::pivot_wider(tmp1, names_from="smoothed_k9_1663", values_from="r1", values_fill=0)
+tmp1 = group_by(cdata, smoothed_k7_1626) %>% mutate(r1=rank(prop_spots)) %>%
+  select(smoothed_k7_1626, sample_id, r1)
+tmp2 = tidyr::pivot_wider(tmp1, names_from="smoothed_k7_1626", values_from="r1", values_fill=0)
 order1 = arrange(tmp2, WM, L6)
 
 split.name = unlist(strsplit(save.name, "-"))
 p1 <- ggplot(mutate(cdata, x_lab= factor(sample_id, levels=order1$sample_id)),
-       aes(x=x_lab, y=prop_spots, fill=smoothed_k9_1663))+
+       aes(x=x_lab, y=prop_spots, fill=smoothed_k7_1626))+
   geom_bar(stat="identity", position="fill", color="black", linewidth=.3)+
   facet_wrap(vars(cond_sex), ncol=2, scales="free_x")+
   scale_fill_manual(values=fill.palette)+
@@ -61,7 +67,7 @@ p1 <- ggplot(mutate(cdata, x_lab= factor(sample_id, levels=order1$sample_id)),
 	fill=paste0(paste(split.name[1:2], collapse=" "), "\n", paste(split.name[3:4], collapse=" ")))+
   theme_bw()+theme(axis.text.x= element_blank())
 
-ggsave(file=paste0("plots/05_clustering/PRECAST/per-sample-proportions_", save.name, ".png"),
+ggsave(file=paste0("plots/05_clustering/PRECAST/per-sample-proportions_conservative_", save.name, ".png"),
        p1, 
        bg="white", width=7, height=9)
 
@@ -109,7 +115,7 @@ for (i in unique(spe_sub2$sample_id)) {
 
 
 p1 <- plotSpots(spe_sub, x_coord=mod_spatialCoords1[,1], y_coord=mod_spatialCoords1[,2],
-                sample_id="sample_id", annotate="smoothed_k9_1663", point_size=.1)+
+                sample_id="sample_id", annotate="smoothed_k7_1626", point_size=.1)+
   scale_color_manual(paste0("PRECAST\n", paste(split.name[1:2], collapse=" "), "\n", paste(split.name[3:4], collapse=" ")), values=fill.palette)+
   facet_grid(rows=vars(cond_sex), cols=vars(facet_col), switch="y")+
   geom_text(aes(x=0, y= -60,
@@ -126,7 +132,7 @@ p1 <- plotSpots(spe_sub, x_coord=mod_spatialCoords1[,1], y_coord=mod_spatialCoor
 
 
 p2 <- plotSpots(spe_sub2, x_coord=mod_spatialCoords2[,1], y_coord=mod_spatialCoords2[,2],
-                sample_id="sample_id", annotate="smoothed_k9_1663", point_size=.1)+
+                sample_id="sample_id", annotate="smoothed_k7_1626", point_size=.1)+
   scale_color_manual(paste0("PRECAST\n", paste(split.name[1:2], collapse=" "), "\n", paste(split.name[3:4], collapse=" ")), values=fill.palette)+
   facet_grid(rows=vars(facet_row), cols=vars(facet_col), switch="y")+
   theme(text=element_text(size=10), strip.background = element_rect(fill=NA, color=NA), panel.border=element_rect(fill=NA, color=NA),
@@ -137,11 +143,11 @@ p2 <- plotSpots(spe_sub2, x_coord=mod_spatialCoords2[,1], y_coord=mod_spatialCoo
         legend.margin=margin(0,0,0,0,"pt"),
         legend.box.margin = margin(0,2,0,2,"pt"))
 
-pdf(file=paste0("plots/05_clustering/PRECAST/example-spot-plots_", save.name, ".pdf"), height=10, width=8)
+pdf(file=paste0("plots/05_clustering/PRECAST/example-spot-plots_conservative_", save.name, ".pdf"), height=10, width=8)
 p1
 p2
 dev.off()
-cat("\nSpot plots saved to:",paste0("plots/05_clustering/PRECAST/example-spot-plots_", save.name, ".pdf"),"\n")
+cat("\nSpot plots saved to:",paste0("plots/05_clustering/PRECAST/example-spot-plots_conservative_", save.name, ".pdf"),"\n")
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time())

@@ -5,15 +5,16 @@ suppressPackageStartupMessages({
 	library(ggspavis)
 })
 
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC-conservative_norm_")
 
 source("code/05_clustering/PRECAST/04-supp_cluster-names.r")
 
 #annotate precast clusters
-for(i in names(annotations)) {
+#for(i in names(annotations)) {
+i="precast_k7_1626"
 	colData(spe)[[i]] = factor(colData(spe)[[i]], levels= annotations[[i]], labels= names(annotations[[i]]))
 
-}
+#}
 
 #create spe subsets for plotting
 #ideal samples
@@ -58,8 +59,8 @@ for (i in unique(spe_sub2$sample_id)) {
 
 
 #plot all results
-for (i in names(annotations)) {
-
+#for (i in names(annotations)) {
+i="precast_k7_1626"
 	save.name = gsub("_", "-", substr(i, 9, 16))
 	fill.palette = annot_colors[[i]]
 
@@ -93,13 +94,13 @@ for (i in names(annotations)) {
 			legend.margin=margin(0,0,0,0,"pt"),
 			legend.box.margin = margin(0,2,0,2,"pt"))
 
-	pdf(file=paste0("plots/05_clustering/PRECAST/example-spot-plots_", save.name, ".pdf"), height=10, width=8)
+	pdf(file=paste0("plots/05_clustering/PRECAST/example-spot-plots_conservative_", save.name, ".pdf"), height=10, width=8)
 	print(p1)
 	print(p2)
 	dev.off()
-	cat("\nSpot plots saved to:",paste0("plots/05_clustering/PRECAST/example-spot-plots_", save.name, ".pdf"),"\n")
+	cat("\nSpot plots saved to:",paste0("plots/05_clustering/PRECAST/example-spot-plots_conservative_", save.name, ".pdf"),"\n")
 
-}
+#}
 
 
 
