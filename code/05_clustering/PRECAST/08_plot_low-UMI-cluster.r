@@ -46,7 +46,7 @@ plotList = lapply(slideList, function(x) {
 		mutate(x1=0, y1=-60)
 	suppressMessages({
 		p1 <- plotSpots(spe_sub, x_coord=mod_spatialCoords2[,1], y_coord=mod_spatialCoords2[,2],
-			sample_id="sample_id", annotate="smoothed_k9_1663", point_size=.1)+
+			sample_id="sample_id", annotate="smoothed_k7_1626", point_size=.1)+
 		scale_color_manual("PRECAST\n(smoothed)", values=fill.palette)+
 		facet_grid(rows=vars(facet_row), cols=vars(facet_col))+
 		#label each panel with small text of sample_id
