@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=5G
-#SBATCH --job-name=plot_final_pc30-L2-L3-merge
+#SBATCH --job-name=plot_final_pc30-filtered_conservative
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/Seurat/logs/%x_%j.log
 
 echo "**** Job starts ****"

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=plot_GABA_MBv-transfer_pc30-L2-L3-merge
+#SBATCH --job-name=plot_GABA_MBv-conservative_pc20
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/Seurat/logs/%x_%j.log
 
 echo "**** Job starts ****"

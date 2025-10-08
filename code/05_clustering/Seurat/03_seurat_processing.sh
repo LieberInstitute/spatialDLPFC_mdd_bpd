@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=50G
-#SBATCH --job-name=seurat_control_MBv-filtered-SCT_plots
+#SBATCH --mem=250G
+#SBATCH --job-name=seurat_control_MBv-filtered-conservative
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/Seurat/logs/%x_%j.log
 
 echo "**** Job starts ****"

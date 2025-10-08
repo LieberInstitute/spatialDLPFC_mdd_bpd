@@ -10,11 +10,11 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 cpList <- readRDS("plots/colorPalettes.rds")
-seurat_pc = "pc30"
+seurat_pc = "pc20"
 
-cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
-cdata$precast_k9_1663_f = factor(cdata$precast_k9_1663_f, levels=c("Vasc","L1","L2","L3/4","GABA","L5","L6","WM","low UMI"),
-	labels=c("Vasc","L1","L2","L3.4","GABA","L5","L6","WM","low UMI"))
+cdata = read.csv("processed-data/05_clustering/PRECAST/colData_conservative_all-precast-clusters.csv", row.names=1)
+cdata$smoothed_k7_1626 = factor(cdata$smoothed_k7_1626, levels=c("L1","L2","L3/4","L5","L6","WM","low UMI"),
+	labels=c("L1","L2","L3.4","L5","L6","WM","low UMI"))
 
 #low.res.pal = c("Micro/Vasc"="#911223","Astro"="#cfa45c",
 #	"L2"="#5D9940", "L3"="#5095CD", 
@@ -23,10 +23,12 @@ cdata$precast_k9_1663_f = factor(cdata$precast_k9_1663_f, levels=c("Vasc","L1","
 #        "Oligo"="#D1C4B0",
 #        "Inhb"="#9377AC")
 
-res = read.csv(paste0("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-MBv_qual-genes-kanchor-50-",
+res = read.csv(paste0("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered-conservative_ref-control_query-MBv-conservative_qual-genes-kanchor-50-",
 	seurat_pc, "_red-precast-kweight-50-low-res.csv"), row.names=1)
-stopifnot(identical(rownames(cdata), rownames(res)))
-cdata$seurat_label = factor(res$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","Inhb","L5","L6","Oligo"),
+#stopifnot(identical(rownames(cdata), rownames(res)))
+# remove 10 extra spots with precast smoothed labels
+cdata = cdata[rownames(res),]
+cdata$seurat_label = factor(res$predicted.id, levels=c("Micro.Vasc","Astro","L2","L3","L4","Inhb","L5","L6","Oligo"),
 	########## merging pc30 L2 and L3
 	labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","Inhb","L5","L6","Oligo"))
 	##########
@@ -34,7 +36,7 @@ cdata$cond_sex = factor(paste(cdata$condition, cdata$sex),
                         levels=c("NTC M","NTC F","MDD M","MDD F","BPD M","BPD F"))
 
 ######### merging pc30 L2 and L3
-seurat_pc = "pc30-L2-L3-merge"
+#seurat_pc = "pc30"
 #low.res.pal = c("Micro/Vasc"="#911223","Astro"="#cfa45c",
 #        "L2/3"="#5D9940", 
 #	#"L3"="#5095CD",
@@ -53,11 +55,11 @@ p1 <- ggplot(cdata, aes(x=cond_sex, fill=seurat_label))+
 
 
 #plot heatmap
-cdata2 = group_by(cdata, precast_k9_1663_f, seurat_label, .drop=F) %>% tally() %>%
-  group_by(precast_k9_1663_f) %>% mutate(total_n=sum(n)) %>%
+cdata2 = group_by(cdata, smoothed_k7_1626, seurat_label, .drop=F) %>% tally() %>%
+  group_by(smoothed_k7_1626) %>% mutate(total_n=sum(n)) %>%
   ungroup() %>%
   mutate(prop_n=n/total_n,
-         precast = factor(precast_k9_1663_f, levels=rev(levels(cdata$precast_k9_1663_f))))
+         precast = factor(smoothed_k7_1626, levels=rev(levels(cdata$smoothed_k7_1626))))
 
 p2 <- ggplot(cdata2, aes(x=seurat_label, y=precast, fill=log10(n+1)))+
   geom_tile(color="grey90")+
@@ -65,14 +67,14 @@ p2 <- ggplot(cdata2, aes(x=seurat_label, y=precast, fill=log10(n+1)))+
   geom_text(data=mutate(cdata2, prop_n=round(prop_n,2)*100) %>% filter(prop_n>15),
             aes(label=prop_n), color="red3", size=3, fontface="bold")+
   scale_x_discrete(paste("Label transfer: seurat", seurat_pc), expand = c(0,0))+
-  scale_y_discrete("Original PRECAST k=9 annotation", expand = c(0,0))+
+  scale_y_discrete("Smoothed PRECAST k=7 annotation", expand = c(0,0))+
   ggtitle(paste("MBv label transfer:", seurat_pc))+
   theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.5),
                    text=element_text(size=10),
                    aspect.ratio=1, legend.key.size = unit(10, "pt"))
 
 #plot individual distribution spot plots
-load("processed-data/04_feature_selection/per-sample_spe/V13B23-329_A1.Rdata")
+load("processed-data/04_feature_selection/per-sample_spe-conservative/V13B23-329_A1.Rdata")
 cdata_tmp = cdata[colnames(tmp),]
 stopifnot(identical(rownames(cdata_tmp), rownames(colData(tmp))))
 plist <- lapply(names(cpList$transfer.bright), function(x) {
@@ -95,7 +97,7 @@ laymat = rbind(c(1,1,1,2,2,2),
                c(8,8,9,9,10,10))
 ########## 
 
-ggsave(file=paste0("plots/05_clustering/Seurat/MBv_label-transfer-", seurat_pc,"_plots.png"), 
+ggsave(file=paste0("plots/05_clustering/Seurat/MBv-conservative_label-transfer-", seurat_pc,"_plots.png"), 
 	gridExtra::grid.arrange(p1, p2, 
 		plist[[1]], plist[[2]], plist[[3]], 
 		plist[[4]], plist[[5]], plist[[6]], 
@@ -105,23 +107,33 @@ ggsave(file=paste0("plots/05_clustering/Seurat/MBv_label-transfer-", seurat_pc,"
 		##########
 		layout_matrix=laymat),
 	bg="white", width=10, height=14)
-cat("\n\nResults plots saved to:",paste0("plots/05_clustering/Seurat/MBv_label-transfer-", seurat_pc,"_plots.png"),"\n")
+cat("\n\nResults plots saved to:",paste0("plots/05_clustering/Seurat/MBv-conservative_label-transfer-", seurat_pc,"_plots.png"),"\n")
 
 
 #plot low UMI proportions
 cdata$cond_sex = factor(paste(cdata$condition, cdata$sex),
                         levels=c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M"))
-p1 <- ggplot(filter(cdata, smoothed_k9_1663_f=="low UMI"), aes(x=sample_id, fill=seurat_label))+
+p1 <- ggplot(filter(cdata, smoothed_k7_1626=="low UMI"), aes(x=sample_id, fill=seurat_label))+
   geom_bar(stat="count", position="stack", color="black", linewidth=.3)+
   facet_wrap(vars(cond_sex), scales="free_x", ncol=2)+
   scale_fill_manual(values=cpList$transfer.bright)+
   labs(title="Only PRECAST (smoothed) low UMI cluster spots", fill=seurat_pc)+
   theme_bw()+theme(axis.text.x=element_blank())
 
-ggsave(file=paste0("plots/05_clustering/Seurat/per-sample-nspots_low-UMI-cluster_", seurat_pc, ".png"),
-	p1,
-	bg="white", width=7, height=9)
-cat("\n\nLow UMI assignemtn bar plot saved to:",paste0("plots/05_clustering/Seurat/per-sample-nspots_low-UMI-cluster_", seurat_pc,".png"),"\n")
+plist = lapply(levels(cdata$seurat_label), function(x) {
+	ggplot(filter(cdata, seurat_label==x), aes(x=sample_id, fill=smoothed_k7_1626))+
+		geom_bar(stat="count", position="stack", color="black", linewidth=.3)+
+		facet_wrap(vars(cond_sex), scales="free_x", ncol=2)+
+		scale_fill_manual("PRECAST",values=c(cpList$smoothed.bright, "low UMI"="grey50"))+
+		labs(title=paste("Only Seurat", seurat_pc, x))+
+		theme_bw()+theme(axis.text.x=element_blank())
+})
+
+plist = c(list(p1), plist)
+ggsave(file=paste0("plots/05_clustering/Seurat/per-sample-nspots_conservative_low-UMI-cluster_", seurat_pc, ".pdf"),
+	gridExtra::marrangeGrob(grobs=plist, nrow=1, ncol=1, top=NULL),
+	width=7.5, height=9)
+cat("\n\nLow UMI assignemtn bar plot saved to:",paste0("plots/05_clustering/Seurat/per-sample-nspots_conservative_low-UMI-cluster_", seurat_pc,".png"),"\n")
 
 print("\n\nReproducibility information:")
 format(Sys.time())
