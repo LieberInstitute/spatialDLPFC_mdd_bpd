@@ -12,35 +12,35 @@ setAutoBlockSize(1e9)
 spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 
 #load clusters
-#res2 = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-MBv_qual-genes-kanchor-50-pc20_red-precast-kweight-50-low-res.csv", row.names=1)
-#stopifnot(identical(rownames(colData(spe)), rownames(res2)))
-res4 = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-MBv_qual-genes-kanchor-50-pc30_red-precast-kweight-50-low-res.csv", row.names=1)
-stopifnot(identical(rownames(colData(spe)), rownames(res4)))
+res = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-MBv_qual-genes-kanchor-50-pc20_red-precast-kweight-50-low-res.csv", row.names=1)
+stopifnot(identical(rownames(colData(spe)), rownames(res)))
+#res4 = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-MBv_qual-genes-kanchor-50-pc30_red-precast-kweight-50-low-res.csv", row.names=1)
+#stopifnot(identical(rownames(colData(spe)), rownames(res4)))
 
 #transfer label IDs and combine L2/3
-#spe$seurat_qual.genes_pc20.kweight50 = factor(res2$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
+spe$seurat_pc20 = factor(res$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
 ########### unmerge L2 and L3 for pc20
-#	labels=c("Micro.Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"))
+	labels=c("Micro.Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"))
 	#labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","L5","L6","Oligo","Inhb"))
 ###########
 
-spe$seurat_qual.genes_pc30.kweight50 = factor(res4$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
-        labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","L5","L6","Oligo","Inhb"))
-cat("\nTransferred label transfer from qual genes results with PC=30 and k.weights=50 to spe:\n")
-#table(spe$seurat_qual.genes_pc20.kweight50, useNA="ifany")
-table(spe$seurat_qual.genes_pc30.kweight50, useNA="ifany")
+#spe$seurat_qual.genes_pc30.kweight50 = factor(res4$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
+#        labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","L5","L6","Oligo","Inhb"))
+cat("\nTransferred label transfer from qual genes results with PC=20 and k.weights=50 to spe:\n")
+table(spe$seurat_pc20, useNA="ifany")
+#table(spe$seurat_qual.genes_pc30.kweight50, useNA="ifany")
 
 
-#remove low UMI cluster
-cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
-stopifnot(identical(rownames(colData(spe)), rownames(cdata)))
-
-spe$lowUMI_cluster = cdata$precast_k9_1663_f=="low UMI"
-
-spe = spe[,spe$lowUMI_cluster==F]
-cat("\n\nRemoved low UMI cluster spots...\n")
-dim(spe)
-table(spe$seurat_qual.genes_pc30.kweight50, useNA="ifany")
+##remove low UMI cluster
+#cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
+#stopifnot(identical(rownames(colData(spe)), rownames(cdata)))
+#
+#spe$lowUMI_cluster = cdata$precast_k9_1663_f=="low UMI"
+#
+#spe = spe[,spe$lowUMI_cluster==F]
+#cat("\n\nRemoved low UMI cluster spots...\n")
+#dim(spe)
+#table(spe$seurat_qual.genes_pc30.kweight50, useNA="ifany")
 
 
 #realize counts
@@ -57,14 +57,14 @@ sce <- SingleCellExperiment(assays = list(logcounts = sparse_matrix_counts), col
 rowData(sce) = rowData(spe)
 
 #pseudobulk logcounts
-cat("\nPseudobulk spe by: condition, sex, seurat_qual.genes_pc30.kweight50\n")
-spe_summ = aggregateAcrossCells(sce, ids=colData(sce)[,c("condition","sex","seurat_qual.genes_pc30.kweight50")], 
+cat("\nPseudobulk spe by: condition, sex, seurat_pc20\n")
+spe_summ = aggregateAcrossCells(sce, ids=colData(sce)[,c("condition","sex","seurat_pc20")], 
                             statistics=c("mean","prop.detected"),
                             use.assay.type="logcounts")
 dim(spe_summ)
 
 #quick save checkpoints
-save(spe_summ, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI-heatmap_dx-sex-seurat-pc30.Rdata")
+save(spe_summ, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-heatmap_dx-sex-seurat-pc20.Rdata")
 
 #remove repeated colData column for sample_id and cluster
 g1 = grep("seurat", colnames(colData(spe_summ)))
@@ -91,15 +91,15 @@ colData(spe_summ) = colData(spe_summ)[,c(#"sample_id","brnum","age",
 	"sex","condition","cond_sex",
 	#"PMI","RIN","slide","array","MBv_sample","seq","round",
 	#"seurat_qual.genes_pc20.kweight50",
-	"seurat_qual.genes_pc30.kweight50",
+	"seurat_20",
 	"nspots")]
 colData(spe_summ)$condition = factor(spe_summ$condition, levels=c("NTC","MDD","BPD"))
-colData(spe_summ)$seurat_label = colData(spe_summ)$seurat_qual.genes_pc30.kweight50
+colData(spe_summ)$seurat_label = colData(spe_summ)$seurat_pc20
 
 
 Sys.time()
-save(spe_summ, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI-heatmap_dx-sex-seurat-pc30.Rdata")
-cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI-heatmap_dx-sex-seurat-pc30.Rdata")
+save(spe_summ, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-heatmap_dx-sex-seurat-pc20.Rdata")
+cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-heatmap_dx-sex-seurat-pc20.Rdata")
 
 #update spe tracker
 #write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),
