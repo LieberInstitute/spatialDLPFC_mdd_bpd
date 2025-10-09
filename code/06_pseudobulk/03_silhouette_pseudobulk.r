@@ -13,13 +13,13 @@ cpList <- readRDS("plots/colorPalettes.rds")
 names(cpList$transfer.bright)[1] = "M.V"
 
 #PRECAST smoothed
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-with-lowUMI_sample-smoothed-n1663-k9_norm.Rdata")
+load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_conservative_pseudo-with-lowUMI_sample-smoothed-n1626-k7_norm.Rdata")
 ### no detected genes filter at this point
-table(spe_pseudo$smoothed_k9_1663, useNA="ifany")
+table(spe_pseudo$smoothed_k7_1626, useNA="ifany")
 #.L1      L2    L3.4      L5      L6      WM low UMI 
 #119     119     119     119     119     105     110 
 spe_pseudo$cond_sex = factor(paste(spe_pseudo$condition, spe_pseudo$sex), levels=c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M"))
-table(as.data.frame(colData(spe_pseudo))[,c("cond_sex","smoothed_k9_1663")], useNA="ifany")
+table(as.data.frame(colData(spe_pseudo))[,c("cond_sex","smoothed_k7_1626")], useNA="ifany")
 #.........smoothed_k9_1663
 #cond_sex L1 L2 L3.4 L5 L6 WM low UMI
 #...NTC F 20 20   20 20 20 16      18
@@ -31,9 +31,9 @@ table(as.data.frame(colData(spe_pseudo))[,c("cond_sex","smoothed_k9_1663")], use
 
 
 color.palette = c(cpList$smoothed.bright, "low UMI"="grey50")
-sil.results <- as.data.frame(approxSilhouette(reducedDim(spe_pseudo, "PCA_1663"), clusters=spe_pseudo$smoothed_k9_1663))
+sil.results <- as.data.frame(approxSilhouette(reducedDim(spe_pseudo, "PCA_1626"), clusters=spe_pseudo$smoothed_k7_1626))
 sil.results$closest <- factor(ifelse(sil.results$width > 0, as.character(sil.results$cluster), as.character(sil.results$other)))
-sil.results$closest <- factor(sil.results$closest, levels=levels(spe_pseudo$smoothed_k9_1663))
+sil.results$closest <- factor(sil.results$closest, levels=levels(spe_pseudo$smoothed_k7_1626))
 
 p1 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
   ggbeeswarm::geom_quasirandom()+scale_color_manual(values=color.palette)+
@@ -43,13 +43,13 @@ p1 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
 spe_sm_low.umi = spe_pseudo
 
 #PRECAST smoothed
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_conservative_pseudo_sample-smoothed-n1626-k7_norm-filt.Rdata")
 ### detected genes filter is 10k across the board
-table(spe_pseudo$smoothed_k9_1663, useNA="ifany")
+table(spe_pseudo$smoothed_k7_1626, useNA="ifany")
 #.L1   L2 L3.4   L5   L6   WM 
 #117  119  119  119  118   93 
 spe_pseudo$cond_sex = factor(paste(spe_pseudo$condition, spe_pseudo$sex), levels=c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M"))
-table(as.data.frame(colData(spe_pseudo))[,c("cond_sex","smoothed_k9_1663")], useNA="ifany")
+table(as.data.frame(colData(spe_pseudo))[,c("cond_sex","smoothed_k7_1626")], useNA="ifany")
 #.........smoothed_k9_1663
 #cond_sex L1 L2 L3.4 L5 L6 WM
 #...NTC F 20 20   20 20 20 14
@@ -59,9 +59,9 @@ table(as.data.frame(colData(spe_pseudo))[,c("cond_sex","smoothed_k9_1663")], use
 #...BPD F 20 20   20 20 20 14
 #...BPD M 20 20   20 20 20 19
 
-sil.results <- as.data.frame(approxSilhouette(reducedDim(spe_pseudo, "PCA_1663"), clusters=spe_pseudo$smoothed_k9_1663))
+sil.results <- as.data.frame(approxSilhouette(reducedDim(spe_pseudo, "PCA_1626"), clusters=spe_pseudo$smoothed_k7_1626))
 sil.results$closest <- factor(ifelse(sil.results$width > 0, as.character(sil.results$cluster), as.character(sil.results$other)))
-sil.results$closest <- factor(sil.results$closest, levels=levels(spe_pseudo$smoothed_k9_1663))
+sil.results$closest <- factor(sil.results$closest, levels=levels(spe_pseudo$smoothed_k7_1626))
 
 p2 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
   ggbeeswarm::geom_quasirandom()+scale_color_manual(values=cpList$smoothed.bright)+
@@ -70,9 +70,14 @@ p2 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
 
 spe_sm = spe_pseudo
 
+#ggsave(file="plots/06_pseudobulk/low-UMI-cluster_conservative_silhouettes.png", 
+#       grid.arrange(p1, p2, ncol=2),
+#       bg="white", height=4, width=8)
+#cat("\nSaved silhouette plots to: plots/06_pseudobulk/low-UMI-cluster_conservative_silhouettes.png\n")
+#stop("Stop early, Seurat labels not completed with conservative results.")
 
 #label transfer
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_conservative_pseudo_sample-seurat-pc30_norm-filt.Rdata")
 ### detected genes filter is 10k across the board
 spe_pseudo$seurat_label_f = factor(as.character(spe_pseudo$seurat_label), 
                                    levels=c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"),
@@ -94,19 +99,19 @@ table(as.data.frame(colData(spe_pseudo))[,c("cond_sex","seurat_label_f")], useNA
 #...BPD M         19    20   20 20   20 20 20    19
 
 
-sil.results <- as.data.frame(approxSilhouette(reducedDim(spe_pseudo, "PCA_1663"), clusters=spe_pseudo$seurat_label_f))
+sil.results <- as.data.frame(approxSilhouette(reducedDim(spe_pseudo, "PCA_1626"), clusters=spe_pseudo$seurat_label_f))
 sil.results$closest <- factor(ifelse(sil.results$width > 0, as.character(sil.results$cluster), as.character(sil.results$other)))
 sil.results$closest <- factor(sil.results$closest, levels=levels(spe_pseudo$seurat_label_f))
 
 p3 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
   ggbeeswarm::geom_quasirandom()+scale_color_manual(values=cpList$transfer.bright)+
-  labs(x="Seurat cell-type label", title="Seurat labels", subtitle="with low UMI cluster spots")+
+  labs(x="Seurat cell-type label", title="Seurat labels", subtitle="PC30")+
   theme_minimal()+theme(text=element_text(size=10))
 
 spe_se_low.umi = spe_pseudo
 
 #label transfer (no low UMI)
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_conservative_pseudo_sample-seurat-pc20_norm-filt.Rdata")
 spe_pseudo$seurat_label_f = factor(as.character(spe_pseudo$seurat_label), 
                                    levels=c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"),
                                    labels=c("M.V","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
@@ -126,22 +131,22 @@ table(as.data.frame(colData(spe_pseudo))[,c("cond_sex","seurat_label_f")], useNA
 #...BPD F         20    20   20 20   20 20 20    19
 #...BPD M         19    20   20 20   20 20 20    20
 
-sil.results <- as.data.frame(approxSilhouette(reducedDim(spe_pseudo, "PCA_1663"), clusters=spe_pseudo$seurat_label_f))
+sil.results <- as.data.frame(approxSilhouette(reducedDim(spe_pseudo, "PCA_1626"), clusters=spe_pseudo$seurat_label_f))
 sil.results$closest <- factor(ifelse(sil.results$width > 0, as.character(sil.results$cluster), as.character(sil.results$other)))
 sil.results$closest <- factor(sil.results$closest, levels=levels(spe_pseudo$seurat_label_f))
 
 p4 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
   ggbeeswarm::geom_quasirandom()+scale_color_manual(values=cpList$transfer.bright)+
-  labs(x="Seurat cell-type label", title="Seurat labels", subtitle="without low UMI cluster spots")+
+  labs(x="Seurat cell-type label", title="Seurat labels", subtitle="PC20")+
   theme_minimal()+theme(text=element_text(size=10))
 
 spe_se_no.low.umi = spe_pseudo
 
 
-ggsave(file="plots/06_pseudobulk/low-UMI-cluster_silhouettes.png", 
+ggsave(file="plots/06_pseudobulk/low-UMI-cluster_conservative_silhouettes.png", 
        grid.arrange(p1, p2, p3, p4, ncol=2),
        bg="white", height=8, width=8)
-cat("\nSaved silhouette plots to: plots/06_pseudobulk/low-UMI-cluster_silhouettes.png\n")
+cat("\nSaved silhouette plots to: plots/06_pseudobulk/low-UMI-cluster_conservative_silhouettes.png\n")
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time(), tz="EST")
