@@ -11,32 +11,32 @@ set.seed(123)
 setAutoBlockSize(1e9)
 
 #load spe
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC-conservative_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 
 
 cpList <- readRDS("plots/colorPalettes.rds")
-seurat_pc = "pc30"
+seurat_pc = "pc20"
 
-res = read.csv(paste0("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered-conservative_ref-control_query-MBv-conservative_qual-genes-kanchor-50-",
+res = read.csv(paste0("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-MBv_qual-genes-kanchor-50-",
         seurat_pc, "_red-precast-kweight-50-low-res.csv"), row.names=1)
-#stopifnot(identical(rownames(colData(spe)), rownames(res)))
 spe = spe[,rownames(res)]
 res = res[colnames(spe),]
+stopifnot(identical(rownames(colData(spe)), rownames(res)))
 
-# remove low UMI cluster for L4 and Inhb
-cdata = read.csv("processed-data/05_clustering/PRECAST/colData_conservative_all-precast-clusters.csv", row.names=1)
-cdata = cdata[rownames(res),]
-cdata$predicted.id = res$predicted.id
-remove.spots = cdata$smoothed_k7_1626=="low UMI" & cdata$predicted.id %in% c("L4","Inhb")
-cdata2 = cdata[!remove.spots,]
+## remove low UMI cluster for L4 and Inhb
+#cdata = read.csv("processed-data/05_clustering/PRECAST/colData_conservative_all-precast-clusters.csv", row.names=1)
+#cdata = cdata[rownames(res),]
+#cdata$predicted.id = res$predicted.id
+#remove.spots = cdata$smoothed_k7_1626=="low UMI" & cdata$predicted.id %in% c("L4","Inhb")
+#cdata2 = cdata[!remove.spots,]
+#
+#spe = spe[,rownames(cdata2)]
+#res = res[colnames(spe),]
 
-spe = spe[,rownames(cdata2)]
-res = res[colnames(spe),]
-
-spe$seurat_label = factor(res$predicted.id, levels=c("Micro.Vasc","Astro","L2","L3","L4","Inhb","L5","L6","Oligo"),
-        ########## merging pc30 L2 and L3
-        labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","Inhb","L5","L6","Oligo"))
-
+spe$seurat_label = factor(res$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","Inhb","L5","L6","Oligo"),
+#        ########## merging pc30 L2 and L3
+#        labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","Inhb","L5","L6","Oligo"))
+	labels=c("Micro.Vasc","Astro","L2","L3","L4","Inhb","L5","L6","Oligo"))
 spe$cond_sex = factor(paste(spe$condition, spe$sex),
                         levels=c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M"))
 
@@ -63,13 +63,13 @@ p1 <- ggplot(mutate(cdata, x_lab= factor(sample_id, levels=order1$sample_id)),
        aes(x=x_lab, y=prop_spots, fill=seurat_label))+
   geom_bar(stat="identity", position="fill", color="black", linewidth=.3)+
   facet_wrap(vars(cond_sex), ncol=2, scales="free_x")+
-  scale_fill_manual(values=cpList$transfer.bright)+
+  scale_fill_manual(values=cpList$low.res.bright)+
   labs(title="Seurat label", x="sample ID", y="prop. of spots",
         fill=paste0("Seurat\n", seurat_pc))+
 	#fill=paste0("Seurat ", split.name[1], "\n", paste(split.name[2:3], collapse="/"), " ", split.name[4]))+
   theme_bw()+theme(axis.text.x= element_blank())
 
-ggsave(file=paste0("plots/05_clustering/Seurat/per-sample-proportions_conservative_", seurat_pc, "-filtered.png"),
+ggsave(file=paste0("plots/05_clustering/Seurat/per-sample-proportions_", seurat_pc, ".png"),
        p1,
        bg="white", width=7, height=9)
 
@@ -123,7 +123,7 @@ p1 <- plotSpots(spe_sub, x_coord=mod_spatialCoords1[,1], y_coord=mod_spatialCoor
 	sample_id="sample_id", annotate="seurat_label", point_size=.1)+
 	scale_color_manual(paste0("Seurat ", seurat_pc),
 		#paste0("Seurat ", split.name[1], "\n", paste(split.name[2:3], collapse="/"), " ", split.name[4]), 
-		values=cpList$transfer.bright)+
+		values=cpList$low.res.bright)+
 	facet_grid(rows=vars(cond_sex), cols=vars(facet_col), switch="y")+
 	geom_text(aes(x=0, y= -60,
 		label= ifelse(.data[["array_row"]]==5 & .data[["array_col"]]==13,
@@ -141,7 +141,7 @@ p2 <- plotSpots(spe_sub2, x_coord=mod_spatialCoords2[,1], y_coord=mod_spatialCoo
 	sample_id="sample_id", annotate="seurat_label", point_size=.1)+
 	scale_color_manual(paste0("Seurat ", seurat_pc),
 		#paste0("Seurat ", split.name[1], "\n", paste(split.name[2:3], collapse="/"), " ", split.name[4]), 
-		values=cpList$transfer.bright)+
+		values=cpList$low.res.bright)+
 	facet_grid(rows=vars(facet_row), cols=vars(facet_col), switch="y")+
 	theme(text=element_text(size=10), strip.background = element_rect(fill=NA, color=NA), panel.border=element_rect(fill=NA, color=NA),
 		strip.text.x = element_blank(),
@@ -151,11 +151,11 @@ p2 <- plotSpots(spe_sub2, x_coord=mod_spatialCoords2[,1], y_coord=mod_spatialCoo
 		legend.margin=margin(0,0,0,0,"pt"),
 		legend.box.margin = margin(0,2,0,2,"pt"))
 
-pdf(file=paste0("plots/05_clustering/Seurat/example-spot-plots_MBv-conservative_label-transfer-", seurat_pc, "-filtered.pdf"), height=10, width=8)
+pdf(file=paste0("plots/05_clustering/Seurat/example-spot-plots_MBv_label-transfer-", seurat_pc, ".pdf"), height=10, width=8)
 	print(p1)
 	print(p2)
 dev.off()
-cat("\nSpot plots saved to:",paste0("plots/05_clustering/Seurat/example-spot-plots_MBv-conservative_label-transfer-", seurat_pc, "-filtered.pdf"),"\n")
+cat("\nSpot plots saved to:",paste0("plots/05_clustering/Seurat/example-spot-plots_MBv_label-transfer-", seurat_pc, ".pdf"),"\n")
 
 print("\n\nReproducibility information:")
 format(Sys.time())
