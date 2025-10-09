@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=50G
-#SBATCH --job-name=plot_bd-tranfer_MBv-filtered-pc30
+#SBATCH --job-name=plot_bd-tranfer_MBv-filtered-conservative_pc30
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/Seurat/logs/%x_%j.log
 
 echo "**** Job starts ****"
