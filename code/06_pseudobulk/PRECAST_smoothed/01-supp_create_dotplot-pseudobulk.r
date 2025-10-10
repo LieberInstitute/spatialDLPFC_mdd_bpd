@@ -40,7 +40,7 @@ spe_summ = scuttle::aggregateAcrossCells(sce, ids=colData(spe)[,c("condition","s
 dim(spe_summ)
 
 #quick save checkpoints
-save(spe_summ, file="processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-heatmap_dx-sex-smoothed-n1663-k9.Rdata")
+save(spe_summ, file="processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-dotplot_dx-sex-smoothed-n1663-k9.Rdata")
 
 #remove repeated colData column for sample_id and cluster
 g1 = grep("smoothed", colnames(colData(spe_summ)))
@@ -72,8 +72,8 @@ colData(spe_summ)$condition = factor(spe_summ$condition, levels=c("NTC","MDD","B
 
 
 Sys.time()
-save(spe_summ, file="processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-heatmap_dx-sex-smoothed-n1663-k9.Rdata")
-cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-heatmap_dx-sex-smoothed-n1663-k9.Rdata")
+save(spe_summ, file="processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-dotplot_dx-sex-smoothed-n1663-k9.Rdata")
+cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-dotplot_dx-sex-smoothed-n1663-k9.Rdata")
 
 #update spe tracker
 #write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),

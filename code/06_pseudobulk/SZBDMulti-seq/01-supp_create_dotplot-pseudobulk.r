@@ -58,7 +58,7 @@ sce_summ = aggregateAcrossCells(sce_con, ids=colData(sce_con)[,c("Disorder","seu
 dim(sce_summ)
 
 #quick save checkpoints
-save(sce_summ, file="processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-heatmap_seurat-low-res.Rdata")
+save(sce_summ, file="processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-dotplot_seurat-low-res.Rdata")
 
 #remove repeated colData column for sample_id and cluster
 g1 = grep("seurat", colnames(colData(sce_summ)))
@@ -90,8 +90,8 @@ colData(sce_summ) = colData(sce_summ)[,c("Disorder","seurat_low.res","ncells")]
 
 
 Sys.time()
-save(sce_summ, file="processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-heatmap_seurat-low-res.Rdata")
-cat("\nPseudobulk sce saved to: processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-heatmap_seurat-low-res.Rdata")
+save(sce_summ, file="processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-dotplot_seurat-low-res.Rdata")
+cat("\nPseudobulk sce saved to: processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-dotplot_seurat-low-res.Rdata")
 
 #update spe tracker
 #write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),
