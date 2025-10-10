@@ -7,14 +7,14 @@ suppressPackageStartupMessages({
 
 set.seed(123)
 
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_conservative_pseudo_sample-seurat-pc30_norm-filt.Rdata")
 dim(spe_pseudo)
 
-spe_pseudo$pc3 = reducedDim(spe_pseudo)[,"PC3"]
+spe_pseudo$pc2 = reducedDim(spe_pseudo)[,"PC2"]
 
-cat("\nenrichment model: ~ seurat_label + condition + sex + nspots + pc3\n")
+cat("\nenrichment model: ~ seurat_label + condition + sex + nspots + pc2\n")
 var_registration = "seurat_label"
-covars = c("condition","sex","nspots","pc3")
+covars = c("condition","sex","nspots","pc2")
 
 #following guidance of spatialLIBD function to create contrast matrices
 cluster_idx <- split(seq(along = spe_pseudo[[var_registration]]), spe_pseudo[[var_registration]])
@@ -42,13 +42,13 @@ modelList <- lapply(cluster_idx, function(x) {
 
 
 cat("\nvoom applied = FALSE\n")
-cor_mod = model.matrix(~0 + seurat_label + condition + sex + nspots + pc3, data=colData(spe_pseudo))
+cor_mod = model.matrix(~0 + seurat_label + condition + sex + nspots + pc2, data=colData(spe_pseudo))
 corfit <- duplicateCorrelation(logcounts(spe_pseudo), design=cor_mod, block=spe_pseudo$sample_id)
 fitList <- bplapply(modelList, function(x) {
 	lmFit(logcounts(spe_pseudo), design=x, block=spe_pseudo$sample_id, correlation=corfit$consensus)
 }, BPPARAM=MulticoreParam(workers=8))
-saveRDS(fitList, "processed-data/06_pseudobulk/Seurat/lmFit-list_seurat-pc30-no-lowUMI_covars-condition-sex-nspots-pc3.rda")
-cat("\nlmFit objects with enrichment results saved to: processed-data/06_pseudobulk/Seurat/lmFit-list_seurat-pc30-no-lowUMI_covars-condition-sex-nspots-pc3.rda\n")
+saveRDS(fitList, "processed-data/06_pseudobulk/Seurat/lmFit-list_conservative_seurat-pc30_covars-condition-sex-nspots-pc2.rda")
+cat("\nlmFit objects with enrichment results saved to: processed-data/06_pseudobulk/Seurat/lmFit-list_conservative_seurat-pc30_covars-condition-sex-nspots-pc2.rda\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()
