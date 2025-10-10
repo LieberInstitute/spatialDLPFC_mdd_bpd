@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --ntasks=8
 #SBATCH --mem=5G
-#SBATCH --job-name=layer-enrich_lmFit
+#SBATCH --job-name=layer-enrich_lmFit_revised-pb-filters
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/06_pseudobulk/PRECAST_smoothed/logs/%x_%j.log
 
 echo "**** Job starts ****"

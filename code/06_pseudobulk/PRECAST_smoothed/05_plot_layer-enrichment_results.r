@@ -18,7 +18,7 @@ dim(rdata) #36601 7
 rm(spe)
 
 #load in sce for heatmap and dotplots
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-heatmap_dx-sex-smoothed-n1663-k9.Rdata")
+load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-dotplot_dx-sex-smoothed-n1663-k9.Rdata")
 cond_sex = c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M")
 precast_levels= c("L1","L2","L3.4","L5","L6","WM")
 spe_summ$sample_id = factor(paste(spe_summ$condition, spe_summ$sex, spe_summ$smoothed_k9_1663),
