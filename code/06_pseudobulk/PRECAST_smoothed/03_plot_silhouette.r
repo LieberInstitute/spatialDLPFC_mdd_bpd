@@ -70,7 +70,7 @@ p3 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
 
 
 ggsave(file="plots/06_pseudobulk/PRECAST_smoothed/PRECAST_silhouettes.png", 
-       grid.arrange(p1, p2, p3, layout_matrix=rbind(c(1,2),c(NA,3))),
+       grid.arrange(p1, p2, p3, layout_matrix=rbind(c(1,NA),c(2,3))),
        bg="white", height=8, width=8)
 cat("\nSaved silhouette plots to: plots/06_pseudobulk/PRECAST_smoothed/PRECAST_silhouettes.png\n")
 
