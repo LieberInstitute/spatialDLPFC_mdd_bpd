@@ -13,7 +13,8 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 cpList = readRDS("plots/colorPalettes.rds")
-low.res.pal = cpList$transfer.bright
+#low.res.pal = cpList$transfer.bright
+low.res.pal = cpList$low.res.bright
 #low.res.pal = c("Astro"="#cfa45c","Micro.Vasc"="#911223",
 #                "Inhb"="#9377AC",
 #		"L2"="#5D9940", "L3"="#5095CD",
@@ -22,13 +23,14 @@ low.res.pal = cpList$transfer.bright
 #                "L5"="#ddc94e","L6"="#E45C5F",
 #                "Oligo"="#D1C4B0")
 
-load("processed-data/06_pseudobulk/Seurat/spe_n119_conservative_pseudo_sample-seurat-pc30.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc20.Rdata")
 dim(spe_pseudo) 
 
 #rename seurat labels so that it fits in plot
 colnames(colData(spe_pseudo))[grep("^seurat_", colnames(colData(spe_pseudo)))] = "seurat_label"
 
-spe_pseudo$seurat_label = factor(spe_pseudo$seurat_label, levels=c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
+spe_pseudo$seurat_label = factor(spe_pseudo$seurat_label, levels=c("Micro.Vasc","Astro","L2","L3","L4","Inhb","L5","L6","Oligo"))
+#spe_pseudo$seurat_label = factor(spe_pseudo$seurat_label, levels=c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
 
 #filter by expression before recalculating norm counts
 rowData(spe_pseudo)$high_expr_group_sample_id <- filterByExpr(spe_pseudo, group = spe_pseudo$sample_id)
@@ -121,9 +123,9 @@ p4 <- ggplot(cdata, aes(x=condition, y=subsets_mito_percent))+
   theme_bw()+labs(title="Fraction of chrM reads per pseudobulked sample", y="subsets_mito_percent")+
   theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
-ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc30_conservative_unfiltered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
+ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc20_unfiltered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
         bg="white", width=12, height=12, units="in")
-cat("\nQC plots saved to: plots/06_pseudobulk/Seurat/sample-seurat-pc30_conservative_unfiltered_QC-metrics.png\n")
+cat("\nQC plots saved to: plots/06_pseudobulk/Seurat/sample-seurat-pc20_unfiltered_QC-metrics.png\n")
 
 #remove MT- genes prior to calculating norm factors (this improves histogram of norm factors)
 spe_pseudo = spe_pseudo[-grep("MT-", rowData(spe_pseudo)$gene_name),]
@@ -135,7 +137,7 @@ logcounts(spe_pseudo) <- x
 
 
 #PCA before filtering reveals one component dominated by low detected genes samples
-geneList <- readRDS("processed-data/04_feature_selection/nnSVG-eval_conservative_geneList.rds")
+geneList <- readRDS("processed-data/04_feature_selection/nnSVG-eval_geneList.rds")
 n1663.ids = rownames(spe_pseudo)[rowData(spe_pseudo)$gene_name %in% geneList$qual_genes]
 length(n1663.ids)
 
@@ -153,14 +155,14 @@ exp.vars.colors = c("#FB8072", "#80B1D3",
                     "#CCEBC5", "#D9D9D9","black")
 names(exp.vars.colors) = exp.vars
 
-spe_pseudo <- runPCA(spe_pseudo, subset_row=n1663.ids, exprs_values="logcounts", name="PCA_1626")
-p1 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1626", variables=exp.vars)+
+spe_pseudo <- runPCA(spe_pseudo, subset_row=n1663.ids, exprs_values="logcounts", name="PCA_1663")
+p1 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", variables=exp.vars)+
         scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
-p2 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1626", npcs_to_plot=20, variables=exp.vars)+
+p2 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", npcs_to_plot=20, variables=exp.vars)+
         scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
-p3 <- plotReducedDim(spe_pseudo, dimred="PCA_1626", ncomponents=2, colour_by = "seurat_label", point_alpha=1)+
+p3 <- plotReducedDim(spe_pseudo, dimred="PCA_1663", ncomponents=2, colour_by = "seurat_label", point_alpha=1)+
         scale_color_manual("", values=low.res.pal)
-p4 <- plotPCA(spe_pseudo, dimred="PCA_1626", ncomponents=4, colour_by = "seurat_label")+
+p4 <- plotPCA(spe_pseudo, dimred="PCA_1663", ncomponents=4, colour_by = "seurat_label")+
         scale_color_manual("", values=low.res.pal)
 
 #retroactively modify linewidth and point size
@@ -191,22 +193,22 @@ bp1 <- ggplot(group_by(cdata, cond_sex, seurat_label) %>% summarise(n_total=sum(
 	legend.position="bottom")
 
 #PCA colored by detected
-p5 <- plotPCA(spe_pseudo, dimred="PCA_1626", ncomponents=4, colour_by = "detected")+
+p5 <- plotPCA(spe_pseudo, dimred="PCA_1663", ncomponents=4, colour_by = "detected")+
         scale_color_viridis_c("detected\ngenes")
 q5 = ggplot_build(p5)
 q5$data[[2]]$size = 1
 q5 = ggplot_gtable(q5)
 
-ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc30_conservative_unfiltered_PCA-1626-eval.png",
+ggsave("plots/06_pseudobulk/Seurat/sample-seurat-pc20_unfiltered_PCA-1663-eval.png",
 	gridExtra::grid.arrange(q1, q2, p3, q4, bp1, q5, layout_matrix=cbind(c(1,3,3,5,5),c(2,4,4,6,6))),
         bg="white", height=12, width=12, units="in")
-cat("\nPCA eval plots saved to: plots/06_pseudobulk/Seurat/sample-seurat-pc30_conservative_unfiltered_PCA-1626-eval.png\n")
+cat("\nPCA eval plots saved to: plots/06_pseudobulk/Seurat/sample-seurat-pc20_unfiltered_PCA-1663-eval.png\n")
 
 
-save(spe_pseudo, file="processed-data/06_pseudobulk/Seurat/spe_n119_conservative_pseudo_sample-seurat-pc30_norm.Rdata")
+save(spe_pseudo, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc20_norm.Rdata")
 
 ##### stop early to evaluate filters then run again
-#stop("Evaluate plots then continue")
+stop("Evaluate plots then continue")
 #####
 
 #apply sample filter (simple)
