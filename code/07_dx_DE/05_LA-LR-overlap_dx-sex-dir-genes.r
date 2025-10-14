@@ -1,3 +1,6 @@
+args = commandArgs(TRUE)
+print(args[[1]])
+
 setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
 suppressPackageStartupMessages({
 	library(SpatialExperiment)
@@ -13,15 +16,16 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 cpList = readRDS("plots/colorPalettes.rds")
+dx_sex_dir = args[[1]]
 
 # load DE model results
 ## PRECAST smoothed
-adj.results_sm = read.csv("processed-data/07_dx_DE/layer-adjusted-age_smoothed-k9-1663_compiled-results.csv", row.names = 1) %>%
+adj.results_sm = read.csv("processed-data/07_dx_DE/layer-adjusted-age_smoothed-k9-1663_rev-gene-input_compiled-results.csv", row.names = 1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased", "increased")))
 
-restr.results_sm <- read.csv("processed-data/07_dx_DE/layer-restricted-age_smoothed-k9-1663_compiled-results.csv", row.names=1) %>%
+restr.results_sm <- read.csv("processed-data/07_dx_DE/layer-restricted-age_smoothed-k9-1663_rev-gene-input_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          smoothed=factor(cluster, levels=c("L1","L2","L3.4","L5","L6","WM")),
@@ -29,12 +33,12 @@ restr.results_sm <- read.csv("processed-data/07_dx_DE/layer-restricted-age_smoot
 
 
 ## Seurat label transfer
-adj.results_se = read.csv("processed-data/07_dx_DE/layer-adjusted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+adj.results_se = read.csv("processed-data/07_dx_DE/layer-adjusted-age_seurat-pc30_rev-gene-input_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased", "increased")))
 
-restr.results_se <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+restr.results_se <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seurat-pc30_rev-gene-input_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          seurat_label_f=factor(cluster, levels=c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Oligo","Inhb"),
@@ -43,14 +47,14 @@ restr.results_se <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seura
 
 # load overlaps gene lists
 
-saveList <- readRDS("processed-data/07_dx_DE/LA-LR-overlap_lists.rds")
+saveList <- readRDS("processed-data/07_dx_DE/LA-LR-overlap_rev-gene-input_lists.rds")
 
 # load spe for heatmap
 
 load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
 spe_sm <- spe_pseudo
 
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
 spe_se <- spe_pseudo
 spe_se$seurat_label_f = factor(spe_se$seurat_label, levels=c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Inhb","Oligo"),
                                labels=c("M.V","Astro","L2.3","L4","L5","L6","Inhb","Oligo"))
@@ -58,7 +62,7 @@ spe_se$seurat_label_f = factor(spe_se$seurat_label, levels=c("Micro.Vasc","Astro
 
 # define dx*sex dir to plot
 
-dx_sex_dir = "NTC.BPD_M_up"
+#dx_sex_dir = "NTC.BPD_M_up"
 
 
 tmp = unlist(strsplit(dx_sex_dir, "_"))
@@ -243,18 +247,26 @@ plist <- lapply(test_genes, function(x) {
 })
 
 ##for NTC.MDD F up, because there are so many, make 2 rows per page and make pages bigger
-#plist = marrangeGrob(plist, nrow=2, ncol=1, top = NULL)
+if(dx_sex_dir=="NTC.MDD_F_up") {
+	plist = marrangeGrob(plist, nrow=2, ncol=1, top = NULL)
+}
 
 plotList = c(plotList, plist)
 
 
 # save plots to multi-page pdf
-
-ggsave(file=paste0("plots/07_dx_DE/LA-LR-overlap_", target_group, "-", target_sex, "-", target_dir2, ".pdf"),
-       marrangeGrob(plotList, nrow=1, ncol=1, top = NULL),
-       height=5, width=8)
+if(dx_sex_dir=="NTC.MDD_F_up") {
+	ggsave(file=paste0("plots/07_dx_DE/LA-LR-overlap_rev-gene-input_", target_group, "-", target_sex, "-", target_dir2, ".pdf"),
+                marrangeGrob(plotList, nrow=1, ncol=1, top = NULL),
+                height=11, width=8)
+} else {
+	ggsave(file=paste0("plots/07_dx_DE/LA-LR-overlap_rev-gene-input_", target_group, "-", target_sex, "-", target_dir2, ".pdf"),
+		marrangeGrob(plotList, nrow=1, ncol=1, top = NULL),
+		height=5, width=8)
 	#height=11, width=8)
-cat("\n\nSaved compiled pdf to:", paste0("plots/07_dx_DE/LA-LR-overlap_", target_group, "-", target_sex, "-", target_dir2, ".pdf"))
+}
+
+cat("\n\nSaved compiled pdf to:", paste0("plots/07_dx_DE/LA-LR-overlap_rev-gene-input_", target_group, "-", target_sex, "-", target_dir2, ".pdf"))
 
 
 cat("\n\nReproducibility information:\n")

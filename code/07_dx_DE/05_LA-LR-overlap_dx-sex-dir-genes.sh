@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=plot_LA-LR-overlap_NTC.BPD-M-up
-#SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/logs/%x_%j.log
+#SBATCH --job-name=plot_LA-LR-overlap_rev-gene-input
+#SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/logs/%x_%j_%a.log
+#SBATCH --array=1-6
 
 echo "**** Job starts ****"
 date
@@ -17,7 +18,9 @@ echo "n Tasks: ${SLURM_NTASKS}"
 module load conda_R/4.4.x
 module list
 
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/05_LA-LR-overlap_dx-sex-dir-genes.r
+input=$(head -n $SLURM_ARRAY_TASK_ID /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/05-supp_LA-LR-overlap_groups.txt | tail -n 1)
+echo $input
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/05_LA-LR-overlap_dx-sex-dir-genes.r $input
 
 echo "**** Job ends ****"
 date

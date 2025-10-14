@@ -39,9 +39,11 @@ groupContrasts <- function(.fit_results, .comparisons, add_covar=NULL, return_co
   
   #add covar
   if(!is.null(add_covar)) {
-    cont_mtx = cbind(cont_mtx, "tmp"=0)
-    colnames(cont_mtx)[ncol(cont_mtx)] = add_covar
-    cont_mtx[add_covar, add_covar] = 1
+    for(j in add_covar) {
+      cont_mtx = cbind(cont_mtx, "tmp"=0)
+      colnames(cont_mtx)[ncol(cont_mtx)] = j
+      cont_mtx[j, j] = 1
+    }
   }
   
   #change "dot" in rownames to match with coef names

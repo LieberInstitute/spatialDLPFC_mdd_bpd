@@ -19,12 +19,12 @@ cpList = readRDS("plots/colorPalettes.rds")
 
 # load DE model results
 ## PRECAST smoothed
-adj.results_sm = read.csv("processed-data/07_dx_DE/layer-adjusted-age_smoothed-k9-1663_compiled-results.csv", row.names = 1) %>%
+adj.results_sm = read.csv("processed-data/07_dx_DE/layer-adjusted-age_smoothed-k9-1663_rev-gene-input_compiled-results.csv", row.names = 1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased", "increased")))
 
-restr.results_sm <- read.csv("processed-data/07_dx_DE/layer-restricted-age_smoothed-k9-1663_compiled-results.csv", row.names=1) %>%
+restr.results_sm <- read.csv("processed-data/07_dx_DE/layer-restricted-age_smoothed-k9-1663_rev-gene-input_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          smoothed=factor(cluster, levels=c("L1","L2","L3.4","L5","L6","WM")),
@@ -32,12 +32,12 @@ restr.results_sm <- read.csv("processed-data/07_dx_DE/layer-restricted-age_smoot
 
 
 ## Seurat label transfer
-adj.results_se = read.csv("processed-data/07_dx_DE/layer-adjusted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+adj.results_se = read.csv("processed-data/07_dx_DE/layer-adjusted-age_seurat-pc30_rev-gene-input_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          dir= factor(sign(logFC), levels=c(-1,1), labels=c("decreased", "increased")))
 
-restr.results_se <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seurat-pc30-no-lowUMI_compiled-results.csv", row.names=1) %>%
+restr.results_se <- read.csv("processed-data/07_dx_DE/layer-restricted-age_seurat-pc30_rev-gene-input_compiled-results.csv", row.names=1) %>%
   mutate(sex= factor(sex, levels=c("F","M")),
          group= factor(group, levels=c("NTC.MDD","NTC.BPD","MDD.BPD")),
          seurat_label_f=factor(cluster, levels=c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Oligo","Inhb"),
@@ -107,8 +107,8 @@ saveList <- list("sig_genes"= checkList2,
 	"LA.LR_overlap"= checkList3,
 	"LA.LR_both.annotations"= checkList4
 )
-saveRDS(saveList, "processed-data/07_dx_DE/LA-LR-overlap_lists.rds")
-cat("\n\nOverlaps list saved to: processed-data/07_dx_DE/LA-LR-overlap_lists.rds\n")
+saveRDS(saveList, "processed-data/07_dx_DE/LA-LR-overlap_rev-gene-input_lists.rds")
+cat("\n\nOverlaps list saved to: processed-data/07_dx_DE/LA-LR-overlap_rev-gene-input_lists.rds\n")
 
 
 # format for volcano plots
@@ -354,7 +354,7 @@ grobList2 = lapply(1:nrow(tmp.mtx), function(x) {
 
 
 # compile pdf
-pdf(file="plots/07_dx_DE/LA-LR-overlap_summary.pdf", height=11, width=8)
+pdf(file="plots/07_dx_DE/LA-LR-overlap_rev-gene-input_summary.pdf", height=11, width=8)
 #p1
 grid.arrange(rasterize(volcanoList$sm_single+theme(plot.margin = ggplot2::margin(1,1,1,1, unit="cm")), dpi=200), 
              barList$sm_la+theme(aspect.ratio=1), 
@@ -372,7 +372,7 @@ grid.arrange(grobList2[[1]], grobList2[[2]],
 grid.arrange(rasterize(volcanoList$sm_both+theme(plot.margin = ggplot2::margin(1,1,1,1, unit="cm")), dpi=200), 
              rasterize(volcanoList$se_both+theme(plot.margin = ggplot2::margin(1,1,1,1, unit="cm")), dpi=200), ncol=1, top="L-A & L-R in both annotations")
 dev.off()
-cat("\n\nSaved L-A and L-R overlap strategy summary to: plots/07_dx_DE/LA-LR-overlap_summary.pdf\n")
+cat("\n\nSaved L-A and L-R overlap strategy summary to: plots/07_dx_DE/LA-LR-overlap_rev-gene-input_summary.pdf\n")
 
 
 cat("\n\nReproducibility information:\n")
