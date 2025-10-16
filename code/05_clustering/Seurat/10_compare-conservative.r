@@ -98,9 +98,9 @@ tmp.df = group_by(tmp.df, reference) %>% mutate(Total=sum(Freq)) %>% ungroup() %
 
 p2 <- ggplot(tmp.df, aes(y=query, x=reference, fill=Prop))+
   geom_tile(color="grey50", linewidth=.3)+scale_fill_gradient(low="white",high="black", limits=c(0,1))+
-  geom_text(data=union(group_by(tmp.df, query) %>% slice_max(n=2, Freq), 
-                       group_by(tmp.df, reference) %>% slice_max(n=2, Freq)) %>% 
-              filter(Prop>.1) %>%
+  geom_text(data=#union(group_by(tmp.df, query) %>% slice_max(n=2, Freq), 
+                 #      group_by(tmp.df, reference) %>% slice_max(n=2, Freq)) %>% 
+              filter(tmp.df, Prop>.1) %>%
               mutate(text_value= paste0(round(Freq/1000, 1), "k")), 
             aes(label=text_value), color="red", size=2, fontface="bold")+
   scale_x_discrete(labels=c("Micro/\nVasc", levels(tmp.df$reference)[2:9],"QC\nremoved"))+
@@ -119,9 +119,9 @@ tmp.df2 = group_by(tmp.df2, reference) %>% mutate(Total=sum(Freq)) %>% ungroup()
 
 p2.s <- ggplot(tmp.df2, aes(y=query, x=reference, fill=Prop))+
   geom_tile(color="grey50", linewidth=.3)+scale_fill_gradient(low="white",high="black", limits=c(0,1))+
-  geom_text(data=union(group_by(tmp.df2, query) %>% slice_max(n=2, Freq), 
-                       group_by(tmp.df2, reference) %>% slice_max(n=2, Freq)) %>% 
-              filter(Prop>.1) %>%
+  geom_text(data=#union(group_by(tmp.df2, query) %>% slice_max(n=2, Freq), 
+                 #      group_by(tmp.df2, reference) %>% slice_max(n=2, Freq)) %>% 
+              filter(tmp.df2, Prop>.1) %>%
               mutate(text_value= paste0(round(Freq/1000, 1), "k")), 
             aes(label=text_value), color="red", size=2, fontface="bold")+
   scale_x_discrete(labels=c("Micro/\nVasc",levels(tmp.df2$reference)[2:8],"QC\nremoved"))+
