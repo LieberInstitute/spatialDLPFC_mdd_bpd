@@ -1,4 +1,4 @@
-dotplotDF <- function(source_sce, gene_id_list, summarize_groups=FALSE, cluster_labels=NULL, swap_rownames=NULL) {
+dotplotDF <- function(source_sce, gene_id_list, summarize_groups=FALSE, cluster_labels=NULL, swap_rownames=NULL, row_data=rdata) {
  # if(!"rdata" %in% ls()) rdata = as.data.frame(rowData(source_sce))
   if(!is.null(swap_rownames)) {
     gene_id_list = rownames(source_sce)[rowData(source_sce)[[swap_rownames]] %in% gene_id_list]
@@ -8,8 +8,9 @@ dotplotDF <- function(source_sce, gene_id_list, summarize_groups=FALSE, cluster_
                          tibble::rownames_to_column(as.data.frame(t(scale(t(assay(source_sce, "logcounts.mean")[gene_id_list,])))), var="gene_id") %>%
                            tidyr::pivot_longer(colnames(source_sce), names_to="clusters", values_to="mean_expr_scaled")) %>%
     left_join(tibble::rownames_to_column(as.data.frame(assay(source_sce, "logcounts.prop.detected")[gene_id_list,]), var="gene_id") %>%
-                tidyr::pivot_longer(colnames(source_sce), names_to="clusters", values_to="prop_spots")) %>%
-    left_join(rdata[,c("gene_id","gene_name","gene_type")], by="gene_id")
+                tidyr::pivot_longer(colnames(source_sce), names_to="clusters", values_to="prop_spots"))# %>%
+    if(!is.null(row_data)) dotplot.df = left_join(dotplot.df, rdata[,c("gene_id","gene_name","gene_type")], by="gene_id")
+    if(!is.null(swap_rownames)) dotplot.df[[swap_rownames]] = rowData(source_sce)[dotplot.df$gene_id, swap_rownames]
   if(!summarize_groups) {return(dotplot.df)}
   else {
     if(is.null(cluster_labels)) {error("To summarize by groups, name of colData column of clusters to summarize to must be provided as 'cluster_labels'.")}
@@ -17,8 +18,10 @@ dotplotDF <- function(source_sce, gene_id_list, summarize_groups=FALSE, cluster_
     cdata$new_clusters = cdata[[cluster_labels]]
     dotplot.df2 = left_join(dotplot.df, cdata[,c("sample_id","new_clusters")],
                             by=c("clusters"="sample_id")) %>%
-      group_by(new_clusters, gene_name, gene_id, gene_type) %>% summarise_at(c("mean_expr_scaled","prop_spots"), mean)
+      group_by(new_clusters, gene_id) %>% summarise_at(c("mean_expr_scaled","prop_spots"), mean)
     colnames(dotplot.df2)[grep("new_clusters", colnames(dotplot.df2))] = "clusters"
+    if(!is.null(row_data)) dotplot.df2 = left_join(dotplot.df2, rdata[,c("gene_id","gene_name","gene_type")], by="gene_id")
+    if(!is.null(swap_rownames)) dotplot.df2[[swap_rownames]] = rowData(source_sce)[dotplot.df2$gene_id, swap_rownames]
     return(dotplot.df2)
   }
 }
