@@ -15,10 +15,34 @@ rm(seu_con)
 #load seu_con with original genes
 load("processed-data/05_clustering/Seurat/seurat_SZBDMulti-seq_control_processed-SCT.Rdata")
 
-#transfer cluster labels
-seu_con$seurat_low.res <- factor(as.character(mdata$seurat_low.res), 
-	levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
-	labels=c("Micro.Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"))
+##transfer cluster labels
+#seu_con$seurat_low.res <- factor(as.character(mdata$seurat_low.res), 
+#	levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
+#	labels=c("Micro.Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"))
+seu_con$azimuth_broad <- factor(as.character(seu_con$azimuth),
+                                levels=c("Endo","PC","SMC","VLMC",
+                                         "Immune","Micro",
+                                         "Astro",
+                                         "L2/3 IT", "L4 IT",
+                                         "L5 IT", "L5 ET", "L5/6 NP",
+                                         "L6 IT","L6 IT Car3","L6 CT","L6b",
+                                         "Oligo","OPC",
+                                         "Sncg","Pax6","Vip",
+                                         "Lamp5","Lamp5 Lhx6",
+                                         "Sst","Sst Chodl","Pvalb",
+                                         "Chandelier"),
+                                labels=c("Vasc","Vasc","Vasc","Vasc",
+                                         "Micro","Micro",
+                                         "Astro",
+                                         "L2/3","L4",
+                                         "L5","L5","L5",
+                                         "L6","L6","L6","L6",
+                                         "Oligo","Oligo",
+                                         "CGE VIP","CGE VIP","CGE VIP",
+                                         "CGE LAMP5","CGE LAMP5",
+                                         "MGE SST", "MGE SST", "MGE PVALB",
+                                         "Chandelier")
+)
 
 #to sce
 ### feature/row data
@@ -34,13 +58,15 @@ colnames(mtx) = colnames(seu_con[["RNA"]])
 
 ### metadata/coldata
 cdata = seu_con@meta.data[,c("Channel","demux_type","assignment",#"anno","subclass","azimuth",
-	"individualID","Cohort","Biological_Sex","Age_death","Disorder","seurat_low.res")]
+	"individualID","Cohort","Biological_Sex","Age_death","Disorder","azimuth_broad")]
+	#"seurat_low.res")]
 
 rm(seu_con)
 sce_con <- SingleCellExperiment(assays = list(counts = mtx), colData=cdata)
 rowData(sce_con) = fdata
 sce_con
-table(colData(sce_con)$seurat_low.res, useNA="ifany")
+#table(colData(sce_con)$seurat_low.res, useNA="ifany")
+table(colData(sce_con)$azimuth_broad, useNA="ifany")
 
 #normalization
 format(Sys.time())
@@ -49,19 +75,22 @@ sce_con <- computeLibraryFactors(sce_con)
 sce_con <- logNormCounts(sce_con)
 
 #pseudobulk raw counts
-cat("\nPseudobulk sce by: Disorder, seurat_low.res\n")
+#cat("\nPseudobulk sce by: Disorder, seurat_low.res\n")
+cat("\nPseudobulk sce by: Disorder, azimuth_broad\n")
 
-sce_summ = aggregateAcrossCells(sce_con, ids=colData(sce_con)[,c("Disorder","seurat_low.res")], 
+sce_summ = aggregateAcrossCells(sce_con, ids=colData(sce_con)[,c("Disorder","azimuth_broad")],
+		#"seurat_low.res")], 
                             statistics=c("mean","prop.detected"),
                             use.assay.type="logcounts")
 
 dim(sce_summ)
 
 #quick save checkpoints
-save(sce_summ, file="processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-dotplot_seurat-low-res.Rdata")
+save(sce_summ, file="processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-dotplot_azimuth-broad.Rdata")
 
 #remove repeated colData column for sample_id and cluster
-g1 = grep("seurat", colnames(colData(sce_summ)))
+#g1 = grep("seurat", colnames(colData(sce_summ)))
+g1 = grep("azimuth", colnames(colData(sce_summ)))
 if(length(g1)>1) colData(sce_summ)[,g1[[2]]] <- NULL
 g2 = grep("Disorder", colnames(colData(sce_summ)))
 if(length(g2)>1) colData(sce_summ)[,g2[[2]]] <- NULL
@@ -79,19 +108,13 @@ if(length(g2)>1) colData(sce_summ)[,g2[[2]]] <- NULL
 #spatialCoords(spe_summ) <-NULL
 
 #keep only sample level coldata
-colData(sce_summ) = colData(sce_summ)[,c("Disorder","seurat_low.res","ncells")]
-	#"sex","condition",
-	#"PMI","RIN","slide","array","MBv_sample","seq","round",
-	#"seurat_qual.genes_pc20.kweight50",
-	#"seurat_qual.genes_pc30.kweight50",
-	#"nspots")]
-#colData(spe_summ)$condition = factor(spe_summ$condition, levels=c("NTC","MDD","BPD"))
-#colData(spe_summ)$seurat_label = colData(spe_summ)$seurat_qual.genes_pc30.kweight50
+#colData(sce_summ) = colData(sce_summ)[,c("Disorder","seurat_low.res","ncells")]
+colData(sce_summ) = colData(sce_summ)[,c("Disorder","azimuth_broad","ncells")]
 
 
 Sys.time()
-save(sce_summ, file="processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-dotplot_seurat-low-res.Rdata")
-cat("\nPseudobulk sce saved to: processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-dotplot_seurat-low-res.Rdata")
+save(sce_summ, file="processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-dotplot_azimuth-broad.Rdata")
+cat("\nPseudobulk sce saved to: processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-dotplot_azimuth-broad.Rdata")
 
 #update spe tracker
 #write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),
