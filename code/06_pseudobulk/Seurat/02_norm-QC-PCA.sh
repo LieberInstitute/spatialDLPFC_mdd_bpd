@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=norm_QC_PCA_seurat-pc20_save-unfiltered_prior-count-2_no-MT-genes
+#SBATCH --job-name=norm_QC_PCA_seurat-pc30-no-lowUMI_save-unfiltered_prior-count-2_no-MT-genes
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/06_pseudobulk/Seurat/logs/%x_%j.log
 
 echo "**** Job starts ****"

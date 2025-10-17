@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=plot_silhouette_conservative
+#SBATCH --job-name=plot_silhouette_with-no-lowUMI
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/06_pseudobulk/Seurat/logs/%x_%j.log
 
 echo "**** Job starts ****"
