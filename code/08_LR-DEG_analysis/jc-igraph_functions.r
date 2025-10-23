@@ -30,8 +30,8 @@ formatJaccardIGRAPH <- function(fgsea_results, .group, .cluster) {
   e.df= filter(jc.df, jaccard>0)
 
   
-  lr.both.dir = c(lrList[[paste0(x,"_dn")]][["LR_sig"]][[unlist(strsplit(res_file, "-"))[[1]]]][[y]],
-                  lrList[[paste0(x,"_up")]][["LR_sig"]][[unlist(strsplit(res_file, "-"))[[1]]]][[y]])
+  lr.both.dir = c(lrList[[paste0(x,"_dn")]][["LR_sig"]][[unlist(strsplit(res_file, "-"))[[1]]]][[.cluster]],
+                  lrList[[paste0(x,"_up")]][["LR_sig"]][[unlist(strsplit(res_file, "-"))[[1]]]][[.cluster]])
   la.both.dir = c(saveList[["sig_genes"]][[paste0(x,"_dn")]][[paste0("adj_", substr(res_file, start=0, stop=2))]],
                   saveList[["sig_genes"]][[paste0(x,"_up")]][[paste0("adj_", substr(res_file, start=0, stop=2))]])
   
@@ -41,7 +41,7 @@ formatJaccardIGRAPH <- function(fgsea_results, .group, .cluster) {
                     "LA_in_leadingEdge"=sapply(lapply(ledge, intersect, y=la.both.dir), length),
                     "LR.or.LA_in_leadingEdge"=sapply(lapply(ledge, intersect, y=union(la.both.dir, lr.both.dir)), length), 
                     "source"=rep(unlist(strsplit(res_file, "-"))[[1]], length(ledge)),
-                    "cluster"=rep(y, length(ledge)),
+                    "cluster"=rep(.cluster, length(ledge)),
                     row.names=NULL)
   ## pretty names
   if(gmt_db=="Reactome") {
