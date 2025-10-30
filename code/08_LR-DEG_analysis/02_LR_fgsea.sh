@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=5G
-#SBATCH --job-name=LR-fgsea_wikipathways_seurat-pc30
+#SBATCH --mem=7G
+#SBATCH --job-name=LR-fgsea_GO-cc_smoothed
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_LR-DEG_analysis/logs/%x_%j.log
 
 echo "**** Job starts ****"

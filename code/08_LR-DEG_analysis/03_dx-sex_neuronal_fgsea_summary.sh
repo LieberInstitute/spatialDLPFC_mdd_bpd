@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=plot_neuronal-fgsea-summary_WikiPathways
+#SBATCH --job-name=plot_neuronal-fgsea-summary_smoothed_GO-CC
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_LR-DEG_analysis/logs/%x_%j_%a.log
 #SBATCH --array=1-5
 

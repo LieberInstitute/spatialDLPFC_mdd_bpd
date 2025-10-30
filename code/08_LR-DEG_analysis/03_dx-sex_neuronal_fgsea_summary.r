@@ -21,20 +21,24 @@ source("code/08_LR-DEG_analysis/jc-igraph_functions.r")
 
 cpList = readRDS("plots/colorPalettes.rds")
 
+if(!dir.exists(paste0("plots/08_LR-DEG_analysis/", gsub("\\.","-", gsub("_","-",x))))) dir.create(paste0("plots/08_LR-DEG_analysis/", gsub("\\.","-", gsub("_","-",x))))
+
 #load DEG lists
 lrList = readRDS("processed-data/08_LR-DEG_analysis/LR-paired_rev-gene-input_logFC-0.3_lists.rds")
 saveList <- readRDS("processed-data/07_dx_DE/LA-LR-overlap_rev-gene-input_lists.rds")
 
 #gmt_db = "Reactome"
-gmt_db = "WikiPathways"
+##gmt_db = "WikiPathways"
+#(gmt_db = "GO-BP")
+(gmt_db = "GO-CC")
 
-#(res_file = "smoothed-k9-1663")
-#(clust_levels = c("L1","L2","L3.4","L5","L6","WM"))
-#clust_subset = c("L2","L3.4","L5","L6")
+(res_file = "smoothed-k9-1663")
+(clust_levels = c("L1","L2","L3.4","L5","L6","WM"))
+clust_subset = c("L2","L3.4","L5","L6")
 
-(res_file = "seurat-pc30")
-(clust_levels = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
-clust_subset = c("L2.3","L4","Inhb","L5","L6")
+#(res_file = "seurat-pc30")
+#(clust_levels = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
+#clust_subset = c("L2.3","L4","Inhb","L5","L6")
 
 names(clust_levels) = clust_levels
 
@@ -72,6 +76,9 @@ if(gmt_db=="Reactome") {
 if(gmt_db=="WikiPathways") {
   p.names = sapply(strsplit(ledge.df$term, " WP"), function(x) x[[1]])
 }
+if(gmt_db %in% c("GO-BP","GO-CC")) {
+  p.names = sapply(strsplit(ledge.df$term, " \\(GO:"), function(x) x[[1]])
+}
 p.names = sapply(p.names, function(x) {
   c1 = unlist(strwrap(x, width=75))
   if(length(c1)>1) {
@@ -97,6 +104,9 @@ if(nrow(check1)>0) {
   if(gmt_db=="WikiPathways") {
     p.names2 = paste0("WP", sapply(strsplit(check1$term, " WP"), function(x) x[[2]]))
     p.names2 = paste(p.names2, check1$name)
+  }
+  if(gmt_db %in% c("GO-BP","GO-CC")) {
+    p.names2 = paste0("(GO:", sapply(strsplit(check1$term, " (GO:"), function(x) x[[2]]))
   }
   p.names2 = sapply(p.names2, function(x) {
     c1 = unlist(strwrap(x, width=75))
@@ -202,7 +212,8 @@ outList2 = generateIGRAPH(out2)
 
 
 #save plots
-pdf(file=paste0("plots/08_LR-DEG_analysis/", gsub("\\.","-", gsub("_","-",x)), "_", res_file, "_", gmt_db, "_neuronal-fgsea-summary.pdf"), height=12, width=12)
+pdf(file=paste0("plots/08_LR-DEG_analysis/", gsub("\\.","-", gsub("_","-",x)), "/", 
+	gsub("\\.","-", gsub("_","-",x)), "_", res_file, "_", gmt_db, "_neuronal-fgsea-summary.pdf"), height=12, width=12)
 grid.arrange(phm[[4]], top=paste(gsub("_"," ",x), gmt_db))
 grid.arrange(phm2[[4]], top=paste(gsub("_"," ",x), gmt_db))
 grid.arrange(phm3[[4]], top=paste(gsub("_"," ",x), gmt_db))
@@ -218,7 +229,8 @@ legend("bottomleft", legend=c("Depleted","Depleted (with LR DEG)",
        pch=16, pt.cex=1, cex=.7,
        col=c("#CFEBF7","skyblue","#FFC0B5","tomato"))
 dev.off()
-cat("\nPlots of neuronal GSEA summary saved to:", paste0("plots/08_LR-DEG_analysis/", gsub("\\.","-", gsub("_","-",x)), "_", res_file, "_", gmt_db, "_neuronal-fgsea-summary.pdf"), "\n")
+cat("\nPlots of neuronal GSEA summary saved to:", paste0("plots/08_LR-DEG_analysis/", gsub("\\.","-", gsub("_","-",x)), "/", 
+	gsub("\\.","-", gsub("_","-",x)), "_", res_file, "_", gmt_db, "_neuronal-fgsea-summary.pdf"), "\n")
 
 
 cat("\n\nReproducibility information:\n")

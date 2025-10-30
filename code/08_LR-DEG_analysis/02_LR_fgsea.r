@@ -19,13 +19,15 @@ cat("\n\n")
 
 # set variables for FGSEA
 #(gmt_db = "Reactome")
-(gmt_db = "WikiPathways")
+#(gmt_db = "WikiPathways")
+#(gmt_db = "GO-BP")
+(gmt_db = "GO-CC")
 
-#(res_file = "smoothed-k9-1663")
-#(clust_levels = c("L1","L2","L3.4","L5","L6","WM"))
+(res_file = "smoothed-k9-1663")
+(clust_levels = c("L1","L2","L3.4","L5","L6","WM"))
 
-(res_file = "seurat-pc30")
-(clust_levels = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
+#(res_file = "seurat-pc30")
+#(clust_levels = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
 
 names(clust_levels) = clust_levels
 
@@ -39,6 +41,8 @@ restr.results <- read.csv(paste0("processed-data/07_dx_DE/layer-restricted-age_"
 
 if(gmt_db=="Reactome") gmt = .read_gmt("Reactome_2022")
 if(gmt_db=="WikiPathways") gmt = .read_gmt("WikiPathways_2024_Human")
+if(gmt_db=="GO-CC") gmt = .read_gmt("GO_Cellular_Component_2025")
+if(gmt_db=="GO-BP") gmt = .read_gmt("GO_Biological_Process_2025")
 
 gmt.list = group_by(gmt, term) %>% summarise(gene=list(gene)) %>%
   tibble::deframe()
