@@ -17,9 +17,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 module load conda_R/4.4.x
 module list
 
-#input=$(head -n $SLURM_ARRAY_TASK_ID /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_LA-DEG_analysis/02-supp_dx-sex_groups.txt | tail -n 1)
-#echo $input
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_LA-DEG_analysis/04_extract_biological_themes.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_LA-DEG_analysis/04_extract_biological_themes_NTC-BPD-M.r
 
 echo "**** Job ends ****"
 date

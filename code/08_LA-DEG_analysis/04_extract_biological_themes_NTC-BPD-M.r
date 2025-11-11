@@ -359,7 +359,101 @@ plist3
 plist4
 dev.off()
 cat("\n\nPlots saved to:", paste0("plots/08_LA-DEG_analysis/", gsub("\\.","-", gsub("_","-",x)),"/", gsub("\\.","-", gsub("_","-",x)),
-                "_biological-themes.pdf"))
+                "_biological-themes.pdf"),"\n")
+
+#test additional plot
+#pull strongly sig genes not in top.genes
+t1 = filter(box_data[["LA_smoothed"]], group=="NTC.BPD", sex=="M", abs(logFC)>.5, adj.P.Val<.05)$gene_name
+	#, !gene_name %in% unlist(top.genes))$gene_name
+t2 = filter(box_data[["LA_seurat"]], group=="NTC.BPD", sex=="M", abs(logFC)>.5, adj.P.Val<.05)$gene_name
+	#, !gene_name %in% unlist(top.genes))$gene_name
+new.genes = intersect(t1, t2)
+hmp_data = formatData(union(unique(unlist(top.genes)), new.genes), spe_sm, spe_se)
+
+#format for heatmap
+d1 = tidyr::pivot_wider(hmp_data$boxplot.df, names_from="key_genes", values_from="logcounts")
+m1 = as.matrix(d1[,union(unique(unlist(top.genes)), new.genes)])
+c1 = cor(m1, method="spearman")
+
+#d2 = distinct(ungroup(all.terms), gene_name, NES)
+d2 = bind_rows(filter(box_data[["LA_seurat"]][,c("gene_name","logFC","group","sex")], group=="NTC.BPD", sex=="M", gene_name %in% union(unlist(top.genes), new.genes)),
+	filter(box_data[["LA_smoothed"]][,c("gene_name","logFC","group","sex")], group=="NTC.BPD", sex=="M", gene_name %in% union(unlist(top.genes), new.genes))) %>%
+	group_by(gene_name) %>% summarise("NES"=sign(mean(logFC)))
+
+for(i in names(geneList)) {
+  d2[[i]] = as.character(d2$gene_name %in% geneList[[i]])
+}
+
+#create and format heatmap columns annotations
+col.annot = as.data.frame(d2[,-1])
+rownames(col.annot) = d2$gene_name
+col.annot$NES = as.character(col.annot$NES)
+
+col.annot$logfc05 = as.character(rownames(col.annot) %in% new.genes)
+col.annot$logfc05 = ifelse(rownames(col.annot) %in% unlist(top.genes) & col.annot$logfc05=="TRUE", "top", col.annot$logfc05)
+
+for(i in names(top.genes)) {
+  col.annot[top.genes[[i]],i] = "top"
+}
+#make logfc05 be bottom after NES
+col.annot = col.annot[,c("NES","logfc05", names(top.genes))]
+
+#select column annotation colors
+annot_colors= list("NES"=c("-1"="skyblue","1"="tomato"),
+	"logfc05"= c("FALSE"="white", "TRUE"="grey50", "top"="black"))
+for(i in names(geneList)) {
+  annot_colors[[i]] = c("FALSE"="white", "TRUE"="grey50", "top"="black")
+}
+#annot_colors[["new.genes"]] = c("FALSE"="white", "TRUE"="grey50")
+
+#make c1 rownames have *** if top gene
+rownames(c1) = ifelse(rownames(c1) %in% unlist(top.genes), paste0(rownames(c1), "***"), rownames(c1))
+
+#plot heatmap
+phm = pheatmap(c1, annotation_col=col.annot, annotation_colors = annot_colors,
+         color=colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))(9),
+         breaks=seq(-1, 1, length.out=10), legend_breaks = seq(-1, 1, by=.5),
+         angle_col=90, fontsize=7, treeheight_row = 12, treeheight_col = 12,
+         clustering_method = "ward.D2", main="NTC.BPD M L-A top DEGs in term supplemented with top DEGs (abs logFC>.5) not in terms",
+         silent=T)
+
+#dotplot all genes with abs(logFC)>.5
+gene_order = rev(phm$tree_col$label[phm$tree_col$order])
+pc30.df = dotplotDF(spe_summ, gene_order, swap_rownames="gene_name", summarize_groups=T,
+                    cluster_labels="seurat_pc30", row_data=NULL)
+#gene_order = rev(phm$tree_row$label[phm$tree_row$order])
+pc30.df$gene_name_f = factor(pc30.df$gene_name, levels=gene_order,
+                             labels=ifelse(gene_order %in% unlist(top.genes), paste0("***", gene_order), gene_order))
+
+#add column with direction for background color
+pc30.df2 = left_join(pc30.df, tibble::rownames_to_column(col.annot, var="gene_name"), by=c("gene_name")) %>%
+	mutate(fill_color= factor(NES, levels=c("-1","1"), labels=c("#CFEBF7","#FFC0B5")))
+
+#dlpfc marker dotplot
+p3 <- ggplot(pc30.df, aes(x=factor(clusters, levels=seurat_levels),
+                          y=gene_name_f, color=mean_expr_scaled, size=prop_spots))+
+  geom_tile(data=pc30.df2, aes(fill=fill_color, size=NA), alpha=.5, color="transparent", show.legend=c(size=FALSE))+
+  scale_fill_manual(values=c("#CFEBF7","#FFC0B5"), guide="none")+
+  geom_count()+scale_color_gradient(low="white", high="black")+
+  scale_x_discrete(labels=c("Micro\nVasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))+
+  scale_size(range=c(1,6), limits=c(0,1), breaks=c(0,.5,1))+
+  labs(color="Avg. expr.\n(scaled)", size="Prop. of\nspots",
+       y="GSEA term genes", title="NTC.BPD M L-A DEGs with abs(logFC)>.5 (background indicates whether term was enriched/depleted)")+
+  theme_minimal()+theme(axis.title.x=element_blank(),
+                        #panel.background = element_rect(fill="palegoldenrod"),
+                        #panel.grid = element_line(color="khaki3"),
+                        axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"),
+                        axis.title.y=element_text(margin=margin(0,20,0,20,"pt")))
+
+#gex plot all genes with abs(logFC)>.5
+plist4 = lapply(phm$tree_col$label[phm$tree_col$order], function(y) plotViolin(y, hmp_data$boxplot.df, box_data, color_by="cluster"))
+plist4 = marrangeGrob(plist4, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = "All genes with abs(logFC)>.5")
+
+pdf(file="plots/08_LA-DEG_analysis/NTC-BPD-M/NTC-BPD-M_all-genes-logFC-05.pdf", height=12, width=12)
+plot(phm[[4]])
+p3
+plist4
+dev.off()
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time())
