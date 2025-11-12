@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=plot_NTC-BPD-M_consolidated
+#SBATCH --job-name=plot_NTC-BPD-F_consolidated
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_LA-DEG_analysis/logs/%x_%j.log
 
 echo "**** Job starts ****"

@@ -10,7 +10,7 @@ set.seed(123)
 source("code/08_LA-DEG_analysis/jc-igraph_functions.r")
 source("code/08_LA-DEG_analysis/fgsea_functions.r")
 
-x="NTC.BPD_M"
+x="NTC.BPD_F"
 
 source(paste0("code/08_LA-DEG_analysis/", gsub("\\.","-", gsub("_","-",x)), "_keylist.r"))
 
@@ -63,8 +63,8 @@ cat("\n\nSaved list of consolidated terms to:",paste0("processed-data/08_LA-DEG_
                res_file, "_consolidated-terms.rda"))
 }
 
-outlist1  = readRDS("processed-data/08_LA-DEG_analysis/NTC-BPD-M_seurat-pc30_consolidated-terms.rda")
-outlist2  = readRDS("processed-data/08_LA-DEG_analysis/NTC-BPD-M_smoothed-k9-1663_consolidated-terms.rda")
+outlist1  = readRDS(paste0("processed-data/08_LA-DEG_analysis/",gsub("\\.","-", gsub("_","-",x)), "_seurat-pc30_consolidated-terms.rda"))
+outlist2  = readRDS(paste0("processed-data/08_LA-DEG_analysis/", gsub("\\.","-", gsub("_","-",x)), "_smoothed-k9-1663_consolidated-terms.rda"))
 
 keepterms = c(union(outlist1[[1]], outlist2[[1]]), union(outlist1[[2]], outlist2[[2]]), union(outlist1[[3]], outlist2[[3]]))
 length(keepterms)
