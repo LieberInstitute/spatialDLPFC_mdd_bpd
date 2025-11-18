@@ -358,9 +358,10 @@ cat("\n\nPlots saved to:", paste0("plots/08_LA-DEG_analysis/", gsub("\\.","-", g
 
 
 #pull strongly sig genes not in top.genes
-t1 = filter(box_data[["LA_smoothed"]], group==target_group, sex==target_sex, abs(logFC)>.5, adj.P.Val<.05)$gene_name
+### some genes were just barely not at logFC=.5 in only 1 so i lowered the threshold just a little but (genes like ADRA1D, CARNS1)
+t1 = filter(box_data[["LA_smoothed"]], group==target_group, sex==target_sex, abs(logFC)>.47, adj.P.Val<.05)$gene_name
 	#, !gene_name %in% unlist(top.genes))$gene_name
-t2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, abs(logFC)>.5, adj.P.Val<.05)$gene_name
+t2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, abs(logFC)>.47, adj.P.Val<.05)$gene_name
 	#, !gene_name %in% unlist(top.genes))$gene_name
 new.genes = intersect(t1, t2)
 hmp_data = formatData(union(unique(unlist(top.genes)), new.genes), spe_sm, spe_se)
