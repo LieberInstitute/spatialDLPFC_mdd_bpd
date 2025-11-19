@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=NTC-BPD-F_extract-themes
+#SBATCH --job-name=NTC-MDD-F_extract-themes
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_LA-DEG_analysis/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -17,7 +17,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 module load conda_R/4.4.x
 module list
 
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_LA-DEG_analysis/04_extract_biological_themes_NTC-BPD-F.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_LA-DEG_analysis/04_extract_biological_themes_NTC-MDD-F.r
 
 echo "**** Job ends ****"
 date
