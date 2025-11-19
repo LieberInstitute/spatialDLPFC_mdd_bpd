@@ -10,7 +10,7 @@ set.seed(123)
 source("code/08_LA-DEG_analysis/jc-igraph_functions.r")
 source("code/08_LA-DEG_analysis/fgsea_functions.r")
 
-x="NTC.BPD_F"
+x="NTC.MDD_F"
 
 source(paste0("code/08_LA-DEG_analysis/", gsub("\\.","-", gsub("_","-",x)), "_keylist.r"))
 
