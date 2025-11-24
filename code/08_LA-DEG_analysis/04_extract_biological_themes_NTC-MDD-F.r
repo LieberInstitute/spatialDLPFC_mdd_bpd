@@ -450,9 +450,9 @@ pc30.df2 = left_join(pc30.df, tibble::rownames_to_column(col.annot, var="gene_na
 #dlpfc marker dotplot
 ## split into two to make gene names legible
 #sub1 = phm$tree_col$label[phm$tree_col$order][1:grep("DDIT4",phm$tree_col$label[phm$tree_col$order])]
-sub1 = intersect(phm$tree_col$label[phm$tree_col$order], new.genes)[1:75]
-#sub2 = phm$tree_col$label[phm$tree_col$order][(grep("DDIT4",phm$tree_col$label[phm$tree_col$order])+1):length(phm$tree_col$label[phm$tree_col$order])]
-sub2 = intersect(phm$tree_col$label[phm$tree_col$order], new.genes)[76:length(gene_order)]
+sub1 = intersect(phm$tree_col$label[phm$tree_col$order], new.genes)[1:81]
+#sub2 = phm$tree_col$label[phm$tree_col$order][(grep("DDIT4",phm$tree_col$label[phm$tree_col$order])+1):length(gene_order)]
+sub2 = intersect(phm$tree_col$label[phm$tree_col$order], new.genes)[82:length(gene_order)]
 p3 <- ggplot(filter(pc30.df, gene_name %in% sub1),
 	aes(x=factor(clusters, levels=seurat_levels),
                           y=gene_name_f, color=mean_expr_scaled, size=prop_spots))+
