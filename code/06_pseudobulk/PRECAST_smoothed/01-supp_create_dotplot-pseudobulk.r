@@ -31,24 +31,24 @@ sce <- SingleCellExperiment(assays = list(logcounts = logcounts(spe)), colData=c
 rowData(sce) = rowData(spe)
 
 #pseudobulk raw counts
-cat("\nPseudobulk spe by: condition, sex, smoothed_k9_1663\n")
+cat("\nPseudobulk spe by: sample_id, smoothed_k9_1663\n")
 
-spe_summ = scuttle::aggregateAcrossCells(sce, ids=colData(spe)[,c("condition","sex","smoothed_k9_1663")], 
+spe_summ = scuttle::aggregateAcrossCells(sce, ids=colData(spe)[,c("sample_id","smoothed_k9_1663")], 
                             statistics=c("mean","prop.detected"),
                             use.assay.type="logcounts")
 
 dim(spe_summ)
 
 #quick save checkpoints
-save(spe_summ, file="processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-dotplot_dx-sex-smoothed-n1663-k9.Rdata")
+save(spe_summ, file="processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-dotplot_sample-id-smoothed-n1663-k9.Rdata")
 
 #remove repeated colData column for sample_id and cluster
 g1 = grep("smoothed", colnames(colData(spe_summ)))
 if(length(g1)>1) colData(spe_summ)[,g1[[2]]] <- NULL
-g2 = grep("condition", colnames(colData(spe_summ)))
-if(length(g2)>1) colData(spe_summ)[,g2[[2]]] <- NULL
-g3 = grep("sex", colnames(colData(spe_summ)))
-if(length(g3)>1) colData(spe_summ)[,g3[[2]]] <- NULL
+#g2 = grep("condition", colnames(colData(spe_summ)))
+#if(length(g2)>1) colData(spe_summ)[,g2[[2]]] <- NULL
+#g3 = grep("sex", colnames(colData(spe_summ)))
+#if(length(g3)>1) colData(spe_summ)[,g3[[2]]] <- NULL
 
 #change name of ncells to nspots
 colnames(colData(spe_summ))[grep("ncells", colnames(colData(spe_summ)))] = "nspots"
@@ -63,17 +63,17 @@ if(length(reducedDimNames(spe_summ))>0) {
 #spatialCoords(spe_summ) <-NULL
 
 #keep only sample level coldata
-colData(spe_summ) = colData(spe_summ)[,c(#"sample_id","brnum","age",
+colData(spe_summ) = colData(spe_summ)[,c("sample_id","brnum","age",
 	"sex","condition",
-	#"PMI","RIN","slide","array","MBv_sample","seq","round",
+	"PMI","RIN","slide","array","MBv_sample","seq","round",
 	"smoothed_k9_1663",
 	"nspots")]
 colData(spe_summ)$condition = factor(spe_summ$condition, levels=c("NTC","MDD","BPD"))
-
+colData(spe_summ)$sex = factor(spe_summ$sex, levels=c("F","M"))
 
 Sys.time()
-save(spe_summ, file="processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-dotplot_dx-sex-smoothed-n1663-k9.Rdata")
-cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-dotplot_dx-sex-smoothed-n1663-k9.Rdata")
+save(spe_summ, file="processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-dotplot_sample-id-smoothed-n1663-k9.Rdata")
+cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-dotplot_sample-id-smoothed-n1663-k9.Rdata")
 
 #update spe tracker
 #write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),

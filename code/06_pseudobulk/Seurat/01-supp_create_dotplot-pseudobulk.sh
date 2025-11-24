@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=250G
-#SBATCH --job-name=pseudobulk_conservative_dotplot_seurat-pc20
+#SBATCH --mem=10G
+#SBATCH --job-name=pseudobulk_dotplot_sample-id-seurat-pc30
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/06_pseudobulk/Seurat/logs/%x_%j.log
 
 echo "**** Job starts ****"
