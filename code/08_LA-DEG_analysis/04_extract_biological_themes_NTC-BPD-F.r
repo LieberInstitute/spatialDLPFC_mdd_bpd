@@ -160,24 +160,54 @@ geneList[["neuropeptide"]] = c(geneList[["neuropeptide"]], "NMU")
 #remaining genes
 cat("\n\nGenes that were not assigned to a theme:\n\n")
 filter(all.terms[,1:4], !gene_name %in% unlist(geneList)) %>% arrange(gene_name)
-#other neuronal: ARF1, CP, GRIK1
-#not included in any theme: CRISPLD2, PYGB, SMAD1, TGFBR2, UFC1, ZMIZ1, ZNF395
 
 
+#save geneList
+saveRDS(geneList, "processed-data/08_LA-DEG_analysis/NTC-BPD-F_biological-themes_geneList.rds")
+cat("\n\nSaved genes in themes to: processed-data/08_LA-DEG_analysis/NTC-BPD-F_biological-themes_geneList.rds\n")
 
 
 #pull out top L-A DEGs with greatest logFC per theme
 box_data = loadData()
 
-top.genes = lapply(geneList, function(x) {
-  g1 = filter(box_data[["LA_smoothed"]], group==target_group, sex==target_sex, adj.P.Val<.05, gene_name %in% x) %>%
-    slice_max(n=8, abs(logFC)) %>% pull(gene_name)
-  g2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, adj.P.Val<.05, gene_name %in% x) %>%
-    slice_max(n=8, abs(logFC)) %>% pull(gene_name)
+##find zero prop of leading edge genes
+load("processed-data/06_pseudobulk/spe_n119_pseudo-dotplot_sample-id.Rdata")
+prop.m = t(assay(spe_summ, "logcounts.prop.detected")[rowData(spe_summ)$gene_name %in% unique(unlist(geneList)),])
+colnames(prop.m) = rowData(spe_summ)[colnames(prop.m), "gene_name"]
+
+f2 <- function(x) as.numeric(median(x))
+q2 = apply(prop.m, MARGIN=2, f2)
+q2.pass = q2>.02
+
+geneList2 = sapply(geneList, function(y) {
+  v1 = q2.pass[y]
+  names(v1)[v1==T]
+})
+
+##maybe add cat message for if geneList2 length ==0
+
+##save zero prop spe for later
+spe_zero <- spe_summ
+
+##pull out genes with high logFC in both
+top.genes = lapply(geneList2, function(x) {
+  g1 = filter(box_data[["LA_smoothed"]], group==target_group, sex==target_sex, adj.P.Val<.05, abs(logFC)>.3, gene_name %in% x)$gene_name
+  g2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, adj.P.Val<.05, abs(logFC)>.3, gene_name %in% x)$gene_name
   intersect(g1, g2)
 })
 
-sapply(top.genes, length)
+##make second top genes list for plotting top 8 max
+top.genes2 = top.genes
+for(i in names(top.genes2)) {
+  #if no genes above logFC threshold, reduce threshold
+  if(length(top.genes2[[i]])==0) {
+	g1 = filter(box_data[["LA_smoothed"]], group==target_group, sex==target_sex, adj.P.Val<.05, gene_name %in% geneList2[[i]]) %>%
+		slice_max(n=8, abs(logFC)) %>% pull(gene_name)
+	g2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, adj.P.Val<.05, gene_name %in% geneList2[[i]]) %>%
+		slice_max(n=8, abs(logFC)) %>% pull(gene_name)
+	top.genes2[[i]] = intersect(g1, g2)
+  }
+}
 
 
 #plot themes
@@ -236,23 +266,28 @@ for(i in names(geneList)) {
 
 #plot depleted genes
 dep.names = rownames(col.annot)[col.annot$NES<0]
-phmd = pheatmap(c1[dep.names,dep.names], annotation_col=col.annot[dep.names,], annotation_colors = annot_colors,
+dep.mtx = c1[dep.names,dep.names]
+rownames(dep.mtx) = ifelse(rownames(dep.mtx) %in% unlist(top.genes), paste0(rownames(dep.mtx), "***"), rownames(dep.mtx))
+
+phmd = pheatmap(dep.mtx, annotation_col=col.annot[dep.names,], annotation_colors = annot_colors,
          color=colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))(9),
          breaks=seq(-1, 1, length.out=10), legend_breaks = seq(-1, 1, by=.5),
          angle_col=90, fontsize=7, treeheight_row = 12, treeheight_col = 12,
          clustering_method = "ward.D2", main="NTC.BPD F L-A depleted genes\nTop logFC DEGs per theme annotated with black",
          silent=T)
-#plot(phmd[[4]])
 
 #plot enriched genes
 en.names = rownames(col.annot)[col.annot$NES>0]
-phme = pheatmap(c1[en.names,en.names], annotation_col=col.annot[en.names,], annotation_colors = annot_colors,
+en.mtx = c1[en.names, en.names]
+rownames(en.mtx) = ifelse(rownames(en.mtx) %in% unlist(top.genes), paste0(rownames(en.mtx), "***"), rownames(en.mtx))
+
+phme = pheatmap(en.mtx, annotation_col=col.annot[en.names,], annotation_colors = annot_colors,
          color=colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))(9),
          breaks=seq(-1, 1, length.out=10), legend_breaks = seq(-1, 1, by=.5),
          angle_col=90, fontsize=7, treeheight_row = 12, treeheight_col = 12,
          clustering_method = "ward.D2", main="NTC.BPD F L-A enriched genes\nTop logFC DEGs per theme annotated with black",
          silent=T)
-#plot(phme[[4]])
+
 
 # plot dotplots to look at layer distribution of theme genes
 ## using custom function from 06_pseudobulk/custom_functions.r
@@ -268,14 +303,15 @@ colnames(spe_summ) <- spe_summ$sample_id
 cat("\nSubset spe object for dotplot to only NTC M and BPD M samples:\n")
 spe_summ = spe_summ[,spe_summ$condition %in% c("NTC","BPD") & spe_summ$sex=="F"]
 dim(spe_summ)
-#depleted
+
+
+#depleted dotplot
 pc30.df = dotplotDF(spe_summ, dep.names, swap_rownames="gene_name", summarize_groups=T, 
                     cluster_labels="seurat_pc30", row_data=NULL) 
-gene_order = rev(phmd$tree_row$label[phmd$tree_row$order])
+gene_order = rev(phmd$tree_col$label[phmd$tree_col$order])
 pc30.df$gene_name_f = factor(pc30.df$gene_name, levels=gene_order,
                              labels=ifelse(gene_order %in% unlist(top.genes), paste0("***", gene_order), gene_order))
 
-#dlpfc marker dotplot
 p1 <- ggplot(pc30.df, aes(x=factor(clusters, levels=seurat_levels), 
                           y=gene_name_f, color=mean_expr_scaled, size=prop_spots))+
   geom_count()+scale_color_gradient(low="white", high="black")+
@@ -288,15 +324,14 @@ p1 <- ggplot(pc30.df, aes(x=factor(clusters, levels=seurat_levels),
                         panel.grid = element_line(color="#9FD7EF"),
                         axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"),
                         axis.title.y=element_text(margin=margin(0,20,0,20,"pt")))
-#p1
 
-#enriched
+#enriched dotplot
 pc30.df = dotplotDF(spe_summ, en.names, swap_rownames="gene_name", summarize_groups=T, 
                     cluster_labels="seurat_pc30", row_data=NULL) 
-gene_order = rev(phme$tree_row$label[phme$tree_row$order])
+gene_order = rev(phme$tree_col$label[phme$tree_col$order])
 pc30.df$gene_name_f = factor(pc30.df$gene_name, levels=gene_order,
                              labels=ifelse(gene_order %in% unlist(top.genes), paste0("***", gene_order), gene_order))
-#dlpfc marker dotplot
+
 p2 <- ggplot(pc30.df, aes(x=factor(clusters, levels=seurat_levels), 
                           y=gene_name_f, color=mean_expr_scaled, size=prop_spots))+
   geom_count()+scale_color_gradient(low="white", high="black")+
@@ -310,18 +345,19 @@ p2 <- ggplot(pc30.df, aes(x=factor(clusters, levels=seurat_levels),
                         axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"),
                         axis.title.y=element_text(margin=margin(0,20,0,20,"pt")))
 
+
 #plot top genes expression with combo of violin and boxplots
 ## using custom function from 08_LA-DEG_analysis/plot-gex_functions.r
 #depleted
 plist1 = lapply(c("energy","gaba","neuropeptide","vesicle","oligo","ecm","bbb"), function(x) {
-  gl1 = top.genes[[x]]
+  gl1 = top.genes2[[x]]
   plist = lapply(gl1, function(y) plotViolin(y, hmp_data$boxplot.df, box_data, color_by="cluster"))
   plist = marrangeGrob(plist, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = paste(x, "top genes"))
   return(plist)
 })
 #enriched
 plist2 = lapply(c("ox.stress","ribo"), function(x) {
-  gl1 = top.genes[[x]]
+  gl1 = top.genes2[[x]]
   plist = lapply(gl1, function(y) plotViolin(y, hmp_data$boxplot.df, box_data, color_by="cluster"))
   plist = marrangeGrob(plist, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = paste(x, "top genes"))
   return(plist)
@@ -357,8 +393,9 @@ cat("\n\nPlots saved to:", paste0("plots/08_LA-DEG_analysis/", gsub("\\.","-", g
                 "_biological-themes.pdf"),"\n")
 
 
+
+#additional plot utilizing all L-A DEGs present in both datasets
 #pull strongly sig genes not in top.genes
-### some genes were just barely not at logFC=.5 in only 1 so i lowered the threshold just a little but (genes like ADRA1D, CARNS1)
 t1 = filter(box_data[["LA_smoothed"]], group==target_group, sex==target_sex, abs(logFC)>.3, adj.P.Val<.05)$gene_name
 	#, !gene_name %in% unlist(top.genes))$gene_name
 t2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, abs(logFC)>.3, adj.P.Val<.05)$gene_name
@@ -366,27 +403,27 @@ t2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, abs(l
 new.genes = intersect(t1, t2)
 
 #filter by prop n50
-spe_save <- spe_summ
-load("processed-data/06_pseudobulk/spe_n119_pseudo-dotplot_sample-id.Rdata")
-prop.m = t(assay(spe_summ, "logcounts.prop.detected")[rowData(spe_summ)$gene_name %in% new.genes,])
-colnames(prop.m) = rowData(spe_summ)[colnames(prop.m), "gene_name"]
+prop.m = t(assay(spe_zero, "logcounts.prop.detected")[rowData(spe_zero)$gene_name %in% new.genes,])
+colnames(prop.m) = rowData(spe_zero)[colnames(prop.m), "gene_name"]
 
 f2 <- function(x) as.numeric(median(x))
 q2 = apply(prop.m, MARGIN=2, f2)
 q2.pass = q2>.02
 new.genes = names(q2.pass)[q2.pass]
 
-spe_summ <- spe_save
-hmp_data = formatData(union(unique(unlist(top.genes)), new.genes), spe_sm, spe_se)
+
+hmp_data = formatData(union(unique(unlist(top.genes2)), new.genes), spe_sm, spe_se)
 
 #format for heatmap
 d1 = tidyr::pivot_wider(hmp_data$boxplot.df, names_from="key_genes", values_from="logcounts")
-m1 = as.matrix(d1[,union(unique(unlist(top.genes)), new.genes)])
+m1 = as.matrix(d1[,union(unique(unlist(top.genes2)), new.genes)])
 c1 = cor(m1, method="spearman")
 
 #d2 = distinct(ungroup(all.terms), gene_name, NES)
-d2 = bind_rows(filter(box_data[["LA_seurat"]][,c("gene_name","logFC","group","sex")], group==target_group, sex==target_sex, gene_name %in% union(unlist(top.genes), new.genes)),
-	filter(box_data[["LA_smoothed"]][,c("gene_name","logFC","group","sex")], group==target_group, sex==target_sex, gene_name %in% union(unlist(top.genes), new.genes))) %>%
+d2 = bind_rows(filter(box_data[["LA_seurat"]][,c("gene_name","logFC","group","sex")], group==target_group, sex==target_sex, 
+		gene_name %in% union(unlist(top.genes2), new.genes)),
+	filter(box_data[["LA_smoothed"]][,c("gene_name","logFC","group","sex")], group==target_group, sex==target_sex, 
+		gene_name %in% union(unlist(top.genes2), new.genes))) %>%
 	group_by(gene_name) %>% summarise("NES"=sign(mean(logFC)))
 
 for(i in names(geneList)) {
@@ -399,7 +436,7 @@ rownames(col.annot) = d2$gene_name
 col.annot$NES = as.character(col.annot$NES)
 
 col.annot$logfc03 = as.character(rownames(col.annot) %in% new.genes)
-col.annot$logfc03 = ifelse(rownames(col.annot) %in% unlist(top.genes) & col.annot$logfc03=="TRUE", "top", col.annot$logfc03)
+col.annot$logfc03 = ifelse(rownames(col.annot) %in% unlist(top.genes2) & col.annot$logfc03=="TRUE", "top", col.annot$logfc03)
 
 for(i in names(top.genes)) {
   col.annot[top.genes[[i]],i] = "top"
@@ -427,7 +464,7 @@ phm = pheatmap(c1, annotation_col=col.annot, annotation_colors = annot_colors,
          silent=T)
 
 #dotplot all genes with abs(logFC)>.5
-gene_order = rev(intersect(phm$tree_col$label[phm$tree_col$order], new.genes))
+gene_order = rev(phm$tree_col$label[phm$tree_col$order])
 pc30.df = dotplotDF(spe_summ, gene_order, swap_rownames="gene_name", summarize_groups=T,
                     cluster_labels="seurat_pc30", row_data=NULL)
 #gene_order = rev(phm$tree_row$label[phm$tree_row$order])
@@ -456,13 +493,14 @@ p3 <- ggplot(pc30.df, aes(x=factor(clusters, levels=seurat_levels),
 
 #gex plot all genes with abs(logFC)>.5
 plist4 = lapply(intersect(phm$tree_col$label[phm$tree_col$order], new.genes), function(y) plotViolin(y, hmp_data$boxplot.df, box_data, color_by="cluster"))
-plist4 = marrangeGrob(plist4, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = "All genes with abs(logFC)>.3")
+plist4 = marrangeGrob(plist4, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = "All genes with abs(logFC)>.3 and zero prop.>2% in half of capture areas")
 
-pdf(file=paste0("plots/08_LA-DEG_analysis/",gsub("\\.","-", gsub("_","-",x)),"/", gsub("\\.","-", gsub("_","-",x)), "_all-genes-logFC-03-zerorpop-02.pdf"), height=12, width=12)
+pdf(file=paste0("plots/08_LA-DEG_analysis/",gsub("\\.","-", gsub("_","-",x)),"/", gsub("\\.","-", gsub("_","-",x)), "_all-genes-logFC-03-zeroprop-02.pdf"), height=12, width=12)
 plot(phm[[4]])
 p3
 plist4
 dev.off()
+cat("\nCorrelation, dotplot, and violin of all genes passed logFC and zero prop filter saved to: plots/08_LA-DEG_analysis/NTC-BPD-F/NTC-BPD-F_all-genes-logFC-03-zeroprop-02.pdf\n")
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time())
