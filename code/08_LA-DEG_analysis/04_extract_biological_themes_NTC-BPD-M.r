@@ -481,7 +481,7 @@ phm = pheatmap(c1, annotation_col=col.annot, annotation_colors = annot_colors,
          silent=T)
 
 #dotplot all genes with abs(logFC)>.5
-gene_order = rev(intersect(phm$tree_col$label[phm$tree_col$order], new.genes))
+gene_order = rev(phm$tree_col$label[phm$tree_col$order])
 pc30.df = dotplotDF(spe_summ, gene_order, swap_rownames="gene_name", summarize_groups=T,
                     cluster_labels="seurat_pc30", row_data=NULL)
 #gene_order = rev(phm$tree_row$label[phm$tree_row$order])
