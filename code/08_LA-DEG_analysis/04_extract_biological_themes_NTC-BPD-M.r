@@ -92,15 +92,15 @@ imm.df = filter(all.terms, term %in% termList[["immune"]])
 #length(unique(imm.df$gene_name)) #18
 geneList[["immune"]] = unique(imm.df$gene_name)
 
-#temporary one for GPCR
-gpcr = c("GPCR","G Alpha")
-termList[["gpcr"]] = do.call(c, sapply(gpcr, function(x) grep(x, keepterms, value=T)))
-gpcr.df = filter(all.terms, term %in% termList[["gpcr"]])
-#table(gpcr.df$NES) #all down, 33
-geneList[["gpcr"]] = unique(gpcr.df$gene_name)
-#GPCR to immune 
-#geneList[["immune"]] = c(geneList[["immune"]],
-#                         c("CX3CR1","P2RY13","P2RY12","C3","C3AR1","RGS10","RGS5","PRKCB","LPAR6"))
+##temporary one for GPCR
+#gpcr = c("GPCR","G Alpha")
+#termList[["gpcr"]] = do.call(c, sapply(gpcr, function(x) grep(x, keepterms, value=T)))
+#gpcr.df = filter(all.terms, term %in% termList[["gpcr"]])
+##table(gpcr.df$NES) #all down, 33
+#geneList[["gpcr"]] = unique(gpcr.df$gene_name)
+##GPCR to immune 
+geneList[["immune"]] = c(geneList[["immune"]],
+                         c("P2RY13","PRKCB","LPAR6"))
 
 #GPCR to GABA
 geneList[["gaba"]] = c("SST","CORT","PNOC","CRH","TAC1")
@@ -124,23 +124,67 @@ filter(all.terms[,1:4], !gene_name %in% unlist(geneList)) %>% arrange(gene_name)
 #other neuronal: ARF1, CP, GRIK1
 #not included in any theme: CRISPLD2, PYGB, SMAD1, TGFBR2, UFC1, ZMIZ1, ZNF395
 
+#save geneList
+saveRDS(geneList, "processed-data/08_LA-DEG_analysis/NTC-BPD-M_biological-themes_geneList.rds")
+cat("\n\nSaved genes in themes to: processed-data/08_LA-DEG_analysis/NTC-BPD-M_biological-themes_geneList.rds\n")
+
+
 
 #pull out top L-A DEGs with greatest logFC per theme
 box_data = loadData()
 
-top.genes = lapply(geneList, function(x) {
-  g1 = filter(box_data[["LA_smoothed"]], group==target_group, sex==target_sex, adj.P.Val<.05, gene_name %in% x) %>%
-    slice_max(n=8, abs(logFC)) %>% pull(gene_name)
-  g2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, adj.P.Val<.05, gene_name %in% x) %>%
-    slice_max(n=8, abs(logFC)) %>% pull(gene_name)
+##find zero prop of leading edge genes
+load("processed-data/06_pseudobulk/spe_n119_pseudo-dotplot_sample-id.Rdata")
+prop.m = t(assay(spe_summ, "logcounts.prop.detected")[rowData(spe_summ)$gene_name %in% unique(unlist(geneList)),])
+colnames(prop.m) = rowData(spe_summ)[colnames(prop.m), "gene_name"]
+
+f2 <- function(x) as.numeric(median(x))
+q2 = apply(prop.m, MARGIN=2, f2)
+q2.pass = q2>.02
+
+geneList2 = sapply(geneList, function(y) {
+  v1 = q2.pass[y]
+  names(v1)[v1==T]
+})
+
+##maybe add cat message for if geneList2 length ==0
+
+##save zero prop spe for later
+spe_zero <- spe_summ
+
+##pull out genes with high logFC in both both
+top.genes = lapply(geneList2, function(x) {
+  g1 = filter(box_data[["LA_smoothed"]], group==target_group, sex==target_sex, adj.P.Val<.05, abs(logFC)>.3, gene_name %in% x)$gene_name
+  g2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, adj.P.Val<.05, abs(logFC)>.3, gene_name %in% x)$gene_name
   intersect(g1, g2)
 })
 
-#sapply(top.genes, length)
+##make second top genes list for plotting top 8 max
+top.genes2 = top.genes
+for(i in names(top.genes2)) {
+  #if no genes above logFC threshold, reduce threshold
+  if(length(top.genes2[[i]])==0) {
+	g1 = filter(box_data[["LA_smoothed"]], group==target_group, sex==target_sex, adj.P.Val<.05, gene_name %in% geneList2[[i]]) %>%
+		slice_max(n=8, abs(logFC)) %>% pull(gene_name)
+	g2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, adj.P.Val<.05, gene_name %in% geneList2[[i]]) %>%
+		slice_max(n=8, abs(logFC)) %>% pull(gene_name)
+	top.genes2[[i]] = intersect(g1, g2)
+  }
+#  #if more than 8 genes pick top 8
+#  if(length(top.genes2[[i]])>8) {
+#	g1 = filter(box_data[["LA_smoothed"]], group==target_group, sex==target_sex, gene_name %in% top.genes2[[i]])
+#	g2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, adj.P.Val<.05, gene_name %in% top.genes2[[i]])
+#	tmp = left_join(g1[,c("gene_id","gene_name","logFC")], g2[,c("gene_id","gene_name","logFC")], by=c("gene_id", "gene_name"), suffix=c("_sm","_se")) %>%
+#		mutate(avg_logFC= (logFC_sm+logFC_se)/2) %>%
+#		slice_max(n=8, abs(avg_logFC))
+#	top.genes2[[i]] = tmp$gene_name
+#  }
+}
 
 
 #plot themes
-igraphList = lapply(c("upkeep","gaba","gpcr","immune","vascular","proinfl","nuclear"), function(y) {
+igraphList = lapply(c("upkeep","gaba",#"gpcr",
+	"immune","vascular","proinfl","nuclear"), function(y) {
   t1 = filter(all.terms, gene_name %in% geneList[[y]])
   i1 = term2GeneIGRAPH(as.data.frame(t1), layout_style="kk",
                   text_title=paste(gsub("_"," ",x), y, "theme"))
@@ -187,7 +231,10 @@ for(i in names(geneList)) {
 
 #plot depleted genes
 dep.names = rownames(col.annot)[col.annot$NES<0]
-phmd = pheatmap(c1[dep.names,dep.names], annotation_col=col.annot[dep.names,], annotation_colors = annot_colors,
+dep.mtx = c1[dep.names,dep.names]
+rownames(dep.mtx) = ifelse(rownames(dep.mtx) %in% unlist(top.genes), paste0(rownames(dep.mtx), "***"), rownames(dep.mtx))
+
+phmd = pheatmap(dep.mtx, annotation_col=col.annot[dep.names,], annotation_colors = annot_colors,
          color=colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))(9),
          breaks=seq(-1, 1, length.out=10), legend_breaks = seq(-1, 1, by=.5),
          angle_col=90, fontsize=7, treeheight_row = 12, treeheight_col = 12,
@@ -196,7 +243,10 @@ phmd = pheatmap(c1[dep.names,dep.names], annotation_col=col.annot[dep.names,], a
 
 #plot enriched genes
 en.names = rownames(col.annot)[col.annot$NES>0]
-phme = pheatmap(c1[en.names,en.names], annotation_col=col.annot[en.names,], annotation_colors = annot_colors,
+en.mtx = c1[en.names, en.names]
+rownames(en.mtx) = ifelse(rownames(en.mtx) %in% unlist(top.genes), paste0(rownames(en.mtx), "***"), rownames(en.mtx))
+
+phme = pheatmap(en.mtx, annotation_col=col.annot[en.names,], annotation_colors = annot_colors,
          color=colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))(9),
          breaks=seq(-1, 1, length.out=10), legend_breaks = seq(-1, 1, by=.5),
          angle_col=90, fontsize=7, treeheight_row = 12, treeheight_col = 12,
@@ -217,14 +267,14 @@ colnames(spe_summ) <- spe_summ$sample_id
 cat("\nSubset spe object for dotplot to only NTC M and BPD M samples:\n")
 spe_summ = spe_summ[,spe_summ$condition %in% c("NTC","BPD") & spe_summ$sex=="M"]
 dim(spe_summ)
-#depleted
+
+#depleted dotplot
 pc30.df = dotplotDF(spe_summ, dep.names, swap_rownames="gene_name", summarize_groups=T, 
                     cluster_labels="seurat_pc30", row_data=NULL) 
-gene_order = rev(phmd$tree_row$label[phmd$tree_row$order])
+gene_order = rev(phmd$tree_col$label[phmd$tree_col$order])
 pc30.df$gene_name_f = factor(pc30.df$gene_name, levels=gene_order,
                              labels=ifelse(gene_order %in% unlist(top.genes), paste0("***", gene_order), gene_order))
 
-#dlpfc marker dotplot
 p1 <- ggplot(pc30.df, aes(x=factor(clusters, levels=seurat_levels), 
                           y=gene_name_f, color=mean_expr_scaled, size=prop_spots))+
   geom_count()+scale_color_gradient(low="white", high="black")+
@@ -238,13 +288,13 @@ p1 <- ggplot(pc30.df, aes(x=factor(clusters, levels=seurat_levels),
                         axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"),
                         axis.title.y=element_text(margin=margin(0,20,0,20,"pt")))
 
-#enriched
+#enriched dotplot
 pc30.df = dotplotDF(spe_summ, en.names, swap_rownames="gene_name", summarize_groups=T, 
                     cluster_labels="seurat_pc30", row_data=NULL) 
-gene_order = rev(phme$tree_row$label[phme$tree_row$order])
+gene_order = rev(phme$tree_col$label[phme$tree_col$order])
 pc30.df$gene_name_f = factor(pc30.df$gene_name, levels=gene_order,
                              labels=ifelse(gene_order %in% unlist(top.genes), paste0("***", gene_order), gene_order))
-#dlpfc marker dotplot
+
 p2 <- ggplot(pc30.df, aes(x=factor(clusters, levels=seurat_levels), 
                           y=gene_name_f, color=mean_expr_scaled, size=prop_spots))+
   geom_count()+scale_color_gradient(low="white", high="black")+
@@ -261,30 +311,35 @@ p2 <- ggplot(pc30.df, aes(x=factor(clusters, levels=seurat_levels),
 #plot top genes expression with combo of violin and boxplots
 ## using custom function from 08_LA-DEG_analysis/plot-gex_functions.r
 #depleted
-plist1 = lapply(c("upkeep","gaba","gpcr","immune"), function(x) {
-  gl1 = top.genes[[x]]
+plist1 = lapply(c("upkeep","gaba","immune"), function(x) {
+  gl1 = top.genes2[[x]]
   plist = lapply(gl1, function(y) plotViolin(y, hmp_data$boxplot.df, box_data, color_by="cluster"))
   plist = marrangeGrob(plist, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = paste(x, "top genes"))
   return(plist)
 })
 #enriched
 plist2 = lapply(c("proinfl","nuclear","vascular"), function(x) {
-  gl1 = top.genes[[x]]
+  gl1 = top.genes2[[x]]
   plist = lapply(gl1, function(y) plotViolin(y, hmp_data$boxplot.df, box_data, color_by="cluster"))
   plist = marrangeGrob(plist, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = paste(x, "top genes"))
   return(plist)
 })
 
+#the enriched pro-inflamm terms are split between glia and neuronal enriched....
+#but now if i'm not filtering to top 8 I should still get the neuronal genes violin plot if they pass the threshold
+#it is still nice to see the igraph plots tho i guess
 #now do a revised version of the enriched guys, splitting by glial and neuronal
-gene_order = phme$tree_row$label[phme$tree_row$order]
+gene_order = phme$tree_col$label[phme$tree_col$order]
 en.names1 = gene_order[1:grep("CRISPLD2", gene_order)]
 en.names2 = gene_order[(grep("CRISPLD2", gene_order)+1):length(gene_order)]
 
-top.genes2 = lapply(list(en.names1, en.names2), function(x) {
-  g1 = filter(box_data[["LA_smoothed"]], group==target_group, sex==target_sex, adj.P.Val<.05, gene_name %in% x) %>%
-    slice_max(n=8, abs(logFC)) %>% pull(gene_name)
-  g2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, adj.P.Val<.05, gene_name %in% x) %>%
-    slice_max(n=8, abs(logFC)) %>% pull(gene_name)
+#subset to zero proportion passing
+en.names1 = intersect(en.names1, unlist(geneList2))
+en.names2 = intersect(en.names2, unlist(geneList2))
+
+top.genes3 = lapply(list(en.names1, en.names2), function(x) {
+  g1 = filter(box_data[["LA_smoothed"]], group==target_group, sex==target_sex, adj.P.Val<.05, abs(logFC)>.3, gene_name %in% x)$gene_name
+  g2 = filter(box_data[["LA_seurat"]], group==target_group, sex==target_sex, adj.P.Val<.05, abs(logFC)>.3, gene_name %in% x)$gene_name
   intersect(g1, g2)
 })
 
@@ -292,7 +347,7 @@ t1 = filter(all.terms, gene_name %in% en.names1)
 i1 = term2GeneIGRAPH(as.data.frame(t1), layout_style="kk",
                      text_title=paste(gsub("_"," ",x), "enriched (glial)"))
 #make top DEG darker
-V(i1$igraph)$color = ifelse(V(i1$igraph)$name %in% top.genes2[[1]], "grey50", V(i1$igraph)$color)
+V(i1$igraph)$color = ifelse(V(i1$igraph)$name %in% top.genes3[[1]], "grey50", V(i1$igraph)$color)
 #make theme terms darker
 mod.color = V(i1$igraph)$name %in% termList[["proinfl"]]
 V(i1$igraph)$color[mod.color] = ifelse(V(i1$igraph)$color[mod.color]=="#CFEBF7", "skyblue", "tomato")
@@ -302,17 +357,11 @@ t2 = filter(all.terms, gene_name %in% en.names2)
 i2 = term2GeneIGRAPH(as.data.frame(t2), layout_style="kk",
                      text_title=paste(gsub("_"," ",x), "enriched (neuronal)"))
 #make top DEG darker
-V(i2$igraph)$color = ifelse(V(i2$igraph)$name %in% top.genes2[[2]], "grey50", V(i2$igraph)$color)
+V(i2$igraph)$color = ifelse(V(i2$igraph)$name %in% top.genes3[[2]], "grey50", V(i2$igraph)$color)
 #make theme terms darker
 mod.color = V(i2$igraph)$name %in% termList[["proinfl"]]
 V(i2$igraph)$color[mod.color] = ifelse(V(i2$igraph)$color[mod.color]=="#CFEBF7", "skyblue", "tomato")
 
-#violin for revised neuronal
-plist3 = lapply(top.genes2[[1]], function(y) plotViolin(y, hmp_data$boxplot.df, box_data, color_by="cluster"))
-plist3 = marrangeGrob(plist3, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = "Glial enriched top genes")
-
-plist4 = lapply(top.genes2[[2]], function(y) plotViolin(y, hmp_data$boxplot.df, box_data, color_by="cluster"))
-plist4 = marrangeGrob(plist4, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = "Neuronal enriched top genes")
 
 # save plots
 pdf(file=paste0("plots/08_LA-DEG_analysis/", gsub("\\.","-", gsub("_","-",x)),"/", gsub("\\.","-", gsub("_","-",x)), 
@@ -355,11 +404,14 @@ for(i in list(i1, i2)) {
          pch=16, pt.cex=1, cex=.7,
          col=c("#CFEBF7","skyblue","#FFC0B5","tomato","grey85","grey50"))
 }
-plist3
-plist4
 dev.off()
 cat("\n\nPlots saved to:", paste0("plots/08_LA-DEG_analysis/", gsub("\\.","-", gsub("_","-",x)),"/", gsub("\\.","-", gsub("_","-",x)),
                 "_biological-themes.pdf"),"\n")
+
+
+
+
+
 
 #additional plot utilizing all L-A DEGs present in both datasets
 #pull strongly sig genes not in top.genes
@@ -370,27 +422,25 @@ t2 = filter(box_data[["LA_seurat"]], group=="NTC.BPD", sex=="M", abs(logFC)>.3, 
 new.genes = intersect(t1, t2)
 
 #filter by prop n50
-spe_save <- spe_summ
-load("processed-data/06_pseudobulk/spe_n119_pseudo-dotplot_sample-id.Rdata")
-prop.m = t(assay(spe_summ, "logcounts.prop.detected")[rowData(spe_summ)$gene_name %in% new.genes,])
-colnames(prop.m) = rowData(spe_summ)[colnames(prop.m), "gene_name"]
+prop.m = t(assay(spe_zero, "logcounts.prop.detected")[rowData(spe_zero)$gene_name %in% new.genes,])
+colnames(prop.m) = rowData(spe_zero)[colnames(prop.m), "gene_name"]
 
 f2 <- function(x) as.numeric(median(x))
 q2 = apply(prop.m, MARGIN=2, f2)
 q2.pass = q2>.02
 new.genes = names(q2.pass)[q2.pass]
 
-spe_summ <- spe_save
-hmp_data = formatData(union(unique(unlist(top.genes)), new.genes), spe_sm, spe_se)
+
+hmp_data = formatData(union(unique(unlist(top.genes2)), new.genes), spe_sm, spe_se)
 
 #format for heatmap
 d1 = tidyr::pivot_wider(hmp_data$boxplot.df, names_from="key_genes", values_from="logcounts")
-m1 = as.matrix(d1[,union(unique(unlist(top.genes)), new.genes)])
+m1 = as.matrix(d1[,union(unique(unlist(top.genes2)), new.genes)])
 c1 = cor(m1, method="spearman")
 
 #d2 = distinct(ungroup(all.terms), gene_name, NES)
-d2 = bind_rows(filter(box_data[["LA_seurat"]][,c("gene_name","logFC","group","sex")], group=="NTC.BPD", sex=="M", gene_name %in% union(unlist(top.genes), new.genes)),
-	filter(box_data[["LA_smoothed"]][,c("gene_name","logFC","group","sex")], group=="NTC.BPD", sex=="M", gene_name %in% union(unlist(top.genes), new.genes))) %>%
+d2 = bind_rows(filter(box_data[["LA_seurat"]][,c("gene_name","logFC","group","sex")], group=="NTC.BPD", sex=="M", gene_name %in% union(unlist(top.genes2), new.genes)),
+	filter(box_data[["LA_smoothed"]][,c("gene_name","logFC","group","sex")], group=="NTC.BPD", sex=="M", gene_name %in% union(unlist(top.genes2), new.genes))) %>%
 	group_by(gene_name) %>% summarise("NES"=sign(mean(logFC)))
 
 for(i in names(geneList)) {
@@ -403,7 +453,7 @@ rownames(col.annot) = d2$gene_name
 col.annot$NES = as.character(col.annot$NES)
 
 col.annot$logfc03 = as.character(rownames(col.annot) %in% new.genes)
-col.annot$logfc03 = ifelse(rownames(col.annot) %in% unlist(top.genes) & col.annot$logfc03=="TRUE", "top", col.annot$logfc03)
+col.annot$logfc03 = ifelse(rownames(col.annot) %in% unlist(top.genes2) & col.annot$logfc03=="TRUE", "top", col.annot$logfc03)
 
 for(i in names(top.genes)) {
   col.annot[top.genes[[i]],i] = "top"
@@ -460,13 +510,14 @@ p3 <- ggplot(pc30.df, aes(x=factor(clusters, levels=seurat_levels),
 
 #gex plot all genes with abs(logFC)>.5
 plist4 = lapply(intersect(phm$tree_col$label[phm$tree_col$order], new.genes), function(y) plotViolin(y, hmp_data$boxplot.df, box_data, color_by="cluster"))
-plist4 = marrangeGrob(plist4, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = "All genes with abs(logFC)>.5")
+plist4 = marrangeGrob(plist4, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = "All genes with abs(logFC)>.3 and zero prop.>2% in half of capture areas")
 
 pdf(file="plots/08_LA-DEG_analysis/NTC-BPD-M/NTC-BPD-M_all-genes-logFC-03-zeroprop-02.pdf", height=12, width=12)
 plot(phm[[4]])
 p3
 plist4
 dev.off()
+cat("\nCorrelation, dotplot, and violin of all genes passed logFC and zero prop filter saved to: plots/08_LA-DEG_analysis/NTC-BPD-M/NTC-BPD-M_all-genes-logFC-03-zeroprop-02.pdf\n")
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time())
