@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=NTC-MDD-F_extract-themes
+#SBATCH --job-name=NTC-MDD-F_extract-themes_zero-prop-filter
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_LA-DEG_analysis/logs/%x_%j.log
 
 echo "**** Job starts ****"
