@@ -26,7 +26,7 @@ outlist1  = readRDS(paste0("processed-data/08_LA-DEG_analysis/", gsub("_","-", g
 outlist2  = readRDS(paste0("processed-data/08_LA-DEG_analysis/", gsub("_","-", gsub("\\.","-",x)), "_smoothed-k9-1663_consolidated-terms.rda"))
 
 keepterms = c(union(outlist1[[1]], outlist2[[1]]), union(outlist1[[2]], outlist2[[2]]), union(outlist1[[3]], outlist2[[3]]))
-length(keepterms) #92
+length(keepterms) #45
 
 outlist = list()
 for(gmt_db in gmt_dbl) {
@@ -59,31 +59,31 @@ nrn.df = filter(all.terms, term %in% termList[["syn.func"]])
 #length(unique(nrn.df$gene_name)) #10
 geneList[["syn.func"]] = unique(nrn.df$gene_name)
 
-assembl = c("Assembly","Dendrit","Projection")
-termList[["syn.struc"]] = do.call(c, sapply(assembl, function(x) grep(x, keepterms, value=T)))
-nrn.df = filter(all.terms, term %in% termList[["syn.struc"]])
-#length(unique(nrn.df$gene_name)) #13
-geneList[["syn.struc"]] = unique(nrn.df$gene_name)
-
-termList[["neuro"]] = grep("Neuronal", keepterms, value=T, ignore.case = T)
+neuro = c("Assembly","Dendrit","Projection","Neuronal","Calcium")
+termList[["neuro"]] = do.call(c, sapply(neuro, function(x) grep(x, keepterms, value=T)))
 nrn.df = filter(all.terms, term %in% termList[["neuro"]])
-#length(unique(nrn.df$gene_name)) #11
+#length(unique(nrn.df$gene_name)) #13
 geneList[["neuro"]] = unique(nrn.df$gene_name)
+
+#termList[["neuro"]] = grep("Neuronal", keepterms, value=T, ignore.case = T)
+#nrn.df = filter(all.terms, term %in% termList[["neuro"]])
+##length(unique(nrn.df$gene_name)) #11
+#geneList[["neuro"]] = unique(nrn.df$gene_name)
 
 #calcium only had 3 genes and should correlate or be obvious if high enough fold change
 
-energy = c("Respirat","Mito")
-termList[["energy"]] = do.call(c, lapply(energy, function(x) grep(x, keepterms, value=T)))
-atp.df = filter(all.terms, term %in% termList[["energy"]])
+mito = c("Mito")
+termList[["mito"]] = do.call(c, lapply(mito, function(x) grep(x, keepterms, value=T)))
+atp.df = filter(all.terms, term %in% termList[["mito"]])
 #length(unique(atp.df$gene_name)) #9
-geneList[["energy"]] = unique(atp.df$gene_name)
+geneList[["mito"]] = unique(atp.df$gene_name)
 
-glia = c("Drug","Collagen","Hemato")
-termList[["glia"]] = setdiff(do.call(c, lapply(glia, function(x) grep(x, keepterms, value=T))),
-                             "Collagen-Containing Extracellular Matrix (GO:0062023)")
-glia.df = filter(all.terms, term %in% termList[["glia"]])
-#length(unique(glia.df$gene_name)) #17
-geneList[["glia"]] = unique(glia.df$gene_name)
+#glia = c("Drug","Collagen","Hemato")
+#termList[["glia"]] = setdiff(do.call(c, lapply(glia, function(x) grep(x, keepterms, value=T))),
+#                             "Collagen-Containing Extracellular Matrix (GO:0062023)")
+#glia.df = filter(all.terms, term %in% termList[["glia"]])
+##length(unique(glia.df$gene_name)) #17
+#geneList[["glia"]] = unique(glia.df$gene_name)
 
 #switch to enriched terms
 
@@ -95,12 +95,12 @@ vasc.df = filter(all.terms, term %in% termList[["vasc"]])
 #length(unique(vasc.df$gene_name)) #20
 geneList[["vasc"]] = unique(vasc.df$gene_name)
 
-vasc2 = c("Endo","Epi")
-termList[["bbb"]] = do.call(c, lapply(vasc2, function(x) grep(x, keepterms, value=T)))
-vasc.df2 = filter(all.terms, term %in% termList[["bbb"]])
-#table(vasc.df2$NES) #all up, 13
-#length(unique(vasc.df2$gene_name)) #11
-geneList[["bbb"]] = unique(vasc.df2$gene_name)
+#vasc2 = c("Endo","Epi")
+#termList[["bbb"]] = do.call(c, lapply(vasc2, function(x) grep(x, keepterms, value=T)))
+#vasc.df2 = filter(all.terms, term %in% termList[["bbb"]])
+##table(vasc.df2$NES) #all up, 13
+##length(unique(vasc.df2$gene_name)) #11
+#geneList[["bbb"]] = unique(vasc.df2$gene_name)
 
 #termList[["ecm"]] = "Collagen-Containing Extracellular Matrix (GO:0062023)"
 #geneList[["ecm"]] = filter(all.terms, term=="Collagen-Containing Extracellular Matrix (GO:0062023)")$gene_name
@@ -111,17 +111,24 @@ geneList[["bbb"]] = unique(vasc.df2$gene_name)
 #termList[["adhesion"]] = "Focal Adhesion (GO:0005925)"
 #geneList[["adhesion"]] = filter(all.terms, term=="Focal Adhesion (GO:0005925)")$gene_name
 
-termList[["inflamm"]] = grep("Inflamm", keepterms, value=T)
-geneList[["inflamm"]] = unique(filter(all.terms, term %in% termList[["inflamm"]])$gene_name)
+inflamm = c("Cytokine","Inflamm","Neutrophil")
+termList[["inflamm"]] = do.call(c, sapply(inflamm, function(x) grep(x, keepterms, value=T)))
+inf.df = filter(all.terms, term %in% termList[["inflamm"]])
+table(inf.df$NES) #all up, 94
+length(unique(inf.df$gene_name)) #62
+geneList[["inflamm"]] = unique(inf.df$gene_name)
 
-termList[["neutrophil"]] = "Neutrophil Degranulation R-HSA-6798695"
-geneList[["neutrophil"]] = filter(all.terms, term=="Neutrophil Degranulation R-HSA-6798695")$gene_name
+#termList[["inflamm"]] = grep("Inflamm", keepterms, value=T)
+#geneList[["inflamm"]] = unique(filter(all.terms, term %in% termList[["inflamm"]])$gene_name)
 
-termList[["cyto.prod"]] = "Regulation of Cytokine Production (GO:0001817)"
-geneList[["cyto.prod"]] = filter(all.terms, term=="Regulation of Cytokine Production (GO:0001817)")$gene_name
+#termList[["neutrophil"]] = "Neutrophil Degranulation R-HSA-6798695"
+#geneList[["neutrophil"]] = filter(all.terms, term=="Neutrophil Degranulation R-HSA-6798695")$gene_name
 
-termList[["cyto.resp"]] = setdiff(grep("Cytokine", keepterms, value=T), "Regulation of Cytokine Production (GO:0001817)")
-geneList[["cyto.resp"]] = unique(filter(all.terms, term %in% termList[["cyto.resp"]])$gene_name)
+#termList[["cyto.prod"]] = "Regulation of Cytokine Production (GO:0001817)"
+#geneList[["cyto.prod"]] = filter(all.terms, term=="Regulation of Cytokine Production (GO:0001817)")$gene_name
+
+#termList[["cyto.resp"]] = setdiff(grep("Cytokine", keepterms, value=T), "Regulation of Cytokine Production (GO:0001817)")
+#geneList[["cyto.resp"]] = unique(filter(all.terms, term %in% termList[["cyto.resp"]])$gene_name)
 
 #termList[["complement"]] = "Complement Cascade R-HSA-166658"
 #geneList[["complement"]] = filter(all.terms, term=="Complement Cascade R-HSA-166658")$gene_name
@@ -131,15 +138,22 @@ termList[["growth"]] = c("Negative Regulation of Growth (GO:0045926)",
 grow.df = filter(all.terms, term %in% termList[["growth"]])
 geneList[["growth"]] = unique(grow.df$gene_name)
 
-ribo = c("Ribo","Translation","mRNA","P-body")
-termList[["ribo"]] = do.call(c, sapply(ribo, function(x) grep(x, keepterms, value=T)))
+ribo = c("mRNA","P-body","NMD")
+termList[["mRNA"]] = do.call(c, lapply(ribo, function(x) grep(x, keepterms, value=T)))
+ribo.df = filter(all.terms, term %in% termList[["mRNA"]])
+#table(ribo.df$NES) #all up, 50
+#length(unique(ribo.df$gene_name)) #21
+geneList[["mRNA"]] = unique(ribo.df$gene_name)
+
+ribo = c("Ribo","Translation")
+termList[["ribo"]] = do.call(c, lapply(ribo, function(x) grep(x, keepterms, value=T)))
 ribo.df = filter(all.terms, term %in% termList[["ribo"]])
 #table(ribo.df$NES) #all up, 50
 #length(unique(ribo.df$gene_name)) #21
 geneList[["ribo"]] = unique(ribo.df$gene_name)
 
-termList[["starve"]] = "Cellular Response To Starvation R-HSA-9711097"
-geneList[["starve"]] = filter(all.terms, term=="Cellular Response To Starvation R-HSA-9711097")$gene_name
+termList[["starve"]] = c("Cellular Response To Starvation R-HSA-9711097","Response Of EIF2AK4 (GCN2) To Amino Acid Deficiency R-HSA-9633012")
+geneList[["starve"]] = unique(filter(all.terms, term %in% c("Cellular Response To Starvation R-HSA-9711097","Response Of EIF2AK4 (GCN2) To Amino Acid Deficiency R-HSA-9633012"))$gene_name)
 #Response Of EIF2AK4 (GCN2) To Amino Acid Deficiency R…
 
 termList[["apop"]] = grep("Apop", keepterms, value=T)
@@ -224,7 +238,7 @@ for(i in names(geneList)) {
 
 #plot depleted genes
 dep.names = rownames(col.annot)[col.annot$NES<0]
-col.annot_d = col.annot[,c("NES","energy","syn.struc","neuro","syn.func","glia")]
+col.annot_d = col.annot[,c("NES","mito","neuro","syn.func")]
 phmd = pheatmap(c1[dep.names,dep.names], annotation_col=col.annot_d[dep.names,], annotation_colors = annot_colors,
          color=colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))(9),
          breaks=seq(-1, 1, length.out=10), legend_breaks = seq(-1, 1, by=.5),
@@ -235,7 +249,7 @@ phmd = pheatmap(c1[dep.names,dep.names], annotation_col=col.annot_d[dep.names,],
 
 #plot enriched genes
 en.names = rownames(col.annot)[col.annot$NES>0]
-col.annot_e = col.annot[,c("NES", setdiff(names(geneList),c("energy","syn.struc","neuro","syn.func","glia")))]
+col.annot_e = col.annot[,c("NES", setdiff(names(geneList),c("mito","neuro","syn.func")))]
 phme = pheatmap(c1[en.names,en.names], annotation_col=col.annot_e[en.names,], annotation_colors = annot_colors,
          color=colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))(9),
          breaks=seq(-1, 1, length.out=10), legend_breaks = seq(-1, 1, by=.5),
@@ -288,7 +302,7 @@ pc30.df$gene_name_f = factor(pc30.df$gene_name, levels=gene_order,
                              labels=ifelse(gene_order %in% unlist(top.genes), paste0("***", gene_order), gene_order))
 #dlpfc marker dotplot
 #try splitting into two so that gene names are readable
-p2 <- ggplot(filter(pc30.df, gene_name %in% phme$tree_row$label[phme$tree_row$order][1:grep("FABP5", phme$tree_row$label[phme$tree_row$order])]), 
+p2 <- ggplot(filter(pc30.df, gene_name %in% phme$tree_row$label[phme$tree_row$order][1:grep("SCIN", phme$tree_row$label[phme$tree_row$order])]), 
 	aes(x=factor(clusters, levels=seurat_levels), 
                           y=gene_name_f, color=mean_expr_scaled, size=prop_spots))+
   geom_count()+scale_color_gradient(low="white", high="black")+
@@ -302,7 +316,7 @@ p2 <- ggplot(filter(pc30.df, gene_name %in% phme$tree_row$label[phme$tree_row$or
                         axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"),
                         axis.title.y=element_text(margin=margin(0,20,0,20,"pt")))
 
-p2.1 <- ggplot(filter(pc30.df, gene_name %in% phme$tree_row$label[phme$tree_row$order][(grep("FABP5", phme$tree_row$label[phme$tree_row$order])+1):length(phme$tree_row$label[phme$tree_row$order])]),
+p2.1 <- ggplot(filter(pc30.df, gene_name %in% phme$tree_row$label[phme$tree_row$order][(grep("SCIN", phme$tree_row$label[phme$tree_row$order])+1):length(phme$tree_row$label[phme$tree_row$order])]),
         aes(x=factor(clusters, levels=seurat_levels),
                           y=gene_name_f, color=mean_expr_scaled, size=prop_spots))+
   geom_count()+scale_color_gradient(low="white", high="black")+
@@ -318,14 +332,14 @@ p2.1 <- ggplot(filter(pc30.df, gene_name %in% phme$tree_row$label[phme$tree_row$
 #plot top genes expression with combo of violin and boxplots
 ## using custom function from 08_LA-DEG_analysis/plot-gex_functions.r
 #depleted
-plist1 = lapply(c("energy","syn.struc","neuro","syn.func","glia"), function(x) {
+plist1 = lapply(c("mito","neuro","syn.func"), function(x) {
   gl1 = top.genes[[x]]
   plist = lapply(gl1, function(y) plotViolin(y, hmp_data$boxplot.df, box_data, color_by="cluster"))
   plist = marrangeGrob(plist, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = paste(x, "top genes"))
   return(plist)
 })
 #enriched
-plist2 = lapply(setdiff(names(top.genes), c("energy","syn.struc","neuro","syn.func","glia")), function(x) {
+plist2 = lapply(setdiff(names(top.genes), c("mito","neuro","syn.func")), function(x) {
   gl1 = top.genes[[x]]
   plist = lapply(gl1, function(y) plotViolin(y, hmp_data$boxplot.df, box_data, color_by="cluster"))
   plist = marrangeGrob(plist, layout_matrix=matrix(c(1:8), ncol=2, nrow=4, byrow=T), top = paste(x, "top genes"))
@@ -350,14 +364,14 @@ for(i in igraphList) {
          pch=16, pt.cex=1, cex=.7,
          col=c("#CFEBF7","skyblue","#FFC0B5","tomato","grey85","grey50"))
 }
-UpSetR::upset(UpSetR::fromList(geneList[c("energy","syn.struc","neuro","syn.func","glia")]), nsets=5, text.scale=2, mb.ratio=c(.5,.5))
+UpSetR::upset(UpSetR::fromList(geneList[c("mito","neuro","syn.func")]), nsets=3, text.scale=2, mb.ratio=c(.5,.5))
 #UpSetR::upset(UpSetR::fromList(geneList[setdiff(names(geneList), c("energy","syn.struc","neuro","syn.func","glia"))]), 
 #	nsets=length(geneList)-5, text.scale=2, mb.ratio=c(.5,.5))
 plot(phmd[[4]])
 p1
 plist1
-UpSetR::upset(UpSetR::fromList(geneList[setdiff(names(geneList), c("energy","syn.struc","neuro","syn.func","glia"))]),
-        nsets=length(geneList)-5, text.scale=2, mb.ratio=c(.5,.5))
+UpSetR::upset(UpSetR::fromList(geneList[setdiff(names(geneList), c("mito","neuro","syn.func"))]),
+        nsets=length(geneList)-3, text.scale=2, mb.ratio=c(.5,.5))
 plot(phme[[4]])
 p2
 p2.1
@@ -365,7 +379,6 @@ plist2
 dev.off()
 cat("\n\nPlots saved to:", paste0("plots/08_LA-DEG_analysis/", gsub("\\.","-", gsub("_","-",x)),"/", gsub("\\.","-", gsub("_","-",x)),
                 "_biological-themes.pdf"),"\n")
-
 
 #pull strongly sig genes not in top.genes
 ### some genes were just barely not at logFC=.5 in only 1 so i lowered the threshold just a little but (genes like ADRA1D, CARNS1)

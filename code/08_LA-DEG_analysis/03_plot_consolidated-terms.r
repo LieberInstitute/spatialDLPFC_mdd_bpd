@@ -50,6 +50,12 @@ for(gmt_db in gmt_dbl) {
   redundant.terms = setdiff(redundant.terms,keep.terms)
   
   tmp2_revised = filter(tmp2, !term %in% redundant.terms)
+
+  #extra for ntc mdd f
+  if(x=="NTC.MDD_F" & gmt_db=="GO-BP") {
+	extra.redundant = setdiff(tmp2_revised$term, keep.terms)
+	tmp2_revised = filter(tmp2_revised, !term %in% extra.redundant)
+  }
   #check for removed genes
   filter(tmp2, gene_name %in% setdiff(tmp2$gene_name, tmp2_revised$gene_name))
   
