@@ -37,13 +37,13 @@ dge_pseudo <- calcNormFactors(dge_pseudo)
 #dds <- DESeq2::estimateSizeFactors(dds)
 #dge_pseudo$samples$norm.factors <- sizeFactors(dds)
 
-cat("\ndx model: ~ 0 + group + smoothed_k9_1663 + pc3\n")
+cat("\ndx model: ~ 0 + group + smoothed_k9_1663\n")
 #cat("\ndx model: ~ 0 + group + seurat_label + pc3 + age\n")
 
 group = interaction(spe_pseudo$condition, spe_pseudo$sex)
 table(group)
 dx_mod <- model.matrix(
-  ~ 0 + group + smoothed_k9_1663 + pc3,
+  ~ 0 + group + smoothed_k9_1663,
   #~ 0 + group + seurat_label + pc3 + age,
   colData(spe_pseudo)
 )
@@ -69,8 +69,8 @@ fit <- lmFit(y, block = colData(spe_pseudo)$sample_id, correlation = corfit$cons
 #corfit <- duplicateCorrelation(logcounts(spe_pseudo), design=dx_mod, block=spe_pseudo$sample_id)
 #fit <- lmFit(logcounts(spe_pseudo), design=dx_mod, block=spe_pseudo$sample_id, correlation=corfit$consensus)
 
-saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-pc3.rda")
-cat("\nlmFit results/ object saved to: processed-data/07_dx_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-pc3.rda\n")
+saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-none.rda")
+cat("\nlmFit results/ object saved to: processed-data/07_dx_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-none.rda\n")
 
 #saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-adjusted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-age.rda")
 #cat("\nlmFit results/ object saved to: processed-data/07_dx_DE/lmFit-voom_layer-adjusted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-age.rda\n")
