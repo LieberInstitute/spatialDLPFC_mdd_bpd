@@ -58,7 +58,7 @@ y = voom(dge_pseudo, dx_mod, plot=F)
 #fit <- lmFit(y, block = colData(spe_pseudo)$sample_id, correlation = corfit$consensus)
 
 cat("\nSkip duplicateCorrelation!!!\n")
-fit <- lmFit(y, block = colData(spe_pseudo)$sample_id)
+fit <- lmFit(y, correlation=0)
 
 #cat("\nvoom re-applied after duplicateCorrelation = TRUE\n")
 ## https://bioconductor.org/packages/release/bioc/vignettes/limma/inst/doc/usersguide.pdf PAGE 127-128
@@ -72,8 +72,8 @@ fit <- lmFit(y, block = colData(spe_pseudo)$sample_id)
 #corfit <- duplicateCorrelation(logcounts(spe_pseudo), design=dx_mod, block=spe_pseudo$sample_id)
 #fit <- lmFit(logcounts(spe_pseudo), design=dx_mod, block=spe_pseudo$sample_id, correlation=corfit$consensus)
 
-saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_rev-gene-input_no-dupCorr_covars-pc3.rda")
-cat("\nlmFit results/ object saved to: processed-data/07_dx_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_rev-gene-input_no-dupCorr_covars-pc3.rda\n")
+saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_rev-gene-input_dupCorr-0_covars-pc3.rda")
+cat("\nlmFit results/ object saved to: processed-data/07_dx_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_rev-gene-input_dupCor-0_covars-pc3.rda\n")
 
 #saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-adjusted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-age.rda")
 #cat("\nlmFit results/ object saved to: processed-data/07_dx_DE/lmFit-voom_layer-adjusted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-age.rda\n")
