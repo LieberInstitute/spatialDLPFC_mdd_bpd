@@ -19,6 +19,7 @@ rowData(spe_pseudo)$high_expr_group_sample_id2 <- filterByExpr(spe_pseudo, group
 rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$seurat_label)
 spe_pseudo <- spe_pseudo[rowData(spe_pseudo)$high_expr_group_sample_id2==T & rowData(spe_pseudo)$high_expr_group_cluster2==T,]
 dim(spe_pseudo)
+
 ##remove lowly expressed genes that were included for comparison with snRNAseq data
 #spe_pseudo <- spe_pseudo[rowData(spe_pseudo)$high_expr_group_sample_id==T & rowData(spe_pseudo)$high_expr_group_cluster==T,]
 #dim(spe_pseudo)
@@ -37,10 +38,10 @@ group = interaction(dx, clus, sex)
 cat("\ngroup var produced by interaction():\n")
 table(group)
 
-cat("\ndx model: ~ 0 + group + pc3 + age\n")
+cat("\ndx model: ~ 0 + group\n")
 
 dx_mod <- model.matrix(
-  ~ 0 + group + pc3 + age,
+  ~ 0 + group,
   colData(spe_pseudo)
 )
 stopifnot(is.fullrank(dx_mod))
@@ -57,11 +58,11 @@ fit <- lmFit(y, block = colData(spe_pseudo)$sample_id, correlation = corfit$cons
 #corfit <- duplicateCorrelation(logcounts(spe_pseudo), design=dx_mod, block=spe_pseudo$sample_id)
 #fit <- lmFit(logcounts(spe_pseudo), design=dx_mod, block=spe_pseudo$sample_id, correlation= corfit$consensus) 
 
-#saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-restricted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-pc3-age.rda")
-#cat("\nSaved to: processed-data/07_dx_DE/lmFit-voom_layer-restricted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-pc3-age.rda\n")
+#saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-restricted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-none.rda")
+#cat("\nSaved to: processed-data/07_dx_DE/lmFit-voom_layer-restricted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-none.rda\n")
 
-saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-restricted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-age.rda")
-cat("\nSaved to: processed-data/07_dx_DE/lmFit-voom_layer-restricted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-age.rda\n")
+saveRDS(fit, "processed-data/07_dx_DE/lmFit-voom_layer-restricted_seurat-pc30_condition-sex_rev-gene-input_covars-none.rda")
+cat("\nSaved to: processed-data/07_dx_DE/lmFit-voom_layer-restricted_seurat-pc30_condition-sex_rev-gene-input_covars-none.rda\n")
 
 
 cat("\n\nReproducibility information:\n")
