@@ -22,7 +22,7 @@ names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")
 
 ## layer agnostic
 results <- readRDS(paste0("processed-data/07_dx_DE/lmFit-voom_layer-agnostic_", results_set,
-        "_condition-sex_rev-gene-input_covars-pc3.rda"))
+        "_condition-sex_rev-gene-input_covars-none.rda"))
 #head(coef(results))
 
 comparisons = c("F_NTC.MDD","M_NTC.MDD",
@@ -46,22 +46,22 @@ p <- ggplot(sex.res$results, aes(x=logFC, y=-log10(adj.P.Val)))+
   ggtitle(paste0("Layer-agnostic (", results_set, ")"))+
   theme_bw()
 
-ggsave(paste0("plots/07_dx_DE/layer-agnostic-pc3-only_", results_set,
+ggsave(paste0("plots/07_dx_DE/layer-agnostic-no-covars_", results_set,
         "_rev-gene-input_p-val-histogram-volcano.png"),
         gridExtra::grid.arrange(sex.res$phist, p, ncol=1),
         bg="white", width=6, height=11)
 cat("\n\nSaved un-adjusted p value histogram and volcano plots to:",
-        paste0("plots/07_dx_DE/layer-agnostic-pc3-only_", results_set,
+        paste0("plots/07_dx_DE/layer-agnostic-no-covars_", results_set,
         "_rev-gene-input_p-val-histogram-volcano.png"), "\n")
 
-write.csv(sex.res$results, paste0("processed-data/07_dx_DE/layer-agnostic-pc3-only_", results_set,
+write.csv(sex.res$results, paste0("processed-data/07_dx_DE/layer-agnostic-no-covars_", results_set,
         "_rev-gene-input_compiled-results.csv"))
-cat("\n\n\nSaved compiled results dframe to:", paste0("processed-data/07_dx_DE/layer-agnostic-pc3-only_", results_set,
+cat("\n\n\nSaved compiled results dframe to:", paste0("processed-data/07_dx_DE/layer-agnostic-no-covars_", results_set,
         "_rev-gene-input_compiled-results.csv"), "\n\n")
 
 ## layer adjusted
 results <- readRDS(paste0("processed-data/07_dx_DE/lmFit-voom_layer-adjusted_", results_set, 
-	"_condition-sex_rev-gene-input_covars-pc3.rda"))
+	"_condition-sex_rev-gene-input_covars-none.rda"))
 #head(coef(results))
 
 comparisons = c("F_NTC.MDD","M_NTC.MDD",
@@ -74,7 +74,6 @@ eb <- eBayes(groupContrasts(results, comparisons), trend=T)
 sex.res = sexTopTable(eb, phist=T)
 #sex.res$phist #awesome, flat not reverse
 
-
 cat("\nLayer-adjusted analysis with adj p<.05 and abs(logFC)>.2:\n\n")
 filter(sex.res$results, adj.P.Val<.05, abs(logFC)>.2) %>% group_by(sex, group, .drop=F) %>% tally()
 
@@ -85,22 +84,22 @@ p <- ggplot(sex.res$results, aes(x=logFC, y=-log10(adj.P.Val)))+
   ggtitle(paste0("Layer-adjusted (", results_set, ")"))+
   theme_bw()
 
-ggsave(paste0("plots/07_dx_DE/layer-adjusted-pc3-only_", results_set, 
+ggsave(paste0("plots/07_dx_DE/layer-adjusted-no-covars_", results_set, 
 	"_rev-gene-input_p-val-histogram-volcano.png"),
 	gridExtra::grid.arrange(sex.res$phist, p, ncol=1),
 	bg="white", width=6, height=11)
 cat("\n\nSaved un-adjusted p value histogram and volcano plots to:",
-	paste0("plots/07_dx_DE/layer-adjusted-pc3-only_", results_set, 
+	paste0("plots/07_dx_DE/layer-adjusted-no-covars_", results_set, 
 	"_rev-gene-input_p-val-histogram-volcano.png"), "\n")
 
-write.csv(sex.res$results, paste0("processed-data/07_dx_DE/layer-adjusted-pc3-only_", results_set, 
+write.csv(sex.res$results, paste0("processed-data/07_dx_DE/layer-adjusted-no-covars_", results_set, 
 	"_rev-gene-input_compiled-results.csv"))
-cat("\n\n\nSaved compiled results dframe to:", paste0("processed-data/07_dx_DE/layer-adjusted-pc3-only_", results_set, 
+cat("\n\n\nSaved compiled results dframe to:", paste0("processed-data/07_dx_DE/layer-adjusted-no-covars_", results_set, 
 	"_rev-gene-input_compiled-results.csv"), "\n\n")
 
 ### layer restricted
 results <- readRDS(paste0("processed-data/07_dx_DE/lmFit-voom_layer-restricted_", results_set, 
-	"_condition-sex_rev-gene-input_covars-pc3.rda"))
+	"_condition-sex_rev-gene-input_covars-none.rda"))
 
 
 #need to have "dot" instead of "." in comparisons for cluster name 
@@ -148,23 +147,23 @@ p2 <- ggplot(filter(sex.res_df, sex=="M"), aes(x=logFC, y=-log10(adj.P.Val)))+
   xlim(-ceiling(max(sex.res_df$logFC)), ceiling(max(sex.res_df$logFC)))+ggtitle("Males")+
   theme_bw()
 
-pdf(file=paste0("plots/07_dx_DE/layer-restricted-pc3-only_", results_set, 
+pdf(file=paste0("plots/07_dx_DE/layer-restricted-no-covars_", results_set, 
 	"_rev-gene-input_p-val-histogram-volcano.pdf"),
     width=7, height=8)
 p0
 ggrastr::rasterize(p1,layer='point',dpi=300)
 ggrastr::rasterize(p2,layer='point',dpi=300)
 dev.off()
-cat("\n\nSaved volcano plots to:", paste0("plots/07_dx_DE/layer-restricted-pc3-only_", results_set, 
+cat("\n\nSaved volcano plots to:", paste0("plots/07_dx_DE/layer-restricted-no-covars_", results_set, 
 	"_rev-gene-input_volcano.pdf"),"\n\n\n")
 
 cat("\nLayer-restricted analysis with adj p<.05 and abs(logFC)>.2:\n\n")
 filter(sex.res_df, adj.P.Val<.05, abs(logFC)>.2) %>% group_by(sex, group, cluster, .drop=F) %>% tally() %>%
   tidyr::pivot_wider(names_from="cluster", values_from="n", values_fill=0)
 
-write.csv(sex.res_df, paste0("processed-data/07_dx_DE/layer-restricted-pc3-only_", results_set,
+write.csv(sex.res_df, paste0("processed-data/07_dx_DE/layer-restricted-no-covars_", results_set,
 	"_rev-gene-input_compiled-results.csv"), row.names=F)
-cat("\n\n\nSaved compiled results dframe to:", paste0("processed-data/07_dx_DE/layer-restricted-pc3-only_", results_set,
+cat("\n\n\nSaved compiled results dframe to:", paste0("processed-data/07_dx_DE/layer-restricted-no-covars_", results_set,
 	"_rev-gene-input_compiled-results.csv"), "\n")
 
 cat("\n\nReproducibility information:\n")
