@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=plot_both-models-seurat-pc30_with-age_revised-pb-filters_revised-gene-input
+#SBATCH --job-name=plot_all-3-models-seurat_pc3-only_revised-pb-filters_revised-gene-input
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/logs/%x_%j.log
 
 echo "**** Job starts ****"
