@@ -104,3 +104,55 @@ hmp = pheatmap::pheatmap(cor.var.m,
                          annotation_col = col_annot, annotation_colors = ann_colors,
                          annotation_names_col=FALSE, annotation_legend=T)
 plot(hmp[[4]])
+
+#do seurat too
+spe_save = spe_pseudo
+
+
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+spe_pseudo$pc3 = reducedDim(spe_pseudo, "PCA_1663")[,3]
+
+#heatmap and percent variance
+new.cdata = merge(colData(spe_pseudo), sdata, sort=F)
+identical(spe_pseudo$total, new.cdata$total)
+colData(spe_pseudo) <- new.cdata
+
+exp.vars = c("seurat_label","sample_id",
+             "slide","seq",
+             "condition","sex",
+             "age","BMI","Smoking",
+             "PMI","RIN",
+             "sum","detected","nspots")
+var.m = scater::getVarianceExplained(spe_pseudo, variables=c(exp.vars,"pc3"), 
+                                     exprs_values="logcounts")
+#decidedly not normal distribution
+cor.var.m = cor(var.m, method="spearman")
+col_annot = data.frame(colMeans(var.m))
+colnames(col_annot) = "percVar"
+round(col_annot, 2)
+#.............percVar
+#seurat_label   15.34
+#sample_id      24.84
+#slide          11.51
+#seq             2.83
+#condition       0.48
+#sex             0.29
+#age             0.48
+#BMI             0.25
+#Smoking         0.24
+#PMI             0.28
+#RIN             0.28
+#sum             3.61
+#detected        7.20
+#nspots          3.14
+#pc3             5.53
+
+ann_colors = list(
+  percVar = colorRampPalette(c("white", "purple3", "black"), bias=1)(10)
+)
+hmp = pheatmap::pheatmap(cor.var.m,
+                         annotation_col = col_annot, annotation_colors = ann_colors,
+                         annotation_names_col=FALSE, annotation_legend=T,
+                         angle_col = 90, main="Seurat PC30")
+
+spe_seurat <- spe_pseudo
