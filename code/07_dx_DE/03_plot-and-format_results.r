@@ -20,111 +20,102 @@ results_set = "seurat-pc30"
 comp_names = c("MicrodotVasc","Astro","L2dot3","L4","Inhb","L5","L6","Oligo")
 names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")
 
-## layer agnostic
-results <- readRDS(paste0("processed-data/07_dx_DE/lmFit-voom_layer-agnostic_", results_set,
-        "_condition-sex_rev-gene-input_covars-none.rda"))
-#head(coef(results))
-
-comparisons = c("F_NTC.MDD","M_NTC.MDD",
-                "F_NTC.BPD","M_NTC.BPD",
-                "F_MDD.BPD","M_MDD.BPD")
-
-eb <- eBayes(groupContrasts(results, comparisons), trend=T)
-#plotSA(eb)
-
-sex.res = sexTopTable(eb, phist=T)
-#sex.res$phist #awesome, flat not reverse
-
-
-cat("\nLayer-agnostic analysis with adj p<.05 and abs(logFC)>.2:\n\n")
-filter(sex.res$results, adj.P.Val<.05, abs(logFC)>.2) %>% group_by(sex, group, .drop=F) %>% tally()
-
-p <- ggplot(sex.res$results, aes(x=logFC, y=-log10(adj.P.Val)))+
-  geom_point(size=.3)+geom_point(data=filter(sex.res$results, adj.P.Val<.05, abs(logFC)>.2), size=.3, color="red2")+
-  facet_grid(rows=vars(group), cols=vars(sex))+
-  xlim(-ceiling(max(sex.res$results$logFC)), ceiling(max(sex.res$results$logFC)))+
-  ggtitle(paste0("Layer-agnostic (", results_set, ")"))+
-  theme_bw()
-
-ggsave(paste0("plots/07_dx_DE/layer-agnostic-no-covars_", results_set,
-        "_rev-gene-input_p-val-histogram-volcano.png"),
-        gridExtra::grid.arrange(sex.res$phist, p, ncol=1),
-        bg="white", width=6, height=11)
-cat("\n\nSaved un-adjusted p value histogram and volcano plots to:",
-        paste0("plots/07_dx_DE/layer-agnostic-no-covars_", results_set,
-        "_rev-gene-input_p-val-histogram-volcano.png"), "\n")
-
-write.csv(sex.res$results, paste0("processed-data/07_dx_DE/layer-agnostic-no-covars_", results_set,
-        "_rev-gene-input_compiled-results.csv"))
-cat("\n\n\nSaved compiled results dframe to:", paste0("processed-data/07_dx_DE/layer-agnostic-no-covars_", results_set,
-        "_rev-gene-input_compiled-results.csv"), "\n\n")
-
 ## layer adjusted
 results <- readRDS(paste0("processed-data/07_dx_DE/lmFit-voom_layer-adjusted_", results_set, 
-	"_condition-sex_rev-gene-input_covars-none.rda"))
+	"_condition-sex_rev-gene-input_covars-pc3.rda"))
 #head(coef(results))
 
 comparisons = c("F_NTC.MDD","M_NTC.MDD",
                 "F_NTC.BPD","M_NTC.BPD",
                 "F_MDD.BPD","M_MDD.BPD")
 
-eb <- eBayes(groupContrasts(results, comparisons), trend=T)
+eb <- eBayes(groupContrasts(results, comparisons), trend=T, robust=T)
 #plotSA(eb)
 
+## F statistics
+eb.f = getTopTable(eb, .coef="all") %>%
+	mutate("F_design"="~ 0 + dx*sex")
+f_sig = filter(eb.f, adj.P.Val<.05)$gene_id
+## moderated t statistics
 sex.res = sexTopTable(eb, phist=T)
-#sex.res$phist #awesome, flat not reverse
+### implement global padj method (without this, different t cutoffs were sig because of different group sizes)
+### details: https://github.com/cran/limma/blob/master/R/decidetests.R
+sex.res$results$adj.P.Val = p.adjust(sex.res$results$P.Value, method="BH")
 
-cat("\nLayer-adjusted analysis with adj p<.05 and abs(logFC)>.2:\n\n")
-filter(sex.res$results, adj.P.Val<.05, abs(logFC)>.2) %>% group_by(sex, group, .drop=F) %>% tally()
+
+cat("\nLayer-adjusted analysis with adj p<.05 and F adj p<.05:\n\n")
+filter(sex.res$results, adj.P.Val<.05, gene_id %in% f_sig) %>% 
+	group_by(sex, group, .drop=F) %>% tally()
 
 p <- ggplot(sex.res$results, aes(x=logFC, y=-log10(adj.P.Val)))+
-  geom_point(size=.3)+geom_point(data=filter(sex.res$results, adj.P.Val<.05, abs(logFC)>.2), size=.3, color="red2")+
+  geom_point(size=.3)+
+  geom_point(data=filter(sex.res$results, adj.P.Val<.05, gene_id %in% f_sig), size=.3, color="red2")+
   facet_grid(rows=vars(group), cols=vars(sex))+
   xlim(-ceiling(max(sex.res$results$logFC)), ceiling(max(sex.res$results$logFC)))+
   ggtitle(paste0("Layer-adjusted (", results_set, ")"))+
   theme_bw()
 
-ggsave(paste0("plots/07_dx_DE/layer-adjusted-no-covars_", results_set, 
+ggsave(paste0("plots/07_dx_DE/layer-adjusted-pc3_", results_set, 
 	"_rev-gene-input_p-val-histogram-volcano.png"),
 	gridExtra::grid.arrange(sex.res$phist, p, ncol=1),
 	bg="white", width=6, height=11)
 cat("\n\nSaved un-adjusted p value histogram and volcano plots to:",
-	paste0("plots/07_dx_DE/layer-adjusted-no-covars_", results_set, 
+	paste0("plots/07_dx_DE/layer-adjusted-pc3_", results_set, 
 	"_rev-gene-input_p-val-histogram-volcano.png"), "\n")
 
-write.csv(sex.res$results, paste0("processed-data/07_dx_DE/layer-adjusted-no-covars_", results_set, 
-	"_rev-gene-input_compiled-results.csv"))
-cat("\n\n\nSaved compiled results dframe to:", paste0("processed-data/07_dx_DE/layer-adjusted-no-covars_", results_set, 
-	"_rev-gene-input_compiled-results.csv"), "\n\n")
+write.csv(eb.f, paste0("processed-data/07_dx_DE/layer-adjusted-pc3_", results_set,
+	"_rev-gene-input_F-test.csv"), row.names=F)
+cat("\n\n\nSaved F test results dframe to:", paste0("processed-data/07_dx_DE/layer-adjusted-pc3_", results_set,
+        "_rev-gene-input_F-test.csv"), "\n")
+write.csv(sex.res$results, paste0("processed-data/07_dx_DE/layer-adjusted-pc3_", results_set, 
+	"_rev-gene-input_moderated-t-test.csv"), row.names=F)
+cat("\nSaved moderated t test results dframe to:", paste0("processed-data/07_dx_DE/layer-adjusted-pc3_", results_set, 
+	"_rev-gene-input_moderated-t-test.csv"), "\n\n")
+
+
 
 ### layer restricted
 results <- readRDS(paste0("processed-data/07_dx_DE/lmFit-voom_layer-restricted_", results_set, 
-	"_condition-sex_rev-gene-input_covars-none.rda"))
+	"_condition-sex_rev-gene-input_covars-pc3.rda"))
 
 
 #need to have "dot" instead of "." in comparisons for cluster name 
 comparisons = unlist(lapply(comp_names, 
                             function(x) paste(x, comparisons, sep="_")))
 
-eb <- eBayes(groupContrasts(results, comparisons), trend=T)
+eb <- eBayes(groupContrasts(results, comparisons), trend=T, robust=T)
 #plotSA(eb)
 
-#get top table for all comparisons
-sex.resList <- lapply(names(comp_names), function(x) sexTopTable(eb, phist=T, cluster=x))
+## F statistics
+eb_f = getTopTable(eb, .coef="all") %>%
+	mutate(cluster="all", F_design="~ 0 + dx*sex*cluster")
 
-##plot pval histogram for all comparisons
-#pdf(file=paste0("plots/07_dx_DE/layer-restricted-pc3-only_", results_set, 
-#	"_rev-gene-input_p-val-histogram.pdf"),
-#    width=5, height=6)
-#for(i in 1:length(sex.resList)) {
-#	plot(sex.resList[[i]]$phist+ggtitle(names(comp_names)[i]))
-#}
-#dev.off()
-#cat("\n\nSaved un-adjusted p value histogram to:", paste0("plots/07_dx_DE/layer-restricted-pc3-only_", results_set, 
-#	"_rev-gene-input_p-val-histogram.pdf"),"\n")
-
-sex.res_df = do.call(rbind, lapply(sex.resList, function(x) x$results)) %>%
+### nested approach
+eb_f.list <- lapply(names(comp_names), function(x) {
+  tmp = getTopTable(eb, .coef=grep(x, colnames(coef(eb)), value=T))
+  colnames(tmp)[1:6] = sapply(strsplit(colnames(tmp)[1:6], "_"), function(y) paste(y[[2]], y[[3]], sep="_"))
+  tmp$cluster = x
+  tmp$F_design = paste0(x, ": ~ 0 + dx*sex")
+  return(tmp)
+  })
+### implement global padj method (without this, different t cutoffs were sig because of different group sizes)
+### details: https://github.com/cran/limma/blob/master/R/decidetests.R
+eb_f.list_df = do.call(rbind, eb_f.list) %>% 
   mutate(cluster=factor(cluster, levels=names(comp_names)))
+eb_f.list_df$adj.P.Val = p.adjust(eb_f.list_df$P.Value, method="BH")
+
+f_sig_list = lapply(names(comp_names), function(x)
+	filter(eb_f.list_df, cluster==x, adj.P.Val<.05)$gene_id
+)
+names(f_sig_list) <- names(comp_names)
+
+## moderated t statistics
+sex.resList <- lapply(names(comp_names), function(x) sexTopTable(eb, phist=F, cluster=x))
+sex.res_df = do.call(rbind, sex.resList) %>%
+  mutate(cluster=factor(cluster, levels=names(comp_names)))
+### implement global padj method (without this, different t cutoffs were sig because of different group sizes)
+### details: https://github.com/cran/limma/blob/master/R/decidetests.R
+sex.res_df$adj.P.Val = p.adjust(sex.res_df$P.Value, method="BH")
 
 #alt pvalue histogram
 tmp = mutate(sex.res_df, sex.group=factor(paste(group, sex), levels=c("NTC.MDD F","NTC.MDD M","NTC.BPD F","NTC.BPD M","MDD.BPD F","MDD.BPD M")))
@@ -134,37 +125,79 @@ p0 <- ggplot(tmp, aes(x=P.Value))+
   labs(title=paste0("Layer-restricted (", results_set, ")"))+
   theme_minimal()+theme(panel.grid.minor=element_blank())
 
+
+#number of DEGs
+cat("\nLayer-restricted analysis with adj p<.05 and F adj p<.05:\n\n")
+do.call(rbind, lapply(names(comp_names), function(x) 
+  filter(sex.res_df, cluster==x, adj.P.Val<.05, gene_id %in% f_sig_list[[x]]) %>% 
+    group_by(sex, group, cluster) %>% tally())
+) %>% tidyr::pivot_wider(names_from="cluster", values_from="n", values_fill=0)
+
 #volcanos
+tmp = do.call(rbind, lapply(names(comp_names), function(x)
+  filter(sex.res_df, cluster==x, adj.P.Val<.05, gene_id %in% f_sig_list[[x]])
+))
+
 p1 <- ggplot(filter(sex.res_df, sex=="F"), aes(x=logFC, y=-log10(adj.P.Val)))+
-  geom_point(size=.3)+geom_point(data=filter(sex.res_df, sex=="F", adj.P.Val<.05, abs(logFC)>.2), size=.3, color="red2")+
+  geom_point(size=.3)+geom_point(data=filter(tmp, sex=="F"), size=.3, color="red2")+
   facet_grid(rows=vars(cluster), cols=vars(group))+
   xlim(-ceiling(max(sex.res_df$logFC)), ceiling(max(sex.res_df$logFC)))+ggtitle("Females")+
   theme_bw()
 
 p2 <- ggplot(filter(sex.res_df, sex=="M"), aes(x=logFC, y=-log10(adj.P.Val)))+
-  geom_point(size=.3)+geom_point(data=filter(sex.res_df, sex=="M", adj.P.Val<.05, abs(logFC)>.2), size=.3, color="red2")+
+  geom_point(size=.3)+geom_point(data=filter(tmp, sex=="M"), size=.3, color="red2")+
   facet_grid(rows=vars(cluster), cols=vars(group))+
   xlim(-ceiling(max(sex.res_df$logFC)), ceiling(max(sex.res_df$logFC)))+ggtitle("Males")+
   theme_bw()
 
-pdf(file=paste0("plots/07_dx_DE/layer-restricted-no-covars_", results_set, 
+pdf(file=paste0("plots/07_dx_DE/layer-restricted-pc3_", results_set, 
 	"_rev-gene-input_p-val-histogram-volcano.pdf"),
     width=7, height=8)
 p0
 ggrastr::rasterize(p1,layer='point',dpi=300)
 ggrastr::rasterize(p2,layer='point',dpi=300)
 dev.off()
-cat("\n\nSaved volcano plots to:", paste0("plots/07_dx_DE/layer-restricted-no-covars_", results_set, 
+cat("\n\nSaved volcano plots to:", paste0("plots/07_dx_DE/layer-restricted-pc3_", results_set, 
 	"_rev-gene-input_volcano.pdf"),"\n\n\n")
 
-cat("\nLayer-restricted analysis with adj p<.05 and abs(logFC)>.2:\n\n")
-filter(sex.res_df, adj.P.Val<.05, abs(logFC)>.2) %>% group_by(sex, group, cluster, .drop=F) %>% tally() %>%
-  tidyr::pivot_wider(names_from="cluster", values_from="n", values_fill=0)
 
-write.csv(sex.res_df, paste0("processed-data/07_dx_DE/layer-restricted-no-covars_", results_set,
-	"_rev-gene-input_compiled-results.csv"), row.names=F)
-cat("\n\n\nSaved compiled results dframe to:", paste0("processed-data/07_dx_DE/layer-restricted-no-covars_", results_set,
-	"_rev-gene-input_compiled-results.csv"), "\n")
+ph1 <- ggplot(eb.f, aes(x=P.Value))+
+  geom_histogram(bins=30)+scale_x_continuous(breaks=c(0,.5,1))+
+  labs(subtitle=paste0("Layer-adjusted (", results_set, ")"),
+    title="~ 0 + dx*sex", x="F test p value")+
+  theme_minimal()+theme(panel.grid.minor=element_blank())
+
+ph2 <- ggplot(eb_f, aes(x=P.Value))+
+  geom_histogram(bins=30)+scale_x_continuous(breaks=c(0,.5,1))+
+  labs(subtitle=paste0("Layer-restricted (", results_set, ")"),
+    title="~ 0 + dx*sex*cluster", x="F test p value")+
+  theme_minimal()+theme(panel.grid.minor=element_blank())
+
+ph3 <- ggplot(eb_f.list_df, aes(x=P.Value))+
+  geom_histogram(bins=30)+scale_x_continuous(breaks=c(0,.5,1))+
+  facet_wrap(vars(cluster), ncol=2, scales="free_y")+
+  labs(subtitle=paste0("Layer-restricted (", results_set, ")"), 
+    title="cluster: ~ 0 + dx*sex", x="F test p value")+
+  theme_minimal()+theme(panel.grid.minor=element_blank())
+
+lay_mat= rbind(c(1,2),c(3,3),c(3,3))
+ggsave(paste0("plots/07_dx_DE/F-test_la-lr-pc3_", results_set,
+        "_rev-gene-input_p-val-histogram.png"),
+        gridExtra::grid.arrange(ph1, ph2, ph3, layout_matrix=lay_mat),
+        bg="white", width=6, height=11)
+cat("\n\nSaved F test un-adjusted p value histogram to:",
+        paste0("plots/07_dx_DE/F-test_la-lr-pc3_", results_set,
+        "_rev-gene-input_p-val-histogram-volcano.png"), "\n")
+
+
+write.csv(bind_rows(eb_f, eb_f.list_df), paste0("processed-data/07_dx_DE/layer-restricted-pc3_", results_set,
+	"_rev-gene-input_F-test.csv"), row.names=F)
+cat("\n\n\nSaved F test results dframe to:", paste0("processed-data/07_dx_DE/layer-restricted-pc3_", results_set,
+        "_rev-gene-input_F-test.csv"), "\n")
+write.csv(sex.res_df, paste0("processed-data/07_dx_DE/layer-restricted-pc3_", results_set,
+	"_rev-gene-input_moderated-t-test.csv"), row.names=F)
+cat("\nSaved moderated t test results dframe to:", paste0("processed-data/07_dx_DE/layer-restricted-pc3_", results_set,
+	"_rev-gene-input_moderated-t-test.csv"), "\n")
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time())

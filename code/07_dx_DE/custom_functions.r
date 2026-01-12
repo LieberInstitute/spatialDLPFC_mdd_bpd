@@ -1,10 +1,19 @@
 getTopTable <- function(eBayes_results, .coef, coef_name=NA) {
-  if(.coef=="all") {
-    t1 = topTable(eBayes_results, n=Inf)
+  if(length(.coef)>1) {
+    t1 = topTable(eBayes_results, n=Inf, coef=.coef, sort.by="none")
+    stopifnot(identical(rownames(t1), rownames(eBayes_results)))
+    t1$df.prior = eBayes_results$df.prior
+    t1$df.total = eBayes_results$df.total
   } else {
-    t1 = topTable(eBayes_results, coef=.coef, n=Inf)
+    if(.coef=="all") {
+      t1 = topTable(eBayes_results, n=Inf, sort.by="none")
+      stopifnot(identical(rownames(t1), rownames(eBayes_results)))
+      t1$df.prior = eBayes_results$df.prior
+      t1$df.total = eBayes_results$df.total
+    } else {
+      t1 = topTable(eBayes_results, coef=.coef, n=Inf)
+    }
   }
-  
   #t1$fdr = p.adjust(t1$P.Value, "fdr")
   if(!is.na(coef_name)) t1$coef = coef_name
   t1$gene_id = rownames(t1)
@@ -32,8 +41,8 @@ groupContrasts <- function(.fit_results, .comparisons, add_covar=NULL, return_co
       clus = paste(seg[!grepl("\\.", seg)], collapse=".")
       #swap out dot placeholder
       clus = gsub("dot","\\.", clus)
-      cont_mtx[grep(paste(dx_refer, clus, sep="."), rownames(cont_mtx)),i] = -1
-      cont_mtx[grep(paste(dx_compare, clus, sep="."), rownames(cont_mtx)),i] = 1
+      cont_mtx[grep(paste0(dx_refer, ".*", clus), rownames(cont_mtx)),i] = -1
+      cont_mtx[grep(paste0(dx_compare, ".*", clus), rownames(cont_mtx)),i] = 1
     }
   }
   
