@@ -10,18 +10,18 @@ set.seed(123)
 source("code/07_dx_DE/custom_functions.r")
 cpList = readRDS("plots/colorPalettes.rds")
 
-covars = c("age","BMI","Smoking","RIN","PMI")
+covars = c("detected","nspots","age","BMI","Smoking","RIN","PMI")
 names(covars) <- covars
 
-#load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
-#results_set = "smoothed-k9-1663"
-#comp_names = c("L1","L2","L3dot4","L5","L6","WM")
-#names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
+load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+results_set = "smoothed-k9-1663"
+comp_names = c("L1","L2","L3dot4","L5","L6","WM")
+names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
 
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
-results_set = "seurat-pc30"
-comp_names = c("MicrodotVasc","Astro","L2dot3","L4","Inhb","L5","L6","Oligo")
-names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")
+#load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+#results_set = "seurat-pc30"
+#comp_names = c("MicrodotVasc","Astro","L2dot3","L4","Inhb","L5","L6","Oligo")
+#names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")
 
 cat("\nAnnotation results set:", results_set, "\n\n")
 
@@ -99,6 +99,8 @@ do.call(rbind, lapply(covars, function(x) filter(sex.resList[[x]]$results, adj.P
 
 pdf(file=paste0("plots/07-1_covariate_sensitivity/layer-adjusted_", results_set, "_rev-gene-input_p-val-histogram.pdf"))
 ph
+sex.resList[["detected"]]$phist+labs(title="detected", subtitle=paste0("Layer-adjusted (", results_set, ")"))
+sex.resList[["nspots"]]$phist+labs(title="nspots", subtitle=paste0("Layer-adjusted (", results_set, ")"))
 sex.resList[["age"]]$phist+labs(title="Age", subtitle=paste0("Layer-adjusted (", results_set, ")"))
 sex.resList[["BMI"]]$phist+labs(title="BMI", subtitle=paste0("Layer-adjusted (", results_set, ")"))
 sex.resList[["Smoking"]]$phist+labs(title="Smoking", subtitle=paste0("Layer-adjusted (", results_set, ")"))
@@ -121,7 +123,6 @@ write.csv(res.df, paste0("processed-data/07-1_covariate_sensitivity/layer-adjust
 	"_rev-gene-input_moderated-t-test_all-covar-models.csv"), row.names=F)
 cat("\nSaved moderated t test results dframe to:", paste0("processed-data/07-1_covariate_sensitivity/layer-adjusted_", results_set, 
 	"_rev-gene-input_moderated-t-test_all-covar-models.csv"), "\n\n")
-
 
 
 # layer restricted
@@ -236,6 +237,8 @@ plist <- lapply(covars, function(x) {
 pdf(file=paste0("plots/07-1_covariate_sensitivity/layer-restricted_", results_set, 
 	"_rev-gene-input_p-val-histogram.pdf"), width=8, height=11)
 gridExtra::grid.arrange(ph2, ph3, layout_matrix=matrix(c(1,2,2,2)))
+plist[["detected"]]
+plist[["nspots"]]
 plist[["age"]]
 plist[["BMI"]]
 plist[["Smoking"]]

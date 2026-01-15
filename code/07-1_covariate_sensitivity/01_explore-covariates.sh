@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=explore_seurat
-#SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_covariate_sensitivity/logs/%x_%j.log
+#SBATCH --job-name=explore_smoothed_with-cluster
+#SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07-1_covariate_sensitivity/logs/%x_%j.log
 
 echo "**** Job starts ****"
 date
@@ -16,7 +16,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/4.4.x
 module list
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_covariate_sensitivity/01_explore-covariates.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07-1_covariate_sensitivity/01_explore-covariates.r
 
 echo "**** Job ends ****"
 date

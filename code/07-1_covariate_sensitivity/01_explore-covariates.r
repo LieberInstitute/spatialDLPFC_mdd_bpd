@@ -10,13 +10,13 @@ set.seed(123)
 
 cpList = readRDS("plots/colorPalettes.rds")
 
-#results_set = "smoothed-n1663-k9"
-#load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
-#colnames(colData(spe_pseudo))[grep("smoothed", colnames(colData(spe_pseudo)))] = "cluster"
+results_set = "smoothed-n1663-k9"
+load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+colnames(colData(spe_pseudo))[grep("smoothed", colnames(colData(spe_pseudo)))] = "cluster"
 
-results_set = "seurat-pc30"
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
-colnames(colData(spe_pseudo))[grep("seurat", colnames(colData(spe_pseudo)))] = "cluster"
+#results_set = "seurat-pc30"
+#load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+#colnames(colData(spe_pseudo))[grep("seurat", colnames(colData(spe_pseudo)))] = "cluster"
 
 cat("\nResults set:", results_set, "\n")
 colnames(colData(spe_pseudo))[grep("subsets_mito_percent", colnames(colData(spe_pseudo)))] = "chrM_ratio"
@@ -74,7 +74,7 @@ table(sdata[,c("condition","sex","Smoking")])
 #......BPD 16 12
 
 #plot if needed
-if(!file.exists("plots/07_covariate_sensitivity/donor-covariates_by_dx-sex.png")) {
+if(!file.exists("plots/07-1_covariate_sensitivity/donor-covariates_by_dx-sex.png")) {
 o1 <- ggplot(sdata, aes(x=sex, y=age, color=condition))+
   ggbeeswarm::geom_beeswarm(dodge.width = .75)+
   geom_boxplot(fill="white", alpha=.5)+
@@ -113,10 +113,10 @@ o5 = ggplot(sdata2, aes(x=sex, y=prop_smokers, fill=condition))+
   ylim(0,1)+
   labs(y="Prop. of subjects w/ history", title="Smoking")+theme_bw()
 
-ggsave(file="plots/07_covariate_sensitivity/donor-covariates_by_dx-sex.png",
+ggsave(file="plots/07-1_covariate_sensitivity/donor-covariates_by_dx-sex.png",
 	grid.arrange(o1, o2, o3, o4, o5, ncol=2),
 	width=7, height=9, bg="white")
-cat("\nDonor covariate boxplots saved to: plots/07_covariate_sensitivity/donor-covariates_by_dx-sex.png\n")
+cat("\nDonor covariate boxplots saved to: plots/07-1_covariate_sensitivity/donor-covariates_by_dx-sex.png\n")
 }
 
 
@@ -221,10 +221,48 @@ hmp = pheatmap::pheatmap(cor.var.m, angle_col=90, silent=T,
 	treeheight_col=10)
 
 lay_mat= rbind(c(1,4),c(2,5),c(3,6),c(7,7),c(7,7))
-ggsave(file=paste0("plots/07_covariate_sensitivity/explore-covariates_", results_set,".png"),
+ggsave(file=paste0("plots/07-1_covariate_sensitivity/explore-covariates_", results_set,".png"),
 	grid.arrange(p1, p2, p3, p4, p5, p6, hmp[[4]], layout_matrix=lay_mat),
 	width=8, height=10, bg="white")
-cat("\nExploratory plots saved to:", paste0("plots/07_covariate_sensitivity/explore-covariates_", results_set,".png"),"\n")
+cat("\nExploratory plots saved to:", paste0("plots/07-1_covariate_sensitivity/explore-covariates_", results_set,".png"),"\n")
+
+
+#subset by cluster and see variance explained correlation
+varList <- lapply(levels(spe_pseudo$cluster), function(x) {
+  scater::getVarianceExplained(spe_pseudo[,spe_pseudo$cluster==x], 
+                               variables=c(exp.vars[-1],bio.vars[-1],donor.vars), 
+                               exprs_values="logcounts")
+})
+names(varList) <- levels(spe_pseudo$cluster)
+
+if(results_set=="smoothed-n1663-k9") clus.colors = cpList$smoothed.bright
+if(results_set=="seurat-pc30") clus.colors = cpList$transfer.bright
+
+corList <- lapply(varList, function(x) {
+  cor(x, method="spearman")
+})
+
+hmpList = lapply(names(corList), function(x) {
+  tmp = pheatmap::pheatmap(corList[[x]], angle_col = 90, main=x, silent=T,
+                     treeheight_row = 15, treeheight_col = 15)
+  return(tmp[[4]])
+})
+
+pdf(file=paste0("plots/07-1_covariate_sensitivity/explore-covariates_", results_set, "_by-cluster.pdf"), width=8, height=11)
+par(mfrow=c(5,3))
+for(i in c(exp.vars[-1],bio.vars[-1],donor.vars)) {
+  for(j in names(varList)) {
+    if(j==names(varList)[[1]]) {
+      plot(ecdf(varList[[j]][,i]), col=clus.colors[[j]], main=i, xlim=c(0,100),
+           xlab="% variance explained")
+    } else {
+      lines(ecdf(varList[[j]][,i]), col=clus.colors[[j]])
+    }
+  }
+}
+do.call(grid.arrange, c(grobs=hmpList, ncol=2))
+dev.off()
+cat("\nExploratory plots (by cluster) saved to:", paste0("plots/07-1_covariate_sensitivity/explore-covariates_", results_set,"_by-cluster.png"),"\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()
