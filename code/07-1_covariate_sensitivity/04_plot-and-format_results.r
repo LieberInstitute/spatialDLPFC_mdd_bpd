@@ -13,15 +13,15 @@ cpList = readRDS("plots/colorPalettes.rds")
 covars = c("age","BMI","Smoking","RIN","PMI")
 names(covars) <- covars
 
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
-results_set = "smoothed-k9-1663"
-comp_names = c("L1","L2","L3dot4","L5","L6","WM")
-names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
+#load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+#results_set = "smoothed-k9-1663"
+#comp_names = c("L1","L2","L3dot4","L5","L6","WM")
+#names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
 
-#load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
-#results_set = "seurat-pc30"
-#comp_names = c("MicrodotVasc","Astro","L2dot3","L4","Inhb","L5","L6","Oligo")
-#names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+results_set = "seurat-pc30"
+comp_names = c("MicrodotVasc","Astro","L2dot3","L4","Inhb","L5","L6","Oligo")
+names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")
 
 cat("\nAnnotation results set:", results_set, "\n\n")
 
@@ -162,6 +162,10 @@ eb_fList_all = lapply(covars, function(x)
 		covar=x)
 )
 
+f_sig_list_all = lapply(eb_fList_all, function(x)
+  filter(x, adj.P.Val<.05)$gene_id
+)
+
 eb_fList_all.df = do.call(rbind, eb_fList_all) %>%
   mutate(covar=factor(covar, levels=covars))
 ph2 <- ggplot(eb_fList_all.df, aes(x=P.Value))+
@@ -185,17 +189,17 @@ eb_fList_each <- lapply(covars, function(z) {
   ### details: https://github.com/cran/limma/blob/master/R/decidetests.R
   tmp = do.call(rbind, tmp) %>% 
     mutate(cluster=factor(cluster, levels=names(comp_names)))
-  tmp$adj.P.Val = p.adjust(tmp$P.Value, method="BH")
+  tmp$adj.P.Val_global = p.adjust(tmp$P.Value, method="BH")
   return(tmp)
 })
 
-f_sig_list_each = lapply(eb_fList_each, function(z) {
-  tmp = lapply(names(comp_names), function(x)
-	filter(z, cluster==x, adj.P.Val<.05)$gene_id
-  )
-  names(tmp) <- names(comp_names)
-  return(tmp)
-})
+#f_sig_list_each = lapply(eb_fList_each, function(z) {
+#  tmp = lapply(names(comp_names), function(x)
+#	filter(z, cluster==x, adj.P.Val<.05)$gene_id
+#  )
+#  names(tmp) <- names(comp_names)
+#  return(tmp)
+#})
 
 eb_fList_each.df = do.call(rbind, eb_fList_each) %>%
   mutate(covar=factor(covar, levels=covars))
@@ -247,16 +251,16 @@ cat("\n\nLayer-adjusted dx*sex p value histograms saved to:", paste0("plots/07-1
 cat("\nLayer-restricted dx*sex DEGs (padj<.05, F padj<.05):\n")
 for(i in covars) {
   cat("\n",i,"\n")
-  tmp = do.call(rbind, lapply(names(comp_names), function(x) filter(sex.resList[[i]], adj.P.Val<.05, 
-	cluster==x, gene_id %in% f_sig_list_each[[i]][[x]]) %>% 
-    group_by(sex, group, cluster) %>% tally()
-  ))
-  print(tidyr::pivot_wider(tmp, names_from="cluster", values_from="n", values_fill=0))
+  print(filter(sex.resList[[i]], adj.P.Val<.05, gene_id %in% f_sig_list_all[[i]]) %>% 
+    group_by(sex, group, cluster) %>% tally() %>%
+    tidyr::pivot_wider(names_from="cluster", values_from="n", values_fill=0))
 }
 
 
-write.csv(bind_rows(eb_fList_all.df, eb_fList_each.df), paste0("processed-data/07-1_covariate_sensitivity/layer-restricted_", results_set,
-        "_rev-gene-input_F-test_all-covar-models.csv"), row.names=F)
+write.csv(eb_fList_all.df, paste0("processed-data/07-1_covariate_sensitivity/layer-restricted_", results_set,
+        "_rev-gene-input_F-test_all_all-covar-models.csv"), row.names=F)
+write.csv(eb_fList_each.df, paste0("processed-data/07-1_covariate_sensitivity/layer-restricted_", results_set,
+        "_rev-gene-input_F-test_each_all-covar-models.csv"), row.names=F)
 cat("\n\n\nSaved F test results dframe to:", paste0("processed-data/07-1_covariate_sensitivity/layer-restricted_", results_set,
         "_rev-gene-input_F-test_all-covar-models.csv"), "\n")
 
