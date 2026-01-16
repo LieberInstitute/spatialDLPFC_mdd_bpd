@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=5G
-#SBATCH --job-name=plot_F-test-t-test_seurat_scaled_revised-pb-filters_revised-gene-input
+#SBATCH --job-name=plot_covar-comparisons_seurat_scaled
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07-1_covariate_sensitivity/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -17,7 +17,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 module load conda_R/4.4.x
 module list
 
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07-1_covariate_sensitivity/04_plot-and-format_results.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07-1_covariate_sensitivity/05_compare-models.r
 
 echo "**** Job ends ****"
 date

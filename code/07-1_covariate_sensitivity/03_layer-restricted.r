@@ -11,8 +11,8 @@ suppressPackageStartupMessages({
 
 set.seed(123)
 
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
-#load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+#load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
 dim(spe_pseudo)
 spe_pseudo$pc3 = reducedDim(spe_pseudo)[,"PC3"]
 
@@ -27,8 +27,8 @@ colData(spe_pseudo) <- new.cdata
 #revised genes, recalculated on filtered samples
 rowData(spe_pseudo)$high_expr_group_sample_id2 <- filterByExpr(spe_pseudo, group = spe_pseudo$sample_id)
 
-rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$smoothed_k9_1663)
-#rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$seurat_label)
+#rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$smoothed_k9_1663)
+rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$seurat_label)
 
 spe_pseudo <- spe_pseudo[rowData(spe_pseudo)$high_expr_group_sample_id2==T & rowData(spe_pseudo)$high_expr_group_cluster2==T,]
 dim(spe_pseudo)
@@ -40,8 +40,8 @@ dge_pseudo <- calcNormFactors(dge_pseudo)
 
 ### the way that makes more sense to me for setting up contrasts
 dx = spe_pseudo$condition
-clus = spe_pseudo$smoothed_k9_1663
-#clus = spe_pseudo$seurat_label
+#clus = spe_pseudo$smoothed_k9_1663
+clus = spe_pseudo$seurat_label
 sex = spe_pseudo$sex
 group = interaction(dx, clus, sex)
 
@@ -65,15 +65,15 @@ y = voom(dge_pseudo, dx_mod, plot=F)
 corfit <- duplicateCorrelation(y, block = colData(spe_pseudo)$sample_id)
 fit <- lmFit(y, block = colData(spe_pseudo)$sample_id, correlation = corfit$consensus)
 
-saveRDS(fit, paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-restricted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-pc3-",
-	args[[1]], ".rda"))
-cat("\nlmFit results/ object saved to:", paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-restricted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-pc3-",
-	args[[1]], ".rda"),"\n")
+#saveRDS(fit, paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-restricted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-pc3-",
+#	args[[1]], ".rda"))
+#cat("\nlmFit results/ object saved to:", paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-restricted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-pc3-",
+#	args[[1]], ".rda"),"\n")
 
-#saveRDS(fit, paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-restricted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-",
-#        args[[1]], ".rda"))
-#cat("\nlmFit results/ object saved to:", paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-restricted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-",
-#        args[[1]], ".rda"),"\n")
+saveRDS(fit, paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-restricted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-",
+        args[[1]], ".rda"))
+cat("\nlmFit results/ object saved to:", paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-restricted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-",
+        args[[1]], ".rda"),"\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()
