@@ -2,7 +2,7 @@
 #SBATCH --mem=5G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=dx-sex_layer-restricted-smoothed_pc3-scaled_lmFit-voom_revised-pb-filters_revised-gene-input
+#SBATCH --job-name=dx-sex_layer-restricted-seurat_pc3-age-nspots_lmFit-voom_revised-pb-filters_revised-gene-input
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/logs/%x_%j.log
 
 echo "**** Job starts ****"
