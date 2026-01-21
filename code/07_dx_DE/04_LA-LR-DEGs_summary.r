@@ -14,17 +14,17 @@ comparisons = c("F_NTC.MDD","M_NTC.MDD",
                 "F_MDD.BPD","M_MDD.BPD")
 names(comparisons) <- comparisons
 
-#results_set = "smoothed-k9-1663"
-#load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
-#spe_pseudo$cluster = spe_pseudo$smoothed_k9_1663
-#comp_names = c("L1","L2","L3dot4","L5","L6","WM")
-#names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
+results_set = "smoothed-k9-1663"
+load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+spe_pseudo$cluster = spe_pseudo$smoothed_k9_1663
+comp_names = c("L1","L2","L3dot4","L5","L6","WM")
+names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
 
-results_set = "seurat-pc30"
-load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
-spe_pseudo$cluster = spe_pseudo$seurat_label
-comp_names = c("MicrodotVasc","Astro","L2dot3","L4","Inhb","L5","L6","Oligo")
-names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")
+#results_set = "seurat-pc30"
+#load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+#spe_pseudo$cluster = spe_pseudo$seurat_label
+#comp_names = c("MicrodotVasc","Astro","L2dot3","L4","Inhb","L5","L6","Oligo")
+#names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")
 
 # L-A ----
 ## f test
@@ -231,23 +231,45 @@ plist = lapply(names(comp_names), function(x) {
     p.df$gene_name_f = factor(p.df$gene_name, levels=y)
     color_limits = round(max(abs(p.df$mean_expr_scaled)),1)
     if(color_limits<max(abs(p.df$mean_expr_scaled))) color_limits = color_limits+.1
-    
+
+    #additional DF to label LR sig
+    sig.join = mutate(t.df_lr, dir=factor(sign(logFC), levels=c(1,-1), labels=c("Inc.","Dec."))) %>%
+	filter(cluster==x, adj.P.Val<.05, gene_name %in% y, sex.group %in% c("F_NTC.MDD","M_NTC.MDD","F_NTC.BPD","M_NTC.BPD")) %>%
+	select(gene_name, gene_id, dir, cluster)
+    check.n = distinct(sig.join, gene_id, gene_name, dir) %>% group_by(gene_id, gene_name) %>% tally()
+    if(max(check.n$n)!=1) {
+      both.dir = filter(check.n, n>1)
+      sig.join.supp = sig.join[sig.join$gene_id %in% both.dir$gene_id,]
+      sig.join.supp = sig.join.supp[1,]
+      sig.join.supp[,"dir"] = "Both"
+      sig.join <- bind_rows(filter(sig.join, !gene_id %in% both.dir$gene_id),
+                            sig.join.supp)
+    }
+    sig.plot = right_join(p.df, sig.join, by=c("clusters"="cluster", "gene_name", "gene_id"))
+
     #generate plot
-    p <- ggplot(p.df, aes(x=clusters, y=gene_name_f, 
-                          color=mean_expr_scaled, size=prop_spots))+
-      geom_count()+
+    p <- ggplot(p.df, aes(x=clusters, y=gene_name_f))+ 
+                          #color=mean_expr_scaled, size=prop_spots))+
+      geom_count(aes(color=mean_expr_scaled, size=prop_spots))+
       scale_color_gradient2(low="white", mid="lightgoldenrod", high="black",
                             midpoint=0, limits=c(-color_limits,color_limits))+
       scale_size(range=c(1,6), limits=c(0,1), breaks=c(0,.5,1))+
+      geom_count(data=filter(sig.plot, dir=="Inc."), aes(size=0), color="tomato", show.legend = F)+
+      geom_count(data=filter(sig.plot, dir=="Dec."), aes(size=0), color="dodgerblue", show.legend = F)+
       labs(color="Avg. expr.\n(scaled)", size="Prop. of\nspots",
            y=paste0("F test adj. p<.05 & any ", x, " t-test adj. p<.05"), 
-           title=paste0("L-R ", results_set, ": ", x, " DEGs"))+
+           title=paste0("L-R ", results_set, ": ", x, " DEGs"),
+	   subtitle="Central red/blue dot indicates dir of DE vs NTC")+
       theme_minimal()+
       theme(axis.title.x=element_blank(), 
             panel.background = element_rect(fill="grey90"),
             panel.grid = element_line(color="grey80"),
             axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"),
             axis.title.y=element_text(margin=margin(0,20,0,20,"pt")))
+    if(max(check.n$n)!=1) {
+      p <- p+geom_count(data=filter(sig.plot, dir=="Both"), aes(size=0), color="purple", show.legend = F)+
+        labs(subtitle="Central red/blue dot indicates dir of DE vs NTC (purple means sig each dir)")
+    }
     return(p)
   })
   return(dotlist)
