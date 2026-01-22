@@ -5,7 +5,7 @@ suppressPackageStartupMessages({
 	library(dplyr)
 	library(ggplot2)
 	library(gridExtra)
-	library(VennDiagram)
+	library(ggVennDiagram)
 })
 set.seed(123)
 
@@ -60,8 +60,8 @@ tmp = filter(t.df, gene_id %in% f_sig$gene_id, adj.P.Val<.05) %>%
          dir=factor(sign(logFC), levels=c(-1,1), labels=c("dn","up"))) %>%
   group_by(coef, dir, .drop=F) %>% tally()
 p1 <- ggplot(tmp, aes(x=coef, y=n))+ 
-  geom_bar(data=filter(tmp, dir=="up"), stat="identity", fill="#FFC0B5", color="tomato")+
-  geom_bar(data=filter(tmp, dir=="dn"), aes(y=-n), stat="identity", fill="#CFEBF7", color="skyblue")+
+  geom_bar(data=filter(tmp, dir=="up"), stat="identity", fill="#FFC0B5", color="tomato", width=.8)+
+  geom_bar(data=filter(tmp, dir=="dn"), aes(y=-n), stat="identity", fill="#CFEBF7", color="skyblue", width=.8)+
   scale_x_discrete("", labels=gsub("\\.", " vs. ", gsub("_","\n",comparisons)))+
   labs(y="# genes (F test adj. p<.05 t-test adj. p<.05)", title=paste0("L-A model: ", results_set),
        subtitle=paste0("Of ", nrow(la.degs), " genes with F test adj. p<.05, ", 
@@ -127,15 +127,19 @@ cat("\nSaved L-R DEGs to:", paste0("processed-data/07_dx_DE/layer-restricted-pc3
 
 
 ## venn diagram of overlap
-vp <- venn.diagram(
-  x = list("LA"=la.degs$gene_id, "LR"=lr.degs$gene_id),
-  category.names = c("L-A DEGs\n(F adj. p<.05)", "L-R DEGs\n(F adj. p<.05)"),
-  lwd = 1, fill = c("grey80","palegoldenrod"),
-  fontfamily="sans",
-  cat.fontfamily = "sans",
-  cat.dist=c(.1,.1), margin=.2,
-  filename = NULL, disable.logging=T
-)
+vp <- ggVennDiagram(list("LA"=la.degs$gene_id, "LR"=lr.degs$gene_id), label="count",
+                    edge_size=.5, set_color=c("black","darkgreen"),
+              category.names= c("L-A genes (F adj. p<.05)", "L-R genes (F adj. p<.05)"))+
+  scale_fill_gradient(low="white", high="grey60")+
+  labs(title=results_set)+
+  xlim(-5,5)+
+  coord_flip()+theme(legend.position="none", plot.title=element_text(hjust=.5, color="grey"),
+                     plot.margin=margin(6,50,10,50, "pt"), aspect.ratio=.8,
+                     text=element_text(size=10))
+
+b <- ggplot_build(vp)  
+b$data[[3]][,"x"] = c(5,-5)
+b$data[[3]][,"y"] = c(0,4)
 
 ## plot
 tmp = filter(t.df_lr, gene_id %in% f_sig_lr$gene_id, adj.P.Val<.05) %>% 
@@ -171,7 +175,11 @@ spe_summ$sample_id = factor(paste(spe_summ$condition, spe_summ$sex, spe_summ$clu
                             levels=as.character(outer(cond_sex, names(comp_names), paste)))
 colnames(spe_summ) <- spe_summ$sample_id
 
-
+#set color limits based on all of the LR degs being plotted to color scale is consistent across plots
+lim.df = dotplotDF(spe_summ, lr.degs$gene_name[lr.degs$n_ttest_sig>0], summarize_groups=T, swap_rownames="gene_name",
+                 cluster_labels="cluster", row_data=NULL)
+color_limits = round(max(abs(lim.df$mean_expr_scaled)),1)
+if(color_limits<max(abs(lim.df$mean_expr_scaled))) color_limits = color_limits+.1
 
 plist = lapply(names(comp_names), function(x) {
   # select layer DEGs
@@ -229,8 +237,8 @@ plist = lapply(names(comp_names), function(x) {
     p.df = dotplotDF(spe_summ, y, summarize_groups=T, swap_rownames="gene_name",
                      cluster_labels="cluster", row_data=NULL) 
     p.df$gene_name_f = factor(p.df$gene_name, levels=y)
-    color_limits = round(max(abs(p.df$mean_expr_scaled)),1)
-    if(color_limits<max(abs(p.df$mean_expr_scaled))) color_limits = color_limits+.1
+    #color_limits = round(max(abs(p.df$mean_expr_scaled)),1)
+    #if(color_limits<max(abs(p.df$mean_expr_scaled))) color_limits = color_limits+.1
 
     #additional DF to label LR sig
     sig.join = mutate(t.df_lr, dir=factor(sign(logFC), levels=c(1,-1), labels=c("Inc.","Dec."))) %>%
@@ -250,20 +258,20 @@ plist = lapply(names(comp_names), function(x) {
     #generate plot
     p <- ggplot(p.df, aes(x=clusters, y=gene_name_f))+ 
                           #color=mean_expr_scaled, size=prop_spots))+
-      geom_count(aes(color=mean_expr_scaled, size=prop_spots))+
-      scale_color_gradient2(low="white", mid="lightgoldenrod", high="black",
+      geom_count(aes(fill=mean_expr_scaled, size=prop_spots), shape=21, color="grey")+
+      scale_fill_gradient2(low="white", mid="lightgoldenrod", high="black",
                             midpoint=0, limits=c(-color_limits,color_limits))+
       scale_size(range=c(1,6), limits=c(0,1), breaks=c(0,.5,1))+
       geom_count(data=filter(sig.plot, dir=="Inc."), aes(size=0), color="tomato", show.legend = F)+
       geom_count(data=filter(sig.plot, dir=="Dec."), aes(size=0), color="dodgerblue", show.legend = F)+
-      labs(color="Avg. expr.\n(scaled)", size="Prop. of\nspots",
+      labs(fill="Avg. expr.\n(scaled)", size="Prop. of\nspots",
            y=paste0("F test adj. p<.05 & any ", x, " t-test adj. p<.05"), 
            title=paste0("L-R ", results_set, ": ", x, " DEGs"),
 	   subtitle="Central red/blue dot indicates dir of DE vs NTC")+
       theme_minimal()+
       theme(axis.title.x=element_blank(), 
-            panel.background = element_rect(fill="grey90"),
-            panel.grid = element_line(color="grey80"),
+            #panel.background = element_rect(fill="grey90"),
+            #panel.grid = element_line(color="grey80"),
             axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"),
             axis.title.y=element_text(margin=margin(0,20,0,20,"pt")))
     if(max(check.n$n)!=1) {
@@ -277,7 +285,7 @@ plist = lapply(names(comp_names), function(x) {
 
 
 pdf(file=paste0("plots/07_dx_DE/dx-sex_pc3-age-nspots_", results_set,"_DEG-plots.pdf"))
-grid.arrange(p1+theme(plot.margin=margin(6,50,6,50, "pt")), gTree(children=vp), ncol=1)
+grid.arrange(p1+theme(plot.margin=margin(6,50,6,50, "pt")), ggplot_gtable(b), ncol=1)
 p2
 for(i in 1:length(plist)) {
   if(length(plist[[i]])>1) {
