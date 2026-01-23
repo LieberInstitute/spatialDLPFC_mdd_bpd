@@ -37,6 +37,7 @@ term2gene = cbind.data.frame("ID"=term.id.long, "geneID"=gmt$gene)
 # L-A ORA
 la.degs = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_", results_set,
                           "_dx-sex_degs-F-test-t-test.csv"))
+#la.degs_t = filter(la.degs, n_ttest_sig>0)
 
 gene_universe = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_", results_set,
                                 "_rev-gene-input_F-test.csv"))$gene_name
@@ -53,6 +54,7 @@ cat("\nReactome ORA results for L-A saved to:", paste0("processed-data/08_dx-sex
 # L-R ORA
 lr.degs = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_", results_set,
                           "_dx-sex_degs-F-test-t-test.csv"))
+#lr.degs_t = filter(lr.degs, n_ttest_sig>0)
 
 ora_lr = enricher(lr.degs$gene_name, universe=gene_universe, 
                TERM2GENE = term2gene,
@@ -154,8 +156,11 @@ igraphList <- lapply(comparisons, function(x) {
   tmp = bind_rows(filter(tsig_genes, geneID %in% increased) %>% mutate(NES=FoldEnrichment),
                   filter(tsig_genes, geneID %in% decreased) %>% mutate(NES=-FoldEnrichment)) %>%
     select(term=ID, name, NES, gene_name=geneID)
+
+  tmp = left_join(tmp, la.degs_t[,c("gene_name","med_prop.spots.detected")])
+  tmp$node_size = ifelse(tmp$med_prop.spots.detected>.05, 6, 3)
   
-    outlist <- term2GeneIGRAPH(tmp, source=FALSE, layout_style="kk", 
+    outlist <- term2GeneIGRAPH(tmp, source=FALSE, node_size="node_size", layout_style="kk", 
                              text_title=paste0("L-A DEGs (",results_set,"): ", x), color_by="gene") 
   
   return(list("ngenes"=ngenes, "igraphL"=outlist))
@@ -196,7 +201,7 @@ grobList <- lapply(comparisons, function(x) {
 
 # save plots to PDF
 pdf(file=paste0("plots/08_dx-sex_DEG_analysis/Reactome-ORA_", results_set, 
-                "_F-test-padj05_test.pdf"), 
+                "_F-test-padj05.pdf"), 
     width=12, height=12)
 grid.arrange(phm1[[4]], top=paste0("Layer-adjusted (", results_set, ")"))
 grid.arrange(grobList[[1]], grobList[[2]],
@@ -207,10 +212,12 @@ grid.arrange(grobList[[1]], grobList[[2]],
 	bottom="DEGs: F test adj. p<.05 and moderated t-test adj.p <.05"
 )
 for(i in igraphList) {
-  plot(i$igraphL$igraph, layout=i$igraphL$layout, vertex.label.family="sans", vertex.size=6, edges.curved=T,
+  plot(i$igraphL$igraph, layout=i$igraphL$layout, vertex.label.family="sans", #vertex.size=6, 
+	edges.curved=T,
        vertex.frame.width=0,
        main=i$igraphL[["title_text"]],
-       sub=paste0("Reactome annotations determined by ORA with n= ", nrow(la.degs)," genes with F-test adj. p<.05"))
+       sub=paste0("Reactome annotations determined by ORA with n= ", nrow(la.degs)," genes with F-test adj. p<.05",
+	"\nSmaller genes have median zero proportion >=5% of spots."))
   legend("bottomleft", legend=c("Decreased","Increased","Term"),
          pch=16, pt.cex=1, cex=.7,
          col=c("#CFEBF7","#FFC0B5","grey85"))
@@ -219,7 +226,7 @@ grid.arrange(phm2[[4]], top=paste0("Layer-restricted (", results_set, ")"))
 dev.off()
 
 cat("\n\nReactome ORA results plots saved to:", paste0("plots/08_dx-sex_DEG_analysis/Reactome-ORA_", 
-  results_set,  "_F-test-padj05_test.pdf"),"\n")
+  results_set,  "_F-test-padj05.pdf"),"\n")
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time())

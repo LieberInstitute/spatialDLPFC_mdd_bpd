@@ -25,7 +25,7 @@
 }
 
 
-term2GeneIGRAPH <- function(leadingEdge_DF, source=FALSE, layout_style=c("kk","fr"), text_title=NULL,
+term2GeneIGRAPH <- function(leadingEdge_DF, source=FALSE, node_size=NA, layout_style=c("kk","fr"), text_title=NULL,
                             color_by=c("term","gene")) {
   set.seed(123) 
   
@@ -33,6 +33,8 @@ term2GeneIGRAPH <- function(leadingEdge_DF, source=FALSE, layout_style=c("kk","f
   st = table(sign(leadingEdge_DF$NES))
   if(dim(st)>1) warning("Not all terms in same direction (mix of depleted and enriched)")
   
+  if(!is.na(node_size)) colnames(leadingEdge_DF)[grep(node_size, colnames(leadingEdge_DF))] = "node_size"
+
   p.terms = tibble::deframe(distinct(leadingEdge_DF, term, name))
   p.terms = sapply(p.terms, function(x) paste(strwrap(x, width=20), collapse="\n"))
   
@@ -53,7 +55,12 @@ term2GeneIGRAPH <- function(leadingEdge_DF, source=FALSE, layout_style=c("kk","f
                        #make sure that order is the same
                        s.nes[n.df$label[n.df$type=="gene"]])
   }
-  
+  if(!is.na(node_size)) {
+    s.size = tibble::deframe(distinct(leadingEdge_DF, gene_name, node_size))
+    n.df$node_size <- c(rep(6, length(unique(leadingEdge_DF$term))),
+                       #make sure that order is the same
+                       s.size[n.df$label[n.df$type=="gene"]])
+  }
   ## edges are colored by cluster and thicker if it is a LR
   if(source) {
     e.df = leadingEdge_DF[,c("term","gene_name","source")]
@@ -70,11 +77,18 @@ term2GeneIGRAPH <- function(leadingEdge_DF, source=FALSE, layout_style=c("kk","f
   E(g)$color = as.character(factor(e.df$sign_NES, levels=c(-1,1,0), labels=c("skyblue","tomato","grey")))
   
   V(g)$color = as.character(factor(n.df$sign_NES, levels=c(-1,1,0), labels=c("#CFEBF7","#FFC0B5","grey85")))
-  V(g)$label.cex = ifelse(n.df$type=="term", .5, .7)
+  #V(g)$label.cex = ifelse(n.df$type=="term", .5, .7)
   V(g)$label.font = ifelse(n.df$type=="term", 1, 3)
   V(g)$label.color = "black"
   V(g)$label = n.df$label
-  
+
+  if(!is.na(node_size)) {
+    V(g)$size = n.df$node_size
+    V(g)$label.cex = ifelse(n.df$type=="term" | n.df$node_size==3, .5, .7)
+  } else {
+    V(g)$label.cex = ifelse(n.df$type=="term", .5, .7)
+  }
+
   if(layout_style=="kk") {
     lay1 = layout_with_kk(g)
     set.seed(123)
