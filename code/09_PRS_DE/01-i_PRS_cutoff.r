@@ -102,7 +102,9 @@ dev.off()
 
 
 
-prs.df3 = bind_rows(filter(prs.df2, risk %in% c("MDD","BPD"), p.cutoff=="1e.07") %>% 
+prs.df3 = bind_rows(filter(prs.df2, risk=="MDD", p.cutoff=="1e.07") %>% 
+                      select(brnum, age, sex, condition, PMI, RIN, BP.subtype, risk, score),
+                    filter(prs.df2, risk=="BPD", p.cutoff=="1e.06") %>% 
                       select(brnum, age, sex, condition, PMI, RIN, BP.subtype, risk, score),
                     filter(prs.df2, risk=="SCZ", p.cutoff=="1e.08") %>%
                       select(brnum, age, sex, condition, PMI, RIN, BP.subtype, risk, score)) %>%
@@ -116,5 +118,5 @@ ggplot(prs.df3, aes(x=MDD, y=BPD, color=condition))+
   scale_y_continuous("PRS (BPD)", labels=function(x) format(x, scientific=T, digits=2))+
   theme(aspect.ratio=1)
 
-colnames(prs.df3)[8:10] = c("MDD_p.1e07","BPD_p.1e07","SCZ_p.1e08")
+colnames(prs.df3)[8:10] = c("MDD_p.1e07","BPD_p.1e06","SCZ_p.1e08")
 write.csv(prs.df3, "raw-data/PRS/PRS_chosen-p-cutoffs.csv", row.names=F)
