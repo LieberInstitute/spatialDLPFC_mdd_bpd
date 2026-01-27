@@ -35,20 +35,21 @@ rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group =
 spe_pseudo <- spe_pseudo[rowData(spe_pseudo)$high_expr_group_sample_id2==T & rowData(spe_pseudo)$high_expr_group_cluster2==T,]
 dim(spe_pseudo)
 
-
 #make DGE
 dge_pseudo = DGEList(counts(spe_pseudo))
 dge_pseudo <- calcNormFactors(dge_pseudo)
 
 #establish model
-cat("\nLayer-adjusted model\ndx model: ~ 0 + ", paste0("prs", args[[1]]), ":sex + smoothed_k9_1663 + pc3\n")
+cat("\nLayer-adjusted model\ndx model: ~ 0 + ", paste0("prs", args[[1]]), "*sex + smoothed_k9_1663 + pc3 + age + nspots\n")
 #cat("\nLayer-adjusted model\ndx model: ~ 0 + ", paste0("prs", args[[1]]), ":sex + seurat_label + pc3\n")
 
+spe_pseudo$age = scale(spe_pseudo$age)
+spe_pseudo$nspots = scale(spe_pseudo$nspots)
 #small work around to use args variable as covariate
 colnames(colData(spe_pseudo))[grep(args[[1]], colnames(colData(spe_pseudo)))] <- "PRS"
 spe_pseudo$PRS = scale(spe_pseudo$PRS)
 dx_mod <- model.matrix(
-  ~ 0 + PRS:sex + smoothed_k9_1663 + pc3,
+  ~ 0 + PRS*sex + smoothed_k9_1663 + pc3 + age + nspots,
   #~ 0 + PRS:sex + seurat_label + pc3,
   colData(spe_pseudo)
 )
@@ -61,9 +62,9 @@ corfit <- duplicateCorrelation(y, block = colData(spe_pseudo)$sample_id)
 fit <- lmFit(y, block = colData(spe_pseudo)$sample_id, correlation = corfit$consensus)
 
 saveRDS(fit, paste0("processed-data/09_PRS_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_", paste0("prs", args[[1]]), 
-	"-sex_rev-gene-input_covars-pc3.rda"))
+	"-sex_rev-gene-input_covars-pc3-age-nspots.rda"))
 cat("\nlmFit results/ object saved to:", paste0("processed-data/09_PRS_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_", paste0("prs", args[[1]]),
-	"-sex_rev-gene-input_covars-pc3.rda),"\n")
+	"-sex_rev-gene-input_covars-pc3-age-nspots.rda"),"\n")
 
 #saveRDS(fit, paste0("processed-data/09_PRS_DE/lmFit-voom_layer-adjusted_seurat-pc30_", paste0("prs", args[[1]]),
 #	"-sex_rev-gene-input_covars-pc3.rda"))
