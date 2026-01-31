@@ -16,9 +16,9 @@ rm(seu_con)
 load("processed-data/05_clustering/Seurat/seurat_SZBDMulti-seq_control_processed-SCT.Rdata")
 
 #transfer cluster labels
-#seu_con$seurat_low.res <- factor(as.character(mdata$seurat_low.res), 
-#	levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
-#	labels=c("Micro.Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"))
+seu_con$seurat_low.res <- factor(as.character(mdata$seurat_low.res), 
+	levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
+	labels=c("Micro.Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"))
 seu_con$azimuth_broad <- factor(as.character(seu_con$azimuth),
                                 levels=c("Endo","PC","SMC","VLMC",
                                          "Immune","Micro",
@@ -58,15 +58,23 @@ colnames(mtx) = colnames(seu_con[["RNA"]])
 
 ### metadata/coldata
 cdata = seu_con@meta.data[,c("Channel","demux_type","assignment",#"anno","subclass","azimuth",
-	"individualID","Cohort","Biological_Sex","Age_death","Disorder","azimuth_broad")]
-	#"seurat_low.res")]
+	"individualID","Cohort","Biological_Sex","Age_death","Disorder","azimuth_broad",
+	"seurat_low.res")]
 
 rm(seu_con)
 sce_con <- SingleCellExperiment(assays = list(counts = mtx), colData=cdata)
 rowData(sce_con) = fdata
 sce_con
-#table(colData(sce_con)$seurat_low.res, useNA="ifany")
+table(colData(sce_con)$seurat_low.res, useNA="ifany")
 table(colData(sce_con)$azimuth_broad, useNA="ifany")
+
+#normalize
+sce_con <- computeLibraryFactors(sce_con)
+sce_con <- logNormCounts(sce_con)
+
+save(sce_con, file="processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_all-spots.Rdata")
+cat("\nSaved full size sce object to: processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_all-spots.Rdata\n")
+stop("Re-run only to save full size object")
 
 #pseudobulk raw counts
 cat("\nPseudobulk sce by: individualID, seurat_low.res\n")

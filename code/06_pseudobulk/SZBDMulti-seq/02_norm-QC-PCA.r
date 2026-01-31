@@ -210,8 +210,8 @@ dim(sce_pseudo)
 
 #renorm after removing samples
 tmp = calcNormFactors(sce_pseudo)
-x = cpm(tmp, log=T, prior.count=2)
-#stopifnot(min(x)>0)
+x = cpm(tmp, log=T, prior.count=12)
+stopifnot(min(x)>0)
 dimnames(x) <- dimnames(sce_pseudo)
 logcounts(sce_pseudo) <- x
 
