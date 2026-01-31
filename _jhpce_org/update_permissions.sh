@@ -41,6 +41,15 @@ if [[ $HOSTNAME == compute-* ]] || [[ $HOSTNAME == transfer-* ]]; then
     find ${1} -user ${USER} -type f -exec nfs4_setfacl -a "A:g:lieber_lcolladotor@cm.cluster:RW" {} \;
     
     echo ""
+    echo "**** Setting read (R), write (W), and execute (X) permissions for lieber_hanlab ****"
+    sleep 5
+    date
+    
+    find ${1} -user ${USER} -type d -exec nfs4_setfacl -a "A:g:lieber_hanlab@cm.cluster:RWX" {} \;
+    find ${1} -user ${USER} -type d -exec nfs4_setfacl -a "A:gfdi:lieber_hanlab@cm.cluster:RWX" {} \;
+    find ${1} -user ${USER} -type f -exec nfs4_setfacl -a "A:g:lieber_hanlab@cm.cluster:RW" {} \;
+
+    echo ""
     echo "**** Setting read (R), write (W), and execute (X) permissions for lieber_marmaypag ****"
     sleep 5
     date
@@ -66,6 +75,11 @@ if [[ $HOSTNAME == compute-* ]] || [[ $HOSTNAME == transfer-* ]]; then
         sleep 5
         date
         chgrp hickslab -R ${1}       
+    elif getent group lieber_hanlab | grep -q "\b${USER}\b"; then
+        echo "**** Running chgrp lieber_hanlab ****"
+        sleep 5
+        date
+        chgrp lieber_hanlab -R ${1}     
     else
         echo "**** Skipping chgrp step ****"
     fi
