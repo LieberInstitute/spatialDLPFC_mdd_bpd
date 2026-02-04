@@ -46,7 +46,9 @@ t.df = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_",
 t_sig_pvt = filter(t.df, gene_id %in% f_sig$gene_id) %>% 
   group_by(gene_id, gene_name) %>% mutate(n_ttest_sig=sum(adj.P.Val<.05)) %>%
   ungroup() %>%
-  mutate(t_sig= factor(adj.P.Val<.05, levels=c("FALSE","TRUE"), labels=c("NS","padj<.05"))) %>% select(AveExpr,n_ttest_sig, t_sig, gene_id, gene_name, coef) %>%
+  #mutate(t_sig= factor(adj.P.Val<.05, levels=c("FALSE","TRUE"), labels=c("NS","padj<.05"))) %>% 
+  mutate(t_sig= cut(adj.P.Val, breaks=c(0,.0001, .01, .05, 1), labels=c("padj<.0001","padj<.01","padj<.05","NS"))) %>%
+  select(AveExpr,n_ttest_sig, t_sig, gene_id, gene_name, coef) %>%
   tidyr::pivot_wider(names_from="coef", values_from="t_sig")
 
 la.degs = left_join(f_sig, t_sig_pvt, by=c("AveExpr","gene_id","gene_name"), suffix=c("_coef","_ttest"))
@@ -103,7 +105,8 @@ t.df_lr = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspo
 t_sig_pvt_lr = filter(t.df_lr, gene_id %in% f_sig_lr$gene_id) %>% 
   group_by(gene_id, gene_name) %>% mutate(n_ttest_sig=sum(adj.P.Val<.05)) %>%
   ungroup() %>%
-  mutate(t_sig= factor(adj.P.Val<.05, levels=c("FALSE","TRUE"), labels=c("NS","padj<.05"))) %>% 
+#  mutate(t_sig= factor(adj.P.Val<.05, levels=c("FALSE","TRUE"), labels=c("NS","padj<.05"))) %>% 
+  mutate(t_sig= cut(adj.P.Val, breaks=c(0,.0001, .01, .05, 1), labels=c("padj<.0001","padj<.01","padj<.05","NS"))) %>%
   select(AveExpr,n_ttest_sig, t_sig, gene_id, gene_name, coef) %>%
   tidyr::pivot_wider(names_from="coef", values_from="t_sig")
 
