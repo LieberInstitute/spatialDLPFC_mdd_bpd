@@ -11,7 +11,8 @@ suppressPackageStartupMessages({
 })
 set.seed(123)
 
-source("code/08_dx-sex_DEG_analysis/custom_functions.r")
+source("code/08_dx-sex_DEG_analysis/fgsea_functions.r")
+source("code/08_dx-sex_DEG_analysis/jc-igraph_functions.r")
 
 results_set = "smoothed-k9-1663"
 #results_set = "seurat-pc30"

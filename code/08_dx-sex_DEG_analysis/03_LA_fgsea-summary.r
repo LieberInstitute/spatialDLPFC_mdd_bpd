@@ -18,7 +18,6 @@ dbs <- listEnrichrDbs()
 
 source("code/08_dx-sex_DEG_analysis/fgsea_functions.r")
 source("code/08_dx-sex_DEG_analysis/jc-igraph_functions.r")
-#source("code/08_dx-sex_DEG_analysis/custom_functions.r")
 
 cpList = readRDS("plots/colorPalettes.rds")
 
@@ -35,8 +34,8 @@ adj.results <- read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-n
 la.degs <- read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_", res_file,
                           "_dx-sex_degs-F-test-t-test.csv"))
 adj.sig = filter(adj.results, group==unlist(strsplit(x, "_"))[[1]], sex==unlist(strsplit(x, "_"))[[2]], adj.P.Val<.05, gene_id %in% la.degs$gene_id)
-cat("\nNumber of L-A DEGs (padj<.05) for", paste0(x,":"),"\n")
-nrow(adj.sig)
+cat("\nNumber of L-A DEGs (padj<.05) for", paste0(x,":"),nrow(adj.sig),"\n")
+#nrow(adj.sig)
 
 gmt_dbl = c("Reactome")
 #gmt_dbl = c("Reactome","GO-BP","GO-CC")
@@ -46,8 +45,8 @@ for(gmt_db in gmt_dbl) {
 	#load fgsea results
 	fgsea.results = readRDS(paste0("processed-data/08_dx-sex_DEG_analysis/", res_file, "_", gmt_db, "_LA-fgsea-list.rda"))
 	res1 = fgsea.results[[x]]
-	cat("\nNumber of sig. GSEA terms for", paste0(gmt_db,":"),"\n")
-	nrow(res1)
+	cat("\nNumber of sig. GSEA terms for", paste0(gmt_db,":"),nrow(res1),"\n")
+	#nrow(res1)
 
 	ledge = tibble::deframe(res1[,c("pathway","leadingEdge")])
 	l1 = lapply(ledge, intersect, y=adj.sig$gene_name)
@@ -74,8 +73,8 @@ for(gmt_db in gmt_dbl) {
 	ledge.df$name = p.names
 
 	tmp1 = filter(ledge.df, LA_in_leadingEdge>0) 
-	cat("\nNumber of sig. GSEA terms with LA in leading edge for", paste0(gmt_db,":"),"\n")
-	nrow(tmp1)
+	cat("\nNumber of sig. GSEA terms with LA in leading edge for", paste0(gmt_db,":"), nrow(tmp1),"\n")
+	#nrow(tmp1)
 
 	tmp2 = tidyr::separate_rows(tmp1, LA_in_leadingEdge2, sep="/")
 	colnames(tmp2)[4] = "gene_name"
@@ -114,7 +113,11 @@ for(gmt_db in gmt_dbl) {
 		text_title=paste(gsub("_"," ",x), gmt_db, res_file))
 
 	#term to gene jaccard
-	outlist2 = term2GeneIGRAPH(tmp2, layout_style="kk", text_title=paste(gsub("_"," ",x), gmt_db, res_file))
+	tmp2 = left_join(tmp2, la.degs[,c("gene_name","med_prop.spots.detected")])
+	tmp2$node_size = ifelse(tmp2$med_prop.spots.detected>.05, 6, 3)
+
+	outlist2 = term2GeneIGRAPH(tmp2, source=FALSE, node_size="node_size", layout_style="kk", color_by="term",
+		text_title=paste(gsub("_"," ",x), gmt_db, res_file))
 
 	#save plots
 	pdf(file=paste0("plots/08_dx-sex_DEG_analysis/", gsub("\\.","-", gsub("_","-",x)), "_",
@@ -129,9 +132,11 @@ for(gmt_db in gmt_dbl) {
 	legend("bottomleft", legend=c("Depleted","Enriched"),
 		pch=16, pt.cex=1, cex=.7,
 		col=c("#CFEBF7","#FFC0B5"))
-	plot(outlist2$igraph, layout=outlist2$layout, vertex.label.family="sans", vertex.size=6, edges.curved=T,
+	plot(outlist2$igraph, layout=outlist2$layout, vertex.label.family="sans", #vertex.size=6, 
+		edges.curved=T,
 		vertex.frame.width=0,
-		main=outlist2[["title_text"]])
+		main=outlist2[["title_text"]],
+		sub="Smaller genes have median zero proportion <=5% of spots.")
 	legend("bottomleft", legend=c("Depleted","Enriched","Gene"),
 		pch=16, pt.cex=1, cex=.7,
 		col=c("#CFEBF7","#FFC0B5","grey85"))
