@@ -79,14 +79,19 @@ ggsave(file="plots/06_pseudobulk/compare-enrichment_volcano.png",
 #t-stat correlation plots
 
 #load in spatialDLPFC results
-layer_modeling_results <- spatialLIBD::fetch_data(type = "modeling_results")
+#layer_modeling_results <- spatialLIBD::fetch_data(type = "modeling_results")
 ### i guess these are from the Maynard paper.... (aka manual annotations)
 #### https://www.bioconductor.org/packages/release/data/experiment/vignettes/spatialLIBD/inst/doc/spatialLIBD.html#spatiallibd-functions
 #### We already covered fetch_data() which allows you to download the Human DLPFC Visium data from LIBD researchers and colleagues (Maynard, Collado-Torres, Weber et al., 2021).
+### in the user guide/ function list I found the key for the 2024 dlPFC results
+layer_modeling_results <- spatialLIBD::fetch_data(type = "spatialDLPFC_Visium_modeling_results")
 t1 = layer_modeling_results$enrichment[,c(grep("t_stat",colnames(layer_modeling_results$enrichment), value=T),"ensembl")]
-colnames(t1) = gsub("t_stat_","", colnames(t1))
-colnames(t1) = gsub("Layer","L", colnames(t1))
-m1 = as.matrix(t1[,1:7])
+#colnames(t1) = gsub("t_stat_","", colnames(t1))
+#colnames(t1) = gsub("Layer","L", colnames(t1))
+#m1 = as.matrix(t1[,1:7])
+fix.names = c("Sp09D01"="Mng","Sp09D02"="L1","Sp09D03"="L2","Sp09D04"="L5","Sp09D05"="L3","Sp09D06"="WM.1","Sp09D07"="L6","Sp09D08"="L4","Sp09D09"="WM.2")
+m1 = as.matrix(t1[,1:9])
+colnames(m1) <- fix.names
 rownames(m1) = t1$ensembl
 cat("\n\nDimensions of spatialDLPFC t stat matrix:\n")
 dim(m1) #22331 7
@@ -115,7 +120,7 @@ cat("\n\nNumber of marker genes identified by union of top 50 t stat and top 50 
 sapply(top50.both.list, length)
 
 #list for factor re-ordering
-orderList <- list("spatialDLPFC"=c("L1","L2","L3","L4","L5","L6","WM"),
+orderList <- list("spatialDLPFC"=c("Mng","L1","L2","L3","L4","L5","L6","WM.1","WM.2"),
                   "SZBDMulti-seq"=c("Micro.Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
                   "PRECAST (smoothed)"=c("L1","L2","L3.4","L5","L6","WM"),
                   "MBv label transfer"=c("Micro.Vasc","Astro","L2.3","L4","L5","L6","Oligo","Inhb"))
@@ -147,6 +152,17 @@ ggsave(file="plots/06_pseudobulk/t-stat-cor-heatmap_MBv-label-transfer-vs-SZBDMu
        bg="white", width=6, height=3) 
 cat("\nSaved t stat correlation plots to: plots/06_pseudobulk/t-stat-cor-heatmap_MBv-label-transfer-vs-SZBDMulti-seq.png\n")
 
+p4 <- plotCorHeatmap(query_list_level= "SZBDMulti-seq", query_stats= t_sn,
+                     reference_list_level= "PRECAST (smoothed)", reference_stats= t_sm,
+                     .coord_flip=T)
+
+p5 <- plotCorHeatmap(query_list_level= "PRECAST (smoothed)", query_stats= t_sm,
+                     reference_list_level= "SZBDMulti-seq", reference_stats= t_sn)
+
+ggsave(file="plots/06_pseudobulk/t-stat-cor-heatmap_PRECAST-smoothed-vs-SZBDMulti-seq.png",
+       grid.arrange(p4, p5, ncol=2),
+       bg="white", width=6, height=3) 
+cat("\nSaved t stat correlation plots to: plots/06_pseudobulk/t-stat-cor-heatmap_PRECAST-smoothed-vs-SZBDMulti-seq.png\n")
 
 p6 <- plotCorHeatmap(query_list_level= "PRECAST (smoothed)", query_stats= t_sm,
                      reference_list_level= "MBv label transfer", reference_stats= t_pc30,
