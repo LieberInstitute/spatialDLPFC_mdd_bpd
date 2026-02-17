@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=plot_LA-fgsea-summary_smoothed
+#SBATCH --job-name=plot_LA-fgsea-summary_GO-BP_smoothed
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_dx-sex_DEG_analysis/logs/%x_%j_%a.log
 #SBATCH --array=1-5
 

@@ -24,10 +24,18 @@ dbs <- listEnrichrDbs()
 gmt = .read_gmt("Reactome_2022")
 gmt.id.split = " R-HSA-"
 
-## separate term and RSA for TERM2NAME
+gmt = .read_gmt("GO_Biological_Process_2025")
+gmt.id.split = " \\(GO:"
+
+## separate term and pathway ID for TERM2NAME
 term2name = do.call(rbind.data.frame, strsplit(as.character(gmt$term), split=gmt.id.split))
 colnames(term2name) <- c("Term","ID")
-term2name$ID = paste0(substr(gmt.id.split, start=2, stop=nchar(gmt.id.split)), term2name$ID)
+if(gmt.id.split==" R-HSA-") {
+	term2name$ID = paste0(substr(gmt.id.split, start=2, stop=nchar(gmt.id.split)), term2name$ID)
+}
+if(gmt.id.split==" \\(GO:") {
+	term2name$ID = gsub("\\)", "", paste0("GO:",term2name$ID))
+}
 term.id.long = term2name$ID
 term2name = distinct(term2name[,c("ID","Term")])
 
@@ -48,9 +56,13 @@ ora = enricher(la.degs$gene_name, universe=gene_universe,
                TERM2NAME = term2name)
 ora@result <- ora@result[ora@result$p.adjust<.05,]
 
-saveRDS(ora, paste0("processed-data/08_dx-sex_DEG_analysis/layer-adjusted_", results_set,"_F-test-padj05_Reactome-ORA.rda"))
-cat("\nReactome ORA results for L-A saved to:", paste0("processed-data/08_dx-sex_DEG_analysis/layer-adjusted_", 
-  results_set,"_F-test-padj05_Reactome-ORA.rda"), "\n\n")
+#saveRDS(ora, paste0("processed-data/08_dx-sex_DEG_analysis/layer-adjusted_", results_set,"_F-test-padj05_Reactome-ORA.rda"))
+#cat("\nReactome ORA results for L-A saved to:", paste0("processed-data/08_dx-sex_DEG_analysis/layer-adjusted_", 
+#  results_set,"_F-test-padj05_Reactome-ORA.rda"), "\n\n")
+
+saveRDS(ora, paste0("processed-data/08_dx-sex_DEG_analysis/layer-adjusted_", results_set,"_F-test-padj05_GO-BP-ORA.rda"))
+cat("\nGO-BP ORA results for L-A saved to:", paste0("processed-data/08_dx-sex_DEG_analysis/layer-adjusted_", 
+  results_set,"_F-test-padj05_GO-BP-ORA.rda"), "\n\n")
 
 # L-R ORA
 lr.degs = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_", results_set,
@@ -62,10 +74,13 @@ ora_lr = enricher(lr.degs$gene_name, universe=gene_universe,
                TERM2NAME = term2name)
 ora_lr@result <- ora_lr@result[ora_lr@result$p.adjust<.05,]
 
-saveRDS(ora_lr, paste0("processed-data/08_dx-sex_DEG_analysis/layer-restricted_", results_set,"_F-test-padj05_Reactome-ORA.rda"))
-cat("\nReactome ORA results for L-R saved to:", paste0("processed-data/08_dx-sex_DEG_analysis/layer-restricted_", 
-  results_set,"_F-test-padj05_Reactome-ORA.rda"), "\n\n")
+#saveRDS(ora_lr, paste0("processed-data/08_dx-sex_DEG_analysis/layer-restricted_", results_set,"_F-test-padj05_Reactome-ORA.rda"))
+#cat("\nReactome ORA results for L-R saved to:", paste0("processed-data/08_dx-sex_DEG_analysis/layer-restricted_", 
+#  results_set,"_F-test-padj05_Reactome-ORA.rda"), "\n\n")
 
+saveRDS(ora_lr, paste0("processed-data/08_dx-sex_DEG_analysis/layer-restricted_", results_set,"_F-test-padj05_GO-BP-ORA.rda"))
+cat("\nGO-BP ORA results for L-R saved to:", paste0("processed-data/08_dx-sex_DEG_analysis/layer-restricted_",
+  results_set,"_F-test-padj05_GO-BP-ORA.rda"), "\n\n")
 
 # L-A heatmap
 test_set = ora@result
@@ -201,7 +216,8 @@ grobList <- lapply(comparisons, function(x) {
 
 
 # save plots to PDF
-pdf(file=paste0("plots/08_dx-sex_DEG_analysis/Reactome-ORA_", results_set, 
+#pdf(file=paste0("plots/08_dx-sex_DEG_analysis/Reactome-ORA_", results_set,
+pdf(file=paste0("plots/08_dx-sex_DEG_analysis/GO-BP-ORA_", results_set, 
                 "_F-test-padj05.pdf"), 
     width=12, height=12)
 grid.arrange(phm1[[4]], top=paste0("Layer-adjusted (", results_set, ")"))
@@ -217,8 +233,9 @@ for(i in igraphList) {
 	edges.curved=T,
        vertex.frame.width=0,
        main=i$igraphL[["title_text"]],
-       sub=paste0("Reactome annotations determined by ORA with n= ", nrow(la.degs)," genes with F-test adj. p<.05",
-	"\nSmaller genes have median zero proportion >=5% of spots."))
+#       sub=paste0("Reactome annotations determined by ORA with n= ", nrow(la.degs)," genes with F-test adj. p<.05",
+       sub=paste0("GO-BP annotations determined by ORA with n= ", nrow(la.degs)," genes with F-test adj. p<.05",
+	"\nSmaller genes have median zero proportion <5% of spots."))
   legend("bottomleft", legend=c("Decreased","Increased","Term"),
          pch=16, pt.cex=1, cex=.7,
          col=c("#CFEBF7","#FFC0B5","grey85"))
@@ -226,7 +243,8 @@ for(i in igraphList) {
 grid.arrange(phm2[[4]], top=paste0("Layer-restricted (", results_set, ")"))
 dev.off()
 
-cat("\n\nReactome ORA results plots saved to:", paste0("plots/08_dx-sex_DEG_analysis/Reactome-ORA_", 
+#cat("\n\nReactome ORA results plots saved to:", paste0("plots/08_dx-sex_DEG_analysis/Reactome-ORA_", 
+cat("\n\nGO-BP ORA results plots saved to:", paste0("plots/08_dx-sex_DEG_analysis/GO-BP-ORA_",
   results_set,  "_F-test-padj05.pdf"),"\n")
 
 cat("\n\nReproducibility information:\n")

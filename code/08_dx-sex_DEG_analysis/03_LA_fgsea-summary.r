@@ -37,7 +37,8 @@ adj.sig = filter(adj.results, group==unlist(strsplit(x, "_"))[[1]], sex==unlist(
 cat("\nNumber of L-A DEGs (padj<.05) for", paste0(x,":"),nrow(adj.sig),"\n")
 #nrow(adj.sig)
 
-gmt_dbl = c("Reactome")
+#gmt_dbl = c("Reactome")
+gmt_dbl = c("GO-BP")
 #gmt_dbl = c("Reactome","GO-BP","GO-CC")
 
 for(gmt_db in gmt_dbl) {

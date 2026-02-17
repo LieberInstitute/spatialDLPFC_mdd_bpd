@@ -38,7 +38,9 @@ wm.sig = filter(lr.results, group==unlist(strsplit(x, "_"))[[1]], sex==unlist(st
 cat("\nNumber of L-R WM DEGs (padj<.05) for", paste0(x,":"), nrow(wm.sig),"\n")
 #nrow(adj.sig)
 
-gmt_dbl = c("Reactome")
+#gmt_dbl = c("Reactome")
+gmt_dbl = c("GO-BP")
+
 #gmt_dbl = c("Reactome","GO-BP","GO-CC")
 
 for(gmt_db in gmt_dbl) {

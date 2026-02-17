@@ -24,7 +24,9 @@ cat("\n\n")
 ##(gmt_db = "WikiPathways")
 #(gmt_db = "GO-BP")
 #(gmt_db = "GO-CC")
-gmt_dbl = c("Reactome")
+
+#gmt_dbl = c("Reactome")
+gmt_dbl = c("GO-BP")
 
 # automated from here
 adj.results <- read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_", res_file, "_rev-gene-input_moderated-t-test.csv")) %>%

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=LR-fgsea_WM_smoothed
+#SBATCH --job-name=LR-fgsea_WM-GO-BP_smoothed
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_dx-sex_DEG_analysis/logs/%x_%j.log
 
 echo "**** Job starts ****"
