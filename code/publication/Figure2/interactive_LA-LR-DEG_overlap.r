@@ -61,6 +61,53 @@ lrt = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_"
 
 i="F_NTC.MDD"
 
+plist <- lapply(comparisons2, function(i) {
+  tmp = filter(lrt, sex.group==i, adj.P.Val<.05)
+  
+  tmp.lr.overlap = filter(tmp, gene_name %in% lr.unique[[i]]$LR_LA_overlap) %>%
+    group_by(cluster, .drop=F) %>% tally() %>% mutate(overlap="L-A & L-R overlap")
+  tmp.lr.only = filter(tmp, gene_name %in% lr.unique[[i]]$LR_only) %>% 
+    group_by(cluster, .drop=F) %>% tally() %>% mutate(overlap="L-R only")
+  tmp.la.only = data.frame(cluster="L-A", n=la.unique["LA_only",i], overlap="L-A only")
+  
+  tmp = bind_rows(tmp.lr.overlap, tmp.lr.only, tmp.la.only) %>% 
+    mutate(cluster=factor(cluster, levels=c("L-A", levels(tmp.lr.overlap$cluster))),
+           overlap=factor(overlap, levels=c("L-A only","L-A & L-R overlap","L-R only"),
+                          labels=c("L-A\nonly","L-A & L-R\noverlap","L-R only")))
+  
+  
+  if(results_set=="smoothed-k9-1663") ymax=55
+  if(results_set=="seurat-pc30") ymax=65
+  if(i=="M_MDD.BPD") ymax=80
+  
+  p <- ggplot(tmp, aes(x=cluster, y=n, fill=cluster))+
+    geom_bar(stat="identity")+
+    scale_y_continuous(limits=c(0,ymax), expand=expansion(mult=c(0,.05)))+
+    facet_grid(cols=vars(overlap), scales="free_x", space="free")+
+    scale_fill_manual(values=c("L-A"="grey", cpList$smoothed.bright), guide="none")+
+    labs(y="# DEGs", x="", title=i)+
+    theme_minimal()+theme(panel.border = element_rect(fill=NA, color="black"),
+                          axis.ticks = element_line(color="grey", linewidth=.3),
+                          plot.title=element_text(hjust=.5), 
+                          panel.grid.minor=element_blank(), panel.grid.major.x=element_blank(), 
+                          panel.grid.major.y=element_line(linewidth=.3), panel.ontop = T, 
+                          axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=7), #axis.text.y=element_text(size=7), strip.text=element_text(size=8),
+                          text=element_text(size=10))
+  
+  if(results_set=="seurat-pc30") p <- p+scale_x_discrete(labels=c("M.V","A","L2.3","L4","In","L5","L6","Olg"))+theme(axis.text.x=element_text(size=8))
+  return(p)
+})
+
+do.call(grid.arrange, c(plist, ncol=3))
+do.call(grid.arrange, c(plist, ncol=2))
+
+ggsave(file="plots/publication/Figure2/LA-LR-DEG_overlap_original.pdf", 
+       arrangeGrob(grobs=plist, ncol=3), width=8, height=4)
+
+
+
+
+
 c1 = cpList$smoothed.light
 names(c1) = paste(names(c1), "L-A & L-R overlap")
 c2 = cpList$smoothed.bright
@@ -79,13 +126,20 @@ plist <- lapply(comparisons2, function(i) {
   tmp = filter(lrt, sex.group==i, adj.P.Val<.05)
   
   tmp.lr.overlap = filter(tmp, gene_name %in% lr.unique[[i]]$LR_LA_overlap) %>%
-    group_by(cluster, .drop=F) %>% tally() %>% mutate(overlap="L-A & L-R overlap")
+    group_by(cluster) %>% tally() %>% mutate(overlap="L-A & L-R overlap")
   tmp.lr.only = filter(tmp, gene_name %in% lr.unique[[i]]$LR_only) %>% 
     group_by(cluster) %>% tally() %>% mutate(overlap="L-R only")
   tmp.la.only = data.frame(cluster="L-A", n=la.unique["LA_only",i], overlap="L-A only")
   
-  tmp = bind_rows(tmp.lr.overlap, tmp.lr.only, tmp.la.only) %>% 
-    mutate(cluster=factor(cluster, levels=c("L-A", levels(tmp.lr.overlap$cluster))),
+  tmp = bind_rows(tmp.lr.overlap, tmp.lr.only, tmp.la.only)
+  addr = setdiff(c("L-A", levels(tmp.lr.overlap$cluster)), tmp$cluster)
+  if(length(addr)>0) {
+    tmp = bind_rows(tmp, data.frame(cluster=addr, n=rep(0, length(addr), overlap=rep("L-A & L-R overlap", length(addr)))))
+  }
+  if(max(table(tmp$cluster))==1) {
+    tmp = bind_rows(tmp, data.frame(cluster="L1", n=0, overlap="L-R only"))
+  }
+  tmp = mutate(tmp, cluster=factor(cluster, levels=c("L-A", levels(tmp.lr.overlap$cluster))),
            ocolor=paste(as.character(cluster), overlap),
            overlap=factor(overlap, levels=c("L-A only","L-A & L-R overlap","L-R only")))
   
@@ -96,26 +150,28 @@ plist <- lapply(comparisons2, function(i) {
   p <- ggplot(tmp, aes(x=cluster, y=n, fill=ocolor, color=ocolor))+
     geom_bar(aes(group=overlap), stat="identity", position=position_dodge2(preserve="single"),
              linewidth=.3)+
-    ylim(0,ymax)+
+    scale_y_continuous(limits=c(0,ymax), expand=expansion(mult=c(0,.05)))+
     scale_fill_manual(values=col.pal, guide="none")+
     scale_color_manual(values=col.pal2, guide="none")+
     #scale_color_manual(values=c("black","black","grey50"), guide="none")+
-    labs(title=i, x="model", y="# DEGs")+
-    theme_minimal()+theme(panel.border = element_rect(fill=NA, color="grey"),
+    labs(title=i, x="", y="# DEGs")+
+    theme_minimal()+theme(panel.border = element_rect(fill=NA, color="black"),
+                          axis.ticks = element_line(color="grey", linewidth=.3),
+                          axis.text.x=element_text(angle=90, hjust=1, vjust=.5), 
                           plot.title=element_text(hjust=.5),
-                          panel.grid.minor=element_blank(),
+                          panel.grid.minor=element_blank(), panel.grid.major.x=element_blank(), 
+                          panel.grid.major.y=element_line(linewidth=.3), 
                           text=element_text(size=10))
-
+  
   if(results_set=="seurat-pc30") p <- p+scale_x_discrete(labels=c("M.V","A","L2.3","L4","In","L5","L6","Olg"))+theme(axis.text.x=element_text(size=8))
   return(p)
 })
 
-
 l.df = mutate(data.frame(model=c("L-A", rep(c("L1","L2","L3.4","L5","L6","WM"), 2)),
-           overlap=c("L-A only", rep("L-A & L-R overlap", 6), rep("L-R only", 6)),
-           xpos=c("b",rep("a",6),rep("b",6))),
-       ocolor= paste(model, overlap),
-       model=factor(model, levels=rev(c("L-A", names(cpList$smoothed.light))))
+                         overlap=c("L-A only", rep("L-A & L-R overlap", 6), rep("L-R only", 6)),
+                         xpos=c("b",rep("a",6),rep("b",6))),
+              ocolor= paste(model, overlap),
+              model=factor(model, levels=rev(c("L-A", names(cpList$smoothed.light))))
 )
 lplot = ggplot(l.df, aes(x=xpos, y=model))+
   geom_count(aes(color=ocolor, fill=ocolor), shape=22, size=8)+
@@ -132,7 +188,7 @@ lplot = ggplot(l.df, aes(x=xpos, y=model))+
   scale_y_discrete(expand=expansion(add = c(1)))+
   theme_void()+theme(plot.margin=margin(.1,4,.1,4,"cm"), legend.position="none")
 
-pdf(file="plots/publication/Figure2/LA-LR-DEG_overlap.pdf", width=6, height=5)
+pdf(file="plots/publication/Figure2/LA-LR-DEG_overlap_new.pdf", width=6, height=5)
 do.call(grid.arrange, c(plist, ncol=3))
 lplot
 dev.off()
