@@ -1,0 +1,136 @@
+**** Job starts ****
+Thu Jan 22 12:10:52 PM EST 2026
+**** JHPCE info ****
+User: jthompso
+Job id: 27079161
+Job name: LA-LR-overlap_smoothed
+Node(s): compute-113
+Node memory requested: 3072
+n Tasks: 
+Loading conda_R/4.4.x
+
+Currently Loaded Modules:
+  1) JHPCE_ROCKY9_DEFAULT_ENV   3) conda/3-24.3.0
+  2) JHPCE_tools/3.0            4) conda_R/4.4.x
+
+ 
+
+
+
+******************** smoothed-k9-1663 ********************
+
+> Layer-adjusted
+
+Number of L-A F test adj. p<.05: 523 
+Number of L-A F test adj. p<.05 with sig t-test result: 293 
+Number of L-A DEGs per dx*sex group:
+F_NTC.MDD_ttest M_NTC.MDD_ttest F_NTC.BPD_ttest M_NTC.BPD_ttest F_MDD.BPD_ttest 
+            115               3              71              80              42 
+M_MDD.BPD_ttest 
+            104 
+
+
+> Layer-restricted
+
+Number of L-R F test adj. p<.05: 293 
+Number of L-R F test adj. p<.05 with sig t-test result: 213 
+Number of L-R DEGs per dx*sex group:
+n_ttest_sig_F_NTC.MDD n_ttest_sig_M_NTC.MDD n_ttest_sig_F_NTC.BPD 
+                  113                     2                    97 
+n_ttest_sig_M_NTC.BPD n_ttest_sig_F_MDD.BPD n_ttest_sig_M_MDD.BPD 
+                   38                    40                    32 
+
+Number of L-R DEGs per cluster:
+  n_ttest_sig_L1   n_ttest_sig_L2 n_ttest_sig_L3.4   n_ttest_sig_L5 
+              25               65               75               45 
+  n_ttest_sig_L6   n_ttest_sig_WM 
+              52              107 
+
+
+
+******* F test adj. p<.05 overlap only *******
+
+L-A and L-R overlap: 167 
+L-A only: 356 
+L-R only: 126 
+
+
+
+******* DEGs (F test adj. p<.05 and t-test adj. p<.05) overlap *******
+
+L-A and L-R overlap: 119 
+L-A only: 174 
+L-R only: 94 
+
+L-A and L-R overlap split by dx*sex group:
+                F_NTC.MDD M_NTC.MDD F_NTC.BPD M_NTC.BPD F_MDD.BPD M_MDD.BPD
+L-A_L-R_overlap        66         0        33        30        13        26
+LA_only                49         3        38        50        29        78
+LR_only                47         2        64         8        27         6
+Joining with `by = join_by(ref_cluster, query_cluster)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+Joining with `by = join_by(gene_id, clusters)`
+null device 
+          1 
+
+
+Reproducibility information:
+[1] "2026-01-22 12:11:49"
+   user  system elapsed 
+ 52.571   1.782  55.072 
+R version 4.4.3 Patched (2025-02-28 r88218)
+Platform: x86_64-conda-linux-gnu
+Running under: Rocky Linux 9.4 (Blue Onyx)
+
+Matrix products: default
+BLAS:   /jhpce/shared/community/core/conda_R/4.4.x/R/lib64/R/lib/libRblas.so 
+LAPACK: /jhpce/shared/community/core/conda_R/4.4.x/R/lib64/R/lib/libRlapack.so;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C               LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8    LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C             LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: US/Eastern
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats4    stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] gridExtra_2.3               scater_1.34.1               scuttle_1.16.0              SpatialExperiment_1.16.0   
+ [5] SingleCellExperiment_1.28.1 SummarizedExperiment_1.36.0 Biobase_2.66.0              GenomicRanges_1.58.0       
+ [9] GenomeInfoDb_1.42.3         IRanges_2.40.1              S4Vectors_0.44.0            BiocGenerics_0.52.0        
+[13] MatrixGenerics_1.18.1       matrixStats_1.5.0           ggplot2_3.5.2               dplyr_1.1.4                
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6            beeswarm_0.4.0          rjson_0.2.23            ggrepel_0.9.6          
+ [5] lattice_0.22-6          vctrs_0.6.5             tools_4.4.3             generics_0.1.4         
+ [9] parallel_4.4.3          tibble_3.2.1            pkgconfig_2.0.3         BiocNeighbors_2.0.1    
+[13] pheatmap_1.0.12         Matrix_1.7-2            RColorBrewer_1.1-3      lifecycle_1.0.4        
+[17] GenomeInfoDbData_1.2.13 compiler_4.4.3          farver_2.1.2            codetools_0.2-20       
+[21] vipor_0.4.7             pillar_1.10.2           crayon_1.5.3            tidyr_1.3.1            
+[25] BiocParallel_1.40.2     DelayedArray_0.32.0     magick_2.8.6            viridis_0.6.5          
+[29] abind_1.4-8             tidyselect_1.2.1        rsvd_1.0.5              BiocSingular_1.22.0    
+[33] purrr_1.0.4             labeling_0.4.3          grid_4.4.3              cli_3.6.5              
+[37] SparseArray_1.6.2       magrittr_2.0.3          S4Arrays_1.6.0          dichromat_2.0-0.1      
+[41] withr_3.0.2             scales_1.4.0            UCSC.utils_1.2.0        ggbeeswarm_0.7.2       
+[45] XVector_0.46.0          httr_1.4.7              ScaledMatrix_1.14.0     beachmat_2.22.0        
+[49] irlba_2.3.5.1           viridisLite_0.4.2       rlang_1.1.6             Rcpp_1.0.14            
+[53] glue_1.8.0              jsonlite_2.0.0          R6_2.6.1                zlibbioc_1.52.0        
+**** Job ends ****
+Thu Jan 22 12:11:49 PM EST 2026

@@ -68,3 +68,16 @@ ggsave(file="plots/publication/Figure2/volcanoes.pdf",
        marrangeGrob(grobs = plist, ncol=1, nrow=1, top = quote(names(plist)[g])),
        width=3, height=3)
 
+p2 <- ggplot(lrt, aes(x=logFC, y=-log10(adj.P.Val), color=is_deg))+
+  rasterize(geom_point(size=.1), dpi=300)+
+  rasterize(geom_point(data=filter(lrt, is_deg==T), size=.1), dpi=300)+
+  scale_color_manual(values=c("grey","black"), guide="none")+
+  facet_grid(cols=vars(sex.group), rows=vars(cluster))+
+  coord_cartesian(xlim=c(-4,4), ylim=c(0,6))+
+  theme_minimal()+theme(panel.grid.minor=element_blank(), panel.grid.major = element_line(linewidth=.3),
+                        aspect.ratio=1, text=element_text(size=6), strip.text.y.right=element_text(angle=0),
+                        panel.border=element_rect(fill=NA, color="grey"), axis.ticks=element_line(color="grey", linewidth=.3))
+
+ggsave(file="plots/publication/Figure2/volcanoes_L-R-supp.pdf", 
+       p2,
+       width=6, height=6)
