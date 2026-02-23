@@ -34,6 +34,8 @@ all.3 = filter(lat.filt, sex.group %in% c("F_NTC.MDD","F_NTC.BPD","M_NTC.BPD")) 
   filter(is_DEG==3) %>% pull(gene_name)
 length(all.3) #11
 
+exclude.low = c("SLC38A5","PDLIM4","EDN1","FCER1G","PLD4","FCGR3A","FCGR2A","FOLR2","RGS1")
+
 tmp1 = filter(lat.filt, sex.group %in% c("F_NTC.MDD","F_NTC.BPD")) %>%
                    select(gene_id, gene_name, sex.group, t) %>% 
                    tidyr::pivot_wider(names_from="sex.group", values_from="t") %>%
@@ -55,6 +57,7 @@ plot.genes1 = c(all.3, c("RAMP2","VGF","SURF1"), c("DDIT4","HBB"),
                 c("ATP6V0E2"),
                 c("MUSTN1"), c("SRGN","FCGR2A"), c("C1QB"),
                 c("CNDP1","RNASE1"))
+plot.genes1 = setdiff(plot.genes1, exclude.low)
 
 p1 <- ggplot(tmp1, aes(x=F_NTC.MDD, y=F_NTC.BPD, color=pt.col))+
   geom_point(size=.5)+scale_color_identity()+
@@ -90,6 +93,7 @@ plot.genes2 = c(all.3,
                 c("CIRBP", "MAPK3", "ZFP36", "EDN1", "PDLIM4", "ANGPTL4", "VASN", "BAIAP3", "GADD45B", "CEBPD"),
                 c("HLA-DPA1","CSF1R","C3","FOLR2", "CX3CR1", "DLX6-AS1"),
                 c("ALDOA","EDNRB"), c("ZNF385D"))
+plot.genes2 = setdiff(plot.genes2, exclude.low)
 
 p2 <- ggplot(tmp2, aes(x=M_NTC.MDD, y=M_NTC.BPD, color=pt.col))+
   geom_point(size=.5)+scale_color_identity()+
@@ -127,6 +131,7 @@ plot.genes3 = c(all.3, c("RASD1","HILPDA","CEBPD","DDIT4","GADD45B","ANGPTL4","S
                 c("SRGN","RGS1"), c("SPP1", "C1QB"),
                 c("TF","CNDP1","CLDN11"),
                 c("MUSTN1"), c("TTYH1","CRTC1"))
+plot.genes3 = setdiff(plot.genes3, exclude.low)
 
 p3 <- ggplot(tmp3, aes(x=F_NTC.MDD, y=F_MDD.BPD, color=pt.col))+
   geom_point(size=.5)+scale_color_identity()+
@@ -164,6 +169,7 @@ plot.genes4 = c(all.3, c("HBB","FOXO3","SPOP","MAPK3","DDIT4"),
                 c("CNDP1","CLDN11","MAG"),
                 c("RASD1","SRGN"), c("SPP1","C1QB","FCER1G","FCGR2A"),
                 c("TTYH1","CRTC1"))
+plot.genes4 = setdiff(plot.genes4, exclude.low)
 
 p4 <- ggplot(tmp4, aes(x=F_NTC.BPD, y=F_MDD.BPD, color=pt.col))+
   geom_point(size=.5)+scale_color_identity()+
@@ -198,6 +204,7 @@ tmp8[tmp8$sig %in% c("FALSE TRUE") & tmp8$dir %in% c("-1 -1","1 -1"),"pt.col"] =
 plot.genes8 = c(all.3, c("EDNRB","ALDOA","CIRBP"),
                 c("DLX6-AS1","GADD45B","PDLIM4","EDN1","APOLD1","ANGPTL4"),
                 c("COX7A1","ZFP36","ZFP36L2"))
+plot.genes8 = setdiff(plot.genes8, exclude.low)
 
 p8 <- ggplot(tmp8, aes(x=M_NTC.MDD, y=M_MDD.BPD, color=pt.col))+
   geom_point(size=.5)+scale_color_identity()+
@@ -235,6 +242,7 @@ plot.genes5 = c(all.3, c("GADD45B","ANGPTL4","MAPK3","VASN","CEBPD","TIMP1","EDN
                 c("CX3CR1","FOLR2", "CSF1R", "C3", "HLA-DPA1","LAPTM5"),
                 c("ZFP36L2","C11orf96"),
                 c("COX7A1","ATP5ME"))
+plot.genes5 = setdiff(plot.genes5, exclude.low)
 
 p5 <- ggplot(tmp5, aes(x=M_NTC.BPD, y=M_MDD.BPD, color=pt.col))+
   geom_point(size=.5)+scale_color_identity()+
@@ -273,6 +281,7 @@ plot.genes6 = c(all.3, c("RASD1","CEBPD","GADD45B","ELK1","ANGPTL4","ZFP36"),
                 c("TIMP1","EDN1","PDLIM4","MAPK3","VASN","GADD45G"),
                 c("DDIT4","SESN1","BAG3","HSPB1","JUN","FABP5","MT2A","HILPDA"),
                 c("SURF1","VEGFA","HLA-DPA1","LAPTM5","CSF1R","C3"))
+plot.genes6 = setdiff(plot.genes6, exclude.low)
 
 p6 <- ggplot(tmp6, aes(x=F_NTC.MDD, y=M_NTC.BPD, color=pt.col))+
   geom_point(size=.5)+scale_color_identity()+
@@ -312,6 +321,7 @@ plot.genes7 = c(all.3, c("MAPK3","DLX6-AS1"),
                 c("CX3CR1","FOLR2","PLD4","HLA-DPA1","CSF1R","C3"),
                 c("GAD1","MAG","SCG2","LMO2","CLDN11"),
                 c("FOXO3","HBB","FTL","SPOP","PUM1","RPL28"))
+plot.genes7 = setdiff(plot.genes7, exclude.low)
 
 p7 <- ggplot(tmp7, aes(x=F_NTC.BPD, y=M_NTC.BPD, color=pt.col))+
   geom_point(size=.5)+scale_color_identity()+
@@ -329,7 +339,7 @@ p7t <- p7+ggrepel::geom_text_repel(data=filter(tmp7, gene_name %in% plot.genes7)
                                    aes(label=gene_name),
                                    min.segment.length = 0, max.overlaps = Inf, size=2, fontface="italic")
 
-pdf(file="plots/publication/Figure2/LA-F-test-padj05_dx-sex-compare_scatter-each.pdf", height=3.5, width=3.5)
+pdf(file="plots/publication/Figure2/scatter-each_LA-F-test-padj05_dx-sex-compare.pdf", height=3.5, width=3.5)
 p1t
 p3t
 p4t
@@ -341,11 +351,11 @@ p6t
 dev.off()
 
 
-ggsave(file="plots/publication/Figure2/LA-F-test-padj05_dx-sex-compare_scatter-no-genes.pdf", 
+ggsave(file="plots/publication/Figure2/scatter-no-genes_LA-F-test-padj05_dx-sex-compare.pdf", 
        arrangeGrob(grobs=list(p1, p3, p4, 
                               p2, p8, p5,
                               p7, p6), ncol=3), height=9, width=9)
-ggsave(file="plots/publication/Figure2/LA-F-test-padj05_dx-sex-compare_scatter-with-genes.pdf", 
+ggsave(file="plots/publication/Figure2/scatter-with-genes_LA-F-test-padj05_dx-sex-compare.pdf", 
        arrangeGrob(grobs=list(p1t, p3t, p4t, 
                               p2t, p8t, p5t,
                               p7t, p6t), ncol=3), height=9, width=9)
