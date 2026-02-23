@@ -24,15 +24,15 @@ lat = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_",
          cluster="L-A") 
 
 lat.filt = filter(lat, gene_id %in% la.degs$gene_id) %>% mutate(is_DEG=adj.P.Val<.05)
-summary(lat.filt$t)
+#summary(lat.filt$t)
 
-filter(lat.filt, is_DEG) %>% group_by(dir, sex.group) %>% slice_min(n=1, abs(t))
-#3.67 is the t cutoff for significance
+#filter(lat.filt, is_DEG) %>% group_by(dir, sex.group) %>% slice_min(n=1, abs(t))
+##3.67 is the t cutoff for significance
 
 all.3 = filter(lat.filt, sex.group %in% c("F_NTC.MDD","F_NTC.BPD","M_NTC.BPD")) %>% 
   group_by(gene_id, gene_name) %>% summarise(is_DEG=sum(is_DEG)) %>%
   filter(is_DEG==3) %>% pull(gene_name)
-length(all.3) #11
+#length(all.3) #11
 
 exclude.low = c("SLC38A5","PDLIM4","EDN1","FCER1G","PLD4","FCGR3A","FCGR2A","FOLR2","RGS1")
 
@@ -41,6 +41,9 @@ tmp1 = filter(lat.filt, sex.group %in% c("F_NTC.MDD","F_NTC.BPD")) %>%
                    tidyr::pivot_wider(names_from="sex.group", values_from="t") %>%
   mutate(sig=paste(abs(F_NTC.MDD)>=3.67, abs(F_NTC.BPD)>=3.67),
          dir=paste(sign(F_NTC.MDD), sign(F_NTC.BPD)))
+
+cor.test(tmp1$F_NTC.MDD, tmp1$F_NTC.BPD)
+
 tmp1$pt.col = ifelse(tmp1$sig=="FALSE FALSE", "grey", "black")
 tmp1[tmp1$sig=="TRUE TRUE" & tmp1$dir=="1 1","pt.col"] = "red3"
 tmp1[tmp1$sig %in% c("TRUE FALSE") & tmp1$dir %in% c("1 -1","1 1"),"pt.col"] = "#FF917E"
@@ -80,6 +83,9 @@ tmp2 = filter(lat.filt, sex.group %in% c("M_NTC.MDD","M_NTC.BPD")) %>%
   tidyr::pivot_wider(names_from="sex.group", values_from="t") %>%
   mutate(sig=paste(abs(M_NTC.MDD)>=3.67, abs(M_NTC.BPD)>=3.67),
          dir=paste(sign(M_NTC.MDD), sign(M_NTC.BPD)))
+
+cor.test(tmp2$M_NTC.MDD, tmp2$M_NTC.BPD)
+
 tmp2$pt.col = ifelse(tmp2$sig=="FALSE FALSE", "grey", "black")
 tmp2[tmp2$sig=="TRUE TRUE" & tmp2$dir=="1 1","pt.col"] = "red3"
 tmp2[tmp2$sig %in% c("TRUE FALSE") & tmp2$dir %in% c("1 -1","1 1"),"pt.col"] = "#FF917E"
@@ -116,6 +122,9 @@ tmp3 = filter(lat.filt, sex.group %in% c("F_NTC.MDD","F_MDD.BPD")) %>%
   tidyr::pivot_wider(names_from="sex.group", values_from="t") %>%
   mutate(sig=paste(abs(F_NTC.MDD)>=3.67, abs(F_MDD.BPD)>=3.67),
          dir=paste(sign(F_NTC.MDD), sign(-F_MDD.BPD)))
+
+cor.test(tmp3$F_NTC.MDD, tmp3$F_MDD.BPD)
+
 tmp3$pt.col = ifelse(tmp3$sig=="FALSE FALSE", "grey", "black")
 tmp3[tmp3$sig=="TRUE TRUE" & tmp3$dir=="1 1","pt.col"] = "red3"
 tmp3[tmp3$sig %in% c("TRUE FALSE") & tmp3$dir %in% c("1 -1","1 1"),"pt.col"] = "#FF917E"
@@ -154,6 +163,9 @@ tmp4 = filter(lat.filt, sex.group %in% c("F_NTC.BPD","F_MDD.BPD")) %>%
   tidyr::pivot_wider(names_from="sex.group", values_from="t") %>%
   mutate(sig=paste(abs(F_NTC.BPD)>=3.67, abs(F_MDD.BPD)>=3.67),
          dir=paste(sign(F_NTC.BPD), sign(F_MDD.BPD)))
+
+cor.test(tmp4$F_NTC.BPD, tmp4$F_MDD.BPD)
+
 tmp4$pt.col = ifelse(tmp4$sig=="FALSE FALSE", "grey", "black")
 tmp4[tmp4$sig=="TRUE TRUE" & tmp4$dir=="1 1","pt.col"] = "red3"
 tmp4[tmp4$sig %in% c("TRUE FALSE") & tmp4$dir %in% c("1 -1","1 1"),"pt.col"] = "#FF917E"
@@ -192,6 +204,9 @@ tmp8 = filter(lat.filt, sex.group %in% c("M_NTC.MDD","M_MDD.BPD")) %>%
   tidyr::pivot_wider(names_from="sex.group", values_from="t") %>%
   mutate(sig=paste(abs(M_NTC.MDD)>=3.67, abs(M_MDD.BPD)>=3.67),
          dir=paste(sign(M_NTC.MDD), sign(-M_MDD.BPD)))
+
+cor.test(tmp8$M_NTC.MDD, tmp8$M_MDD.BPD)
+
 tmp8$pt.col = ifelse(tmp8$sig=="FALSE FALSE", "grey", "black")
 tmp8[tmp8$sig=="TRUE TRUE" & tmp8$dir=="1 1","pt.col"] = "red3"
 tmp8[tmp8$sig %in% c("TRUE FALSE") & tmp8$dir %in% c("1 -1","1 1"),"pt.col"] = "#FF917E"
@@ -227,6 +242,9 @@ tmp5 = filter(lat.filt, sex.group %in% c("M_NTC.BPD","M_MDD.BPD")) %>%
   tidyr::pivot_wider(names_from="sex.group", values_from="t") %>%
   mutate(sig=paste(abs(M_NTC.BPD)>=3.67, abs(M_MDD.BPD)>=3.67),
          dir=paste(sign(M_NTC.BPD), sign(M_MDD.BPD)))
+
+cor.test(tmp5$M_NTC.BPD, tmp5$M_MDD.BPD)
+
 tmp5$pt.col = ifelse(tmp5$sig=="FALSE FALSE", "grey", "black")
 tmp5[tmp5$sig=="TRUE TRUE" & tmp5$dir=="1 1","pt.col"] = "red3"
 tmp5[tmp5$sig %in% c("TRUE FALSE") & tmp5$dir %in% c("1 -1","1 1"),"pt.col"] = "#FF917E"
@@ -265,6 +283,9 @@ tmp6 = filter(lat.filt, sex.group %in% c("M_NTC.BPD","F_NTC.MDD")) %>%
   tidyr::pivot_wider(names_from="sex.group", values_from="t") %>%
   mutate(sig=paste(abs(M_NTC.BPD)>=3.67, abs(F_NTC.MDD)>=3.67),
          dir=paste(sign(M_NTC.BPD), sign(F_NTC.MDD)))
+
+cor.test(tmp6$M_NTC.BPD, tmp6$F_NTC.MDD)
+
 tmp6$pt.col = ifelse(tmp6$sig=="FALSE FALSE", "grey", "black")
 tmp6[tmp6$sig=="TRUE TRUE" & tmp6$dir=="1 1","pt.col"] = "red3"
 tmp6[tmp6$sig %in% c("TRUE FALSE") & tmp6$dir %in% c("1 -1","1 1"),"pt.col"] = "#FF917E"
@@ -305,9 +326,11 @@ tmp7 = filter(lat.filt, sex.group %in% c("M_NTC.BPD","F_NTC.BPD")) %>%
   tidyr::pivot_wider(names_from="sex.group", values_from="t") %>%
   mutate(sig=paste(abs(M_NTC.BPD)>=3.67, abs(F_NTC.BPD)>=3.67),
          dir=paste(sign(M_NTC.BPD), sign(F_NTC.BPD)))
+
+cor.test(tmp7$M_NTC.BPD, tmp7$F_NTC.BPD)
+
 tmp7$pt.col = ifelse(tmp7$sig=="FALSE FALSE", "grey", "black")
 tmp7[tmp7$sig=="TRUE TRUE" & tmp7$dir=="1 1","pt.col"] = "red3"
-#tmp7[tmp7$sig %in% c("TRUE FALSE", "FALSE TRUE") & tmp7$dir=="1 1","pt.col"] = "#FF917E"
 tmp7[tmp7$sig %in% c("TRUE FALSE") & tmp7$dir %in% c("1 -1","1 1"),"pt.col"] = "#FF917E"
 tmp7[tmp7$sig %in% c("FALSE TRUE") & tmp7$dir %in% c("-1 1","1 1"),"pt.col"] = "#FF917E"
 
