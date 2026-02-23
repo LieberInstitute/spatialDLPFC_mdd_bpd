@@ -11,13 +11,18 @@ comparisons2 = comparisons[c(1,3,5,2,4,6)]
 cpList <- readRDS("plots/colorPalettes.rds")
 
 results_set="smoothed-k9-1663"
+la.degs = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_", results_set,
+                          "_dx-sex_degs-F-test-t-test.csv"))
+lr.degs = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_", results_set,
+                          "_dx-sex_degs-F-test-t-test.csv"))
 
+mratio.sn = read.csv("processed-data/06_pseudobulk/SZBDMulti-seq/SZBD-control_azimuth-super-broad_mean-ratio.csv")
 
 # genes to plot
 plot.genes = c(
   "BCL6","HSPA1B","JUN",#WM-inflam
-  "ANP32B","NFKBIA","LMNA", #supp dotplot only
-  "APLP1","SLC44A1","CLDN11","MAG", #WM-myelin
+  "ANP32B","NFKBIA", #supp dotplot only
+  "SLC44A1","CLDN11","MAG", #WM-myelin
   #KCNMB4 and myelin: https://pmc.ncbi.nlm.nih.gov/articles/PMC8596180/
   "TF","ENPP2",#supp dotplot only
   #"SURF1","ATP6V0E2","DDIT4","SESN1",#trans/mito
@@ -27,7 +32,6 @@ plot.genes = c(
   #"BAALC-AS1", "CDKN1A",#supp dotplot only
   "FKBP5", "C1QB","C3","CX3CR1","LAPTM5","CSF1R","HLA-DPA1", #microglia, supp dotplot only
   "SST", "CORT", "CRH", "VGF",#InhN that are L-R too
-  "SLC32A1",#SUPP DOTPLOT ONLY
   "ELK1","MAPK3","DUSP6",
   "DUSP4","RASD1") #supp dotplot only
 
@@ -49,8 +53,12 @@ lrt = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_"
          cluster=factor(cluster, levels=names(cpList$smoothed.bright)),
          sex.group = factor(paste(sex, group, sep="_"), levels=comparisons2))
 
-tmp = bind_rows(filter(lat, gene_name %in% plot.genes),
-          filter(lrt, gene_name %in% plot.genes))
+tmp = bind_rows(filter(lat, gene_name %in% plot.genes) %>%
+		# change adj.P.Val for genes that don't have sig L-R interaction term
+                mutate(adj.P.Val= ifelse(gene_name %in% la.degs$gene_name, adj.P.Val, .5)),
+          filter(lrt, gene_name %in% plot.genes) %>%
+		# change adj.P.Val for genes that don't have sig L-R interaction term
+		mutate(adj.P.Val= ifelse(gene_name %in% lr.degs$gene_name, adj.P.Val, .5)))
 
 tmp$adj.P.Val_bin = as.numeric(as.character(cut(tmp$adj.P.Val, breaks=c(0,.0001,.01,.05,1), labels=c(4,3,2,1))))
 table(tmp$adj.P.Val_bin, useNA="ifany")
