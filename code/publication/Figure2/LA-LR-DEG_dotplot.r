@@ -1,3 +1,4 @@
+library(SpatialExperiment)
 library(dplyr)
 library(ggplot2)
 set.seed(123)
@@ -16,7 +17,7 @@ la.degs = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots
 lr.degs = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_", results_set,
                           "_dx-sex_degs-F-test-t-test.csv"))
 
-mratio.sn = read.csv("processed-data/06_pseudobulk/SZBDMulti-seq/SZBD-control_azimuth-super-broad_mean-ratio.csv")
+#mratio.sn = read.csv("processed-data/06_pseudobulk/SZBDMulti-seq/SZBD-control_azimuth-super-broad_mean-ratio.csv")
 
 # genes to plot
 plot.genes = c(
@@ -27,8 +28,9 @@ plot.genes = c(
   "TF","ENPP2",#supp dotplot only
   #"SURF1","ATP6V0E2","DDIT4","SESN1",#trans/mito
   #"UBA52","UBC","EIF5B","RPL28","RPS8","RPL29","RPS12",#supp dotplot only
-  "CEBPD","GADD45B","ANGPTL4", #BBB angio inflamm group
-  "APOLD1",#"IFITM3","VEGFA","MT2A", #suppdoplot only
+  "CEBPD","MT1X","CDKN1A","GADD45B","ANGPTL4", #BBB angio inflamm group
+  "APOLD1",
+  "MT2A","IFITM3","IFITM2","VEGFA", #suppdoplot only
   #"BAALC-AS1", "CDKN1A",#supp dotplot only
   "FKBP5", "C1QB","C3","CX3CR1","LAPTM5","CSF1R","HLA-DPA1", #microglia, supp dotplot only
   "SST", "CORT", "CRH", "VGF",#InhN that are L-R too
@@ -36,8 +38,8 @@ plot.genes = c(
   "DUSP4","RASD1") #supp dotplot only
 
 
-setdiff(plot.genes, mratio.sn$gene_name)
-plot.genes = intersect(plot.genes, mratio.sn$gene_name)
+#setdiff(plot.genes, mratio.sn$gene_name)
+#plot.genes = intersect(plot.genes, mratio.sn$gene_name)
 
 
 
@@ -87,11 +89,30 @@ col.pal = c("Vasc"=cpList$low.res.light[["Micro.Vasc"]],
             "multi"="grey"
 )
 
-tmp2 = filter(mratio.sn, gene_name %in% tmp$gene_name) %>% 
-  mutate(gene_name=factor(gene_name, levels=levels(tmp$plot.genes)),
-         cellType.target= factor(cellType.target, levels=c("InhN","ExcN","Astro","Oligo","Micro","Vasc")))
 
-p2 = ggplot(tmp2, aes(y=gene_name, x=mean.target, fill=cellType.target))+
+#tmp2 = filter(mratio.sn, gene_name %in% tmp$gene_name) %>% 
+#  mutate(gene_name=factor(gene_name, levels=levels(tmp$plot.genes)),
+#         cellType.target= factor(cellType.target, levels=c("InhN","ExcN","Astro","Oligo","Micro","Vasc")))
+
+#p2 = ggplot(tmp2, aes(y=gene_name, x=mean.target, fill=cellType.target))+
+#  geom_bar(stat="identity", position="fill")+
+#  scale_fill_manual(values=col.pal)+
+#  labs(title=" ")+
+#  theme_minimal()+theme(axis.text.y=element_blank(), axis.title.y=element_blank(),
+#                        axis.text.x=element_text(angle=60, hjust=1, size=8),
+#                        legend.position="bottom", legend.title=element_blank(),
+#                        legend.key.size = unit(10,"pt"))
+
+load("processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-dotplot_azimuth-super-broad.Rdata")
+gids = unique(tmp$gene_id)
+df2 = tibble::rownames_to_column(as.data.frame(assay(sce_summ, "logcounts.mean")[gids,]))
+colnames(df2) = c("gene_id", as.character(colData(sce_summ)$azimuth_super.broad))
+
+tmp2 = tidyr::pivot_longer(df2, all_of(levels(colData(sce_summ)$azimuth_super.broad)), names_to="cellType", values_to="mean.expr") %>%
+  left_join(as.data.frame(rowData(sce_summ)[gids,c("gene_id","gene_name")])) %>%
+  mutate(gene_name= factor(gene_name, levels=levels(tmp$plot.genes)))
+
+p2 = ggplot(tmp2, aes(y=gene_name, x=mean.expr, fill=cellType))+
   geom_bar(stat="identity", position="fill")+
   scale_fill_manual(values=col.pal)+
   labs(title=" ")+
@@ -99,7 +120,6 @@ p2 = ggplot(tmp2, aes(y=gene_name, x=mean.target, fill=cellType.target))+
                         axis.text.x=element_text(angle=60, hjust=1, size=8),
                         legend.position="bottom", legend.title=element_blank(),
                         legend.key.size = unit(10,"pt"))
-
 
 #gridExtra::grid.arrange(p2, p2.1, ncol=2)
 #gridExtra::grid.arrange(p1,p2, layout_matrix=matrix(c(1,1,1,1,1,2), ncol=6))
