@@ -29,7 +29,7 @@ fi
 
 f_tfs="raw-data/SCENIC_aux/tf_lists/allTFs_hg38.txt"
 out_path="processed-data/09_SCENIC/spe-n119_21077_adj.csv"
-pyscenic grn $f_loom_path_scenic $f_tfs -o $out_path --num_workers 48 --seed 1234
+pyscenic grn $f_loom_path_scenic $f_tfs -o $out_path --num_workers 48 --seed 1234 --sparse
 
 #echo $out_path
 
