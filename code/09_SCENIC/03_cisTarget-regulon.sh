@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=500G
-#SBATCH --job-name=ctx_full_track_no-pruning
+#SBATCH --job-name=ctx_full_fixed-thold
 #SBATCH -o code/09_SCENIC/logs/%x_%j.log
 #SBATCH --ntasks=10
 
@@ -29,21 +29,21 @@ fi
 loom_path="processed-data/09_SCENIC/spe-n119_21077-genes.loom"
 
 # motif-based anno
-#annot_path='/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/genome_annotation/hg38_500bp_up_100bp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/genome_annotation/hg38_10kbp_up_10kbp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather'
-#motif_path="/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/motif2tf/motifs-v10nr_clust-nr.hgnc-m0.001-o0.0.tbl"
+annot_path='/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/genome_annotation/hg38_500bp_up_100bp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/genome_annotation/hg38_10kbp_up_10kbp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather'
+motif_path="/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/motif2tf/motifs-v10nr_clust-nr.hgnc-m0.001-o0.0.tbl"
 
 # track based anno
-annot_path='/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/genome_annotation/encode_20190621__ChIP_seq_transcription_factor.hg38__refseq-r80__10kb_up_and_down_tss.max.genes_vs_tracks.rankings.feather /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/genome_annotation/encode_20190621__ChIP_seq_transcription_factor.hg38__refseq-r80__500bp_up_and_100bp_down_tss.max.genes_vs_tracks.rankings.feather'
-motif_path="/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/track2tf/encode_project_20190621__ChIP-seq_transcription_factor.homo_sapiens.hg38.bigwig_signal_pvalue.track_to_tf_in_motif_to_tf_format.tsv"
+#annot_path='/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/genome_annotation/encode_20190621__ChIP_seq_transcription_factor.hg38__refseq-r80__10kb_up_and_down_tss.max.genes_vs_tracks.rankings.feather /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/genome_annotation/encode_20190621__ChIP_seq_transcription_factor.hg38__refseq-r80__500bp_up_and_100bp_down_tss.max.genes_vs_tracks.rankings.feather'
+#motif_path="/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/track2tf/encode_project_20190621__ChIP-seq_transcription_factor.homo_sapiens.hg38.bigwig_signal_pvalue.track_to_tf_in_motif_to_tf_format.tsv"
 
-out_path="processed-data/09_SCENIC/spe-n119_21077_reg-track_no-pruning.csv"
+out_path="processed-data/09_SCENIC/spe-n119_21077_reg_fixed-thold.csv"
 
 pyscenic ctx $adj_path $annot_path \
 	--annotations_fname $motif_path \
 	--expression_mtx_fname $loom_path \
 	--output $out_path \
-	--mask_dropouts --all_modules --num_workers 10 --no_pruning
-
+	--mask_dropouts --all_modules --num_workers 10 \
+	--thresholds 0.5
 #echo $out_path
 
 echo "**** Job ends ****"
