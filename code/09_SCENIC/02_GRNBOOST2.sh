@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=100G
-#SBATCH --job-name=grn_full_dask-5GB-sparse
+#SBATCH --job-name=grn_full_DE-input-genes_dask-5GB-sparse
 #SBATCH -o code/09_SCENIC/logs/%x_%j.log
 #SBATCH --ntasks=20
 
@@ -20,7 +20,7 @@ module load conda
 module list
 source activate pyscenic_bioconda
 
-loom_path="processed-data/09_SCENIC/spe-n119_21077-genes.loom"
+loom_path="processed-data/09_SCENIC/spe-n119_13844-genes.loom"
 echo $loom_path
 if [ ! -f $loom_path ]; then
     echo "File not found!"
@@ -28,7 +28,7 @@ fi
 
 
 f_tfs="raw-data/SCENIC_aux/tf_lists/allTFs_hg38.txt"
-out_path="processed-data/09_SCENIC/spe-n119_21077_adj.csv"
+out_path="processed-data/09_SCENIC/spe-n119_13844_adj.csv"
 
 pyscenic grn $loom_path $f_tfs -o $out_path --num_workers 20 --seed 1234 --sparse
 
