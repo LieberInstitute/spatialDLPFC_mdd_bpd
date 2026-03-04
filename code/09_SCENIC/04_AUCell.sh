@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#SBATCH --mem=30G
-#SBATCH --job-name=aucell_single-slide
+#SBATCH --mem=500G
+#SBATCH --job-name=aucell_full
 #SBATCH -o code/09_SCENIC/logs/%x_%j.log
-#SBATCH --ntasks=48
+#SBATCH --ntasks=24
 
 echo "**** Job starts ****"
 date
@@ -20,18 +20,18 @@ module load conda
 module list
 source activate pyscenic
 
-reg_path="processed-data/09_SCENIC/single-slide_reg.csv"
+reg_path="processed-data/09_SCENIC/spe-n119_21077_reg.csv"
 echo $reg_path
 if [ ! -f $reg_path ]; then
     echo "File not found!"
 fi
 
-loom_path="processed-data/09_SCENIC/single-slide_V13B23-329_17300-genes.loom"
-out_path="processed-data/09_SCENIC/single-slide_AUCell-output.loom"
+loom_path="processed-data/09_SCENIC/spe-n119_21077-genes.loom"
+out_path="processed-data/09_SCENIC/spe-n119_21077_AUCell-output.loom"
 
 pyscenic aucell $loom_path $reg_path \
 	--output $out_path \
-	--seed 1234 --num_workers 48
+	--seed 1234 --num_workers 10
 
 #echo $out_path
 
