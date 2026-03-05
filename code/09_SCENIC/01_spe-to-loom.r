@@ -153,10 +153,11 @@ nrow(rdata2)
 
 # all data
 cat("\n\nFull dataset...\n")
-(fn3 = paste0("processed-data/09_SCENIC/spe-n119_", nrow(rdata2), "-genes_no-lowUMI.loom"))
+(fn3 = paste0("processed-data/09_SCENIC/spe-n119_", nrow(rdata2), "-genes_no-lowUMI_logcounts.loom"))
 
 # extract counts matrix and change rownames
-mtx3 = counts(spe)
+#mtx3 = counts(spe)
+mtx3 = logcounts(spe)
 stopifnot(identical(rownames(mtx3), rdata2$gene_id))
 rownames(mtx3) = rdata2$gene_name
 dim(mtx3)
