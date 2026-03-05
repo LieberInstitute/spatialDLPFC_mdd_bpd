@@ -48,6 +48,15 @@ dim(rdata)
 
 spe = spe[rownames(rdata),]
 
+
+# remove low UMI cluster
+cat("\nRemoving low UMI cluster...\n")
+cdata = cdata[cdata$smoothed_k9_1663!="low.UMI",]
+cdata$smoothed_k9_1663 = droplevels(cdata$smoothed_k9_1663)
+
+spe = spe[,rownames(cdata)]
+dim(spe)
+
 #need to switch rownames to gene_name to match with SCENIC_aux files
 ##check for repeated gene names (multiple gene ids)
 #t1 = table(rdata$gene_name)
@@ -144,7 +153,7 @@ nrow(rdata2)
 
 # all data
 cat("\n\nFull dataset...\n")
-(fn3 = paste0("processed-data/09_SCENIC/spe-n119_", nrow(rdata2), "-genes.loom"))
+(fn3 = paste0("processed-data/09_SCENIC/spe-n119_", nrow(rdata2), "-genes_no-lowUMI.loom"))
 
 # extract counts matrix and change rownames
 mtx3 = counts(spe)

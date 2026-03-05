@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --mem=300G
+#SBATCH --mem=100G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=spe_to_loom_gene-names_full_DE-input
+#SBATCH --job-name=spe_to_loom_gene-names_full_DE-input_no-lowUMI
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_SCENIC/logs/%x_%j.log
 
 echo "**** Job starts ****"
