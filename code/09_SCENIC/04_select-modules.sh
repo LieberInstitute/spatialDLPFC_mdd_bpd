@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --mem=5G
-#SBATCH --job-name=select_modules
+#SBATCH --mem=2G
+#SBATCH --job-name=select_modules_DE-input_no-mask
 #SBATCH -o code/09_SCENIC/logs/%x_%j.log
 
 echo "**** Job starts ****"
