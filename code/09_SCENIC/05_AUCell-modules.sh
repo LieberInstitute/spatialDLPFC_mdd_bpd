@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #SBATCH --mem=100G
-#SBATCH --job-name=aucell_modules_custom
+#SBATCH --job-name=aucell_modules_fixed-thold_custom-cluster
 #SBATCH -o code/09_SCENIC/logs/%x_%j_%a.log
 #SBATCH --ntasks=10
-#SBATCH --array=1-8
+#SBATCH --array=1,4-12
 
 echo "**** Job starts ****"
 date
