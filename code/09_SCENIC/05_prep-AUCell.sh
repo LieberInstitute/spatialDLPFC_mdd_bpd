@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --mem=200G
+#SBATCH --mem=50G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=spe-logcounts_to_loom_gene-names_seurat-label-subsets
+#SBATCH --job-name=spe-logcounts_to_loom_gene-names_custom-cluster-subsets
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_SCENIC/logs/%x_%j.log
 
 echo "**** Job starts ****"

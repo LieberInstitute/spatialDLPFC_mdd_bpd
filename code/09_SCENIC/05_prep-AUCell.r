@@ -67,11 +67,16 @@ spe = spe[,rownames(cdata)]
 dim(spe)
 #  13844 513200
 
-out1 = scuttle::perCellQCMetrics(spe, assay.type="counts")
-stopifnot(identical(rownames(cdata), rownames(out1)))
-out1 = cbind(out1, cdata[,c("sex","condition","smoothed_k9_1663","seurat_label")])
-
-write.csv(out1, "processed-data/09_SCENIC/cdata_revised-qc-metrics_for-AUCell.csv", row.names=T)
+if(file.exists("processed-data/09_SCENIC/cdata_revised-qc-metrics_for-AUCell.csv")) {
+	out1 <- read.csv("processed-data/09_SCENIC/cdata_revised-qc-metrics_for-AUCell.csv", row.names=1)
+	out1$smoothed_k9_1663 = factor(out1$smoothed_k9_1663, levels=levels(cdata$smoothed_k9_1663))
+	out1$seurat_label = factor(out1$seurat_label, levels=levels(cdata$seurat_label))
+} else {
+	out1 = scuttle::perCellQCMetrics(spe, assay.type="counts")
+	stopifnot(identical(rownames(cdata), rownames(out1)))
+	out1 = cbind(out1, cdata[,c("sex","condition","smoothed_k9_1663","seurat_label")])
+	write.csv(out1, "processed-data/09_SCENIC/cdata_revised-qc-metrics_for-AUCell.csv", row.names=T)
+}
 
 table(out1$smoothed_k9_1663)
 cat("\n")
@@ -87,13 +92,34 @@ cat("\n\n")
 colnames(out1)[grep("sum", colnames(out1))] = "nUMI"
 colnames(out1)[grep("detected", colnames(out1))] = "nGene"
 
-for(i in levels(out1$seurat_label)) {
+#further split astro and L23 
+## splitting astro for better sampled representation of # detected genes 
+## splitting L23 because they are equal in # detected genes and cutting down size will make for more efficient array job memory requests
+out1$custom_cluster = as.character(out1$seurat_label)
+out1[out1$custom_cluster=="Astro" & out1$smoothed_k9_1663 %in% c("L1","Vasc","WM"), "custom_cluster"] = "Astro.Glia"
+out1[out1$custom_cluster=="Astro" & !out1$smoothed_k9_1663 %in% c("L1","Vasc","WM"), "custom_cluster"] = "Astro.Nrn"
+out1[out1$custom_cluster=="L2.3" & out1$smoothed_k9_1663=="L2", "custom_cluster"] = "L2"
+out1[out1$custom_cluster=="L2.3" & out1$smoothed_k9_1663!="L2", "custom_cluster"] = "L3"
+
+out1$custom_cluster = factor(out1$custom_cluster, levels=c("Micro.Vasc","Astro.Glia","Astro.Nrn","L2","L3","L4","Inhb","L5","L6","Oligo"))
+
+table(out1$custom_cluster)
+cat("\n")
+sapply(levels(out1$custom_cluster), function(x) quantile(filter(as.data.frame(out1), custom_cluster==x)$nGene, probs=c(.01,.05,.1,.5,1)))
+cat("\n\n")
+
+write.csv(out1, "processed-data/09_SCENIC/cdata_revised-qc-metrics_custom-cluster_for-AUCell.csv", row.names=T)
+
+for(i in c("Astro.Glia","Astro.Nrn","L2","L3")) {
+#for(i in levels(out1$seurat_label)) {
 
 	cat(paste0("\n\n",i,"...\n"))
 
-	(fn = paste0("processed-data/09_SCENIC/expr_loom/spe-n119_seurat-label-",i,"_", nrow(rdata2), "-genes_no-lowUMI_logcounts.loom"))
+        (fn = paste0("processed-data/09_SCENIC/expr_loom/spe-n119_custom-cluster-",i,"_", nrow(rdata2), "-genes_no-lowUMI_logcounts.loom"))
+#	(fn = paste0("processed-data/09_SCENIC/expr_loom/spe-n119_seurat-label-",i,"_", nrow(rdata2), "-genes_no-lowUMI_logcounts.loom"))
 
-	tmp = out1[out1$seurat_label==i,]
+        tmp = out1[out1$custom_cluster==i,]
+#	tmp = out1[out1$seurat_label==i,]
 	nrow(tmp)
 
 	mtx = logcounts(spe[,rownames(tmp)])
