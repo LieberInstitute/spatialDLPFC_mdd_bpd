@@ -9,59 +9,47 @@ set.seed(123)
 setAutoBlockSize(1e9)
 
 #load spe
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC-conservative_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 
 #load clusters
-res = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered-conservative_ref-control_query-MBv-conservative_qual-genes-kanchor-50-pc20_red-precast-kweight-50-low-res.csv", row.names=1)
+#res = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-MBv_qual-genes-kanchor-50-pc20_red-precast-kweight-50-low-res.csv", row.names=1)
 #stopifnot(identical(rownames(colData(spe)), rownames(res2)))
-#res = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered-conservative_ref-control_query-MBv-conservative_qual-genes-kanchor-50-pc30_red-precast-kweight-50-low-res.csv", row.names=1)
+res = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-MBv_qual-genes-kanchor-50-pc30_red-precast-kweight-50-low-res.csv", row.names=1)
 
 spe = spe[,rownames(res)]
-cat("\nDim spe after filtering out spots without PRECAST embeddings:\n")
-dim(spe)
+#cat("\nDim spe after filtering out spots without PRECAST embeddings:\n")
+#dim(spe)
 stopifnot(identical(rownames(colData(spe)), rownames(res)))
 
-# remove low UMI cluster for L4 and Inhb
-cdata = read.csv("processed-data/05_clustering/PRECAST/colData_conservative_all-precast-clusters.csv", row.names=1)
-cdata = cdata[rownames(res),]
-cdata$predicted.id = res$predicted.id
-remove.spots = cdata$smoothed_k7_1626=="low UMI" & cdata$predicted.id %in% c("L4","Inhb")
-cdata2 = cdata[!remove.spots,]
-
-spe = spe[,rownames(cdata2)]
-res = res[colnames(spe),]
-
 #transfer label IDs and combine L2/3
-#spe$seurat_qual.genes_pc20.kweight50 = factor(res2$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
+spe$seurat_pc30 = factor(res$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","Inhb","L5","L6","Oligo"),
 ########### unmerge L2 and L3 for pc20
 #	labels=c("Micro.Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"))
-	#labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","L5","L6","Oligo","Inhb"))
+	labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","Inhb","L5","L6","Oligo"))
 ###########
 
-spe$seurat_pc20 = factor(res$predicted.id, levels=c("Micro.Vasc","Astro","L2","L3","L4","Inhb","L5","L6","Oligo"),
-        labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","Inhb","L5","L6","Oligo"))
-cat("\nTransferred label transfer from qual genes results with PC=20 and k.weights=50 to spe:\n")
+cat("\nTransferred label transfer from qual genes results with PC=30 and k.weights=50 to spe:\n")
 #table(spe$seurat_qual.genes_pc20.kweight50, useNA="ifany")
-table(spe$seurat_pc20, useNA="ifany")
+table(spe$seurat_pc30, useNA="ifany")
 
 
-##remove low UMI cluster
-#cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
-#stopifnot(identical(rownames(colData(spe)), rownames(cdata)))
-#spe$lowUMI_cluster = cdata$precast_k9_1663_f=="low UMI"
-#spe = spe[,spe$lowUMI_cluster==F]
-#cat("\n\nRemoved low UMI cluster spots...\n")
-#dim(spe)
-#table(spe$seurat_qual.genes_pc30.kweight50, useNA="ifany")
+#remove low UMI cluster
+cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
+stopifnot(identical(rownames(colData(spe)), rownames(cdata)))
+spe$lowUMI_cluster = cdata$smoothed_k9_1663_f=="low UMI"
+spe = spe[,spe$lowUMI_cluster==F]
+cat("\n\nRemoved low UMI cluster spots...\n")
+dim(spe)
+table(spe$seurat_pc30, useNA="ifany")
 
 #pseudobulk raw counts
 spe
-cat("\nPseudobulk spe by: sample_id, seurat_pc20\n")
-spe_pseudo <- aggregateAcrossCells(spe, ids=colData(spe)[,c("sample_id","seurat_pc20")], statistics="sum", store.number="nspots", use.assay.type="counts")
+cat("\nPseudobulk spe by: sample_id, seurat_pc30\n")
+spe_pseudo <- aggregateAcrossCells(spe, ids=colData(spe)[,c("sample_id","seurat_pc30")], statistics="sum", store.number="nspots", use.assay.type="counts")
 dim(spe_pseudo)
 
 #quick save checkpoints
-save(spe_pseudo, file="processed-data/06_pseudobulk/Seurat/spe_n119_conservative_pseudo_sample-seurat-pc20-filtered.Rdata")
+save(spe_pseudo, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30.Rdata")
 
 #remove repeated colData column for sample_id and cluster
 g1 = grep("seurat", colnames(colData(spe_pseudo)))
@@ -84,21 +72,21 @@ spatialCoords(spe_pseudo) <-NULL
 colData(spe_pseudo) = colData(spe_pseudo)[,c("sample_id","brnum","age","sex","condition","PMI","RIN",
 	"slide","array","MBv_sample","seq","round",
 	#"seurat_qual.genes_pc20.kweight50",
-	"seurat_pc20",
+	"seurat_pc30",
 	"nspots")]
 colData(spe_pseudo)$condition = factor(spe_pseudo$condition, levels=c("NTC","MDD","BPD"))
 spe_pseudo
 
 Sys.time()
-save(spe_pseudo, file="processed-data/06_pseudobulk/Seurat/spe_n119_conservative_pseudo_sample-seurat-pc20-filtered.Rdata")
-cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/Seurat/spe_n119_conservative_pseudo_sample-seurat-pc20-filtered.Rdata")
+save(spe_pseudo, file="processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30.Rdata")
+cat("\nPseudobulk spe saved to: processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30.Rdata")
 
-#update spe tracker
-write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),
-        "******* Old file location: processed-data/04_feature_selection/spe_n119_postQC-conservative_norm_",
-        "******* New file location: processed-data/06_pseudobulk/Seurat/spe_n119_conservative_pseudo_sample-seurat-pc20-filtered.Rdata",
-        "******* Source code: code/06_pseudobulk/Seurat/01_create_pseudobulk.r",
-        "*******","*******","*******"), "spe_tracker_current.txt", append=TRUE)
+##update spe tracker
+#write(c(paste("******* Created pseudobulked spe on",format(Sys.time()),"EST"),
+#        "******* Old file location: processed-data/04_feature_selection/spe_n119_postQC-conservative_norm_",
+#        "******* New file location: processed-data/06_pseudobulk/Seurat/spe_n119_conservative_pseudo_sample-seurat-pc20-filtered.Rdata",
+#        "******* Source code: code/06_pseudobulk/Seurat/01_create_pseudobulk.r",
+#        "*******","*******","*******"), "spe_tracker_current.txt", append=TRUE)
 
 
 cat("\n\nReproducibility information:\n")
