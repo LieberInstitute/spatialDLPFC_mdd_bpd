@@ -14,17 +14,23 @@ comparisons = c("F_NTC.MDD","M_NTC.MDD",
                 "F_MDD.BPD","M_MDD.BPD")
 names(comparisons) <- comparisons
 
-results_set = "smoothed-k9-1663"
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
-spe_pseudo$cluster = spe_pseudo$smoothed_k9_1663
-comp_names = c("L1","L2","L3dot4","L5","L6","WM")
-names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
+#results_set = "smoothed-k9-1663"
+#load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+#spe_pseudo$cluster = spe_pseudo$smoothed_k9_1663
+#comp_names = c("L1","L2","L3dot4","L5","L6","WM")
+#names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
 
 #results_set = "seurat-pc30"
 #load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
 #spe_pseudo$cluster = spe_pseudo$seurat_label
 #comp_names = c("MicrodotVasc","Astro","L2dot3","L4","Inhb","L5","L6","Oligo")
 #names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")
+
+results_set = "custom-cluster"
+load("processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo_sample-custom-cluster_norm-filt.Rdata")
+spe_pseudo$cluster = spe_pseudo$custom_cluster
+comp_names = c("MicrodotVasc","AstrodotL1","AstrodotNrn","L2","L3","L4","Inhb","L5","L6","WM")
+names(comp_names) = c("Micro.Vasc","Astro.L1","Astro.Nrn","L2","L3","L4","Inhb","L5","L6","WM")
 
 # L-A ----
 ## f test
@@ -88,6 +94,11 @@ if(results_set=="seurat-pc30") {
   load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-dotplot_sample-id-seurat-pc30.Rdata")
   spe_summ$cluster = spe_summ$seurat_label
 }
+if(results_set=="custom-cluster") {
+  load("processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo-dotplot_sample-id-custom-cluster.Rdata")
+  spe_summ$cluster = spe_summ$custom_cluster
+}
+
 df = do.call(rbind, lapply(names(comp_names), function(x) {
   rmeds = rowMedians(assay(spe_summ, "logcounts.prop.detected")[f_sig_lr$gene_id,spe_summ$cluster==x])
   data.frame("gene_id"=f_sig_lr$gene_id, "cluster"=x, med_prop.spots.detected=round(rmeds,3))
@@ -161,6 +172,8 @@ p2 <- ggplot(tmp, aes(x=cluster, y=n))+
         strip.background = element_rect(color="grey80", fill="grey80"))
 
 if(results_set=="seurat-pc30") p2 <- p2+scale_x_discrete(labels=c("M.V","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
+if(results_set=="custom-cluster") p2 <- p2+scale_x_discrete(labels=c("M.V","Ast\nL1","Ast\nNrn","L2","L3","L4","Inhb","L5","L6","WM"))
+
 ## plot each layers unique genes
 source("code/06_pseudobulk/custom_functions.r")
 cond_sex = c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M")
@@ -172,6 +185,10 @@ if(results_set=="smoothed-k9-1663") {
 if(results_set=="seurat-pc30") {
   load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-dotplot_dx-sex-seurat-pc30.Rdata")
   spe_summ$cluster = factor(spe_summ$seurat_label, levels=names(comp_names))
+}
+if(results_set=="custom-cluster") {
+  load("processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo-dotplot_dx-sex-custom-cluster.Rdata")
+  spe_summ$cluster = factor(spe_summ$custom_cluster, levels=names(comp_names))
 }
 
 spe_summ$sample_id = factor(paste(spe_summ$condition, spe_summ$sex, spe_summ$cluster),

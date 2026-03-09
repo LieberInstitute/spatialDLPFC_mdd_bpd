@@ -10,13 +10,17 @@ set.seed(123)
 
 cpList = readRDS("plots/colorPalettes.rds")
 
-results_set = "smoothed-n1663-k9"
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
-colnames(colData(spe_pseudo))[grep("smoothed", colnames(colData(spe_pseudo)))] = "cluster"
+#results_set = "smoothed-n1663-k9"
+#load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+#colnames(colData(spe_pseudo))[grep("smoothed", colnames(colData(spe_pseudo)))] = "cluster"
 
 #results_set = "seurat-pc30"
 #load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
 #colnames(colData(spe_pseudo))[grep("seurat", colnames(colData(spe_pseudo)))] = "cluster"
+
+results_set = "custom-cluster"
+load("processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo_sample-custom-cluster_norm-filt.Rdata")
+colnames(colData(spe_pseudo))[grep("custom", colnames(colData(spe_pseudo)))] = "cluster"
 
 cat("\nResults set:", results_set, "\n")
 colnames(colData(spe_pseudo))[grep("subsets_mito_percent", colnames(colData(spe_pseudo)))] = "chrM_ratio"
@@ -237,7 +241,9 @@ names(varList) <- levels(spe_pseudo$cluster)
 
 if(results_set=="smoothed-n1663-k9") clus.colors = cpList$smoothed.bright
 if(results_set=="seurat-pc30") clus.colors = cpList$transfer.bright
-
+if(results_set=="custom-cluster") clus.colors = c('Micro.Vasc'="#911223", 'Astro.L1'="#cfa45c", 'Astro.Nrn'= "#F5D29E", 
+  'L2'= "#5D9940", 'L3'= "#5095CD",'L4'= "#c2cfcf",'Inhb'= "#9377AC", 
+  'L5'= "#ddc94e", 'L6'= "#E45C5F", 'WM'= "#D1C4B0")
 corList <- lapply(varList, function(x) {
   cor(x, method="spearman")
 })
@@ -247,6 +253,13 @@ hmpList = lapply(names(corList), function(x) {
                      treeheight_row = 15, treeheight_col = 15)
   return(tmp[[4]])
 })
+
+#for custom cluster, rearrange so glia are next to one another
+if(results_set=="custom-cluster") {
+	hmpList_copy = hmpList
+	hmpList = hmpList_copy[c(1,10,2,3)]
+	hmpList2 = hmpList_copy[c(4:9)]
+}
 
 pdf(file=paste0("plots/07-1_covariate_sensitivity/explore-covariates_", results_set, "_by-cluster.pdf"), width=8, height=11)
 par(mfrow=c(5,3))
@@ -261,6 +274,7 @@ for(i in c(exp.vars[-1],bio.vars[-1],donor.vars)) {
   }
 }
 do.call(grid.arrange, c(grobs=hmpList, ncol=2))
+do.call(grid.arrange, c(grobs=hmpList2, ncol=2))
 dev.off()
 cat("\nExploratory plots (by cluster) saved to:", paste0("plots/07-1_covariate_sensitivity/explore-covariates_", results_set,"_by-cluster.png"),"\n")
 
