@@ -1,8 +1,7 @@
 import os, sys, pickle
 
 from shutil import copyfile
-#from pyscenic.aucell import aucell
-from custom_aucell import aucell
+from pyscenic.aucell import aucell
 
 from pyscenic.cli.utils import (
     ATTRIBUTE_NAME_CELL_IDENTIFIER,
@@ -22,30 +21,19 @@ ATTRIBUTE_NAME_WORKERS = 10
 ATTRIBUTE_NAME_SEED = 1234
 
 # passed args
-cluster = sys.argv[2]
-nGenes = int(sys.argv[1])
+cluster = sys.argv[1]
 
-# auc command
-
-target_list = ['Astro.Glia', 'Astro.Nrn', 'L2', 'L3']
-
-if cluster in target_list:
-    SUBSET = "custom-cluster-"+cluster
-else:
-    SUBSET = "seurat-label-"+cluster
-
-#SUBSET="seurat-label-"+cluster
-#SUBSET="custom-cluster-"+cluster
+SUBSET="seurat-label-"+cluster
 SUBSET_ID="spe-n119_"+SUBSET+"_13844-genes_no-lowUMI"
 
 pdir = "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/"
 RESULTS_DIR = pdir+"processed-data/09_SCENIC/"
 LOOM_DIR = RESULTS_DIR+"expr_loom/"
-MOD_DIR = RESULTS_DIR+"AUCell_modules/"
+MOD_DIR = RESULTS_DIR+"AUCell_modules2/"
 
 #MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, "spe-n119_13844-no-lowUMI_logcounts.modules.dat") #won't pickle load from argument
 LOOM_FNAME = os.path.join(LOOM_DIR, '{}_logcounts.loom'.format(SUBSET_ID))
-OUT_FNAME = os.path.join(MOD_DIR, '{}_logcounts_modules-AUCell-fixed-thold.loom'.format(SUBSET_ID))
+OUT_FNAME = os.path.join(MOD_DIR, '{}_logcounts_modules-AUCell-fixed-thold-05.loom'.format(SUBSET_ID))
 
 
 ex_mtx = load_exp_matrix(
@@ -67,18 +55,18 @@ ex_mtx = load_exp_matrix(
 #print("Max rank of", nGenes, "is approx equal to an AUC threshold of:", auc_thold)
 
 #set auc threshold so that max rank is 450 which for 13844 genes is 0.033
-auc_thold =.033
-print("AUC threshold set to 0.033 for all clusters")
+#auc_thold =.033
+auc_thold = .05
+print("AUC threshold set to 0.05 for all clusters")
 
 with open('processed-data/09_SCENIC/spe-n119_13844-no-lowUMI_logcounts.modules.dat', 'rb') as file:
     signatures = pickle.load(file)
 
 auc_mtx = aucell(
-#        drop_mtx,
 	ex_mtx,
         signatures,
         auc_threshold=auc_thold,
-        noweights=False,
+        noweights=False, # must set to False so that adjacency weights (aka importance) are used in enrichment
         seed=ATTRIBUTE_NAME_SEED,
         num_workers=ATTRIBUTE_NAME_WORKERS,
     )

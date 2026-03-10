@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #SBATCH --mem=100G
-#SBATCH --job-name=aucell_modules_fixed-thold_custom-cluster
+#SBATCH --job-name=aucell_modules_fixed-thold-05_seurat-label
 #SBATCH -o code/09_SCENIC/logs/%x_%j_%a.log
 #SBATCH --ntasks=10
-#SBATCH --array=1,4-12
+#SBATCH --array=1-8
 
 echo "**** Job starts ****"
 date
@@ -21,15 +21,14 @@ module load conda
 module list
 source activate pyscenic_bioconda
 
-nGenes=$(awk -v Index=$SLURM_ARRAY_TASK_ID '$1==Index {print$2}' code/09_SCENIC/array_thresholds.txt)
+#nGenes=$(awk -v Index=$SLURM_ARRAY_TASK_ID '$1==Index {print$2}' code/09_SCENIC/array_thresholds.txt)
 cluster=$(awk -v Index=$SLURM_ARRAY_TASK_ID '$1==Index {print$3}' code/09_SCENIC/array_thresholds.txt)
 
 echo $cluster
-echo "cluster-specific 5% detected genes cutoff: ${nGenes}"
 echo ""
 echo ""
 
-python3 /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_SCENIC/05_AUCell-modules.py $nGenes $cluster
+python3 /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_SCENIC/05_AUCell-modules.py $cluster
 
 echo "**** Job ends ****"
 date
