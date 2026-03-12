@@ -6,6 +6,7 @@ from typing import Sequence, Type
 import pandas as pd
 
 from ctxcore.rnkdb import RankingDatabase, opendb
+from ctxcore.genesig import openfile
 from pyscenic.prune import _prepare_client, find_features, prune2df
 from pyscenic.transform import df2regulons
 
@@ -30,14 +31,20 @@ RESULTS_DIR = pdir+"processed-data/09_SCENIC/"
 #LOOM_DIR = RESULTS_DIR+"expr_loom/"
 #MOD_DIR = RESULTS_DIR+"AUCell_modules/"
 
-#ANNOT_PATH='/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/genome_annotation/hg38_500bp_up_100bp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/raw-data/SCENIC_aux/genome_annotation/hg38_10kbp_up_10kbp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather'
+
 ANNOT_PATH=[pdir+"raw-data/SCENIC_aux/genome_annotation/hg38_500bp_up_100bp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather",
 	pdir+"raw-data/SCENIC_aux/genome_annotation/hg38_10kbp_up_10kbp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather"]
 MOTIF_PATH=pdir+"raw-data/SCENIC_aux/motif2tf/motifs-v10nr_clust-nr.hgnc-m0.001-o0.0.tbl"
 
-DATASET_ID='spe-n119_13844-no-lowUMI_logcounts'
+DATASET_ID='spe-n119_13162-no-lowUMI_logcounts'
 
-with open('processed-data/09_SCENIC/spe-n119_13844-no-lowUMI_logcounts.modules.dat', 'rb') as file:
+
+MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.modules.dat'.format(DATASET_ID))
+REGULONS_FNAME = os.path.join(RESULTS_DIR, '{}_regulons-weighted.csv'.format(DATASET_ID))
+REGULONS_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.regulons-weighted.dat'.format(DATASET_ID))
+
+with open(MODULES_DAT_FNAME, 'rb') as file:
+#with open('processed-data/09_SCENIC/spe-n119_13162-no-lowUMI_logcounts.modules.dat', 'rb') as file:
     signatures = pickle.load(file)
 
 
@@ -79,9 +86,11 @@ df_motifs = df_motifs[keep1 | keep2]
 print("Regulons (filtered for direct annotation or q==0):", df_motifs.shape)
 
 LOGGER.info("Writing results to csv file.")
-df_motifs.to_csv(RESULTS_DIR+DATASET_ID+"_regulons-weighted.csv")
+#df_motifs.to_csv(RESULTS_DIR+DATASET_ID+"_regulons-weighted.csv")
+df_motifs.to_csv(REGULONS_FNAME)
 
 LOGGER.info("Pickling regulons to .dat file.")
 regulons = df2regulons(df_motifs)
-with open("/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/09_SCENIC/spe-n119_13844-no-lowUMI_logcounts.regulons-weighted.dat", 'wb') as f:
+with open(REGULONS_DAT_FNAME, 'wb') as f:
+#with open("/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/09_SCENIC/spe-n119_13844-no-lowUMI_logcounts.regulons-weighted.dat", 'wb') as f:
     pickle.dump(regulons, f)
