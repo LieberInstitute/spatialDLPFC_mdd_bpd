@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=300G
-#SBATCH --job-name=add-cor_full-logcounts_DE-input_no-lowUMI
+#SBATCH --job-name=add-cor_full-logcounts_DE-input-13162_no-lowUMI
 #SBATCH -o code/09_SCENIC/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -20,7 +20,7 @@ module list
 source activate pyscenic_bioconda
 
 
-adj_path="processed-data/09_SCENIC/spe-n119_13844-no-lowUMI_adj.csv"
+adj_path="processed-data/09_SCENIC/spe-n119_13162-no-lowUMI_adj.csv"
 echo $adj_path
 if [ ! -f $adj_path ]; then
     echo "Adjacency file not found!"
@@ -30,7 +30,7 @@ if [ ! -f $adj_path ]; then
     scancel ${SLURM_JOB_ID}
 fi
 
-loom_path="processed-data/09_SCENIC/spe-n119_13844-genes_no-lowUMI_logcounts.loom"
+loom_path="processed-data/09_SCENIC/expr_loom/spe-n119_13162-genes_no-lowUMI_logcounts.loom"
 echo $loom_path
 if [ ! -f $loom_path ]; then
     echo "Loom file not found!"
@@ -40,16 +40,16 @@ if [ ! -f $loom_path ]; then
     scancel ${SLURM_JOB_ID}
 fi
 
-out_path="processed-data/09_SCENIC/spe-n119_13844-no-lowUMI_adj_with-logcounts-corr_duplicate.csv"
+out_path="processed-data/09_SCENIC/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr.csv"
 echo $out_path
 if [ -f $out_path ]; then
     echo "File already exists at designated output path!"
-    echo "Overwriting existing file..."
-#    echo "Check output path and comment out these lines to force overwrite."
-#    echo ""
-#    echo "**** Forced stop ****"
-#    date
-#    scancel ${SLURM_JOB_ID}
+#    echo "Overwriting existing file..."
+    echo "Check output path and comment out these lines to force overwrite."
+    echo ""
+    echo "**** Forced stop ****"
+    date
+    scancel ${SLURM_JOB_ID}
 fi
 
 pyscenic add_cor \

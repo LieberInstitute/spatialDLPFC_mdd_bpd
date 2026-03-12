@@ -30,11 +30,11 @@ cdata$seurat_label = factor(res$predicted.id, levels=c("Micro/Vasc","Astro","L2"
 	labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","Inhb","L5","L6","Oligo"))
 
 #for rowdata want to import pseudobulk edgeR filterByExpr results
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
 cat("\nPseudobulk spe for gene filtering...\n")
 dim(spe_pseudo) # 21080   690
 rowData(spe_pseudo)$high_expr_group_sample_id2 <- edgeR::filterByExpr(spe_pseudo, group = spe_pseudo$sample_id)
-rowData(spe_pseudo)$high_expr_group_cluster2 <- edgeR::filterByExpr(spe_pseudo, group = spe_pseudo$smoothed_k9_1663)
+rowData(spe_pseudo)$high_expr_group_cluster2 <- edgeR::filterByExpr(spe_pseudo, group = spe_pseudo$seurat_label)
 
 rdata = as.data.frame(rowData(spe_pseudo)[,c("gene_id","gene_name","gene_type")])
 rdata$DE_input = rowData(spe_pseudo)$high_expr_group_sample_id2==T & rowData(spe_pseudo)$high_expr_group_cluster2==T
@@ -72,7 +72,7 @@ dim(spe)
 #rowData(spe)[c("ENSG00000187522","ENSG00000271858","ENSG00000261186","ENSG00000285053","ENSG00000269226"),"gene_name"] = c("MSTANTD7","LOC101928965","LINC03100","GGPS1-TBCE","TMSB15C")
 
 # DE input version
-rowData(spe)[c("ENSG00000187522","ENSG00000271858"),"gene_name"] = c("MSTANTD7","LOC101928965")
+rowData(spe)[c("ENSG00000187522"),"gene_name"] = "MSTANTD7"
 
 #rowData(spe)["ENSG00000285053","gene_type"] = "lncRNA"
 # combine
@@ -153,7 +153,7 @@ nrow(rdata2)
 
 # all data
 cat("\n\nFull dataset...\n")
-(fn3 = paste0("processed-data/09_SCENIC/spe-n119_", nrow(rdata2), "-genes_no-lowUMI_logcounts.loom"))
+(fn3 = paste0("processed-data/09_SCENIC/expr_loom/spe-n119_", nrow(rdata2), "-genes_no-lowUMI_logcounts.loom"))
 
 # extract counts matrix and change rownames
 #mtx3 = counts(spe)

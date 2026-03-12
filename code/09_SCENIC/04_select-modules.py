@@ -23,7 +23,7 @@ from pyscenic.cli.utils import (
     suffixes_to_separator,
 )
 
-DATASET_ID = "spe-n119_13844-no-lowUMI"
+DATASET_ID = "spe-n119_13162-no-lowUMI"
 
 pdir = "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/"
 RESULTS_DIR = pdir+"processed-data/09_SCENIC/"
@@ -46,9 +46,14 @@ print("Adj. matrix dims:", adjacencies.shape)
 laDEGs = pd.read_csv(pdir+"processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv")
 lrDEGs = pd.read_csv(pdir+"processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv")
 
-mbvDEGs = list(set(pd.concat([laDEGs.gene_name, lrDEGs.gene_name])))
-print("Number of MBv F sig. genes:", len(mbvDEGs))
+smDEGs = list(set(pd.concat([laDEGs.gene_name, lrDEGs.gene_name])))
+print("Number of MBv (PRECAST) F sig. genes:", len(smDEGs))
 
+laDEGs = pd.read_csv(pdir+"processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv")
+lrDEGs = pd.read_csv(pdir+"processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv")
+
+seDEGs = list(set(pd.concat([laDEGs.gene_name, lrDEGs.gene_name])))
+print("Number of MBv (Seurat) F sig. genes:", len(seDEGs))
 
 def select_modules_from_adjacencies(
     adjacencies: pd.DataFrame,
@@ -108,13 +113,16 @@ def select_modules_from_adjacencies(
 
     return list(filter(lambda m: len(m) >= min_genes, map(add_tf, modules_iter)))
 
-modules = select_modules_from_adjacencies(adjacencies, thresholds=(0.5,), min_genes=20)
+modules = select_modules_from_adjacencies(adjacencies, thresholds=(0.5,),
+	min_genes=20, absolute_thresholds=True,)
 
 mod_df = pd.DataFrame({"TF": [item.transcription_factor for item in modules],
                        "dir": ["activating" if "activating" in item.context else "repressing" for item in modules],
                        "set_size": [len(item) for item in modules],
-                      "n_DEGs": [len(set(item.genes).intersection(set(mbvDEGs))) for item in modules],
-                      "DEG_str": ['/' .join(list(set(item.genes).intersection(set(mbvDEGs)))) for item in modules]})
+                      "n_smF": [len(set(item.genes).intersection(set(smDEGs))) for item in modules],
+                      "smF_str": ['/' .join(list(set(item.genes).intersection(set(smDEGs)))) for item in modules],
+                      "n_seF": [len(set(item.genes).intersection(set(seDEGs))) for item in modules],
+                      "seF_str": ['/' .join(list(set(item.genes).intersection(set(seDEGs)))) for item in modules]})
 
 print("Module df dims:", mod_df.shape)
 mod_df.to_csv(MODULES_FNAME)

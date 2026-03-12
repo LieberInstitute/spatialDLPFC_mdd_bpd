@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=1G
-#SBATCH --job-name=select_modules_DE-input_no-lowUMI_logcounts
+#SBATCH --job-name=select_modules_DE-input-13162_no-lowUMI_logcounts
 #SBATCH -o code/09_SCENIC/logs/%x_%j.log
 
 echo "**** Job starts ****"
