@@ -39,9 +39,9 @@ MOTIF_PATH=pdir+"raw-data/SCENIC_aux/motif2tf/motifs-v10nr_clust-nr.hgnc-m0.001-
 DATASET_ID='spe-n119_13162-no-lowUMI_logcounts'
 
 
-MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.modules.dat'.format(DATASET_ID))
-REGULONS_FNAME = os.path.join(RESULTS_DIR, '{}_regulons-weighted.csv'.format(DATASET_ID))
-REGULONS_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.regulons-weighted.dat'.format(DATASET_ID))
+MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.modules-top20.dat'.format(DATASET_ID))
+REGULONS_FNAME = os.path.join(RESULTS_DIR, '{}_regulons-weighted-top20.csv'.format(DATASET_ID))
+REGULONS_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.regulons-weighted-top20.dat'.format(DATASET_ID))
 
 with open(MODULES_DAT_FNAME, 'rb') as file:
 #with open('processed-data/09_SCENIC/spe-n119_13162-no-lowUMI_logcounts.modules.dat', 'rb') as file:
