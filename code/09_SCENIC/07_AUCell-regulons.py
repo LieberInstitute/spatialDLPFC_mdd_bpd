@@ -2,6 +2,7 @@ import os, sys, pickle
 
 from shutil import copyfile
 from pyscenic.aucell import aucell
+from ctxcore.genesig import openfile
 
 from pyscenic.cli.utils import (
     ATTRIBUTE_NAME_CELL_IDENTIFIER,
@@ -24,16 +25,16 @@ ATTRIBUTE_NAME_SEED = 1234
 cluster = sys.argv[1]
 
 SUBSET="seurat-label-"+cluster
-SUBSET_ID="spe-n119_"+SUBSET+"_13844-genes_no-lowUMI"
+SUBSET_ID="spe-n119_"+SUBSET+"_13162-genes_no-lowUMI"
 
 pdir = "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/"
 RESULTS_DIR = pdir+"processed-data/09_SCENIC/"
 LOOM_DIR = RESULTS_DIR+"expr_loom/"
-MOD_DIR = RESULTS_DIR+"AUCell_regulons/"
+REG_DIR = RESULTS_DIR+"AUCell_regulons/"
 
-#MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, "spe-n119_13844-no-lowUMI_logcounts.modules.dat") #won't pickle load from argument
+REGULONS_DAT_FNAME = os.path.join(RESULTS_DIR, "spe-n119_13162-no-lowUMI_logcounts.regulons-weighted.dat")
 LOOM_FNAME = os.path.join(LOOM_DIR, '{}_logcounts.loom'.format(SUBSET_ID))
-OUT_FNAME = os.path.join(MOD_DIR, '{}_logcounts_regulons-AUCell-fixed-thold-05-normalized.loom'.format(SUBSET_ID))
+OUT_FNAME = os.path.join(REG_DIR, '{}_logcounts_regulons-weighted_AUCell-fixed-thold-05.loom'.format(SUBSET_ID))
 
 
 ex_mtx = load_exp_matrix(
@@ -59,7 +60,8 @@ ex_mtx = load_exp_matrix(
 auc_thold = .05
 print("AUC threshold set to 0.05 for all clusters")
 
-with open('processed-data/09_SCENIC/spe-n119_13844-no-lowUMI_logcounts.regulons-weighted.dat', 'rb') as file:
+#with open('processed-data/09_SCENIC/spe-n119_13844-no-lowUMI_logcounts.regulons-weighted.dat', 'rb') as file:
+with open(REGULONS_DAT_FNAME, 'rb') as file:
     signatures = pickle.load(file)
 
 auc_mtx = aucell(
