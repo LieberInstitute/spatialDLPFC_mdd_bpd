@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=20G
-#SBATCH --job-name=cisTarget_DE-input-13162_regulons-weighted_filtered_regional
+#SBATCH --job-name=cisTarget_DE-input-13162_regulons-weighted_filtered_top20percent_regional
 #SBATCH -o code/09_SCENIC/logs/%x_%j.log
 
 echo "**** JHPCE info ****"
