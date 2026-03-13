@@ -19,7 +19,7 @@ module load conda
 module list
 source activate pyscenic_bioconda
 
-python3 /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_SCENIC/04_select-modules.py
+python3 /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_SCENIC/05_select-modules.py
 
 echo "**** Job ends ****"
 date
