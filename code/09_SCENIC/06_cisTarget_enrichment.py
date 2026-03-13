@@ -8,7 +8,8 @@ import pandas as pd
 from ctxcore.rnkdb import RankingDatabase, opendb
 from ctxcore.genesig import openfile
 from pyscenic.prune import _prepare_client, find_features, prune2df
-from pyscenic.transform import df2regulons
+#from pyscenic.transform import df2regulons
+from custom_df2regulon import df2regulons_custom
 
 from pyscenic.cli.utils import (
     ATTRIBUTE_NAME_CELL_IDENTIFIER,
@@ -39,9 +40,9 @@ MOTIF_PATH=pdir+"raw-data/SCENIC_aux/motif2tf/motifs-v10nr_clust-nr.hgnc-m0.001-
 DATASET_ID='spe-n119_13162-no-lowUMI_logcounts'
 
 
-MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.modules-top20.dat'.format(DATASET_ID))
-REGULONS_FNAME = os.path.join(RESULTS_DIR, '{}_regulons-weighted-top20.csv'.format(DATASET_ID))
-REGULONS_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.regulons-weighted-top20.dat'.format(DATASET_ID))
+MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.modules.dat'.format(DATASET_ID))
+REGULONS_FNAME = os.path.join(RESULTS_DIR, '{}_regulons-weighted-regional.csv'.format(DATASET_ID))
+REGULONS_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.regulons-weighted-regional.dat'.format(DATASET_ID))
 
 with open(MODULES_DAT_FNAME, 'rb') as file:
 #with open('processed-data/09_SCENIC/spe-n119_13162-no-lowUMI_logcounts.modules.dat', 'rb') as file:
@@ -89,8 +90,10 @@ LOGGER.info("Writing results to csv file.")
 #df_motifs.to_csv(RESULTS_DIR+DATASET_ID+"_regulons-weighted.csv")
 df_motifs.to_csv(REGULONS_FNAME)
 
+#REPRESSING_MODULE = "enhancer"
+#ACTIVATING_MODULE = "promoter"
 LOGGER.info("Pickling regulons to .dat file.")
-regulons = df2regulons(df_motifs)
+regulons = df2regulons_custom(df_motifs)
 with open(REGULONS_DAT_FNAME, 'wb') as f:
 #with open("/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/09_SCENIC/spe-n119_13844-no-lowUMI_logcounts.regulons-weighted.dat", 'wb') as f:
     pickle.dump(regulons, f)

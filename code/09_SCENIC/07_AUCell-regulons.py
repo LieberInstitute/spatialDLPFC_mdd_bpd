@@ -32,9 +32,9 @@ RESULTS_DIR = pdir+"processed-data/09_SCENIC/"
 LOOM_DIR = RESULTS_DIR+"expr_loom/"
 REG_DIR = RESULTS_DIR+"AUCell_regulons/"
 
-REGULONS_DAT_FNAME = os.path.join(RESULTS_DIR, "spe-n119_13162-no-lowUMI_logcounts.regulons-weighted.dat")
+REGULONS_DAT_FNAME = os.path.join(RESULTS_DIR, "spe-n119_13162-no-lowUMI_logcounts.regulons-weighted-regional.dat")
 LOOM_FNAME = os.path.join(LOOM_DIR, '{}_logcounts.loom'.format(SUBSET_ID))
-OUT_FNAME = os.path.join(REG_DIR, '{}_logcounts_regulons-weighted_AUCell-fixed-thold-05.loom'.format(SUBSET_ID))
+OUT_FNAME = os.path.join(REG_DIR, '{}_logcounts_regulons-weighted-regional_AUCell-fixed-thold-05.loom'.format(SUBSET_ID))
 
 
 ex_mtx = load_exp_matrix(
