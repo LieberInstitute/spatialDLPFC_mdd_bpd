@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
   library(gridExtra)
 })
 
-DATASET_ID = "spe-n119_13162-no-lowUMI_adj_with-logcounts-corr"
+DATASET_ID = "spe-n119_13162-no-lowUMI_adj_with-logcounts-corr-no-mask"
 
 # load in GRNBOOST2 adj output
 lg.mask = read.csv(paste0("processed-data/09_SCENIC/", DATASET_ID, ".csv"))
