@@ -32,9 +32,9 @@ RESULTS_DIR = pdir+"processed-data/09_DEG_GRN/"
 LOOM_DIR = RESULTS_DIR+"expr_loom/"
 MOD_DIR = RESULTS_DIR+"AUCell_modules/"
 
-MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, "spe-n119_13844-no-lowUMI_logcounts.modules-top20.dat")
+MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, "spe-n119_13844-no-lowUMI_logcounts.modules-top20-Fadjp05.dat")
 LOOM_FNAME = os.path.join(LOOM_DIR, '{}.loom'.format(SUBSET_ID))
-OUT_FNAME = os.path.join(MOD_DIR, '{}_modules-top20_AUCell-fixed-thold-05.loom'.format(SUBSET_ID))
+OUT_FNAME = os.path.join(MOD_DIR, '{}_modules-top20-Fadjp05_AUCell-fixed-thold-05.loom'.format(SUBSET_ID))
 
 
 ex_mtx = load_exp_matrix(

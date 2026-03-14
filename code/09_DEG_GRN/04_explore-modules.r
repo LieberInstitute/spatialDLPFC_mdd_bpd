@@ -149,6 +149,14 @@ modules2$n <- NULL
 write.csv(modules2, paste0("processed-data/09_DEG_GRN/", DATASET_ID, "_top20percent.csv"), row.names=F)
 cat("\nFiltered adj. list for top 20% modules saved to:", paste0("processed-data/09_DEG_GRN/", DATASET_ID, "_top20percent.csv"), "\n")
 
+degs = read.table("raw-data/SCENIC_aux/tf_lists/MBv_PRECAST-Seurat_F-test-adjp-05.txt")
+modules3 <- filter(modules2, target %in% degs[,1]) %>% group_by(TF, regulation) %>% add_tally() %>% filter(n>=19)
+cat("\nFiltering to only target genes that are sig. F-test genes...\n")
+nrow(distinct(modules3, TF, regulation, n))
+modules3$n <- NULL
+write.csv(modules3, paste0("processed-data/09_DEG_GRN/", DATASET_ID, "_top20percent-Fadjp05.csv"), row.names=F)
+cat("\nFiltered adj. list for top 20% modules AND F-test saved to:", paste0("processed-data/09_DEG_GRN/", DATASET_ID, "_top20percent-Fadjp05.csv"), "\n")
+
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")
 Sys.time()

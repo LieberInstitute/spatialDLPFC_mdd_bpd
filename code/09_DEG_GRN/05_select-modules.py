@@ -30,13 +30,13 @@ pdir = "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_b
 RESULTS_DIR = pdir+"processed-data/09_DEG_GRN/"
 
 #ADJ_FNAME = os.path.join(RESULTS_DIR, '{}_adj_with-logcounts-corr-no-mask.csv'.format(DATASET_ID))
-ADJ_FNAME = os.path.join(RESULTS_DIR, '{}_adj_with-logcounts-corr_top20percent.csv'.format(DATASET_ID))
+ADJ_FNAME = os.path.join(RESULTS_DIR, '{}_adj_with-logcounts-corr_top20percent-Fadjp05.csv'.format(DATASET_ID))
 
 #DATASET_ID = DATASET_ID+"_logcounts-no-mask"
 DATASET_ID = DATASET_ID+"_logcounts"
 
-MODULES_FNAME = os.path.join(RESULTS_DIR, '{}_modules-top20.csv'.format(DATASET_ID))
-MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.modules-top20.dat'.format(DATASET_ID))
+MODULES_FNAME = os.path.join(RESULTS_DIR, '{}_modules-top20-Fadjp05.csv'.format(DATASET_ID))
+MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.modules-top20-Fadjp05.dat'.format(DATASET_ID))
 
 adjacencies = load_adjacencies(ADJ_FNAME)
 print("Adj. matrix dims:", adjacencies.shape)

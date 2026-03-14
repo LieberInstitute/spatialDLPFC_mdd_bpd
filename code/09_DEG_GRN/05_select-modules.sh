@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=1G
-#SBATCH --job-name=select_modules_DE-input-13844_no-lowUMI_logcounts_top20percent
+#SBATCH --job-name=select_modules_DE-input-13844_no-lowUMI_logcounts_top20percent-Fadjp05
 #SBATCH -o code/09_DEG_GRN/logs/%x_%j.log
 
 echo "**** Job starts ****"

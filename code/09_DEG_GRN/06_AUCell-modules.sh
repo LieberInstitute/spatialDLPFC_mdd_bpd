@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #SBATCH --mem=100G
-#SBATCH --job-name=aucell_DE-input-13844_modules-weighted-top20_fixed-thold-05_seurat-label
+#SBATCH --job-name=aucell_DE-input-13844_modules-weighted-top20-Fadjp05_fixed-thold-05_seurat-label
 #SBATCH -o code/09_DEG_GRN/logs/%x_%j_%a.log
 #SBATCH --ntasks=10
-#SBATCH --array=2-8
+#SBATCH --array=1-8
 
 echo "**** Job starts ****"
 date
