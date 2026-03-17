@@ -4,6 +4,7 @@
 #SBATCH --job-name=grn_full_DE-input-genes-13162_no-lowUMI_dask-5GB-sparse
 #SBATCH -o code/09_DEG_GRN/logs/%x_%j.log
 #SBATCH --ntasks=20
+#SBATCH --time=2-00:00:00
 
 echo "**** Job starts ****"
 date

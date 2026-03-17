@@ -6,23 +6,23 @@ suppressPackageStartupMessages({
   library(gridExtra)
 })
 
-DATASET_ID = "spe-n119_13844-no-lowUMI_adj_with-logcounts-corr"
+DATASET_ID = "spe-n119_13162-no-lowUMI_adj_with-logcounts-corr"
 
 # load in GRNBOOST2 adj output
 lg.mask = read.csv(paste0("processed-data/09_DEG_GRN/", DATASET_ID, ".csv"))
 
 
 # load avg expr
-avg.expr = read.csv("processed-data/06_pseudobulk/PRECAST_smoothed/pseudobulk-sample-smoothed-n1663-k9_filtered-genes_avg-logcounts.csv", row.names=1)
-#avg.expr = read.csv("processed-data/06_pseudobulk/Seurat/pseudobulk-sample-seurat-pc30-no-lowUMI_filtered-genes_avg-logcounts.csv", row.names=1)
+#avg.expr = read.csv("processed-data/06_pseudobulk/PRECAST_smoothed/pseudobulk-sample-smoothed-n1663-k9_filtered-genes_avg-logcounts.csv", row.names=1)
+avg.expr = read.csv("processed-data/06_pseudobulk/Seurat/pseudobulk-sample-seurat-pc30-no-lowUMI_filtered-genes_avg-logcounts.csv", row.names=1)
 
 # load rowData input to filter avg expr to input for GRN
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
-#load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
+#load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
 
 rowData(spe_pseudo)$high_expr_group_sample_id2 <- edgeR::filterByExpr(spe_pseudo, group = spe_pseudo$sample_id)
-rowData(spe_pseudo)$high_expr_group_cluster2 <- edgeR::filterByExpr(spe_pseudo, group = spe_pseudo$smoothed_k9_1663)
-#rowData(spe_pseudo)$high_expr_group_cluster2 <- edgeR::filterByExpr(spe_pseudo, group = spe_pseudo$seurat_label)
+#rowData(spe_pseudo)$high_expr_group_cluster2 <- edgeR::filterByExpr(spe_pseudo, group = spe_pseudo$smoothed_k9_1663)
+rowData(spe_pseudo)$high_expr_group_cluster2 <- edgeR::filterByExpr(spe_pseudo, group = spe_pseudo$seurat_label)
 
 rdata = as.data.frame(rowData(spe_pseudo)[,c("gene_id","gene_name","gene_type")])
 rdata$DE_input = rowData(spe_pseudo)$high_expr_group_sample_id2==T & rowData(spe_pseudo)$high_expr_group_cluster2==T
@@ -30,12 +30,12 @@ rdata$DE_input = rowData(spe_pseudo)$high_expr_group_sample_id2==T & rowData(spe
 # rename gene with duplicated gene name
 avg.expr = avg.expr[rdata$gene_id[rdata$DE_input],]
 
-# precast smoothed
-avg.expr[c("ENSG00000187522","ENSG00000271858"),"gene_name"] = c("MSTANTD7","LOC101928965")
+## precast smoothed
+#avg.expr[c("ENSG00000187522","ENSG00000271858"),"gene_name"] = c("MSTANTD7","LOC101928965")
 
 ## seurat labels
 ##table(rdata$DE_input) #only 1 gene
-#avg.expr[c("ENSG00000187522"),"gene_name"] = "MSTANTD7"
+avg.expr[c("ENSG00000187522"),"gene_name"] = "MSTANTD7"
 
 decile.pal = rainbow(10)
 names(decile.pal) = paste0("dec",1:10)
@@ -50,7 +50,7 @@ modules = filter(lg.mask, importance>.5, regulation!=0) %>%
 act_mod = nrow(filter(distinct(modules, TF, regulation, n), regulation>0))
 rep_mod = nrow(filter(distinct(modules, TF, regulation, n), regulation<0))
 cat("\nNumber of activating modules matching criteria:", act_mod,"\n")
-cat("\nNumber of activating modules matching criteria:", rep_mod, "\n")
+cat("\nNumber of repressing modules matching criteria:", rep_mod, "\n")
 
 cat("\nModule criteria: abs(rho)>.03, top 20% most importance target genes per TF, importance>.5, >=20 target genes\n")
 modules2 = filter(lg.mask, regulation!=0) %>% 
@@ -61,7 +61,7 @@ modules2 = filter(lg.mask, regulation!=0) %>%
 act_mod2 = nrow(filter(distinct(modules2, TF, regulation, n), regulation>0))
 rep_mod2 = nrow(filter(distinct(modules2, TF, regulation, n), regulation<0))
 cat("\nNumber of activating modules matching criteria:", act_mod2,"\n")
-cat("\nNumber of activating modules matching criteria:", rep_mod2, "\n")
+cat("\nNumber of repressing modules matching criteria:", rep_mod2, "\n")
 
 
 t1 = group_by(modules, TF, dir=paste0("rho_",factor(regulation, levels=c(-1,1), labels=c("rep","act")))) %>% 
