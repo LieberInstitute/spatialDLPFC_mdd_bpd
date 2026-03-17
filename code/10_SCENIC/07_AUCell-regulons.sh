@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH --mem=100G
-#SBATCH --job-name=aucell_DE-input-13162_regulons-weighted-top20-regional_fixed-thold-05_seurat-label
-#SBATCH -o code/09_SCENIC/logs/%x_%j_%a.log
+#SBATCH --job-name=aucell_DE-input-13162_regulons-weighted-top20-refined-filtered_fixed-thold-05_seurat-label
+#SBATCH -o code/10_SCENIC/logs/%x_%j_%a.log
 #SBATCH --ntasks=10
 #SBATCH --array=1-8
 
@@ -22,13 +22,13 @@ module list
 source activate pyscenic_bioconda
 
 #nGenes=$(awk -v Index=$SLURM_ARRAY_TASK_ID '$1==Index {print$2}' code/09_SCENIC/array_thresholds.txt)
-cluster=$(awk -v Index=$SLURM_ARRAY_TASK_ID '$1==Index {print$3}' code/09_SCENIC/array_thresholds.txt)
+cluster=$(awk -v Index=$SLURM_ARRAY_TASK_ID '$1==Index {print$3}' code/10_SCENIC/array_thresholds.txt)
 
 echo $cluster
 echo ""
 echo ""
 
-python3 /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_SCENIC/07_AUCell-regulons.py $cluster
+python3 /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/10_SCENIC/07_AUCell-regulons.py $cluster
 
 echo "**** Job ends ****"
 date

@@ -13,11 +13,15 @@ set.seed(123)
 setAutoBlockSize(1e9)
 cpList = readRDS("plots/colorPalettes.rds")
 
+REGULON_TYPE = "regulons-weighted-top20-refined-filtered"
+REG_KEY = "top20-refined_norm"
+
 #load aucell
-aucell = read.csv("processed-data/09_SCENIC/spe-n119_13162-no-lowUMI_logcounts_regulons-weighted-regional_AUCell.csv", row.names=1)
-cnames = unlist(strsplit(readLines("processed-data/09_SCENIC/spe-n119_13162-no-lowUMI_logcounts_regulons-weighted-regional_AUCell.csv", 1), ","))[-1]
-cnames = gsub("\\(\\-\\)", "_enhancer", gsub("\\(\\+\\)", "_promoter", cnames))
-colnames(aucell) = cnames
+aucell = read.csv(paste0("processed-data/10_SCENIC/spe-n119_13162-no-lowUMI_logcounts_", REGULON_TYPE,"_AUCell.csv"), row.names=1)
+#cnames = unlist(strsplit(readLines(paste0("processed-data/10_SCENIC/spe-n119_13162-no-lowUMI_logcounts_", REGULON_TYPE, "_AUCell.csv"), 1), ","))[-1]
+#cnames = gsub("\\(\\-\\)", "_enhancer", gsub("\\(\\+\\)", "_promoter", cnames))
+#colnames(aucell) = cnames
+colnames(aucell)[1:(grep("seurat_label", colnames(aucell))-1)] = sapply(colnames(aucell)[1:(grep("seurat_label", colnames(aucell))-1)], function(x) substr(x, start=0, stop=nchar(x)-3))
 
 #load spe
 spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
@@ -36,17 +40,49 @@ spe$smoothed_k9_1663 = factor(cdata2$smoothed_k9_1663_f, levels=c("L1","L2","L3/
 
 #subset aucell
 aucell = aucell[rownames(colData(spe)),]
+m1 = as.matrix(aucell[,1:(grep("seurat_label", colnames(aucell))-1)])
 
 #scale aucell
-scale_99 = function(distribution) {
-  r1 = round(distribution, 4)
-  q99 = quantile(r1, probs=c(.99))
-  norm1 = r1/q99
+## new conditional scale functions
+find_3MAD = function(distribution) {
+  median(distribution)+(3*mad(distribution))
+}
+
+find_q99 = function(distribution) {
+  quantile(distribution, probs=.995)[[1]]
+}
+
+m1 = apply(m1, MARGIN=2, function(x) {
+  thresh1 = find_3MAD(x)
+  thresh2 = find_q99(x)
+  nmax1 = sum(x>thresh1)
+  nmax2 = sum(x>thresh2)
+  if(nmax2<nmax1) {
+    scale_max = thresh2
+  } else {
+    scale_max = thresh1
+  }
+  
+  # if threshold>max, set threshold to max
+  if(scale_max>max(x)) {
+    scale_max = max(x)
+  }
+  
+  # normalize to set max
+  norm1 = x/scale_max
   norm1[norm1>1] = 1
   return(norm1)
-}
-m1 = as.matrix(aucell[,1:(grep("seurat_label", colnames(aucell))-1)])
-m1 = apply(m1, MARGIN=2, scale_99)
+  
+})
+
+#scale_99 = function(distribution) {
+#  r1 = round(distribution, 4)
+#  q99 = quantile(r1, probs=c(.99))
+#  norm1 = r1/q99
+#  norm1[norm1>1] = 1
+#  return(norm1)
+#}
+#m1 = apply(m1, MARGIN=2, scale_99)
 
 #add aucell to spe
 spot.genes = colnames(m1)
@@ -76,6 +112,9 @@ lm=matrix(seq_len(.nrow*.ncol), nrow = .nrow, ncol = .ncol, byrow = T)
 
 for(y in spot.genes) {
   max.valr=1 #for scaled version max is set to 1
+  #max.val = max(colData(spe)[[y]])
+  #max.valr = round(max.val,1)
+  #if(max.valr<max.val) max.valr=max.valr+.1
 
   suppressMessages({
   plist1 <- lapply(c(vistoseg.samples, lowq.samples), function(x) {
@@ -91,7 +130,7 @@ for(y in spot.genes) {
   })
   })
 
-  ggsave(file=paste0("plots/09_SCENIC/AUCell-regulon-13162/example-samples_AUCell-regulon-13162_norm_",gsub("_","-",y),"_spot-plot.pdf"),
+  ggsave(file=paste0("plots/10_SCENIC/AUCell-regulon-13162_top20/example-samples_",gsub("_","-",y),"_AUCell-regulon-13162-", REG_KEY, "_spot-plot.pdf"),
          marrangeGrob(grobs=plist1, layout_matrix=lm, top=paste(y, "(fill scale fixed, can compare across sections)")),
          height=12, width=9)
   cat("\nSaved", paste0(y, "...\n"))
