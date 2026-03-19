@@ -7,8 +7,8 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 GENESET = "13162"
-MODULES_TYPE = "modules-top20-Fadjp05"
-ADJ_TYPE = "top20percent-Fadjp05"
+MODULES_TYPE = "modules-top20"
+ADJ_TYPE = "top20percent"
 cat("\nGene set:", GENESET, "\n")
 cat("\nAdjacency type:", ADJ_TYPE, "\n")
 
