@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=300G
-#SBATCH --job-name=add-cor_full-logcounts_DE-input-13162_no-lowUMI
+#SBATCH --job-name=add-cor_full-logcounts_DE-input-13162_no-lowUMI_no-mask
 #SBATCH -o code/09_DEG_GRN/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -40,7 +40,7 @@ if [ ! -f $loom_path ]; then
     scancel ${SLURM_JOB_ID}
 fi
 
-out_path="processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr.csv"
+out_path="processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr-no-mask.csv"
 echo $out_path
 if [ -f $out_path ]; then
     echo "File already exists at designated output path!"
@@ -55,7 +55,6 @@ fi
 pyscenic add_cor \
 	--expression_mtx_fname $loom_path \
 	--output $out_path \
-	--mask_dropouts \
 	$adj_path $loom_path
 
 # --mask_dropouts
