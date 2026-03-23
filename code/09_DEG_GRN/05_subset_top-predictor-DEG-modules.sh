@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=2G
-#SBATCH --job-name=explore-modules_full_DE-input-13162_no-lowUMI_filter-to-Ftest-sig_no-mask
+#SBATCH --job-name=subset-top-predictor-modules_full_DE-input-13162_no-lowUMI
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_DEG_GRN/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -16,7 +16,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/4.4.x
 module list
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_DEG_GRN/04_explore-modules.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_DEG_GRN/05_subset_top-predictor-DEG-modules.r
 
 echo "**** Job ends ****"
 date

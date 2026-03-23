@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=100G
-#SBATCH --job-name=aucell_DE-input-13844_modules-weighted-top20-Fadjp05_fixed-thold-05_seurat-label
+#SBATCH --job-name=aucell_DE-input-13162_modules-DEG-subset-refined_fixed-thold-05_seurat-label
 #SBATCH -o code/09_DEG_GRN/logs/%x_%j_%a.log
 #SBATCH --ntasks=10
 #SBATCH --array=1-8
@@ -27,7 +27,7 @@ echo $cluster
 echo ""
 echo ""
 
-python3 /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_DEG_GRN/06_AUCell-modules.py $cluster
+python3 /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_DEG_GRN/07_AUCell-modules.py $cluster
 
 echo "**** Job ends ****"
 date

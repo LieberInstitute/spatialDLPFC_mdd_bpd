@@ -24,34 +24,19 @@ from pyscenic.cli.utils import (
     suffixes_to_separator,
 )
 
-DATASET_ID = "spe-n119_13844-no-lowUMI"
-
 pdir = "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/"
 RESULTS_DIR = pdir+"processed-data/09_DEG_GRN/"
 
-#ADJ_FNAME = os.path.join(RESULTS_DIR, '{}_adj_with-logcounts-corr-no-mask.csv'.format(DATASET_ID))
-ADJ_FNAME = os.path.join(RESULTS_DIR, '{}_adj_with-logcounts-corr_top20percent-Fadjp05-metaModules.csv'.format(DATASET_ID))
+# input file
+ADJ_FNAME = RESULTS_DIR+"spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules-subset-refined.csv"
 
-#DATASET_ID = DATASET_ID+"_logcounts-no-mask"
-DATASET_ID = DATASET_ID+"_logcounts"
+# output files
+MODULES_FNAME = RESULTS_DIR+"spe-n119_13162-no-lowUMI_modules_DEG-subset-refined.csv"
+MODULES_DAT_FNAME = RESULTS_DIR+"spe-n119_13162-no-lowUMI_modules_DEG-subset-refined.dat"
 
-MODULES_FNAME = os.path.join(RESULTS_DIR, '{}_metamodules-top20-Fadjp05.csv'.format(DATASET_ID))
-MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.metamodules-top20-Fadjp05.dat'.format(DATASET_ID))
-
+# load adjacencies
 adjacencies = load_adjacencies(ADJ_FNAME)
 print("Adj. matrix dims:", adjacencies.shape)
-
-#laDEGs = pd.read_csv(pdir+"processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv")
-#lrDEGs = pd.read_csv(pdir+"processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv")
-
-#smDEGs = list(set(pd.concat([laDEGs.gene_name, lrDEGs.gene_name])))
-#print("Number of MBv (PRECAST) F sig. genes:", len(smDEGs))
-
-#laDEGs = pd.read_csv(pdir+"processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv")
-#lrDEGs = pd.read_csv(pdir+"processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv")
-
-#seDEGs = list(set(pd.concat([laDEGs.gene_name, lrDEGs.gene_name])))
-#print("Number of MBv (Seurat) F sig. genes:", len(seDEGs))
 
 def select_modules_from_adjacencies(
     adjacencies: pd.DataFrame,
@@ -106,36 +91,23 @@ def select_modules_from_adjacencies(
     # + Filter for minimum number of genes.
     #LOGGER.info("Creating modules.")
 
-#    def add_tf(module):
-#        return module.add(module.transcription_factor)
+    def add_tf(module):
+        return module.add(module.transcription_factor)
 
-#    return list(filter(lambda m: len(m) >= min_genes, map(add_tf, modules_iter)))
-    return list(filter(lambda m: len(m) >= min_genes, modules_iter))
+    return list(filter(lambda m: len(m) >= min_genes, map(add_tf, modules_iter)))
 
+modules = select_modules_from_adjacencies(adjacencies, thresholds=(1,),
+	min_genes=10, absolute_thresholds=True,)
 
-modules = select_modules_from_adjacencies(adjacencies, thresholds=(0.5,),
-	min_genes=20, absolute_thresholds=True,)
-
+# save as DF for easy browsing
 mod_df = pd.DataFrame({"TF": [item.transcription_factor for item in modules],
-                       "dir": ["activating" if "activating" in item.context else "repressing" for item in modules],
-                       "set_size": [len(item) for item in modules]})
-#                      "n_smF": [len(set(item.genes).intersection(set(smDEGs))) for item in modules],
-#                      "smF_str": ['/' .join(list(set(item.genes).intersection(set(smDEGs)))) for item in modules],
-#                      "n_seF": [len(set(item.genes).intersection(set(seDEGs))) for item in modules],
-#                      "seF_str": ['/' .join(list(set(item.genes).intersection(set(seDEGs)))) for item in modules]})
+	"dir": ["activating" if "activating" in item.context else "repressing" for item in modules],
+	"set_size": [len(item) for item in modules],
+	"set_str": ['/' .join(item.genes) for item in modules]
+})
 
 print("Module df dims:", mod_df.shape)
 mod_df.to_csv(MODULES_FNAME)
-
-## I need to change the module name so that it is unique for each entry which means adding the activating/repressing context
-#def update_name(regulon):
-#    tf_name = regulon.transcription_factor
-#    def derive_interaction_type(ctx):
-#        return "(-)" if "repressing" in ctx else "(+)"
-#    newname = "{}{}".format(tf_name, derive_interaction_type(regulon.context))
-#    return attr.evolve(regulon, name=newname)
-#
-#modules2 = [update_name(item) for item in modules]
 
 with open(MODULES_DAT_FNAME, 'wb') as f:
     pickle.dump(modules, f)

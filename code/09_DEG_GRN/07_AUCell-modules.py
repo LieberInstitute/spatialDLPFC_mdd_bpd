@@ -25,16 +25,16 @@ ATTRIBUTE_NAME_SEED = 1234
 cluster = sys.argv[1]
 
 SUBSET="seurat-label-"+cluster
-SUBSET_ID="spe-n119_"+SUBSET+"_13844-genes_no-lowUMI_logcounts"
+SUBSET_ID="spe-n119_"+SUBSET+"_13162-genes_no-lowUMI_logcounts"
 
 pdir = "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/"
 RESULTS_DIR = pdir+"processed-data/09_DEG_GRN/"
 LOOM_DIR = RESULTS_DIR+"expr_loom/"
 MOD_DIR = RESULTS_DIR+"AUCell_modules/"
 
-MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, "spe-n119_13844-no-lowUMI_logcounts.modules-top20-Fadjp05.dat")
+MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, "spe-n119_13162-no-lowUMI_modules_DEG-subset-refined.dat")
 LOOM_FNAME = os.path.join(LOOM_DIR, '{}.loom'.format(SUBSET_ID))
-OUT_FNAME = os.path.join(MOD_DIR, '{}_modules-top20-Fadjp05_AUCell-fixed-thold-05.loom'.format(SUBSET_ID))
+OUT_FNAME = os.path.join(MOD_DIR, '{}_modules-DEG-subset-refined_AUCell-fixed-thold-05.loom'.format(SUBSET_ID))
 
 
 ex_mtx = load_exp_matrix(
