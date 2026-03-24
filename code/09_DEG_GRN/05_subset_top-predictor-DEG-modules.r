@@ -17,9 +17,9 @@ modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-
 modules2 = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules.csv")
 
 #pick out top predictor DEG network subset
-mod_subset = c("EIF1","COX4I1","UQCRH","PRKAR1A","CAMK2N1","GRIN1","GAD1",
-               "MALAT1","A2M","ADAMTS1","IFITM3","CD74",
-               "PLP1","HSPA1A","APOE","MT1X")
+mod_subset = c("COX4I1","UQCRH","PRKAR1A","CAMK2N1","FAIM2","GAD1",
+               "SNHG14","APOE","A2M","ADAMTS1","IFITM3","CD74",
+               "FTL","APLP1","PLP1","HSPA1A","MT1X")
 cat("\nNumber of INITIAL top predictor DEG network modules to highlight:", length(mod_subset), "\n")
 
 
@@ -174,9 +174,9 @@ plotModuleNetwork <- function(source_DF, filter_set="none", edge_color="grey", v
 
 ## all
 filterSets = list("none", 
-                  c("EIF1","UQCRH","CAMK2N1","PRKAR1A","GRIN1","GAD1","MALAT1"),
+                  c("UQCRH","CAMK2N1","PRKAR1A","FAIM2","GAD1"),
                   c("APOE","A2M","ADAMTS1","IFITM3","MT1X","CD74"),
-                  c("PLP1","APOE","MALAT1","HSPA1A"))
+                  c("APLP1","FTL","PLP1","SNHG14","HSPA1A"))
 names(filterSets) <- c("all","neuron","bbb","other")
 
 plotList <- lapply(filterSets, function(x) plotModuleNetwork(tmp, filter_set=x))

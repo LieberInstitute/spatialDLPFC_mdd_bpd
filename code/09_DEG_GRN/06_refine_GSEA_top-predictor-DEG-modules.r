@@ -12,10 +12,9 @@ set.seed(123)
 modules2 = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules.csv")
 
 #pick out top predictor DEG network subset
-mod_subset = c("EIF1",#"COX4I1",
-               "UQCRH","PRKAR1A","CAMK2N1","GRIN1","GAD1",
-               "MALAT1","A2M","ADAMTS1","IFITM3","CD74",
-               "PLP1","HSPA1A","APOE","MT1X")
+mod_subset = c("UQCRH","PRKAR1A","CAMK2N1","FAIM2","GAD1",
+               "SNHG14","APOE","A2M","IFITM3","ADAMTS1","CD74",
+               "FTL","PLP1","APLP1","HSPA1A","MT1X")
 
 modules3 = filter(modules2, TF %in% mod_subset)
 
@@ -84,7 +83,7 @@ multi.targets = filter(multi2, rel_min<= 1.5, !target %in% unique.targets$target
   select(TF, target, importance, n_mods)
 
 
-refined.modules = bind_rows(unique.targets, multi.targets)
+refined.modules = bind_rows(unique.targets, multi.targets) %>% filter(!target %in% mod_subset)
 
 #group_by(refined.modules, target) %>% add_tally(name="check_n") %>%
 #  filter(n_mods!=check_n)
@@ -176,7 +175,7 @@ plot.df = do.call(rbind, res1) %>%
 #max(abs(tmp$NES))
 
 p1 <- ggplot(plot.df, aes(x=x_lab, y=y_lab, fill=NES, size=is_sig))+
-  geom_count(shape=21, color="black")+scale_size_manual(values=c(3,6))+
+  geom_count(shape=21, color="black")+scale_size_manual(values=c(2,6))+
   scale_fill_gradientn(colors=colorRampPalette(RColorBrewer::brewer.pal(n=7,"RdYlBu")[7:1])(100),
                         limits=c(-3.2,3.2))+
   geom_vline(aes(xintercept=3.5), lty=2)+

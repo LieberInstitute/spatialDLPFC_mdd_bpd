@@ -15,6 +15,8 @@ modules2 = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with
 
 # empty input matrix
 each_module = unique(modules2$TF)
+
+if(!file.exists("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_DEG-modules_target-pearson-correlation.csv")) {
 input.mtx = matrix(NA, nrow=length(each_module), ncol=length(each_module), dimnames = list(each_module, each_module))
 
 for(i in 1:(nrow(input.mtx)-1)) {
@@ -34,15 +36,20 @@ for(i in 1:(nrow(input.mtx)-1)) {
     input.mtx[j,i] = corrij
   }
 }
-
 write.csv(input.mtx, "processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_DEG-modules_target-pearson-correlation.csv")
 cat("\nSaved pairwise target correlation matrix for all DEG modules to: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_DEG-modules_target-pearson-correlation.csv\n")
 
+} else {
+	input.mtx = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_DEG-modules_target-pearson-correlation.csv", row.names=1)
+}
 # plot heatmap and highlight top predictor subsets
-mod_subset = c("EIF1",#"COX4I1",
-               "UQCRH","PRKAR1A","CAMK2N1","GRIN1","GAD1",
-               "MALAT1","A2M","ADAMTS1","IFITM3","CD74",
-               "PLP1","HSPA1A","APOE","MT1X")
+#mod_subset = c("EIF1",#"COX4I1",
+#               "UQCRH","PRKAR1A","CAMK2N1","GRIN1","GAD1",
+#               "MALAT1","A2M","ADAMTS1","IFITM3","CD74",
+#               "PLP1","HSPA1A","APOE","MT1X")
+mod_subset = c("UQCRH","PRKAR1A","CAMK2N1","FAIM2","GAD1",
+               "SNHG14","APOE","A2M","IFITM3","ADAMTS1","CD74",
+               "FTL","PLP1","APLP1","HSPA1A","MT1X")
 
 col_annot = data.frame("is_top"= as.character(each_module %in% mod_subset), row.names=each_module)
 annot_colors= list("is_top"=c("FALSE"="white", "TRUE"="black"))
