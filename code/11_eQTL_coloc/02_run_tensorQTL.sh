@@ -106,6 +106,24 @@ if [[ ${#dataset_ids[@]} -eq 0 ]]; then
   exit 1
 fi
 
+# Prioritize run order:
+#  1) all-donor datasets (no _f/_m suffix)
+#  2) female-only datasets (_f)
+#  3) male-only datasets (_m)
+mapfile -t dataset_ids < <(
+  printf "%s\n" "${dataset_ids[@]}" |
+    awk '
+      function tier(ds) {
+        if (ds ~ /_f$/) return 2
+        if (ds ~ /_m$/) return 3
+        return 1
+      }
+      { print tier($0) "\t" $0 }
+    ' |
+    sort -k1,1n -k2,2 |
+    cut -f2
+)
+
 if [[ -n "${start_from}" ]]; then
   seen=0
   declare -a trimmed=()
