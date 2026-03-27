@@ -13,11 +13,11 @@ set.seed(123)
 setAutoBlockSize(1e9)
 cpList = readRDS("plots/colorPalettes.rds")
 
-REGULON_TYPE = "regulons-weighted-top20-refined-filtered"
-REG_KEY = "top20-refined_norm"
+REGULON_TYPE = "regulons-top20"
+REG_KEY = "top20_norm"
 
 #load aucell
-aucell = read.csv(paste0("processed-data/10_SCENIC/spe-n119_13162-no-lowUMI_logcounts_", REGULON_TYPE,"_AUCell.csv"), row.names=1)
+aucell = read.csv(paste0("processed-data/10_SCENIC/spe-n119_13162-no-lowUMI_", REGULON_TYPE,"_AUCell.csv"), row.names=1)
 #cnames = unlist(strsplit(readLines(paste0("processed-data/10_SCENIC/spe-n119_13162-no-lowUMI_logcounts_", REGULON_TYPE, "_AUCell.csv"), 1), ","))[-1]
 #cnames = gsub("\\(\\-\\)", "_enhancer", gsub("\\(\\+\\)", "_promoter", cnames))
 #colnames(aucell) = cnames
@@ -37,6 +37,10 @@ cdata2 = cdata[cdata$smoothed_k9_1663_f!="low UMI",]
 spe = spe[,rownames(cdata2)]
 spe$smoothed_k9_1663 = factor(cdata2$smoothed_k9_1663_f, levels=c("L1","L2","L3/4","L5","L6","WM","Vasc","GABA"),
                               labels=c("L1","L2","L3.4","L5","L6","WM","drop","drop"))
+
+##subset spe to 109 samples first
+#spe = spe[,rownames(aucell)]
+#dim(spe)
 
 #subset aucell
 aucell = aucell[rownames(colData(spe)),]
@@ -75,15 +79,6 @@ m1 = apply(m1, MARGIN=2, function(x) {
   
 })
 
-#scale_99 = function(distribution) {
-#  r1 = round(distribution, 4)
-#  q99 = quantile(r1, probs=c(.99))
-#  norm1 = r1/q99
-#  norm1[norm1>1] = 1
-#  return(norm1)
-#}
-#m1 = apply(m1, MARGIN=2, scale_99)
-
 #add aucell to spe
 spot.genes = colnames(m1)
 for(i in spot.genes) {
@@ -93,14 +88,16 @@ for(i in spot.genes) {
 
 #create spe subsets for plotting
 #ideal samples
-vistoseg.samples = c("308-D1", "329-A1", "342-B1", "332-B1", #NTC M
-                     "342-A1", "332-A1", "327-C1", "329-B1",#NTC F
-                     "382-C1", "309-D1","352-A1", "329-C1",  #MDD M
-                     "382-D1", "352-B1", "309-C1", "380-B1", #"329-D1", #MDD F
-                     "382-A1", "352-C1", "342-D1", "327-B1", #BPD M
-                     "382-B1", "308-A1", "309-A1", "327-A1") #BPD F
+#subset to example samples
+example.samples = c("342-A1", "332-A1", "279-A1", "327-C1", #NTC F
+                    "382-D1", "023-D1", "334-A1", "309-C1", #MDD F
+                    "382-B1", "308-A1", "309-A1", "332-C1", #BPD F
+                    "308-D1", "329-A1", "342-B1", "332-B1", #NTC M
+                    "382-C1", "309-D1", "340-D1", "328-D1", #MDD M
+                    "382-A1", "352-C1", "381-A1", "327-B1") #BPD M
 
-vistoseg.samples = paste0("V13B23-", gsub("-","_", vistoseg.samples))
+example.samples = paste0("V13B23-", gsub("-","_", example.samples))
+example.samples[[6]] = "V13Y10-023_D1"
 
 lowq.samples = c("V13B23-282","V13B23-301","V13B23-302","V13B23-310","V13B23-311","V13B23-403")
 lowq.samples = unique(colData(spe)[spe$slide %in% lowq.samples,"sample_id"])
@@ -117,7 +114,7 @@ for(y in spot.genes) {
   #if(max.valr<max.val) max.valr=max.valr+.1
 
   suppressMessages({
-  plist1 <- lapply(c(vistoseg.samples, lowq.samples), function(x) {
+  plist1 <- lapply(c(example.samples, lowq.samples), function(x) {
     spe_sub = spe[,spe$sample_id==x]
     p = make_escheR(spe_sub) |> add_ground(var="smoothed_k9_1663", 
                                            stroke=.3, point_size = .5) |> 
@@ -130,7 +127,7 @@ for(y in spot.genes) {
   })
   })
 
-  ggsave(file=paste0("plots/10_SCENIC/AUCell-regulon-13162_top20/example-samples_",gsub("_","-",y),"_AUCell-regulon-13162-", REG_KEY, "_spot-plot.pdf"),
+  ggsave(file=paste0("plots/10_SCENIC/AUCell-regulon_n119/example-samples_",gsub("_","-",y),"_AUCell-regulon-13162-", REG_KEY, "_spot-plot.pdf"),
          marrangeGrob(grobs=plist1, layout_matrix=lm, top=paste(y, "(fill scale fixed, can compare across sections)")),
          height=12, width=9)
   cat("\nSaved", paste0(y, "...\n"))
