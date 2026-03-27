@@ -17,7 +17,7 @@ MODULE_TYPE = "regulons-top20"
 
 
 def extract_aucell(cluster, nGenes, modType):
-    lf = lp.connect(MODULE_PATH+"spe-n109_seurat-label-"+cluster+"_"+nGenes+"-genes_no-lowUMI_logcounts_"+modType+"_AUCell-fixed-thold-05.loom", mode='r+', validate=False)
+    lf = lp.connect(MODULE_PATH+"spe-n119_seurat-label-"+cluster+"_"+nGenes+"-genes_no-lowUMI_logcounts_"+modType+"_AUCell-fixed-thold-05.loom", mode='r+', validate=False)
     auc_mtx = pd.DataFrame(lf.ca.RegulonsAUC, index=lf.ca.CellID)
     cell_mtx = pd.DataFrame({"seurat_label": lf.ca.seurat_label, "smoothed_k9_1663": lf.ca.smoothed_k9_1663, #"custom_cluster": cluster,
                              "sex": lf.ca.sex, "condition": lf.ca.condition, "nGene": lf.ca.nGene, "nUMI": lf.ca.nUMI}, index=lf.ca.CellID)
@@ -39,14 +39,14 @@ auc_all = pd.concat([auc_mv, auc_ast, auc_l23, auc_l4, auc_inh, auc_l5, auc_l6, 
 cell_all = pd.concat([cell_mv, cell_ast, cell_l23, cell_l4, cell_inh, cell_l5, cell_l6, cell_wm])
 
 joined_all = pd.concat([auc_all, cell_all], axis=1)
-joined_all.to_csv(RESULTS_PATH+"spe-n109_13162-no-lowUMI_"+MODULE_TYPE+"_AUCell.csv")
+joined_all.to_csv(RESULTS_PATH+"spe-n119_13162-no-lowUMI_"+MODULE_TYPE+"_AUCell.csv")
 
 #precast domains only
 
 joined_precast = joined_all.loc[-joined_all['smoothed_k9_1663'].isin(['Vasc','GABA'])]
 
 #output regulons as merged df
-with open(RESULTS_PATH+'spe-n109_13162-no-lowUMI_logcounts.'+MODULE_TYPE+'.dat', 'rb') as file:
+with open(RESULTS_PATH+'spe-n119_13162-no-lowUMI_logcounts.'+MODULE_TYPE+'.dat', 'rb') as file:
     regulons = pickle.load(file)
 
 reg_df = pd.DataFrame({"TF": [item.transcription_factor for item in regulons],
@@ -55,7 +55,7 @@ reg_df = pd.DataFrame({"TF": [item.transcription_factor for item in regulons],
                        "set_size": [len(item) for item in regulons],
                       "set_str": ['/' .join(list(item.genes)) for item in regulons]})
 
-reg_df.to_csv(RESULTS_PATH+"spe-n109_13162-no-lowUMI_logcounts_"+MODULE_TYPE+"_merged.csv")
+reg_df.to_csv(RESULTS_PATH+"spe-n119_13162-no-lowUMI_logcounts_"+MODULE_TYPE+"_merged.csv")
 
 
 
@@ -81,7 +81,7 @@ hmp = sns.clustermap(df_means.T, z_score='row', col_colors=row_colors, dendrogra
               cbar_pos=(0.02, 0.8, 0.03, 0.15))
 hmp.ax_heatmap.set_yticklabels(hmp.ax_heatmap.get_ymajorticklabels(), fontsize = 10)
 
-hmp.figure.savefig(PLOT_PATH+'spe-n109_13162-no-lowUMI_logcounts_'+MODULE_TYPE+'_AUCell-seurat-pc30_heatmap.pdf')
+hmp.figure.savefig(PLOT_PATH+'spe-n119_13162-no-lowUMI_logcounts_'+MODULE_TYPE+'_AUCell-seurat-pc30_heatmap.pdf')
 
 
 
@@ -100,7 +100,7 @@ hmp = sns.clustermap(df_means.T, z_score='row', col_colors=row_colors, dendrogra
               cbar_pos=(0.02, 0.8, 0.03, 0.15))
 hmp.ax_heatmap.set_yticklabels(hmp.ax_heatmap.get_ymajorticklabels(), fontsize = 10)
 
-hmp.figure.savefig(PLOT_PATH+'spe-n109_13162-no-lowUMI_logcounts_'+MODULE_TYPE+'_AUCell-smoothed-k9-1663_heatmap.pdf')
+hmp.figure.savefig(PLOT_PATH+'spe-n119_13162-no-lowUMI_logcounts_'+MODULE_TYPE+'_AUCell-smoothed-k9-1663_heatmap.pdf')
 
 
 # correlate AUCell
@@ -108,7 +108,7 @@ hmp.figure.savefig(PLOT_PATH+'spe-n109_13162-no-lowUMI_logcounts_'+MODULE_TYPE+'
 def correlate_aucell(cluster, auc_mtx):
     auc_corr = np.corrcoef(auc_mtx.T)
     corrDF = pd.DataFrame(auc_corr, index=auc_mtx.columns, columns= auc_mtx.columns)
-    corrDF.to_csv(RESULTS_PATH+"spe-n109_13162-no-lowUMI_"+MODULE_TYPE+"_AUCell-"+cluster+"-correlation.csv")
+    corrDF.to_csv(RESULTS_PATH+"spe-n119_13162-no-lowUMI_"+MODULE_TYPE+"_AUCell-"+cluster+"-correlation.csv")
     return corrDF
 
 corrDF = correlate_aucell("all-spots", auc_all)
@@ -125,7 +125,7 @@ corrDF = correlate_aucell("all-spots", auc_all)
 hmp = sns.clustermap(corrDF, dendrogram_ratio=.1,
                     cbar_pos=(0.02, 0.8, 0.03, 0.15))
 hmp.ax_heatmap.set_yticklabels(hmp.ax_heatmap.get_ymajorticklabels(), fontsize = 10)
-hmp.figure.savefig(PLOT_PATH+'spe-n109_13162-no-lowUMI_logcounts_'+MODULE_TYPE+'_AUCell-correlation.pdf')
+hmp.figure.savefig(PLOT_PATH+'spe-n119_13162-no-lowUMI_logcounts_'+MODULE_TYPE+'_AUCell-correlation.pdf')
 
 #sys.exit("Early stopping to check what regulons I have...")
 
@@ -163,35 +163,42 @@ sns.ecdfplot(data=joined_precast, x="LHX6(+)", hue="smoothed_k9_1663", palette=s
              legend=False, ax=axs[7])
 axs[7].set_title("LHX6 (PRECAST)")
 
-sns.ecdfplot(data=joined_all, x="CUX2(+)", hue="seurat_label", palette=transfer_bright, 
-             legend=False, ax=axs[8])
-axs[8].set_title("CUX2 (Seurat)")
-sns.ecdfplot(data=joined_precast, x="CUX2(+)", hue="smoothed_k9_1663", palette=smoothed_bright, 
-             legend=False, ax=axs[9])
-axs[9].set_title("CUX2 (PRECAST)")
+#sns.ecdfplot(data=joined_all, x="CUX2(+)", hue="seurat_label", palette=transfer_bright, 
+#             legend=False, ax=axs[8])
+#axs[8].set_title("CUX2 (Seurat)")
+#sns.ecdfplot(data=joined_precast, x="CUX2(+)", hue="smoothed_k9_1663", palette=smoothed_bright, 
+#             legend=False, ax=axs[9])
+#axs[9].set_title("CUX2 (PRECAST)")
 
 sns.ecdfplot(data=joined_all, x="THRA(+)", hue="seurat_label", palette=transfer_bright, 
-             legend=False, ax=axs[10])
-axs[10].set_title("THRA (Seurat)")
+             legend=False, ax=axs[8])
+axs[8].set_title("THRA (Seurat)")
 sns.ecdfplot(data=joined_precast, x="THRA(+)", hue="smoothed_k9_1663", palette=smoothed_bright, 
+             legend=False, ax=axs[9])
+axs[9].set_title("THRA (PRECAST)")
+
+sns.ecdfplot(data=joined_all, x="SOX8(+)", hue="seurat_label", palette=transfer_bright, 
+             legend=False, ax=axs[10])
+axs[10].set_title("SOX8 (Seurat)")
+sns.ecdfplot(data=joined_precast, x="SOX8(+)", hue="smoothed_k9_1663", palette=smoothed_bright, 
              legend=False, ax=axs[11])
-axs[11].set_title("THRA (PRECAST)")
+axs[11].set_title("SOX8 (PRECAST)")
 
 plt.tight_layout()
-plt.savefig(PLOT_PATH+'spe-n109_13162-no-lowUMI_'+MODULE_TYPE+'_AUCell-layers-ecdf.pdf', 
+plt.savefig(PLOT_PATH+'spe-n119_13162-no-lowUMI_'+MODULE_TYPE+'_AUCell-layers-ecdf.pdf', 
             bbox_inches='tight')
 
 
 # plot density curves (helpful for norm)
 
-fig, axs = plt.subplots(5, 5, figsize=(8, 8))
+fig, axs = plt.subplots(7, 4, figsize=(7, 10))
 
 axs_flat = axs.flatten()
 
-for i in range(23):
+for i in range(26):
     gene1 = auc_all.columns[i]
     sns.kdeplot(data=joined_all, x=gene1, ax=axs_flat[i])
 
 plt.tight_layout()
-plt.savefig(PLOT_PATH+'spe-n109_13162-no-lowUMI_'+MODULE_TYPE+'_AUCell-density.pdf', 
+plt.savefig(PLOT_PATH+'spe-n119_13162-no-lowUMI_'+MODULE_TYPE+'_AUCell-density.pdf', 
             bbox_inches='tight')

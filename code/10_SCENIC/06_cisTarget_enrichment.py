@@ -36,7 +36,7 @@ ANNOT_PATH=[pdir+"raw-data/SCENIC_aux/genome_annotation/hg38_500bp_up_100bp_down
 	pdir+"raw-data/SCENIC_aux/genome_annotation/hg38_10kbp_up_10kbp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather"]
 MOTIF_PATH=pdir+"raw-data/SCENIC_aux/motif2tf/motifs-v10nr_clust-nr.hgnc-m0.001-o0.0.tbl"
 
-DATASET_ID='spe-n109_13162-no-lowUMI_logcounts'
+DATASET_ID='spe-n119_13162-no-lowUMI_logcounts'
 
 
 MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.modules-top20.dat'.format(DATASET_ID))

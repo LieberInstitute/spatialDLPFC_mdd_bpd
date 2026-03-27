@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=5G
-#SBATCH --job-name=plot_aucell_109_DE-input-13162_regulons-top20_fixed-thold-05
+#SBATCH --job-name=plot_aucell_119_DE-input-13162_regulons-top20_fixed-thold-05
 #SBATCH -o code/10_SCENIC/logs/%x_%j.log
 
 echo "**** Job starts ****"
