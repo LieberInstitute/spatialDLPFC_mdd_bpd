@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH --mem=300G
-#SBATCH --job-name=add-cor_full-logcounts_DE-input-13162_no-lowUMI_no-mask
-#SBATCH -o code/09_SCENIC/logs/%x_%j.log
+#SBATCH --mem=200G
+#SBATCH --job-name=add-cor_109-logcounts_DE-input-13162_no-lowUMI_no-mask
+#SBATCH -o code/10_SCENIC/logs/%x_%j.log
 
 echo "**** Job starts ****"
 date
@@ -20,7 +20,7 @@ module list
 source activate pyscenic_bioconda
 
 
-adj_path="processed-data/09_SCENIC/spe-n119_13162-no-lowUMI_adj.csv"
+adj_path="processed-data/10_SCENIC/spe-n109_13162-no-lowUMI_adj.csv"
 echo $adj_path
 if [ ! -f $adj_path ]; then
     echo "Adjacency file not found!"
@@ -30,7 +30,7 @@ if [ ! -f $adj_path ]; then
     scancel ${SLURM_JOB_ID}
 fi
 
-loom_path="processed-data/09_SCENIC/expr_loom/spe-n119_13162-genes_no-lowUMI_logcounts.loom"
+loom_path="processed-data/10_SCENIC/expr_loom/spe-n109_13162-genes_no-lowUMI_logcounts.loom"
 echo $loom_path
 if [ ! -f $loom_path ]; then
     echo "Loom file not found!"
@@ -40,7 +40,7 @@ if [ ! -f $loom_path ]; then
     scancel ${SLURM_JOB_ID}
 fi
 
-out_path="processed-data/09_SCENIC/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr-no-mask.csv"
+out_path="processed-data/10_SCENIC/spe-n109_13162-no-lowUMI_adj_with-logcounts-corr.csv"
 echo $out_path
 if [ -f $out_path ]; then
     echo "File already exists at designated output path!"
@@ -55,6 +55,7 @@ fi
 pyscenic add_cor \
 	--expression_mtx_fname $loom_path \
 	--output $out_path \
+	--mask_dropouts \
 	$adj_path $loom_path
 
 # --mask_dropouts

@@ -2,7 +2,7 @@
 #SBATCH --mem=200G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=spe_to_loom_gene-names_no-npas4_DE-input-13162_no-lowUMI
+#SBATCH --job-name=spe_to_loom_gene-names_no-npas4_DE-input-13162_no-lowUMI_logcounts
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/10_SCENIC/logs/%x_%j.log
 
 echo "**** Job starts ****"

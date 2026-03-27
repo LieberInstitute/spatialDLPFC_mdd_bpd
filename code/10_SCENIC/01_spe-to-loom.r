@@ -71,14 +71,14 @@ cat("\n\nFull  dataset:", dim(spe), "\n")
 npas4.outliers = c("Br5666","Br5594","Br5599","Br5448","Br6316","Br6021","Br5993","Br6192","Br5454","Br8073")
 spe = spe[,!spe$brnum %in% npas4.outliers]
 cat("\nRemoved 10 Npas4 outlier samples:", dim(spe),"\n")
-(fn3 = paste0("processed-data/10_SCENIC/expr_loom/spe-n109_", nrow(rdata2), "-genes_no-lowUMI.loom"))
+(fn3 = paste0("processed-data/10_SCENIC/expr_loom/spe-n109_", nrow(rdata2), "-genes_no-lowUMI_logcounts.loom"))
 
 #cat("\n\nFull dataset...\n")
 #(fn3 = paste0("processed-data/10_SCENIC/expr_loom/spe-n119_", nrow(rdata2), "-genes_no-lowUMI_logcounts.loom"))
 
 # extract counts matrix and change rownames
-mtx3 = counts(spe)
-#mtx3 = logcounts(spe)
+#mtx3 = counts(spe)
+mtx3 = logcounts(spe)
 stopifnot(identical(rownames(mtx3), rdata2$gene_id))
 rownames(mtx3) = rdata2$gene_name
 dim(mtx3)

@@ -62,18 +62,24 @@ cdata = cdata[cdata$smoothed_k9_1663!="low.UMI",]
 cdata$smoothed_k9_1663 = droplevels(cdata$smoothed_k9_1663)
 
 spe = spe[,rownames(cdata)]
-dim(spe)
+#dim(spe)
 # 513200 spots
 
-if(file.exists("processed-data/09_SCENIC/cdata_revised-qc-metrics_for-AUCell-13162.csv")) {
-	out1 <- read.csv("processed-data/09_SCENIC/cdata_revised-qc-metrics_for-AUCell-13162.csv", row.names=1)
+# remove 10 npas4 samples
+cat("\n\nFull  dataset:", dim(spe), "\n")
+npas4.outliers = c("Br5666","Br5594","Br5599","Br5448","Br6316","Br6021","Br5993","Br6192","Br5454","Br8073")
+spe = spe[,!spe$brnum %in% npas4.outliers]
+cat("\nRemoved 10 Npas4 outlier samples:", dim(spe),"\n")
+
+if(file.exists("processed-data/10_SCENIC/cdata_revised-qc-metrics_n109_for-AUCell-13162.csv")) {
+	out1 <- read.csv("processed-data/10_SCENIC/cdata_revised-qc-metrics_n109_for-AUCell-13162.csv", row.names=1)
 	out1$smoothed_k9_1663 = factor(out1$smoothed_k9_1663, levels=levels(cdata$smoothed_k9_1663))
 	out1$seurat_label = factor(out1$seurat_label, levels=levels(cdata$seurat_label))
 } else {
 	out1 = scuttle::perCellQCMetrics(spe, assay.type="counts")
-	stopifnot(identical(rownames(cdata), rownames(out1)))
+	if(!identical(rownames(cdata), rownames(out1))) cdata = cdata[rownames(out1),]
 	out1 = cbind(out1, cdata[,c("sex","condition","smoothed_k9_1663","seurat_label")])
-	write.csv(out1, "processed-data/09_SCENIC/cdata_revised-qc-metrics_for-AUCell-13162.csv", row.names=T)
+	write.csv(out1, "processed-data/10_SCENIC/cdata_revised-qc-metrics_n109_for-AUCell-13162.csv", row.names=T)
 }
 
 table(out1$smoothed_k9_1663)
@@ -114,7 +120,7 @@ for(i in levels(out1$seurat_label)) {
 	cat(paste0("\n\n",i,"...\n"))
 
 #        (fn = paste0("processed-data/09_SCENIC/expr_loom/spe-n119_custom-cluster-",i,"_", nrow(rdata2), "-genes_no-lowUMI_logcounts.loom"))
-	(fn = paste0("processed-data/09_SCENIC/expr_loom/spe-n119_seurat-label-",i,"_", nrow(rdata2), "-genes_no-lowUMI_logcounts.loom"))
+	(fn = paste0("processed-data/10_SCENIC/expr_loom/spe-n109_seurat-label-",i,"_", nrow(rdata2), "-genes_no-lowUMI_logcounts.loom"))
 
 #        tmp = out1[out1$custom_cluster==i,]
 	tmp = out1[out1$seurat_label==i,]
