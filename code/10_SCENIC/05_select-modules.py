@@ -23,10 +23,10 @@ from pyscenic.cli.utils import (
     suffixes_to_separator,
 )
 
-DATASET_ID = "spe-n119_13162-no-lowUMI"
+DATASET_ID = "spe-n109_13162-no-lowUMI"
 
 pdir = "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/"
-RESULTS_DIR = pdir+"processed-data/09_SCENIC/"
+RESULTS_DIR = pdir+"processed-data/10_SCENIC/"
 
 #ADJ_FNAME = os.path.join(RESULTS_DIR, '{}_adj_with-corr.csv'.format(DATASET_ID))
 #ADJ_FNAME = os.path.join(RESULTS_DIR, '{}_adj_with-corr-no-mask.csv'.format(DATASET_ID))

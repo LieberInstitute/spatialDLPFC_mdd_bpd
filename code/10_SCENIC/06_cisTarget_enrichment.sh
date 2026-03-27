@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH --mem=20G
-#SBATCH --job-name=cisTarget_DE-input-13162_regulons-weighted_filtered_top20percent_regional
-#SBATCH -o code/09_SCENIC/logs/%x_%j.log
+#SBATCH --job-name=cisTarget_109_DE-input-13162_regulons_filtered_top20percent
+#SBATCH -o code/10_SCENIC/logs/%x_%j.log
 
 echo "**** JHPCE info ****"
 echo "User: ${USER}"
@@ -16,7 +16,7 @@ module load conda
 module list
 source activate pyscenic_bioconda
 
-python3 /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_SCENIC/06_cisTarget_enrichment.py
+python3 /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/10_SCENIC/06_cisTarget_enrichment.py
 
 echo "**** Job ends ****"
 date

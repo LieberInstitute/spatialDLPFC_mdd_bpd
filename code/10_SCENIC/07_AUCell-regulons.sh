@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=100G
-#SBATCH --job-name=aucell_DE-input-13162_regulons-weighted-top20-refined-filtered_fixed-thold-05_seurat-label
+#SBATCH --job-name=aucell_109_DE-input-13162_regulons-top20_fixed-thold-05_seurat-label
 #SBATCH -o code/10_SCENIC/logs/%x_%j_%a.log
 #SBATCH --ntasks=10
 #SBATCH --array=1-8

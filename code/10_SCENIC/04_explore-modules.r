@@ -6,10 +6,10 @@ suppressPackageStartupMessages({
   library(gridExtra)
 })
 
-DATASET_ID = "spe-n119_13162-no-lowUMI_adj_with-logcounts-corr-no-mask"
+DATASET_ID = "spe-n109_13162-no-lowUMI_adj_with-logcounts-corr"
 
 # load in GRNBOOST2 adj output
-lg.mask = read.csv(paste0("processed-data/09_SCENIC/", DATASET_ID, ".csv"))
+lg.mask = read.csv(paste0("processed-data/10_SCENIC/", DATASET_ID, ".csv"))
 
 
 # load avg expr
@@ -132,13 +132,13 @@ plist[[4]] <- ggplot(t2.1, aes(x=decile_target, y=prop_decile))+
 
 
 
-ggsave(file=paste0("plots/09_SCENIC/", DATASET_ID, "_explore-modules.pdf"), 
+ggsave(file=paste0("plots/10_SCENIC/", DATASET_ID, "_explore-modules.pdf"), 
        marrangeGrob(grobs=plist, ncol=1, nrow=1, top=NULL))
-cat("\nPlots saved to:", paste0("plots/09_SCENIC/", DATASET_ID, "_explore-modules.pdf"), "\n")
+cat("\nPlots saved to:", paste0("plots/10_SCENIC/", DATASET_ID, "_explore-modules.pdf"), "\n")
 
 modules2$n <- NULL
-write.csv(modules2, paste0("processed-data/09_SCENIC/", DATASET_ID, "_top20percent.csv"), row.names=F)
-cat("\nFiltered adj. list for top 20% modules saved to:", paste0("processed-data/09_SCENIC/", DATASET_ID, "_top20percent.csv"), "\n")
+write.csv(modules2, paste0("processed-data/10_SCENIC/", DATASET_ID, "_top20percent.csv"), row.names=F)
+cat("\nFiltered adj. list for top 20% modules saved to:", paste0("processed-data/10_SCENIC/", DATASET_ID, "_top20percent.csv"), "\n")
 
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")

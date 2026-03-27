@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --mem=1G
-#SBATCH --job-name=select_modules_109_DE-input-13162_no-lowUMI_logcounts_top20percent
+#SBATCH --mem=5G
+#SBATCH --job-name=plot_aucell_109_DE-input-13162_regulons-top20_fixed-thold-05
 #SBATCH -o code/10_SCENIC/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -19,7 +19,7 @@ module load conda
 module list
 source activate pyscenic_bioconda
 
-python3 /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/10_SCENIC/05_select-modules.py
+python3 /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/10_SCENIC/08_plot_AUCell-regulons.py
 
 echo "**** Job ends ****"
 date

@@ -8,8 +8,9 @@ import pandas as pd
 from ctxcore.rnkdb import RankingDatabase, opendb
 from ctxcore.genesig import openfile
 from pyscenic.prune import _prepare_client, find_features, prune2df
-#from pyscenic.transform import df2regulons
-from custom_df2regulon import df2regulons_custom
+
+from pyscenic.transform import df2regulons
+#from custom_df2regulon import df2regulons_custom
 
 from pyscenic.cli.utils import (
     ATTRIBUTE_NAME_CELL_IDENTIFIER,
@@ -28,19 +29,19 @@ from pyscenic.cli.utils import (
 LOGGER = logging.getLogger(__name__)
 
 pdir = "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/"
-RESULTS_DIR = pdir+"processed-data/09_SCENIC/"
+RESULTS_DIR = pdir+"processed-data/10_SCENIC/"
 
 
 ANNOT_PATH=[pdir+"raw-data/SCENIC_aux/genome_annotation/hg38_500bp_up_100bp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather",
 	pdir+"raw-data/SCENIC_aux/genome_annotation/hg38_10kbp_up_10kbp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather"]
 MOTIF_PATH=pdir+"raw-data/SCENIC_aux/motif2tf/motifs-v10nr_clust-nr.hgnc-m0.001-o0.0.tbl"
 
-DATASET_ID='spe-n119_13162-no-lowUMI_logcounts'
+DATASET_ID='spe-n109_13162-no-lowUMI_logcounts'
 
 
 MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.modules-top20.dat'.format(DATASET_ID))
-REGULONS_FNAME = os.path.join(RESULTS_DIR, '{}_regulons-weighted-top20-regional.csv'.format(DATASET_ID))
-REGULONS_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.regulons-weighted-top20-regional.dat'.format(DATASET_ID))
+REGULONS_FNAME = os.path.join(RESULTS_DIR, '{}_regulons-top20.csv'.format(DATASET_ID))
+REGULONS_DAT_FNAME = os.path.join(RESULTS_DIR, '{}.regulons-top20.dat'.format(DATASET_ID))
 
 with open(MODULES_DAT_FNAME, 'rb') as file:
     signatures = pickle.load(file)
@@ -71,7 +72,7 @@ df_motifs = calc_func(
   num_workers= 10,
   motif_similarity_fdr= 1e-5,
   orthologuous_identity_threshold= 0.8,
-  weighted_recovery=True,
+  weighted_recovery=False,
 )
 print("Unfiltered regulons:", df_motifs.shape)
 
@@ -87,6 +88,7 @@ LOGGER.info("Writing results to csv file.")
 df_motifs.to_csv(REGULONS_FNAME)
 
 LOGGER.info("Pickling regulons to .dat file.")
-regulons = df2regulons_custom(df_motifs)
+#regulons = df2regulons_custom(df_motifs)
+regulons = df2regulons(df_motifs)
 with open(REGULONS_DAT_FNAME, 'wb') as f:
     pickle.dump(regulons, f)
