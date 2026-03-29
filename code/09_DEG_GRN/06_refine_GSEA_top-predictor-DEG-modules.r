@@ -2,6 +2,7 @@ setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bp
 suppressPackageStartupMessages({
 	library(dplyr)
 	library(ggplot2)
+	library(igraph)
 	library(gridExtra)
 	library(fgsea)
 })
@@ -12,8 +13,8 @@ set.seed(123)
 modules2 = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules.csv")
 
 #pick out top predictor DEG network subset
-mod_subset = c("UQCRH","PRKAR1A","CAMK2N1","FAIM2","GAD1",
-               "SNHG14","APOE","A2M","IFITM3","ADAMTS1","CD74",
+mod_subset = c("UQCRH","PRKAR1A","CAMK2N1","GRIN1","GAD1",
+               "SNHG14","GLUL","A2M","IFITM3","ADAMTS1","CD74",
                "FTL","PLP1","APLP1","HSPA1A","MT1X")
 
 modules3 = filter(modules2, TF %in% mod_subset)
@@ -96,7 +97,7 @@ cat("\nSaved refined top predictor DEG modules adj. file to: processed-data/09_D
 
 
 # plot refined modules
-cat("\nPlot unrefined modules in top predictor DEG modules to highlight...\n")
+cat("\nPlot refined modules in top predictor DEG modules to highlight...\n")
 plist2 = lapply(mod_subset, function(x) {
   df1 = filter(refined.modules, TF==x) %>% arrange(desc(importance)) %>%
     mutate(is_original=T)
@@ -111,6 +112,32 @@ plist2 = lapply(mod_subset, function(x) {
     theme_minimal()+theme(axis.text.x=element_blank(), legend.position="none")
 })
 
+# make refined igraph
+cat("\nPlot refined modules igraph...\n")
+e.df = select(ungroup(refined.modules), from=TF, to=target, weight=importance)
+n.df = data.frame("node"=union(e.df$from, e.df$to),
+	"is_TF"= union(e.df$from, e.df$to) %in% e.df$from)
+
+g <- graph_from_data_frame(e.df, directed=T, vertices=n.df)
+E(g)$weight = e.df$weight
+E(g)$arrow.size = 0
+E(g)$color = "gray"
+  
+V(g)$size = ifelse(n.df$is_TF, 5, 1)
+V(g)$label = ifelse(n.df$is_TF, n.df$node, "")
+V(g)$label.color = "black"
+V(g)$color = "lightgoldenrod"
+  
+V(g)$label.family="sans"
+V(g)$frame.width=0
+V(g)$frame.color=NA
+  
+set.seed(123)
+lay1= layout_with_kk(g, weights=sqrt(E(g)$weight))
+set.seed(123)
+
+saveRDS(list("igraph"=g, "layout"=lay1), "processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_top-predictor-DEG-modules-refined.rda")
+cat("\nSaved refined DEG module igraph to: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_top-predictor-DEG-modules-refined.rda\n")
 
 # perform GSEA based on logFC rankings for enrichment of DEG modules
 cat("\n\nGSEA on refined top predictor DEG modules to highlight...\n")
@@ -208,6 +235,7 @@ pdf(file="plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_subset-refined-modules-and-G
     width=7, height=9)
 do.call(grid.arrange, c(plist, ncol=3, top="Before refining..."))
 do.call(grid.arrange, c(plist2, ncol=3, top="After refining..."))
+plot(g, layout=lay1, main="Refined DEG modules")
 p1
 for(i in setdiff(mod_subset,"ADAMTS1")) {
   plist3 = lapply(comparisons, plotGSEA_jt, DEG_module=i)

@@ -16,20 +16,34 @@ lg.mask = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-
 modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_interaction-modules.csv")
 modules2 = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules.csv")
 
-#pick out top predictor DEG network subset
-mod_subset = c("COX4I1","UQCRH","PRKAR1A","CAMK2N1","FAIM2","GAD1",
-               "SNHG14","APOE","A2M","ADAMTS1","IFITM3","CD74",
+# read in full DEG corr mtx for all DEG module plotting
+input.mtx = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_DEG-modules_target-pearson-correlation.csv", row.names=1)
+
+# pick out top predictor DEG network subset
+mod_subset = c("COX4I1","UQCRH","PRKAR1A","CAMK2N1","GRIN1","GAD1",
+               "SNHG14","GLUL","A2M","ADAMTS1","IFITM3","CD74",
                "FTL","APLP1","PLP1","HSPA1A","MT1X")
 cat("\nNumber of INITIAL top predictor DEG network modules to highlight:", length(mod_subset), "\n")
 
+each_module = unique(modules2$TF)
+col_annot = data.frame("is_top"= as.character(each_module %in% mod_subset), row.names=each_module)
+annot_colors= list("is_top"=c("FALSE"="white", "TRUE"="black"))
+phm = pheatmap(input.mtx, clustering_method="ward.D2",
+	breaks= seq(from = -1, to = 1, length.out = 101), 
+	treeheight_col = 20, treeheight_row = 20, angle_col=90, fontsize=6,
+	annotation_col=col_annot, annotation_row=col_annot, annotation_colors=annot_colors, 
+	annotation_legend = FALSE, annotation_names_row = FALSE, annotation_names_col = FALSE,
+	main="Pearson corr. of DEG module importance")
 
+
+# now just the subsets I selected from top predictors
 input.mtx = matrix(NA, nrow=length(mod_subset), ncol=length(mod_subset), dimnames = list(mod_subset, mod_subset))
 for(i in 1:(nrow(input.mtx)-1)) {
   complete.corr = colnames(input.mtx)[(i+1):ncol(input.mtx)]
   i=rownames(input.mtx)[i]
   for(j in complete.corr) {
-    tmp1 = filter(modules, TF==i)
-    tmp2 = filter(modules, TF==j)
+    tmp1 = filter(modules2, TF==i)
+    tmp2 = filter(modules2, TF==j)
     geneList = setdiff(union(tmp1$target, tmp2$target),
                        c(i,j))
     #pull the raw adj (before any filtering) and format for correlation
@@ -42,9 +56,15 @@ for(i in 1:(nrow(input.mtx)-1)) {
   }
 }
 
-## identify highly correlated DEG modules and pick one
-#input.mtx[matrixStats::rowMaxs(input.mtx, na.rm=T)>.2,
-#          matrixStats::colMaxs(input.mtx, na.rm=T)>.2]
+# plot top predictor modules heatmaps
+phm1 = pheatmap(input.mtx, clustering_method="ward.D2",
+                   breaks= seq(from = -1, to = 1, length.out = 101),
+                   treeheight_col = 20, treeheight_row = 20, angle_col=90,
+                main="Pearson corr. of module importance (DEG targets only)")
+
+# identify highly correlated DEG modules and pick one
+input.mtx[matrixStats::rowMaxs(input.mtx, na.rm=T)>.2,
+          matrixStats::colMaxs(input.mtx, na.rm=T)>.2]
 # keep UQCRH
 cat("\nTwo top predictor networks represent highly correlated target gene modules...")
 cat("\nRemove COX4I1 and keep UQCRH...\n")
@@ -66,37 +86,6 @@ cat("\nNumber of DEGs present in GRN output:", length(intersect(mbv.degs, lg.mas
 cat("\nNumber of DEGs present in the", length(unique(modules$TF)), "interaction modules:", length(intersect(mbv.degs, modules$target)),"\n")
 cat("\nNumber of DEGs present in the", length(unique(modules2$TF)), "DEG modules:", length(intersect(mbv.degs, modules2$target)),"\n")
 cat("\nNumber of DEGs present in the", length(mod_subset), "top predictor DEG modules:", length(intersect(mbv.degs, tmp$target)),"\n\n")
-
-# plot top predictor modules heatmaps
-phm1 = pheatmap(input.mtx[mod_subset,mod_subset], clustering_method="ward.D2",
-                   breaks= seq(from = -1, to = 1, length.out = 101), 
-                   treeheight_col = 20, treeheight_row = 20, angle_col=90,
-                main="Pearson corr. of module importance (all targets)")
-
-# second heatmap based on correlations of only the DEGs in the modules
-input.mtx = matrix(NA, nrow=length(mod_subset), ncol=length(mod_subset), dimnames = list(mod_subset, mod_subset))
-for(i in 1:(nrow(input.mtx)-1)) {
-  complete.corr = colnames(input.mtx)[(i+1):ncol(input.mtx)]
-  i=rownames(input.mtx)[i]
-  for(j in complete.corr) {
-    tmp1 = filter(modules2, TF==i)
-    tmp2 = filter(modules2, TF==j)
-    geneList = setdiff(union(tmp1$target, tmp2$target),
-                       c(i,j))
-    #pull the raw adj (before any filtering) and format for correlation
-    check = filter(lg.mask, TF %in% c(i,j), target %in% geneList) %>%
-      mutate(modules_key=factor(TF, levels=c(i,j), labels=c("I","J"))) %>%
-      select(modules_key, target, importance) %>% tidyr::pivot_wider(names_from="modules_key", values_from="importance", values_fill=0)
-    corrij= cor(check$I, check$J)
-    input.mtx[i,j] = corrij
-    input.mtx[j,i] = corrij
-  }
-}
-
-phm2 = pheatmap(input.mtx, clustering_method="ward.D2",
-                   breaks= seq(from = -1, to = 1, length.out = 101), 
-                   treeheight_col = 20, treeheight_row = 20, angle_col=90,
-                main="Pearson corr. of module importance (DEG targets only)")
 
 
 # plot heatmap of expression for top predictor DEG modules
@@ -174,8 +163,8 @@ plotModuleNetwork <- function(source_DF, filter_set="none", edge_color="grey", v
 
 ## all
 filterSets = list("none", 
-                  c("UQCRH","CAMK2N1","PRKAR1A","FAIM2","GAD1"),
-                  c("APOE","A2M","ADAMTS1","IFITM3","MT1X","CD74"),
+                  c("UQCRH","CAMK2N1","PRKAR1A","GRIN1","GAD1"),
+                  c("GLUL","A2M","ADAMTS1","IFITM3","MT1X","CD74"),
                   c("APLP1","FTL","PLP1","SNHG14","HSPA1A"))
 names(filterSets) <- c("all","neuron","bbb","other")
 
@@ -185,16 +174,8 @@ saveRDS(plotList, "processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_top-predic
 cat("\nSaved list of igraphs and layouts for top predictor DEG modules to: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_top-predictor-DEG-modules.rda\n")
 
 pdf(file="plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_top-predictor-DEG-modules.pdf", width=8, height=8)
-layout.matrix <- matrix(c(1, 0, 0, 2), nrow = 2, byrow=T)
-layout(mat = layout.matrix,
-       heights = c(1, 1), # Heights of the two rows
-       widths = c(1, 1)) # Widths of the two columns
+plot(phm[[4]])
 plot(phm1[[4]])
-plot(phm2[[4]])
-layout.matrix <- matrix(c(1), nrow = 1, ncol=1)
-layout(mat = layout.matrix,
-       heights = c(1), # Heights of the two rows
-       widths = c(1)) # Widths of the two columns
 p1 #dotplot of expression
 for(i in 1:length(plotList)) {
   plot(plotList[[i]]$igraph, layout=plotList[[i]]$layout, main=names(plotList)[[i]])

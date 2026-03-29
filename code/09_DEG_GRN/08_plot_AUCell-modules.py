@@ -128,12 +128,12 @@ sns.ecdfplot(data=joined_precast, x="Regulon for IFITM3", hue="smoothed_k9_1663"
              legend=False, ax=axs[3])
 axs[3].set_title("IFITM3 (PRECAST)")
 
-sns.ecdfplot(data=joined_all, x="Regulon for APOE", hue="seurat_label", palette=transfer_bright, 
+sns.ecdfplot(data=joined_all, x="Regulon for GLUL", hue="seurat_label", palette=transfer_bright, 
              legend=False, ax=axs[4])
-axs[4].set_title("APOE (Seurat)")
-sns.ecdfplot(data=joined_precast, x="Regulon for APOE", hue="smoothed_k9_1663", palette=smoothed_bright, 
+axs[4].set_title("GLUL (Seurat)")
+sns.ecdfplot(data=joined_precast, x="Regulon for GLUL", hue="smoothed_k9_1663", palette=smoothed_bright, 
              legend=False, ax=axs[5])
-axs[5].set_title("APOE (PRECAST)")
+axs[5].set_title("GLUL (PRECAST)")
 
 sns.ecdfplot(data=joined_all, x="Regulon for GAD1", hue="seurat_label", palette=transfer_bright, 
              legend=False, ax=axs[6])
@@ -142,12 +142,12 @@ sns.ecdfplot(data=joined_precast, x="Regulon for GAD1", hue="smoothed_k9_1663", 
              legend=False, ax=axs[7])
 axs[7].set_title("GAD1 (PRECAST)")
 
-sns.ecdfplot(data=joined_all, x="Regulon for FAIM2", hue="seurat_label", palette=transfer_bright, 
+sns.ecdfplot(data=joined_all, x="Regulon for GRIN1", hue="seurat_label", palette=transfer_bright, 
              legend=False, ax=axs[8])
-axs[8].set_title("FAIM2 (Seurat)")
-sns.ecdfplot(data=joined_precast, x="Regulon for FAIM2", hue="smoothed_k9_1663", palette=smoothed_bright, 
+axs[8].set_title("GRIN1 (Seurat)")
+sns.ecdfplot(data=joined_precast, x="Regulon for GRIN1", hue="smoothed_k9_1663", palette=smoothed_bright, 
              legend=False, ax=axs[9])
-axs[9].set_title("FAIM2 (PRECAST)")
+axs[9].set_title("GRIN1 (PRECAST)")
 
 sns.ecdfplot(data=joined_all, x="Regulon for CAMK2N1", hue="seurat_label", palette=transfer_bright, 
              legend=False, ax=axs[10])
@@ -167,7 +167,7 @@ fig, axs = plt.subplots(4, 4, figsize=(8, 8))
 
 axs_flat = axs.flatten()
 
-for i in range(14):
+for i in range(15):
     gene1 = auc_all.columns[i]
     sns.kdeplot(data=joined_all, x=gene1, ax=axs_flat[i])
 

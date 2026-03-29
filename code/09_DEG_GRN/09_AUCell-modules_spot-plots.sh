@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=plot_spatial-AUCell_DE-input-13162_no-lowUMI_DEG-subset-refined_conditional-norm
+#SBATCH --job-name=plot_spatial-AUCell_DE-input-13162_no-lowUMI_DEG-subset-refined_swap-modules_conditional-norm
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_DEG_GRN/logs/%x_%j.log
 
 echo "**** Job starts ****"
