@@ -68,25 +68,18 @@ blist <- lapply(c("NTC","MDD","BPD"), function(x) {
 
 
 # six samples
-vistoseg.samples = c("329-B1",#need to rotate 90 twice
-  "308-D1",
-  "382-D1","382-C1",
+vistoseg.samples = c("332-A1","308-D1",
+  "023-D1","309-D1",
   "382-B1","382-A1")
 vistoseg.samples = paste0("V13B23-", gsub("-","_", vistoseg.samples))
-
+vistoseg.samples[[3]] = "V13Y10-023_D1"
 
 spe_sub = spe[,spe$sample_id %in% vistoseg.samples]
 spe_sub$cond_sex = factor(paste(spe_sub$condition, spe_sub$sex), levels=c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M"))
 table(spe_sub$cond_sex)
 spe_list <- lapply(c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M"), function(x) {
-  tmp = spe_sub[,spe_sub$cond_sex==x]
-  if(x=="NTC F") {
-    return(rotateObject(tmp, degrees = 180))
-  } else {
-    return(tmp)
-  }
+	spe_sub[,spe_sub$cond_sex==x]
 })
-
 
 plist <- lapply(spe_list, function(x) {
   p = make_escheR(x) %>%
@@ -105,3 +98,10 @@ grid.arrange(rasterize(plist[[3]], dpi=300), rasterize(plist[[4]], dpi=300),
 grid.arrange(rasterize(plist[[5]], dpi=300), rasterize(plist[[6]], dpi=300), 
              blist[[3]]+theme(legend.position="none"), layout_matrix=lmat)
 dev.off()
+
+## Reproducibility information
+print("Reproducibility information:")
+format(Sys.time(), tz="EST")
+proc.time()
+options(width = 120)
+sessionInfo()
