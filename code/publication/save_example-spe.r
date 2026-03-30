@@ -50,13 +50,14 @@ write.csv(metadata, "processed-data/publication/GEO_samples_title.csv")
 
 #subset to example samples
 example.samples = c("342-A1", "332-A1", "279-A1", "327-C1", #NTC F
-                    "382-D1", "334-A1", "279-C1", "309-C1", #MDD F
+                    "382-D1", "023-D1", "334-A1", "309-C1", #MDD F
                     "382-B1", "308-A1", "309-A1", "332-C1", #BPD F
                     "308-D1", "329-A1", "342-B1", "332-B1", #NTC M
                     "382-C1", "309-D1", "340-D1", "328-D1", #MDD M
                     "382-A1", "352-C1", "381-A1", "327-B1") #BPD M
 
 example.samples = paste0("V13B23-", gsub("-","_", example.samples))
+example.samples[[6]] = "V13Y10-023_D1"
 
 tmp = spe[,spe$sample_id %in% example.samples]
 dim(tmp) #28965 111258

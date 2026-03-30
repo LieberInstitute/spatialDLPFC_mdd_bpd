@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=50G
-#SBATCH --job-name=save_example-spe
+#SBATCH --job-name=save_example-spe_no-NPAS4-outliers
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/logs/%x_%j.log
 
 echo "**** Job starts ****"
