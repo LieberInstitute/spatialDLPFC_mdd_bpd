@@ -36,8 +36,8 @@ modules = filter(lg.mask, importance>1, rho>.2) %>%
 cat("\nNumber of interaction modules:", length(unique(modules$TF)))
 cat("\nNumber of DEGs represented in interaction modules:", length(intersect(mbv.degs, modules$target)), "\n")
 
-write.csv(modules, "processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_interaction-modules.csv", row.names=F)
-cat("\nSaved adjacency output filtered to modules to: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_interaction-modules.csv\n")
+#write.csv(modules, "processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_interaction-modules.csv", row.names=F)
+#cat("\nSaved adjacency output filtered to modules to: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_interaction-modules.csv\n")
 
 # while we're at it, filter to only DEG targets and DEG modules must have at least 10 DEGs
 modules2 = filter(modules, target %in% mbv.degs) %>% 
@@ -53,13 +53,13 @@ cat("\nNumber of unique top predictors:", length(unique(top.predictors$TF)))
 cat("\nNumber of unique top predictors that are interaction modules:", length(unique(intersect(top.predictors$TF, modules$TF))), "\n")
 
 cat("\nFind top predictor networks for MBv DEGs...\n")
-e.df = filter(top.predictors, target %in% mbv.degs, 
-              TF %in% modules$TF) %>% 
+e.df = filter(top.predictors, target %in% mbv.degs) %>% 
+#              TF %in% modules$TF) %>% 
   select(from=TF, to=target, weight=importance, rho)
 
 n.df = data.frame("node"=union(e.df$from, e.df$to),
                   "is_DEG"=union(e.df$from, e.df$to) %in% mbv.degs,
-                  "is_TF"= union(e.df$from, e.df$to) %in% e.df$from)
+                  "is_TF"= union(e.df$from, e.df$to) %in% modules$TF)
 
 e.reds = colorRampPalette(RColorBrewer::brewer.pal(n=6, "Reds"))(100)
 e.df$rho_scaled= round(scales::rescale(e.df$rho, to=c(20,100)),0)
@@ -85,11 +85,11 @@ dg <- decompose(g)
 dgl = lapply(dg, function(x) {
   set.seed(123)
   layout= layout_with_kk(x, weights=sqrt(E(x)$weight))
-  return(list("igraph"=x, "layout"=layout))
+  return(list("igraph"=x, "layout"=layout, "no_mods"=sum(V(x)$is_TF)==0))
 })
 
 #plan pdf layout
-pdf.layout = data.frame("key"=seq(length(subg$csize)), "csize"=subg$csize)
+pdf.layout = data.frame("key"=seq(length(subg$csize)), "csize"=subg$csize, "no_mods"=sapply(dgl, function(x) x$no_mods))
 pdf.layout$own_page = subg$csize>30
 
 # filter to subnetworks with >10 DEGs
