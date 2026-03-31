@@ -1,6 +1,9 @@
-library(SpatialExperiment)
-library(dplyr)
-library(ggplot2)
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
+suppressPackageStartupMessages({
+	library(SpatialExperiment)
+	library(dplyr)
+	library(ggplot2)
+})
 set.seed(123)
 
 comparisons = c("F_NTC.MDD","M_NTC.MDD",
@@ -21,21 +24,10 @@ lr.degs = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspo
 
 # genes to plot
 plot.genes = c(
-  "BCL6","HSPA1B","JUN",#WM-inflam
-  "ANP32B","NFKBIA", #supp dotplot only
-  "SLC44A1","CLDN11","MAG", #WM-myelin
-  #KCNMB4 and myelin: https://pmc.ncbi.nlm.nih.gov/articles/PMC8596180/
-  "TF","ENPP2",#supp dotplot only
-  #"SURF1","ATP6V0E2","DDIT4","SESN1",#trans/mito
-  #"UBA52","UBC","EIF5B","RPL28","RPS8","RPL29","RPS12",#supp dotplot only
-  "CEBPD","MT1X","CDKN1A","GADD45B","ANGPTL4", #BBB angio inflamm group
-  "APOLD1",
-  "MT2A","IFITM3","IFITM2","VEGFA", #suppdoplot only
-  #"BAALC-AS1", "CDKN1A",#supp dotplot only
-  "FKBP5", "C1QB","C3","CX3CR1","LAPTM5","CSF1R","HLA-DPA1", #microglia, supp dotplot only
-  "SST", "CORT", "CRH", "VGF",#InhN that are L-R too
-  "ELK1","MAPK3","DUSP6",
-  "DUSP4","RASD1") #supp dotplot only
+  "BCL6","HSPA1B","JUN","ANP32B","UBA52","TPT1","HIPK2","MTURN",
+  "CEBPD","MT1X","GADD45B",
+  "APOLD1","A2M","ABCG2","TNFSF10","RERGL","RBM3","TEF","ELK1",
+  "CORT","SST","CRH")
 
 
 #setdiff(plot.genes, mratio.sn$gene_name)
@@ -142,9 +134,16 @@ p3 <- ggplot(tmp3, aes(y=gene_name, x=prop.spots.detected))+
                         plot.margin = margin(.2,0,1.5,0,"cm"))
 
 
-gridExtra::grid.arrange(p1,p2, p3, layout_matrix=matrix(c(1,1,1,1,1,2,3), ncol=7))
+#gridExtra::grid.arrange(p1,p2, p3, layout_matrix=matrix(c(1,1,1,1,1,2,3), ncol=7))
 
 
 ggsave(file="plots/publication/Figure2/dotplot_LA-LR-DEGs.pdf",
        gridExtra::arrangeGrob(grobs=list(p1,p2, p3), layout_matrix=matrix(c(1,1,1,1,1,2,3), ncol=7)),
-       width=6, height=9)
+       width=6, height=6)
+
+## Reproducibility information
+print("Reproducibility information:")
+format(Sys.time(), tz="EST")
+proc.time()
+options(width = 120)
+sessionInfo()

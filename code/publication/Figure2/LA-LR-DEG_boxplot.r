@@ -1,7 +1,9 @@
-library(SpatialExperiment)
-library(dplyr)
-library(ggplot2)
-
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
+suppressPackageStartupMessages({
+	library(SpatialExperiment)
+	library(dplyr)
+	library(ggplot2)
+})
 set.seed(123)
 
 cpList = readRDS("plots/colorPalettes.rds")
@@ -18,7 +20,7 @@ la.degs = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots
 lr.degs = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_", results_set,
                           "_dx-sex_degs-F-test-t-test.csv"))
 
-plot.genes = c("MAG","APOLD1","SST","ELK1")
+plot.genes = c("BCL6","CEBPD","APOLD1","ELK1","SST")
 
 ## previous gene lists by themes
 #plot.genes= c("BCL6","HSPA1B","JUN") #WM-inflamm,
@@ -70,7 +72,7 @@ p3 <- p2+geom_text(data=all.df_filt2, aes(x="L3.4", y=ypos, label=key_genes),
   scale_y_continuous(position="right", expand=expansion(mult = c(.05, .1)))+
   theme(strip.text.y.left = element_blank())
 
-ggsave(file="plots/publication/Figure2/deg-boxplot_MAG-APOLD1-SST-ELK1.pdf", p3, height=4, width=3)
+ggsave(file="plots/publication/Figure2/deg-boxplot_6-genes.pdf", p3, height=6, width=3)
 
 #ggsave(file="plots/publication/Figure2/deg-boxplot_WM-inflamm.pdf", p3, height=3, width=3)
 #ggsave(file="plots/publication/Figure2/deg-boxplot_WM-myelin.pdf", p3, height=3, width=3)
@@ -79,3 +81,11 @@ ggsave(file="plots/publication/Figure2/deg-boxplot_MAG-APOLD1-SST-ELK1.pdf", p3,
 #ggsave(file="plots/publication/Figure2/deg-boxplot_BBB-inflamm.pdf", p3, height=3, width=3)
 #ggsave(file="plots/publication/Figure2/deg-boxplot_GABA-pep.pdf", p3, height=3, width=3)
 #ggsave(file="plots/publication/Figure2/deg-boxplot_MAPK.pdf", p3, height=3, width=3)
+
+
+## Reproducibility information
+print("Reproducibility information:")
+format(Sys.time(), tz="EST")
+proc.time()
+options(width = 120)
+sessionInfo()
