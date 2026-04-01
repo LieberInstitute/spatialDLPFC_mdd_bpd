@@ -73,8 +73,8 @@ for(i in spot.genes) {
   
 spe_sub = spe[,spe$sample_id=="V13B23-308_D1"]
 
-mod_subset = c("A2M","IFITM3","CD74","HSPA1A","SNHG14","MT1X","APOE",
-               "CAMK2N1","GAD1","FAIM2","PRKAR1A","UQCRH","APLP1","FTL","PLP1")
+mod_subset = c("A2M","IFITM3","CD74","HSPA1A","MT1X","SNHG14","GLUL",
+               "CAMK2N1","GAD1","GRIN1","PRKAR1A","UQCRH","APLP1","FTL","PLP1")
 
 cpList <- readRDS("plots/colorPalettes.rds")
 
@@ -91,7 +91,7 @@ plist1 <- lapply(mod_subset, function(x) {
 
 
 ggsave(file="plots/publication/Figure3/modules-DEG-subset-refined_NTC-M_spot-plots.pdf",
-       marrangeGrob(grobs=plist1, layout_matrix=rbind(1:5,6:10,11:15), top=NULL),
+       arrangeGrob(grobs=plist1, layout_matrix=rbind(1:5,6:10,11:15), top=NULL),
        height=5.5, width=9)
 
 
