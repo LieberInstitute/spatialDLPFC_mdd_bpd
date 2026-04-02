@@ -12,8 +12,8 @@ comparisons = c("F_NTC.MDD","M_NTC.MDD",
 names(comparisons) <- comparisons
 comparisons2 = comparisons[c(1,3,5,2,4,6)]
 
-la.sm = read.csv("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv")
-lr.sm = read.csv("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv")
+la.sm = read.csv("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv")
+lr.sm = read.csv("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv")
 
 is_sig = function(x) x!="NS"
 
@@ -67,15 +67,16 @@ sapply(lrList, function(x) {
 cat("\nAny L-R gene sig. in different direction in different dx*sex groups?\n")
 m1 = do.call(rbind, lapply(lrList, function(x) {
   data.frame("sex.group"=x$sex.group, "gene_name"=x$gene_name, 
-             "dir"=apply(x[,4:9], MARGIN=1, function(x) sign(unique(x[x!=0]))))
+             "dir"=apply(x[,4:11], MARGIN=1, function(x) sign(unique(x[x!=0]))))
 })) %>%
   tidyr::pivot_wider(names_from="sex.group", values_from="dir")
 check_condition = apply(m1[,2:5], MARGIN=1, function(x) length(sign(unique(x[!is.na(x)])))>1) 
 m1[check_condition,]
 cat("\n")
+do.call(rbind, lrList) %>% filter(gene_name=="CIRBP")
+cat("\n")
 do.call(rbind, lrList) %>% filter(gene_name=="RBM3")
 cat("\n")
-
 
 overlapList <- lapply(comparisons, function(i) {
   cnames = grep(paste0(i,"_ttest"), colnames(lr.sm), value=T)
@@ -115,12 +116,12 @@ overlapList <- lapply(comparisons, function(i) {
 ### i will need to do this for all comparisons
 #names(overlapList)
 #filter(overlapList[[1]], cluster!="L-A") %>% group_by(cluster) %>% add_tally() %>% filter(n<4)
-overlapList[[1]] = add_row(overlapList[[1]], comparison="F_NTC.MDD", cluster=c("L5","L5","L6","L6"),
-         dir_LA=c(0,0,0,0), dir_LR=c(-1,1,-1,1), n_DEGs=c(0,0,0,0))
+overlapList[[1]] = add_row(overlapList[[1]], comparison="F_NTC.MDD", cluster=c("L6","L6"),
+         dir_LA=c(0,0), dir_LR=c(-1,1), n_DEGs=c(0,0))
 
 overlap.df = do.call(rbind, overlapList) %>% 
   mutate(comparison=factor(comparison, levels=names(comparisons2)),
-         cluster= factor(cluster, levels=c("L-A", names(cpList$smoothed.bright))))
+         cluster= factor(cluster, levels=c("L-A", names(cpList$transfer.bright)[c(1:4,8,5:7)])))
 
 cat("\nAny gene sig. for both L-A and L-R but in different directions?\n")
 filter(overlap.df, dir_LA!=0 & dir_LR!=0, sign(dir_LA)!=sign(dir_LR))
@@ -133,10 +134,10 @@ overlap.df = mutate(overlap.df, n_models= ifelse(dir_LA!=0 & dir_LR!=0, "two mod
        n_DEGs_dir = ifelse(dir_overall=="decreased", -n_DEGs, n_DEGs))
 
 overlap.df$facets = factor(paste(overlap.df$cluster, overlap.df$n_models), levels=c("L-A one model",
-                                                paste(names(cpList$smoothed.bright), "two models"),
-                                                paste(names(cpList$smoothed.bright), "one model")),
-                     labels=c("L-A\nonly", rep("L-A & L-R\noverlap", length(cpList$smoothed.bright)),
-                              rep("L-R only", length(cpList$smoothed.bright))))
+                                                paste(names(cpList$transfer.bright)[c(1:4,8,5:7)], "two models"),
+                                                paste(names(cpList$transfer.bright)[c(1:4,8,5:7)], "one model")),
+                     labels=c("L-A\nonly", rep("L-A & L-R\noverlap", length(cpList$transfer.bright)),
+                              rep("L-R only", length(cpList$transfer.bright))))
 
 p1 <- ggplot(overlap.df, aes(x=cluster, y=n_DEGs_dir, fill=cluster))+
   geom_bar(data=filter(overlap.df, dir_overall=="decreased"), aes(group=n_models), 
@@ -144,8 +145,8 @@ p1 <- ggplot(overlap.df, aes(x=cluster, y=n_DEGs_dir, fill=cluster))+
   geom_bar(data=filter(overlap.df, dir_overall=="increased"), aes(group=n_models), 
            stat="identity", position="stack", color="black", linewidth=.3, width=.7)+
   geom_hline(aes(yintercept=0), linewidth=1)+
-  scale_y_continuous(breaks=c(-40,-20,0,20,40), limits=c(-50,50))+
-  scale_fill_manual(values=c("L-A"="grey", cpList$smoothed.bright), guide="none")+
+  scale_y_continuous(breaks=c(-60,-40,-20,0,20,40,60), limits=c(-60,60))+
+  scale_fill_manual(values=c("L-A"="grey", cpList$transfer.bright), guide="none")+
   facet_grid(cols=vars(facets), rows=vars(comparison), scales="free_x", space="free")+
   labs(y="# DEGs (directional)", x="domain")+
   theme_bw()+theme(strip.background = element_rect(fill="white", color=NA),
@@ -193,6 +194,8 @@ p2 <- ggplot(mutate(comp.df, facets="col\n1"), aes(x=query, y=reference, fill=fi
   geom_tile(color="black", linewidth=.3)+
   scale_fill_manual(values=c("white",RColorBrewer::brewer.pal(n=5,"Greys")[2:5],"black"))+
   facet_grid(rows=vars(comparison), cols=vars(facets))+
+  scale_x_discrete(labels=c("M.V","Ast","L2.3","L4","Inh","L5","L6","Olg"))+
+  scale_y_discrete(labels=c("Olg","L6","L5","Inh","L4","L2.3","Ast","M.V"))+
   labs(x="domain", fill="# lrDEGs\noverlap")+
   theme_minimal()+theme(legend.position="none", axis.title.y=element_blank(),
                         strip.background = element_rect(fill="white", color=NA),
@@ -206,7 +209,7 @@ plegend <- ggplot(comp.df, aes(x=query, y=reference, fill=fill_bin))+
   labs(x="domain", y="domain", fill="# lrDEGs\noverlap")+
   theme_minimal()
 
-pdf(file="plots/publication/Figure2/LA-LR-DEG_overlap.pdf", height=6, width=6)
+pdf(file="plots/publication/Figure3/LA-LR-DEG_seurat-pc30_overlap.pdf", height=6, width=6)
 gridExtra::grid.arrange(p1, p2, layout_matrix=matrix(c(1,1,1,2), ncol=4))
 plegend
 dev.off()
