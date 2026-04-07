@@ -19,56 +19,185 @@ get_script_path <- function() {
   sub("^--file=", "", m[[1]])
 }
 
-script_dir <- dirname(normalizePath(get_script_path()))
-repo_root <- normalizePath(file.path(script_dir, "../.."))
-
-opt <- list(
-  spe_file = file.path(repo_root, "processed-data", "06_pseudobulk", "Seurat",
-                       "spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata"),
-  geno_prefix = file.path(repo_root, "processed-data", "00_genotypes", "plink2", "merged_maf05"),
-  snp_pcs_file = file.path(repo_root, "processed-data", "00_genotypes", "plink2", "merged_maf05_pca.eigenvec"),
-  out_dir = file.path(repo_root, "processed-data", "11_eQTL_coloc", "tqtl_in"),
-  splits = "all,male,female",
-  min_samples = 20L,
-  write_spe = FALSE,
-  check_only = FALSE
-)
-
-args <- commandArgs(trailingOnly = TRUE)
-i <- 1L
-while (i <= length(args)) {
-  a <- args[[i]]
-  if (!startsWith(a, "--")) stop("Unexpected argument: ", a)
-  key <- sub("^--", "", a)
-  if (key %in% c("write-spe", "check-only")) {
-    if (key == "write-spe") opt$write_spe <- TRUE
-    if (key == "check-only") opt$check_only <- TRUE
-    i <- i + 1L
-    next
+cli_fail <- function(..., show_usage = FALSE, defaults = NULL) {
+  msg <- paste0(..., collapse = "")
+  cat("ERROR:", msg, "\n", file = stderr())
+  if (show_usage && !is.null(defaults)) {
+    cat("\n", file = stderr())
+    usage(defaults, con = stderr())
   }
-  if (i == length(args)) stop("Missing value for argument: ", a)
-  val <- args[[i + 1L]]
-  if (key == "spe-file") opt$spe_file <- val
-  else if (key == "geno-prefix") opt$geno_prefix <- val
-  else if (key == "snp-pcs-file") opt$snp_pcs_file <- val
-  else if (key == "out-dir") opt$out_dir <- val
-  else if (key == "splits") opt$splits <- val
-  else if (key == "min-samples") opt$min_samples <- as.integer(val)
-  else stop("Unknown argument: --", key)
-  i <- i + 2L
+  quit(save = "no", status = 1L)
 }
 
-if (!file.exists(opt$spe_file)) stop("Missing spe file: ", opt$spe_file)
-if (!file.exists(paste0(opt$geno_prefix, ".pgen"))) stop("Missing genotype pgen: ", opt$geno_prefix, ".pgen")
-if (!file.exists(paste0(opt$geno_prefix, ".psam"))) stop("Missing genotype psam: ", opt$geno_prefix, ".psam")
-if (!file.exists(paste0(opt$geno_prefix, ".pvar"))) stop("Missing genotype pvar: ", opt$geno_prefix, ".pvar")
-if (!file.exists(opt$snp_pcs_file)) stop("Missing SNP PCs file: ", opt$snp_pcs_file)
-if (!dir.exists(opt$out_dir) && !opt$check_only) dir.create(opt$out_dir, recursive = TRUE)
+default_options <- function(repo_root) {
+  list(
+    spe_file = file.path(repo_root, "processed-data", "06_pseudobulk", "Seurat",
+                         "spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata"),
+    geno_prefix = file.path(repo_root, "processed-data", "00_genotypes", "plink2", "merged_maf05"),
+    snp_pcs_file = file.path(repo_root, "processed-data", "00_genotypes", "plink2", "merged_maf05_pca.eigenvec"),
+    out_dir = file.path(repo_root, "processed-data", "11_eQTL_coloc", "tqtl_in"),
+    splits = "all,male,female",
+    min_samples = 20L,
+    write_spe = FALSE,
+    check_only = FALSE,
+    repo_root = repo_root
+  )
+}
 
-cat("Repo root:", repo_root, "\n")
-cat("Input SPE:", opt$spe_file, "\n")
-cat("SNP PCs:", opt$snp_pcs_file, "\n")
-cat("Output dir:", opt$out_dir, "\n")
+usage <- function(defaults, con = stdout()) {
+  cat(
+    "Usage: 01_prep_inputs.R [options]\n\n",
+    "Prepare tensorQTL BED/covariate/expression-PC inputs per seurat_label.\n",
+    "If no arguments are supplied, the built-in defaults below are used and the prep run starts immediately.\n\n",
+    "Options:\n",
+    "  -h, --help               Show this help and exit. Valid only as the sole argument.\n",
+    "      --check-only         Resolve defaults, validate inputs, build the manifest, and do not write outputs.\n",
+    "      --dry-run            Alias for --check-only.\n",
+    "      --write-spe          Also write .spe.qs2 outputs.\n",
+    "      --spe-file PATH      SpatialExperiment .Rdata input.\n",
+    "      --geno-prefix PATH   PLINK2 prefix; expects .pgen/.psam/.pvar.\n",
+    "      --snp-pcs-file PATH  SNP PCs eigenvec file.\n",
+    "      --out-dir PATH       Output directory for prepared tensorQTL inputs.\n",
+    "      --splits CSV         Comma-separated subset of: all,male,female.\n",
+    "      --min-samples INT    Minimum samples required per dataset.\n\n",
+    "Resolved defaults:\n",
+    "  repo_root:      ", defaults$repo_root, "\n",
+    "  spe_file:       ", defaults$spe_file, "\n",
+    "  geno_prefix:    ", defaults$geno_prefix, "\n",
+    "  snp_pcs_file:   ", defaults$snp_pcs_file, "\n",
+    "  out_dir:        ", defaults$out_dir, "\n",
+    "  splits:         ", defaults$splits, "\n",
+    "  min_samples:    ", defaults$min_samples, "\n",
+    "  write_spe:      ", defaults$write_spe, "\n",
+    "  check_only:     ", defaults$check_only, "\n",
+    sep = "",
+    file = con
+  )
+}
+
+parse_args <- function(args, defaults) {
+  if (length(args) == 1L && args[[1]] %in% c("-h", "--help")) {
+    return(list(mode = "help", opt = defaults))
+  }
+  if (any(args %in% c("-h", "--help"))) {
+    cli_fail("`-h`/`--help` must be provided as the sole argument.", show_usage = TRUE, defaults = defaults)
+  }
+
+  opt <- defaults
+  i <- 1L
+  while (i <= length(args)) {
+    a <- args[[i]]
+    if (!startsWith(a, "--")) cli_fail("Unexpected argument: ", a, show_usage = TRUE, defaults = defaults)
+    key <- sub("^--", "", a)
+    if (key %in% c("write-spe", "check-only", "dry-run")) {
+      if (key == "write-spe") opt$write_spe <- TRUE
+      if (key %in% c("check-only", "dry-run")) opt$check_only <- TRUE
+      i <- i + 1L
+      next
+    }
+    if (i == length(args)) cli_fail("Missing value for argument: ", a, show_usage = TRUE, defaults = defaults)
+    val <- args[[i + 1L]]
+    if (key == "spe-file") opt$spe_file <- val
+    else if (key == "geno-prefix") opt$geno_prefix <- val
+    else if (key == "snp-pcs-file") opt$snp_pcs_file <- val
+    else if (key == "out-dir") opt$out_dir <- val
+    else if (key == "splits") opt$splits <- val
+    else if (key == "min-samples") opt$min_samples <- suppressWarnings(as.integer(val))
+    else cli_fail("Unknown argument: --", key, show_usage = TRUE, defaults = defaults)
+    i <- i + 2L
+  }
+
+  if (is.na(opt$min_samples) || opt$min_samples < 1L) {
+    cli_fail("`--min-samples` must be a positive integer.", show_usage = TRUE, defaults = defaults)
+  }
+
+  list(mode = "run", opt = opt)
+}
+
+print_effective_options <- function(opt, defaults, args) {
+  if (length(args) == 0L) {
+    cat("No arguments provided; using built-in defaults and proceeding.\n")
+  } else if (opt$check_only) {
+    cat("Running in check-only mode with resolved options below.\n")
+  } else {
+    cat("Running with explicitly resolved options below.\n")
+  }
+  cat("Repo root:", defaults$repo_root, "\n")
+  cat("Input SPE:", opt$spe_file, "\n")
+  cat("Genotype prefix:", opt$geno_prefix, "\n")
+  cat("SNP PCs:", opt$snp_pcs_file, "\n")
+  cat("Output dir:", opt$out_dir, "\n")
+  cat("Splits:", opt$splits, "\n")
+  cat("Min samples:", opt$min_samples, "\n")
+  cat("Write SPE:", opt$write_spe, "\n")
+  cat("Check only:", opt$check_only, "\n")
+}
+
+validate_required_inputs <- function(opt) {
+  missing <- character()
+  staged_missing <- character()
+  snp_pcs_missing <- character()
+
+  if (!file.exists(opt$spe_file)) {
+    msg <- paste0("Missing SPE file: ", opt$spe_file)
+    missing <- c(missing, msg)
+    staged_missing <- c(staged_missing, msg)
+  }
+
+  for (ext in c(".pgen", ".psam", ".pvar")) {
+    fn <- paste0(opt$geno_prefix, ext)
+    if (!file.exists(fn)) {
+      msg <- paste0("Missing genotype file: ", fn)
+      missing <- c(missing, msg)
+      staged_missing <- c(staged_missing, msg)
+    }
+  }
+
+  if (!file.exists(opt$snp_pcs_file)) {
+    msg <- paste0("Missing SNP PCs file: ", opt$snp_pcs_file)
+    missing <- c(missing, msg)
+    snp_pcs_missing <- c(snp_pcs_missing, msg)
+  }
+
+  if (length(missing) > 0L) {
+    cat("Required inputs are missing or incomplete:\n", file = stderr())
+    for (msg in missing) {
+      cat("  - ", msg, "\n", sep = "", file = stderr())
+    }
+    if (length(staged_missing) > 0L) {
+      cat("Run ./stage_required_data.sh to stage required local inputs.\n", file = stderr())
+    }
+    if (length(snp_pcs_missing) > 0L) {
+      cat("Run ./00_get_SNP_PCs.sh to generate the SNP PCs eigenvec file.\n", file = stderr())
+    }
+    quit(save = "no", status = 1L)
+  }
+
+  if (!opt$check_only) {
+    if (!dir.exists(opt$out_dir)) {
+      ok <- dir.create(opt$out_dir, recursive = TRUE, showWarnings = FALSE)
+      if (!ok && !dir.exists(opt$out_dir)) {
+        cli_fail("Could not create output directory: ", opt$out_dir)
+      }
+    }
+    if (file.access(opt$out_dir, 2L) != 0L) {
+      cli_fail("Output directory is not writable: ", opt$out_dir)
+    }
+  }
+}
+
+script_dir <- dirname(normalizePath(get_script_path()))
+repo_root <- normalizePath(file.path(script_dir, "../.."))
+defaults <- default_options(repo_root)
+args <- commandArgs(trailingOnly = TRUE)
+parsed <- parse_args(args, defaults)
+if (parsed$mode == "help") {
+  usage(defaults)
+  quit(save = "no", status = 0L)
+}
+opt <- parsed$opt
+print_effective_options(opt, defaults, args)
+validate_required_inputs(opt)
 
 spe_env <- new.env(parent = emptyenv())
 load(opt$spe_file, envir = spe_env)
@@ -84,9 +213,9 @@ cd <- as.data.frame(colData(spe))
 if (!"seurat_label" %in% names(cd)) {
   seurat_cols <- grep("^seurat_", names(cd), value = TRUE)
   if (length(seurat_cols) == 0) stop("Missing seurat_label and no seurat_* column found")
-  cd$seurat_label <- cd[[seurat_cols[[1]]]
-  ]
+  cd$seurat_label <- cd[[seurat_cols[[1]]]]
 }
+
 cd$seurat_label <- as.factor(as.character(cd$seurat_label))
 
 if (!"brnum" %in% names(cd)) {

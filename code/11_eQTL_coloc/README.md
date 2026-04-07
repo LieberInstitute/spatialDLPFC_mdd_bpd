@@ -41,6 +41,14 @@ Prep workflow:
 2. `./00_get_SNP_PCs.sh` computes genotype PCs (`merged_maf05_pca.eigenvec`).
 3. `./01_prep_inputs.R` prepares BED/covariates/exprPC files per `seurat_label`.
 
+Direct prep entrypoint:
+
+* `Rscript ./01_prep_inputs.R` resolves the built-in defaults, prints them, and prepares outputs.
+* `Rscript ./01_prep_inputs.R --help` shows usage plus the exact resolved defaults and exits.
+* `Rscript ./01_prep_inputs.R --check-only` performs the full validation/manifest pass without writing outputs.
+* `Rscript ./01_prep_inputs.R --dry-run` is an alias for `--check-only`.
+* If staged inputs are missing, `01_prep_inputs.R` reports the missing files and advises running `./stage_required_data.sh` and/or `./00_get_SNP_PCs.sh`.
+
 Prepared dataset naming convention in `tqtl_in`:
 
 * No `seurat_` prefix
@@ -53,8 +61,8 @@ Current stratum labels are Seurat-derived (cell-type-like labels):
 
 Convenience wrappers:
 
-* `./prepare_tensorqtl_inputs.sh` runs all 3 prep steps above.
-* `./prepare_tensorqtl_inputs.sh --check-only` validates preconditions without writing outputs.
+* `./prepare_tensorqtl_inputs.sh` is deprecated but still available as a shim that runs all 3 prep steps above.
+* `./prepare_tensorqtl_inputs.sh --check-only` is deprecated but still validates preconditions without writing outputs.
 * `./02_run_tensorQTL.sh` runs `02a_tensorQTL_cis.py` across all prepared dataset IDs in `tqtl_in` (manifest-driven if available).
 
 Common run patterns:
@@ -62,3 +70,15 @@ Common run patterns:
 * `./02_run_tensorQTL.sh --dry-run` to list detected contexts
 * `./02_run_tensorQTL.sh --start-from l5_m` to resume from a context
 * `./02_run_tensorQTL.sh --only '^(l[2-6]|uvasc)(|_[mf])$'` to restrict contexts
+
+## DGE Comparison Inputs
+
+For comparison of current eQTL findings against DGE, use only the Seurat `seurat-pc30` DEG summary files from `processed-data/07_dx_DE`:
+
+* `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
+* `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
+
+These DEG summaries correspond to the same current strata used for eQTL preparation:
+`Astro`, `Inhb`, `L2.3`, `L4`, `L5`, `L6`, `Micro.Vasc`, and `Oligo`.
+
+Older DGE outputs based on other clustering schemes or spatial-domain summaries are not suitable for per-stratum comparison with the current eQTL results and should be ignored for this workflow.
