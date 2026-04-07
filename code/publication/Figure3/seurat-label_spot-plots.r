@@ -48,6 +48,40 @@ ggsave(file="plots/publication/Figure3/seurat-label_spot-plot.pdf",
        width=8, height=4)
 
 
+
+
+spe_sub$Inhb = spe_sub$seurat_pc30=="Inhb"
+p = make_escheR(spe_sub) %>%
+  add_ground(var="smoothed_k9_1663", point_size=.5, stroke=.3) %>%
+  add_fill(var="Inhb", point_size=.6)
+p1 <- p+scale_color_manual("", values=cpList$smoothed.light)+
+  scale_fill_manual("", values=c("white","black"))+
+  labs(title="Inhb")+theme(text=element_text(size=10), legend.position="none")
+
+spot.genes = c("CEBPD","APOLD1","SST")
+for(i in spot.genes) {
+  spe_sub[[i]] = logcounts(spe_sub)[rowData(spe_sub)$gene_name==i,]
+}
+
+p = make_escheR(spe_sub) %>%
+  add_ground(var="smoothed_k9_1663", point_size=.5, stroke=.3) %>%
+  add_fill(var="SST", point_size=.6)
+p2 <- p+scale_color_manual(values=c(cpList$smoothed.light), guide="none")+
+ scale_fill_gradient(low="white",high="black", guide="none")+
+ labs(title="SST")+
+ theme(text=element_text(size=10), plot.title=element_text(face="italic"))
+
+# legend
+p3 <- p+scale_color_manual(values=c(cpList$smoothed.light), guide="none")+
+ scale_fill_gradient(low="white",high="black")+
+ theme(text=element_text(size=10), plot.title=element_blank())
+
+pdf(file="plots/publication/Figure3/supp_Inhb-SST_spot-plot.pdf", width=2, height=4)
+grid.arrange(rasterize(p1, layers="Point", dpi=300), 
+	rasterize(p2, layers="Point", dpi=300), ncol=1)
+rasterize(p3, layers="Point", dpi=300)
+dev.off()
+
 ## Reproducibility information
 print("Reproducibility information:")
 format(Sys.time(), tz="EST")
