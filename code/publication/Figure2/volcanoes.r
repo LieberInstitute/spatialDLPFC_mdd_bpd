@@ -1,9 +1,11 @@
-library(SpatialExperiment)
-library(dplyr)
-library(ggplot2)
-library(gridExtra)
-library(ggrastr)
-
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
+suppressPackageStartupMessages({
+	library(SpatialExperiment)
+	library(dplyr)
+	library(ggplot2)
+	library(gridExtra)
+	library(ggrastr)
+})
 cpList <- readRDS("plots/colorPalettes.rds")
 
 comparisons = c("F_NTC.MDD","M_NTC.MDD",
@@ -68,6 +70,19 @@ ggsave(file="plots/publication/Figure2/volcanoes.pdf",
        marrangeGrob(grobs = plist, ncol=1, nrow=1, top = quote(names(plist)[g])),
        width=3, height=3)
 
+p1 <- ggplot(mutate(lat, cluster="L-A"), aes(x=logFC, y=-log10(adj.P.Val), color=is_deg))+
+  rasterize(geom_point(size=.1), dpi=300)+
+  rasterize(geom_point(data=filter(lat, is_deg==T) %>% mutate(cluster="L-A"), size=.1), dpi=300)+
+  scale_color_manual(values=c("grey","black"), guide="none")+
+  facet_grid(cols=vars(coef), rows=vars(cluster))+
+  coord_cartesian(xlim=c(-2.5,2.5))+
+  theme_minimal()+theme(panel.grid.minor=element_blank(), panel.grid.major = element_line(linewidth=.3),
+                        #aspect.ratio=1, 
+	text=element_text(size=6), strip.text.y.right=element_text(angle=0),
+                        panel.border=element_rect(fill=NA, color="grey"), axis.ticks=element_line(color="grey", linewidth=.3),
+	axis.title.x=element_blank(), plot.margin=margin(0,5.5,0,5.5,"pt"))
+
+
 p2 <- ggplot(lrt, aes(x=logFC, y=-log10(adj.P.Val), color=is_deg))+
   rasterize(geom_point(size=.1), dpi=300)+
   rasterize(geom_point(data=filter(lrt, is_deg==T), size=.1), dpi=300)+
@@ -78,6 +93,14 @@ p2 <- ggplot(lrt, aes(x=logFC, y=-log10(adj.P.Val), color=is_deg))+
                         aspect.ratio=1, text=element_text(size=6), strip.text.y.right=element_text(angle=0),
                         panel.border=element_rect(fill=NA, color="grey"), axis.ticks=element_line(color="grey", linewidth=.3))
 
-ggsave(file="plots/publication/Figure2/volcanoes_L-R-supp.pdf", 
-       p2,
-       width=6, height=6)
+lay_mat= rbind(c(1,1,1,1,1,1), matrix(2, ncol=6, nrow=6))
+ggsave(file="plots/publication/Figure2/supp_all-volcanoes.pdf", 
+       grid.arrange(p1, p2, layout_matrix=lay_mat),
+       width=6, height=7)
+
+## Reproducibility information
+print("Reproducibility information:")
+format(Sys.time(), tz="EST")
+proc.time()
+options(width = 120)
+sessionInfo()
