@@ -57,12 +57,12 @@ p1 <- ggplot(sm.df, aes(x=clusters, y=gene_name_f))+
   guides(size = guide_legend(override.aes = list(shape = 20)),
 	 shape = guide_legend(overrisde.aes = list(size=5)))+
   labs(color="Avg. expr.\n(scaled)", size="Prop. of\nspots",
-       y="common marker genes", title="Seurat PC30")+
+       y="common marker genes")+
   theme_minimal()+theme(axis.title.x=element_blank(), axis.text.x=element_text(size=7, hjust=0),
                         axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"))
 #                        axis.title.y=element_text(margin=margin(0,20,0,40,"pt")))
 
-ggsave(file="plots/publication/Figure3/supp_dlpfc-genes_seurat-pc30_dx-sex-dotplot.pdf", p1, height=8, width=7)
+ggsave(file="plots/publication/Figure3/supp_dlpfc-genes_seurat-pc30_dx-sex-dotplot.pdf", p1, height=7, width=7)
 
 
 

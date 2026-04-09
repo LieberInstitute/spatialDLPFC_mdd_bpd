@@ -13,6 +13,7 @@ set.seed(123)
 cpList <- readRDS("plots/colorPalettes.rds")
 #load in dlpfc marker genes (manually curated)
 source("code/06_pseudobulk/dlpfc_genes.r")
+dlpfc.genes = dlpfc.genes[c(1:5,9,6:8)]
 
 ##### smoothed version first #####
 
@@ -56,12 +57,12 @@ p1 <- ggplot(sm.df, aes(x=clusters, y=gene_name_f))+
   guides(size = guide_legend(override.aes = list(shape = 20)),
 	 shape = guide_legend(overrisde.aes = list(size=5)))+
   labs(color="Avg. expr.\n(scaled)", size="Prop. of\nspots",
-       y="common marker genes", title="PRECAST (smoothed)")+
+       y="common marker genes")+
   theme_minimal()+theme(axis.title.x=element_blank(), axis.text.x=element_text(size=7, hjust=0),
                         axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"))
 #                        axis.title.y=element_text(margin=margin(0,20,0,40,"pt")))
 
-ggsave(file="plots/publication/Figure1/dlpfc-genes_smoothed_dotplot.pdf", p1, height=8, width=7)
+ggsave(file="plots/publication/Figure1/dlpfc-genes_smoothed_dx-sex-dotplot.pdf", p1, height=7, width=7)
 
 
 
@@ -71,7 +72,7 @@ ggsave(file="plots/publication/Figure1/dlpfc-genes_smoothed_dotplot.pdf", p1, he
 #load in sce for heatmap and dotplots
 load("processed-data/06_pseudobulk/PRECAST/spe_n119_pseudo-dotplot_precast-n1663-k9.Rdata")
 cond_sex = c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M")
-precast_levels= c("Vasc","L1","L2","L3.4","L5","L6","WM","GABA","low UMI")
+precast_levels= c("Vasc","L1","L2","L3.4","GABA","L5","L6","WM","low UMI")
 
 sm.df = dotplotDF(spe_summ, unlist(dlpfc.genes), swap_rownames="gene_name",
                   summarize_groups=F, row_data=NULL) %>%
@@ -98,7 +99,7 @@ p2 <- ggplot(sm.df, aes(x=clusters, y=gene_name_f))+
                         axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"))
 #                        axis.title.y=element_text(margin=margin(0,20,0,40,"pt")))
 
-ggsave(file="plots/publication/Figure1/dlpfc-genes_original_dotplot.pdf", p2, height=6, width=5)
+ggsave(file="plots/publication/Figure1/supp_dlpfc-genes_original_dotplot.pdf", p2, height=6, width=3.5)
 
 
 ## Reproducibility information

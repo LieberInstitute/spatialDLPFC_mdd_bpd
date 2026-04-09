@@ -5,7 +5,7 @@ dlpfc.genes = list(#Micro.Vasc=c("ICAM2","COL1A2","CLDN5","CFH","MECOM"), #https
   #https://www.jneurosci.org/content/21/6/1983
   Astro=c("GJA1","AQP4","SLCO1C1","ETNPPL"),
   #L2=c("C1QL2","LIPC","C6orf141","TTC6","PCDH8"),
-  L2=c("C6orf141","HPCAL1","RASGRF2","DGKB","PCDH8"),
+  L2=c("HPCAL1","RASGRF2","DGKB","PCDH8"),
   #L3=c("PRAG1","GPR6","DRGX","LAMA2","COL5A2","CARTPT",),
   L3=c("COL5A2","NTNG1","GPX3"),
   #L4=c("TNNT2","GAL","VIPR2","NGB","BHLHE22","RORB"),
