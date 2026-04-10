@@ -90,7 +90,7 @@ phm1_norow = pheatmap(mtx1, fontsize=6, main="Layer-adjusted F-test ORA: Reactom
                 show_rownames = F, fontsize_col=4)
 
 fake_mtx = as.matrix(tt[,c(1,3,5,2,4,6)], row.names=tt$gene_name)
-phm1_legend = pheatmap(fake_mtx, colors=colorRampPalette(rev(RColorBrewer::brewer.pal(n=7,"RdBu")))(100),
+phm1_legend = pheatmap(fake_mtx, color=colorRampPalette(rev(RColorBrewer::brewer.pal(n=7,"RdBu")))(100),
          breaks=seq(-3,3,length=101), main="Fake mtx for legend (logFC values)")
 
 tmplr = filter(expand_genes3, model=="LR")
