@@ -37,7 +37,7 @@ lrt = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_"
 
 refined.modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules-subset-refined.csv")
 
-# plot PLP1 module
+# plot main figure modules PLP1, IFITM3, A2M
 plot.genes = c("PLP1","MAG","ENPP2","TF","CLDN11","CNDP1","SGK1","SPP1",
 		"LMNA","HSD11B1","NEAT1","PGAM2","AQP1",
 	"IFITM3","C1R","SLCO4A1","TIMP1","OSMR","APOLD1","CHI3L1","EDN1","IL1R1",
@@ -82,9 +82,9 @@ p1.1 = ggplot(tmp2, aes(y=y_lab, x=importance))+
                         plot.margin = margin(.5,.5,2,0, unit="cm"))
 
 
-# plot ITITM3 and CEBPD modules
-plot.genes = filter(refined.modules, TF=="HSPA1A") %>% arrange(desc(importance)) %>% pull(target)
-plot.genes = c("HSPA1A", plot.genes)
+# plot FTL
+plot.genes = filter(refined.modules, TF=="FTL") %>% arrange(desc(importance)) %>% pull(target)
+plot.genes = c("FTL", plot.genes)
 
 tmp = bind_rows(filter(lat, gene_name %in% plot.genes) %>%
                   mutate(adj.P.Val= ifelse(gene_name %in% la.degs$gene_name, adj.P.Val, .5)),
@@ -108,8 +108,8 @@ p2 <- ggplot(tmp, aes(x=cluster, y=plot.genes, fill=logFC, size=adj.P.Val_bin))+
                    legend.position="bottom", axis.title.y=element_blank(),
                    legend.text = element_text(size=8))
 
-tmp2 = filter(refined.modules, TF=="HSPA1A", target %in% plot.genes) %>% 
-	add_row(TF="HSPA1A", target="HSPA1A", importance=0) %>%
+tmp2 = filter(refined.modules, TF=="FTL", target %in% plot.genes) %>% 
+	add_row(TF="FTL", target="FTL", importance=0) %>%
   mutate(y_lab=factor(target, levels=rev(plot.genes)))
 
 p2.1 = ggplot(tmp2, aes(y=y_lab, x=importance))+

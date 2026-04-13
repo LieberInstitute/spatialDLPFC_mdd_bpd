@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=Fig3_dlpfc-genes
+#SBATCH --job-name=Fig3_grn-dotplot
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -19,7 +19,7 @@ module list
 
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/label-transfer_BD-validation.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/seurat-label_low-UMI-cluster.r
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/dlpfc-genes_dotplot.r
+#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/dlpfc-genes_dotplot.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/seurat-label_pca-plots.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/seurat-label_spatial-registration.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/seurat-label_spot-plots.r
@@ -30,7 +30,7 @@ Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_b
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/compare-annotations_DE-results.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/module_spot-plot.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/module_heatmaps.r
-#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/DEG-GRN_dotplot.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/DEG-GRN_dotplot.r
 
 echo "**** Job ends ****"
 date
