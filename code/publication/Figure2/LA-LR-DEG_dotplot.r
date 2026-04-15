@@ -29,7 +29,8 @@ plot.genes = c(
   "APOLD1","A2M","ABCG2","TNFSF10","RERGL","RBM3","TEF","ELK1",
   "CORT","SST","CRH")
 
-
+plot.genes = c("UBC","DYNC1I2","HSP90AA1","DYNC1LI2","UBA52",
+	"RPS4X", "RPL28", "RPL19", "RPLP2", "RPL8", "RPS12", "RPL29", "RPS8", "RPL32","CEBPB")
 #setdiff(plot.genes, mratio.sn$gene_name)
 #plot.genes = intersect(plot.genes, mratio.sn$gene_name)
 
@@ -137,7 +138,8 @@ p3 <- ggplot(tmp3, aes(y=gene_name, x=prop.spots.detected))+
 #gridExtra::grid.arrange(p1,p2, p3, layout_matrix=matrix(c(1,1,1,1,1,2,3), ncol=7))
 
 
-ggsave(file="plots/publication/Figure2/dotplot_LA-LR-DEGs.pdf",
+ggsave(file="plots/publication/Figure2/supp_dotplot_lrDEGs-Oligo-terms.pdf",
+	#file="plots/publication/Figure2/dotplot_LA-LR-DEGs.pdf",
        gridExtra::arrangeGrob(grobs=list(p1,p2, p3), layout_matrix=matrix(c(1,1,1,1,1,2,3), ncol=7)),
        width=6, height=6)
 

@@ -29,7 +29,7 @@ spe$seurat_pc30 = factor(res.pc30$predicted.id, levels=c("Micro/Vasc","Astro","L
 spe_sub = spe[,spe$sample_id=="V13B23-308_D1"]
 
 
-spot.genes = c("PLP1","ENPP2","SGK1","NEAT1")
+spot.genes = c("PLP1","ENPP2","WNK1","ANP32B","SGK1","NEAT1")
 for(i in spot.genes) {
   spe_sub[[i]] = logcounts(spe_sub)[rowData(spe_sub)$gene_name==i,]
 }
@@ -56,7 +56,7 @@ plegend <- lapply(spot.genes, function(x) {
   return(rasterize(p, layers="Point", dpi=300))
 })
 
-pdf(file="plots/publication/Figure3/supp_PLP1-mod-DEGs_spot-plot.pdf", width=4, height=4)
+pdf(file="plots/publication/Figure3/supp_PLP1-mod-DEGs_spot-plot.pdf", width=4, height=6)
 do.call(grid.arrange, c(plist, ncol=2))
 do.call(grid.arrange, c(plegend, ncol=2))
 dev.off()
