@@ -14,7 +14,7 @@ setAutoBlockSize(1e9)
 cpList = readRDS("plots/colorPalettes.rds")
 
 REGULON_TYPE = "modules-DEG-subset-refined"
-REG_KEY = "DEG-subset-refined_norm"
+REG_KEY = "DEG-subset-refined"
 
 #load aucell
 aucell = read.csv(paste0("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_", REGULON_TYPE,"_AUCell.csv"), row.names=1)
@@ -39,6 +39,9 @@ spe$smoothed_k9_1663 = factor(cdata2$smoothed_k9_1663_f, levels=c("L1","L2","L3/
 aucell = aucell[rownames(colData(spe)),]
 m1 = as.matrix(aucell[,1:(grep("seurat_label", colnames(aucell))-1)])
 
+
+plot_expr = TRUE
+if(!plot_expr) {
 #scale aucell
 ## new conditional scale functions
 find_3MAD = function(distribution) {
@@ -79,6 +82,16 @@ for(i in spot.genes) {
   spe[[i]] = m1[,i]
 }
 
+} else {
+	spot.genes = colnames(m1)
+	for(i in spot.genes) {
+		spe[[i]] = logcounts(spe)[rowData(spe)$gene_name==i,]
+	}
+
+}
+
+
+
 #create spe subsets for plotting
 #ideal samples
 #subset to example samples
@@ -101,11 +114,14 @@ lowq.samples = unique(colData(spe)[spe$slide %in% lowq.samples,"sample_id"])
 lm=matrix(seq_len(.nrow*.ncol), nrow = .nrow, ncol = .ncol, byrow = T)
 
 for(y in spot.genes) {
-  max.valr=1 #for scaled version max is set to 1
-  #max.val = max(colData(spe)[[y]])
-  #max.valr = round(max.val,1)
-  #if(max.valr<max.val) max.valr=max.valr+.1
-
+  if(!plot_expr) {
+	max.valr=1 #for scaled version max is set to 1
+  } else {
+	max.val = max(colData(spe)[[y]])
+	max.valr = round(max.val,1)
+	if(max.valr<max.val) max.valr=max.valr+.1
+  }
+  
   suppressMessages({
   plist1 <- lapply(c(example.samples, lowq.samples), function(x) {
     spe_sub = spe[,spe$sample_id==x]
@@ -120,7 +136,10 @@ for(y in spot.genes) {
   })
   })
 
-  ggsave(file=paste0("plots/09_DEG_GRN/AUCell-modules/example-samples_",gsub("_","-",y),"_AUCell-modules-13162-", REG_KEY, "_spot-plot.pdf"),
+  if(!plot_expr) file_name = paste0("plots/09_DEG_GRN/AUCell-modules/example-samples_",gsub("_","-",y),"_AUCell-modules-13162-", REG_KEY, "_spot-plot.pdf")
+  if(plot_expr) file_name = paste0("plots/09_DEG_GRN/AUCell-modules/example-samples_",gsub("_","-",y),"-expr_AUCell-modules-13162-", REG_KEY, "_spot-plot.pdf")
+
+  ggsave(file=file_name,
          marrangeGrob(grobs=plist1, layout_matrix=lm, top=paste(y, "(fill scale fixed, can compare across sections)")),
          height=12, width=9)
   cat("\nSaved", paste0(y, "...\n"))
