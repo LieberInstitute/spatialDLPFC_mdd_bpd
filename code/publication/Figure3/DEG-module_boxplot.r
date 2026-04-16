@@ -3,6 +3,7 @@ suppressPackageStartupMessages({
 	library(SpatialExperiment)
 	library(dplyr)
 	library(ggplot2)
+	library(gridExtra)
 })
 set.seed(123)
 
@@ -20,7 +21,12 @@ la.degs = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots
 lr.degs = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_", results_set,
                           "_dx-sex_degs-F-test-t-test.csv"))
 
-plot.genes = c("RPL32","RPS13","UBA52","EIF1","ATF4")
+geneList = list("PLP1"=c("ENPP2","CLDN11","ANP32B","SGK1","PGAM2"),
+	"FTL"=c("RPL32","RPS13","UBA52","EIF1","ATF4"),
+	"M.V"=c("IFITM3","SLCO4A1","APOLD1","A2M","ABCG2")
+)
+
+plist = lapply(geneList, function(plot.genes) {
 
 for (j in plot.genes) {
   colData(spe_pseudo)[[gsub("-","\\.", j)]] = logcounts(spe_pseudo)[rowData(spe_pseudo)$gene_name==j,]
@@ -60,12 +66,18 @@ all.df_filt2 = group_by(b$data[[1]], PANEL) %>% summarise(ym=max(ymax)) %>%
   mutate(key_genes= factor(all.df_filt2$key_genes, levels=levels(all.df_filt2$key_genes))) %>%
   group_by(key_genes) %>% mutate(ypos=max(ym)+.5)
 
-p3 <- p2+geom_text(data=all.df_filt2, aes(x="Inb", y=ypos, label=key_genes), 
+p3 <- p2+geom_text(data=all.df_filt2, aes(x="L4", y=ypos, label=key_genes), 
           color="grey50", size=2, fontface="italic", hjust=.5)+
   scale_y_continuous(position="right", expand=expansion(mult = c(.05, .1)))+
   theme(strip.text.y.left = element_blank())
 
-ggsave(file="plots/publication/Figure3/supp_deg-boxplot_FTL-DEGs.pdf", p3, height=6, width=3)
+return(p3)
+})
+
+ggsave(file="plots/publication/Figure3/supp_deg-boxplot_module-DEGs.pdf",
+	marrangeGrob(grobs=plist, ncol=1, nrow=1, top=quote(names(plist)[g])),
+	height=6, width=3)
+#ggsave(file="plots/publication/Figure3/supp_deg-boxplot_FTL-DEGs.pdf", p3, height=6, width=3)
 
 
 ## Reproducibility information
