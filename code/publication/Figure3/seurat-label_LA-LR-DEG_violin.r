@@ -8,11 +8,11 @@ set.seed(123)
 
 cpList = readRDS("plots/colorPalettes.rds")
 
-results_set="smoothed-k9-1663"
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+#results_set="smoothed-k9-1663"
+#load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
 
-#results_set="seurat-pc30"
-#load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+results_set="seurat-pc30"
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
 
 
 la.degs = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_", results_set,
@@ -37,11 +37,11 @@ for (j in plot.genes) {
 summ.la.df = as.data.frame(colData(spe_pseudo)[,c("condition", "sex", plot.genes)]) %>%
   tidyr::pivot_longer(all_of(plot.genes), names_to="key_genes", values_to="logcounts") %>%
   mutate(key_genes= factor(key_genes, levels=plot.genes),
-         smoothed_k9_1663="L-A")
-summ.lr.df = as.data.frame(colData(spe_pseudo)[,c("condition", "sex", "smoothed_k9_1663", plot.genes)]) %>%
+         seurat_label="L-A")
+summ.lr.df = as.data.frame(colData(spe_pseudo)[,c("condition", "sex", "seurat_label", plot.genes)]) %>%
   tidyr::pivot_longer(all_of(plot.genes), names_to="key_genes", values_to="logcounts") %>%
   mutate(key_genes= factor(key_genes, levels=plot.genes))
-all.df = bind_rows(summ.la.df, summ.lr.df) %>% mutate(cluster=factor(smoothed_k9_1663, levels=c("L-A", names(cpList$smoothed.bright))))
+all.df = bind_rows(summ.la.df, summ.lr.df) %>% mutate(cluster=factor(seurat_label, levels=c("L-A", names(cpList$transfer.bright)[c(1:4,8,5:7)])))
 
 names(plot.genes) <- plot.genes
 
@@ -58,16 +58,17 @@ all.df_filt3 = group_by(all.df_filt, condition, sex, cluster, key_genes) %>%
 
 #ceiling(all.df_filt3$logcounts) #10
 p2 <- ggplot(all.df_filt3, aes(x=cluster, y=logcounts))+
-  geom_violin(aes(fill=condition), scale="width", color="transparent", position = position_dodge(width=.8), trim=F, bounds=c(0,10))+
+  geom_violin(aes(fill=condition), scale="width", color="transparent", position = position_dodge(width=.8), trim=F, bounds=c(0,11))+
   scale_fill_manual(values=cpList$dx.pal, guide="none")+
   facet_grid(cols=vars(sex), rows=vars(key_genes), switch="y",
              labeller= as_labeller(c("F"="Female","M"="Male", plot.genes)))+
-  geom_text(data=filter(all.df_filt2, cluster=="L3.4"), aes(x=cluster, y=1, label=key_genes), 
+  geom_text(data=filter(all.df_filt2, cluster=="L4"), aes(x=cluster, y=1, label=key_genes), 
           color="grey50", size=2, fontface="italic", hjust=.5)+
   geom_crossbar(data=all.df_filt2, aes(color=condition, y=ypos, ymax=ypos+yse, ymin=ypos-yse), 
 	position = position_dodge(width=.8), linewidth=.3)+
   scale_color_manual(values=c("black","black","black"), guide="none")+
-  scale_y_continuous(position="right", breaks=c(0,2,4,6,8,10))+coord_cartesian(ylim=c(0,10))+
+  scale_y_continuous(position="right", breaks=c(0,2,4,6,8,10))+coord_cartesian(ylim=c(0,11))+
+  scale_x_discrete(labels=c("LA","MV","Ast","L2.3","L4","Inb","L5","L6","Olg"))+
   theme_bw()+theme(strip.background = element_rect(fill="transparent", color="transparent"),
                    text=element_text(size=8), axis.text=element_text(size=6),
                    axis.title.x=element_blank(), axis.title.y=element_blank(),
@@ -75,7 +76,7 @@ p2 <- ggplot(all.df_filt3, aes(x=cluster, y=logcounts))+
                    panel.grid.minor=element_blank(), panel.grid.major=element_line(linewidth=.2))
 
 
-ggsave(file="plots/publication/Figure2/deg-violin_5-genes.pdf", p2, height=5.5, width=3)
+ggsave(file="plots/publication/Figure3/supp_deg-violin_5-genes.pdf", p2, height=5.5, width=3)
 
 #ggsave(file="plots/publication/Figure2/deg-boxplot_WM-inflamm.pdf", p3, height=3, width=3)
 #ggsave(file="plots/publication/Figure2/deg-boxplot_WM-myelin.pdf", p3, height=3, width=3)
