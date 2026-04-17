@@ -76,7 +76,7 @@ p2 <- ggplot(all.df_filt3, aes(x=cluster, y=logcounts))+
                    panel.grid.minor=element_blank(), panel.grid.major=element_line(linewidth=.2))
 
 
-ggsave(file="plots/publication/Figure3/supp_deg-violin_5-genes.pdf", p2, height=5.5, width=3)
+ggsave(file="plots/publication/Figure3/LA-LR-DEG_seurat-pc30_deg-violin_5-genes.pdf", p2, height=5.5, width=3)
 
 #ggsave(file="plots/publication/Figure2/deg-boxplot_WM-inflamm.pdf", p3, height=3, width=3)
 #ggsave(file="plots/publication/Figure2/deg-boxplot_WM-myelin.pdf", p3, height=3, width=3)

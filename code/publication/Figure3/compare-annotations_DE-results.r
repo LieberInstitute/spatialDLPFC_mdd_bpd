@@ -179,7 +179,7 @@ p4 <- ggplot(df2, aes(x=PRECAST, y=clusters, fill=pearson_r))+
 
 lay_mat= rbind(c(1,2,2), c(1,2,2))
 
-pdf(file="plots/publication/Figure3/supp_compare-annotation_DE-results.pdf", height=4, width=6)
+pdf(file="plots/publication/Figure3/seurat-label_compare-annotation_DE-results.pdf", height=4, width=6)
 grid.arrange(p1, p2, layout_matrix=lay_mat)
 grid.arrange(p3, p4+theme(legend.position="none"), layout_matrix=lay_mat)
 p4 #for legend

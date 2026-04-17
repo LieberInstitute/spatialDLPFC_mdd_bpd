@@ -85,7 +85,7 @@ p0 <- ggplot(cor.df, aes(x=clusters, y=seurat, fill=pearson_r))+
                         axis.ticks = element_line(color="grey50", linewidth=.3), axis.text.y=element_text(color="black"),
                         axis.text.x= element_text(angle=90, hjust=1, vjust=.5, size=6, color="black"))
 
-ggsave(file="plots/publication/Figure3/supp_spatial-registration_seurat-MBv-markers-only.pdf",
+ggsave(file="plots/publication/Figure3/seurat-label_spatial-registration_seurat-MBv-markers-only.pdf",
        p0,
        width=3, height=2)
 

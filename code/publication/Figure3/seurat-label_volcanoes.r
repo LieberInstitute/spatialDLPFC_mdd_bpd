@@ -98,7 +98,7 @@ p2 <- ggplot(lrt, aes(x=logFC, y=-log10(adj.P.Val), color=is_deg))+
                         panel.border=element_rect(fill=NA, color="grey"), axis.ticks=element_line(color="grey", linewidth=.3))
 
 lay_mat= rbind(c(1,1,1,1,1,1), matrix(2, ncol=6, nrow=8))
-ggsave(file="plots/publication/Figure3/supp_seurat-pc30_all-volcanoes.pdf", 
+ggsave(file="plots/publication/Figure3/seurat-label_all-volcanoes.pdf", 
        grid.arrange(p1, p2, layout_matrix=lay_mat),
        width=6, height=9)
 

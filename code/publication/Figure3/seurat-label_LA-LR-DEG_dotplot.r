@@ -141,7 +141,7 @@ p3 <- ggplot(tmp3, aes(y=gene_name, x=prop.spots.detected))+
 #gridExtra::grid.arrange(p1,p2, p3, layout_matrix=matrix(c(1,1,1,1,1,2,3), ncol=7))
 
 
-ggsave(file="plots/publication/Figure3/dotplot_seurat-pc30_LA-LR-DEGs.pdf",
+ggsave(file="plots/publication/Figure3/LA-LR-DEG_seurat-pc30_dotplot.pdf",
        p1, #gridExtra::arrangeGrob(grobs=list(p1,p2, p3), layout_matrix=matrix(c(1,1,1,1,1,2,3), ncol=7)),
        width=6, height=6)
 

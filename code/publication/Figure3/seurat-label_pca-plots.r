@@ -33,7 +33,7 @@ b2 = ggplot_build(p2)
 b2$data[[1]]$size = .5
 b2$data[[1]]$fill = NA
 
-ggsave(file="plots/publication/Figure3/supp_PC1-PC2_UMAP.pdf",
+ggsave(file="plots/publication/Figure3/seurat-label_PC1-PC2_UMAP.pdf",
        grid.arrange(ggplot_gtable(b1), ggplot_gtable(b2), ncol=1),
        width=3, height=4)
 
@@ -65,7 +65,7 @@ p4 <- ggplot(as.data.frame(colData(spe_pseudo)),
   theme_minimal()+theme(panel.grid.minor=element_blank(), panel.grid.major.x=element_blank())
 
 
-ggsave(file="plots/publication/Figure3/supp_seurat-pseudobulk.pdf", 
+ggsave(file="plots/publication/Figure3/seurat-label_pseudobulk-qc_violin.pdf", 
 	grid.arrange(p4, p3, ncol=1), height=5, width=5)
 
 
@@ -122,7 +122,7 @@ p3 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", npcs_to_plot=10, variabl
         labs(subtitle="Donor variables", y="% PC variance explained")+
         theme(legend.position="bottom")
 
-ggsave(file="plots/publication/Figure3/supp_seurat-label_pca-variance-explained.pdf",
+ggsave(file="plots/publication/Figure3/seurat-label_pca-variance-explained.pdf",
         grid.arrange(p2, p1, p3, ncol=3), height=2.5, width=8)
 
 

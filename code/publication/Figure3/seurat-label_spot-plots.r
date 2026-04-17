@@ -76,7 +76,7 @@ p3 <- p+scale_color_manual(values=c(cpList$smoothed.light), guide="none")+
  scale_fill_gradient(low="white",high="black")+
  theme(text=element_text(size=10), plot.title=element_blank())
 
-pdf(file="plots/publication/Figure3/supp_Inhb-SST_spot-plot.pdf", width=2, height=4)
+pdf(file="plots/publication/Figure3/seurat-label_Inhb-SST_spot-plot.pdf", width=2, height=4)
 grid.arrange(rasterize(p1, layers="Point", dpi=300), 
 	rasterize(p2, layers="Point", dpi=300), ncol=1)
 rasterize(p3, layers="Point", dpi=300)

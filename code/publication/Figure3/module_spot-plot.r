@@ -90,7 +90,7 @@ plist1 <- lapply(mod_subset, function(x) {
 })
 
 
-ggsave(file="plots/publication/Figure3/modules-DEG-subset-refined_NTC-M_spot-plots.pdf",
+ggsave(file="plots/publication/Figure3/module_NTC-M_spot-plots.pdf",
        arrangeGrob(grobs=plist1, layout_matrix=rbind(1:5,6:10,11:15), top=NULL),
        height=5.5, width=9)
 

@@ -56,7 +56,7 @@ plegend <- lapply(spot.genes, function(x) {
   return(rasterize(p, layers="Point", dpi=300))
 })
 
-pdf(file="plots/publication/Figure3/supp_Vasc-mod-DEGs_spot-plot.pdf", width=4, height=8)
+pdf(file="plots/publication/Figure3/module-DEGs_Vasc_spot-plot.pdf", width=4, height=8)
 do.call(grid.arrange, c(plist, ncol=2))
 do.call(grid.arrange, c(plegend, ncol=2))
 dev.off()

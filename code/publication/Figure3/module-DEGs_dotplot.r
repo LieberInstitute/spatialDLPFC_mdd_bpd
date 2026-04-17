@@ -94,7 +94,7 @@ p1.1 = ggplot(tmp2, aes(y=y_lab, x=importance))+
                         plot.margin = margin(.5,.5,2,0, unit="cm"))
 
 
-ggsave(file="plots/publication/Figure3/dotplot_DEG-GRNs_PLP1.pdf",
+ggsave(file="plots/publication/Figure3/module-DEGs_dotplot_PLP1.pdf",
        arrangeGrob(grobs=list(p1, p1.1), layout_matrix=matrix(c(1,1,1,1,1,1,2), ncol=7), top=NULL),
        width=6, height=4.5)
 
@@ -158,7 +158,7 @@ p2.1 = ggplot(tmp2, aes(y=y_lab, x=importance))+
                         panel.grid.minor=element_blank(), panel.grid.major.y=element_blank(),
                         plot.margin = margin(.5,.5,2,0, unit="cm"))
 
-ggsave(file="plots/publication/Figure3/dotplot_DEG-GRNs_IFITM3-A2M.pdf",
+ggsave(file="plots/publication/Figure3/module-DEGs_dotplot_IFITM3-A2M.pdf",
        arrangeGrob(grobs=list(p2, p2.1), layout_matrix=matrix(c(1,1,1,1,1,1,2), ncol=7), top=NULL),
        width=6, height=4.5)
 
@@ -201,7 +201,7 @@ p3.1 = ggplot(tmp2, aes(y=y_lab, x=importance))+
                         panel.grid.minor=element_blank(), panel.grid.major.y=element_blank(),
                         plot.margin = margin(.5,.5,2,0, unit="cm"))
 
-ggsave(file="plots/publication/Figure3/supp_dotplot_DEG-GRNs_CD74.pdf",
+ggsave(file="plots/publication/Figure3/module-DEGs_dotplot_CD74.pdf",
        marrangeGrob(grobs=list(p3, p3.1), layout_matrix=matrix(c(1,1,1,1,1,1,2), ncol=7)),
        width=6, height=7)
 

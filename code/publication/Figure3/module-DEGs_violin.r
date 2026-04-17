@@ -78,7 +78,7 @@ plist = lapply(geneList, function(plot.genes) {
   return(p2)
 })
 
-ggsave(file="plots/publication/Figure3/supp_deg-violin_module-DEGs.pdf",
+ggsave(file="plots/publication/Figure3/module-DEGs_violin.pdf",
        marrangeGrob(grobs=plist, ncol=1, nrow=1, top=quote(names(plist)[g])),
        height=5.5, width=3)
 #ggsave(file="plots/publication/Figure3/supp_deg-boxplot_FTL-DEGs.pdf", p3, height=6, width=3)

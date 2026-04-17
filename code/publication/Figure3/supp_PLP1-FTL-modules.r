@@ -47,7 +47,7 @@ p2 <- ggplot(filter(aucell_long, module %in% c("PLP1","FTL","APLP1"), smoothed!=
   scale_fill_manual(values=cpList$smoothed.bright, guide="none")+
   theme_minimal()+theme(axis.text.x=element_text(size=8))
 
-ggsave(file="plots/publication/Figure3/supp_Oligo-modules_violin.pdf",
+ggsave(file="plots/publication/Figure3/supp_Oligo-modules-AUCell_violin.pdf",
 	grid.arrange(p1, p2, ncol=1),
 	width=6, height=4)
 # PLP1 module shown on volcanoes

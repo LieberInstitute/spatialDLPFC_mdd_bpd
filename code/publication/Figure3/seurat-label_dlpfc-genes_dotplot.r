@@ -62,7 +62,7 @@ p1 <- ggplot(sm.df, aes(x=clusters, y=gene_name_f))+
                         axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"))
 #                        axis.title.y=element_text(margin=margin(0,20,0,40,"pt")))
 
-ggsave(file="plots/publication/Figure3/supp_dlpfc-genes_seurat-pc30_dx-sex-dotplot.pdf", p1, height=7, width=7)
+ggsave(file="plots/publication/Figure3/seurat-label_dlpfc-genes_dx-sex-dotplot.pdf", p1, height=7, width=7)
 
 
 
@@ -94,7 +94,7 @@ p2 <- ggplot(sm.df, aes(x=clusters, y=gene_name_f))+
                         axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"))
 #                        axis.title.y=element_text(margin=margin(0,20,0,40,"pt")))
 
-ggsave(file="plots/publication/Figure3/supp_dlpfc-genes_seurat-pc30_dotplot.pdf", p2, height=6, width=3.5)
+ggsave(file="plots/publication/Figure3/seurat-label_dlpfc-genes_dotplot.pdf", p2, height=6, width=3.5)
 
 
 # also plot for snRNAseq CTR
@@ -126,7 +126,7 @@ p3 <- ggplot(sm.df, aes(x=clusters, y=gene_name_f))+
   theme_minimal()+theme(axis.title.x=element_blank(), axis.text.x=element_text(size=7),
                         axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"))
 
-ggsave(file="plots/publication/Figure3/supp_dlpfc-genes_SZBDMultiseq-control_dotplot.pdf", p3, height=6, width=3.5)
+ggsave(file="plots/publication/Figure3/label-transfer_dlpfc-genes_SZBDMultiseq-control_dotplot.pdf", p3, height=6, width=3.5)
 
 ## Reproducibility information
 print("Reproducibility information:")

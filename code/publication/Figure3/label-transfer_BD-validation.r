@@ -55,7 +55,7 @@ phm2 = pheatmap(pred2[order1,paste0("prediction.score.",c("Oligo","Astro","Micro
 	cluster_col=F, cluster_rows=F, angle_col=90, fontsize=7,
 	main=paste("BD snRNA-seq transfer Rand index:", round(rand2,4)))
 
-pdf(file="plots/publication/Figure3/supp_BD-transfer-validation.pdf", height=4, width=4)
+pdf(file="plots/publication/Figure3/module_BD-transfer-validation.pdf", height=4, width=4)
 plot(phm1[[4]])
 plot(phm2[[4]])
 dev.off()
