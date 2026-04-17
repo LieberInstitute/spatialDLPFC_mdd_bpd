@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=Fig3_LA-LR-DEG_violin
+#SBATCH --job-name=Fig3_module-DEG-dotplot
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -26,13 +26,12 @@ module list
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/seurat-label_volcanoes.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/seurat-label_LA-LR-DEG_overlap.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/seurat-label_LA-LR-DEG_dotplot.r
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/seurat-label_LA-LR-DEG_violin.r
+#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/seurat-label_LA-LR-DEG_violin.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/compare-annotations_DE-results.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/module_spot-plot.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/module_heatmaps.r
-#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/module-DEGs_dotplot.r
-#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/modules-DEG_spot-plots.r
-#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/module-DEGs_violin.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/module-DEGs_dotplot.r
+#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/module-DEGs_spot-plots-and-violins.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/Figure3/supp_PLP1-FTL-modules.r
 
 echo "**** Job ends ****"
