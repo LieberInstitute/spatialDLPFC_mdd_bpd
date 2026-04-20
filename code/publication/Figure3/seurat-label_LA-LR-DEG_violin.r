@@ -20,15 +20,8 @@ la.degs = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots
 lr.degs = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_", results_set,
                           "_dx-sex_degs-F-test-t-test.csv"))
 
-plot.genes = c("BCL6","CEBPD","APOLD1","ELK1","SST")
-
-## previous gene lists by themes
-#plot.genes= c("BCL6","HSPA1B","JUN") #WM-inflamm,
-#plot.genes= c("CLDN11","MAG","SLC44A1") #WM-myelin
-#plot.genes = c("UBA52","EIF5B","RPS8") #
-#plot.genes= c("CEBPD","GADD45B","ANGPTL4") #BBB angio inflamm group
-#plot.genes= c("SST", "CORT", "CRH") #InhN that are L-R too
-#plot.genes= c("ELK1","DUSP6","RASD1") #MAPK
+#plot.genes = c("BCL6","CEBPD","APOLD1","ELK1","SST")
+plot.genes = c("CX3CR1","C3","SELPLG","RGS1","C1QB")
 
 for (j in plot.genes) {
   colData(spe_pseudo)[[gsub("-","\\.", j)]] = logcounts(spe_pseudo)[rowData(spe_pseudo)$gene_name==j,]
@@ -62,7 +55,7 @@ p2 <- ggplot(all.df_filt3, aes(x=cluster, y=logcounts))+
   scale_fill_manual(values=cpList$dx.pal, guide="none")+
   facet_grid(cols=vars(sex), rows=vars(key_genes), switch="y",
              labeller= as_labeller(c("F"="Female","M"="Male", plot.genes)))+
-  geom_text(data=filter(all.df_filt2, cluster=="L4"), aes(x=cluster, y=1, label=key_genes), 
+  geom_text(data=filter(all.df_filt2, cluster=="L4"), aes(x=cluster, y=10, label=key_genes), 
           color="grey50", size=2, fontface="italic", hjust=.5)+
   geom_crossbar(data=all.df_filt2, aes(color=condition, y=ypos, ymax=ypos+yse, ymin=ypos-yse), 
 	position = position_dodge(width=.8), linewidth=.3)+
@@ -76,16 +69,8 @@ p2 <- ggplot(all.df_filt3, aes(x=cluster, y=logcounts))+
                    panel.grid.minor=element_blank(), panel.grid.major=element_line(linewidth=.2))
 
 
-ggsave(file="plots/publication/Figure3/LA-LR-DEG_seurat-pc30_deg-violin_5-genes.pdf", p2, height=5.5, width=3)
-
-#ggsave(file="plots/publication/Figure2/deg-boxplot_WM-inflamm.pdf", p3, height=3, width=3)
-#ggsave(file="plots/publication/Figure2/deg-boxplot_WM-myelin.pdf", p3, height=3, width=3)
-#ggsave(file="plots/publication/Figure2/deg-boxplot_WM-ribo.pdf", p3, height=3, width=3)
-#ggsave(file="plots/publication/Figure2/deg-boxplot_transl-starv.pdf", p3, height=3, width=3)
-#ggsave(file="plots/publication/Figure2/deg-boxplot_BBB-inflamm.pdf", p3, height=3, width=3)
-#ggsave(file="plots/publication/Figure2/deg-boxplot_GABA-pep.pdf", p3, height=3, width=3)
-#ggsave(file="plots/publication/Figure2/deg-boxplot_MAPK.pdf", p3, height=3, width=3)
-
+#ggsave(file="plots/publication/Figure3/LA-LR-DEG_seurat-pc30_deg-violin_5-genes.pdf", p2, height=5.5, width=3)
+ggsave(file="plots/publication/Figure3/LA-LR-DEG_seurat-pc30_deg-violin_immune.pdf", p2, height=5.5, width=3)
 
 ## Reproducibility information
 print("Reproducibility information:")
