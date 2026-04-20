@@ -73,12 +73,25 @@ Common run patterns:
 
 ## DGE Comparison Inputs
 
-For comparison of current eQTL findings against DGE, use only the Seurat `seurat-pc30` DEG summary files from `processed-data/07_dx_DE`:
+Use the final DEG summary CSVs as the source of significance, with DEG status defined by the F-test BH-adjusted p-value (`adj.P.Val < 0.05`) from the summary files. Do not add a global `n_ttest_sig > 0` filter.
 
+Global DEG support for this project comes from the union of all four author-recommended DEG summaries in `processed-data/07_dx_DE`:
+
+* `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
+* `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
 * `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
 * `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
 
-These DEG summaries correspond to the same current strata used for eQTL preparation:
+The author-provided union list at `raw-data/SCENIC_aux/tf_lists/MBv_PRECAST-Seurat_F-test-adjp-05.txt` is useful as a validation artifact for the reconstructed four-file union by `gene_name`.
+
+Per-context eQTL overlap remains anchored to the current Seurat strata:
 `Astro`, `Inhb`, `L2.3`, `L4`, `L5`, `L6`, `Micro.Vasc`, and `Oligo`.
 
-Older DGE outputs based on other clustering schemes or spatial-domain summaries are not suitable for per-stratum comparison with the current eQTL results and should be ignored for this workflow.
+Per-context DEG sets should be defined as:
+
+* all Seurat `layer-adjusted` F-test-significant genes, plus
+* Seurat `layer-restricted` F-test-significant genes localized to that context via `n_ttest_sig_<context> > 0`
+
+This keeps PRECAST/domain DEG support global while avoiding a forced one-to-one mapping from PRECAST domains onto the 8 Seurat contexts used by the current eQTL workflow.
+
+Use `gene_id` as the primary overlap key against tensorQTL phenotypes. Keep `gene_name` for reporting and validation against the author text list.
