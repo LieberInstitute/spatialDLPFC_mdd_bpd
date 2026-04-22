@@ -64,8 +64,32 @@ p1 <- ggplot(sm.df, aes(x=clusters, y=gene_name_f))+
 
 ggsave(file="plots/publication/Figure1/dlpfc-genes_smoothed_dx-sex-dotplot.pdf", p1, height=7, width=7)
 
+#version not by dx*sex
+sm.df = dotplotDF(spe_summ, unlist(dlpfc.genes), swap_rownames="gene_name",
+                  summarize_groups=T, cluster_labels="smoothed_k9_1663", row_data=NULL) %>%
+  mutate(gene_name_f=factor(gene_name, levels=rev(unlist(dlpfc.genes))),
+         clusters=factor(clusters, levels=precast_levels))
 
+c1 = unlist(lapply(names(dlpfc.genes), function(x) rep(x, length.out=length(dlpfc.genes[[x]]))))
+sm.df2 = mutate(sm.df, fill_color = factor(gene_name, levels=unlist(dlpfc.genes), labels=c1))
 
+p2 <- ggplot(sm.df, aes(x=clusters, y=gene_name_f))+
+  geom_tile(data=sm.df2, aes(fill=fill_color), alpha=.5)+
+  scale_fill_manual(values=cpList$low.res.light, guide="none")+
+  geom_count(aes(color=mean_expr_scaled, size=prop_spots))+
+  #scale_shape_manual(values=c(20,18))+
+  scale_color_gradient(low="white", high="black")+
+  #scale_x_discrete(labels=xlbs)+
+  scale_size(range=c(1,5), limits=c(0,1), breaks=c(0,.5,1))+
+  guides(size = guide_legend(override.aes = list(shape = 20)),
+         shape = guide_legend(overrisde.aes = list(size=5)))+
+  labs(color="Avg. expr.\n(scaled)", size="Prop. of\nspots",
+       y="common marker genes")+
+  theme_minimal()+theme(axis.title.x=element_blank(), axis.text.x=element_text(size=7),
+                        axis.text.y=element_text(face="italic"), legend.key.size=unit(15,"pt"))
+#                        axis.title.y=element_text(margin=margin(0,20,0,40,"pt")))
+
+ggsave(file="plots/publication/Figure1/dlpfc-genes_smoothed_dotplot.pdf", p2, height=6, width=3.2)
 
 ##### now unsmoothed version #####
 
