@@ -25,7 +25,7 @@ spots.df = group_by(cdata, smoothed_k9_1663_f, seurat_label) %>%
 p <- ggplot(spots.df,  aes(x=seurat_label, y=smoothed_k9_1663_f, size=n, color=avg.score))+
   geom_count()+
   scale_color_gradientn("Avg. Seurat\nprediction\nscore",
-                        colors=RColorBrewer::brewer.pal(n=5, "Purples"),
+                        colors=c("white",RColorBrewer::brewer.pal(n=5, "Greys")),
                         limits=c(0,1))+
   scale_size("# spots", range=c(0,6), breaks=c(10,30,50)*1000,
              labels=function(x) paste0(x/1000,"k"))+
