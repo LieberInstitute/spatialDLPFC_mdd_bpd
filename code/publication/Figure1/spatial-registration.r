@@ -40,7 +40,7 @@ top.t = getTopGenes(t_sm, top_n=100)
 length(top.t) #592
 
 orderList <- list("spatialDLPFC"=c("Mng","L1","L2","L3","L4","L5","L6","WM.1","WM.2"),
-                  "SZBDMulti-seq"=c("Micro.Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"),
+                  "SZBDMulti-seq"=c("Micro.Vasc","Astro","L2","L3","L4","Inhb","L5","L6","Oligo"),
                   "PRECAST (smoothed)"=c("L1","L2","L3.4","L5","L6","WM"))
 
 
@@ -51,7 +51,7 @@ cor.res = cor(t_sn[both.genes0,],t_sm[both.genes0,])
 cor.df0 = tibble::rownames_to_column(as.data.frame(cor.res), var="clusters") %>%
   tidyr::pivot_longer(all_of(colnames(cor.res)), names_to="PRECAST", 
                       values_to="pearson_r")
-cor.df0 = mutate(cor.df0, clusters=factor(clusters, levels=orderList[["SZBDMulti-seq"]], labels=c("M.V","Astro","L2","L3","L4","L5","L6","Oligo","Inhb")),
+cor.df0 = mutate(cor.df0, clusters=factor(clusters, levels=orderList[["SZBDMulti-seq"]], labels=c("M.V","Astro","L2","L3","L4","Inhb","L5","L6","Oligo")),
                  compare_to="SZBDMulti-seq")
 
 
@@ -67,7 +67,7 @@ cor.df1 = mutate(cor.df1, clusters=factor(clusters, levels=orderList[["spatialDL
 
 
 cor.df = bind_rows(cor.df0, cor.df1) %>%
-  mutate(clusters= factor(clusters, levels=c("Mng","M.V","L1","Astro","L2","L3","L4","L5","L6","Oligo","WM.1","WM.2","Inhb")),
+  mutate(clusters= factor(clusters, levels=c("Mng","M.V","L1","Astro","L2","L3","L4","Inhb","L5","L6","Oligo","WM.1","WM.2")),
          PRECAST= factor(PRECAST, levels=rev(orderList[["PRECAST (smoothed)"]])),
          compare_to= factor(compare_to, levels=c("spatialDLPFC","SZBDMulti-seq")))
 
@@ -89,3 +89,9 @@ ggsave(file="plots/publication/Figure1/spatial-registration_MBv-markers-only.pdf
        p0,
        width=3, height=2)
 
+
+cat("\n\nReproducibility information:\n")
+format(Sys.time())
+proc.time()
+options(width = 120)
+sessionInfo()
