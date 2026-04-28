@@ -51,6 +51,12 @@ sub_rows = sample(1:nrow(df4), size=.8*nrow(df4))
 
 df4 = mutate(df4[sub_rows,], CRH= CRH-.9)
 
+# remove "all" and replace will re-aggregate
+df4 = filter(df4, cluster2!="all")
+df4 = bind_rows(df4, 
+	mutate(df4, cluster2=factor("all", levels=c("all","c1","c2","c3")))
+)
+
 #just use this one
 p1 <- ggplot(df4, aes(x=condition, y=CRH, shape=cluster))+
   ggbeeswarm::geom_quasirandom(size=2)+
