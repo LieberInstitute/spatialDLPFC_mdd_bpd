@@ -1,0 +1,235 @@
+---
+title: "Independent eQTL and DEG overlap summary"
+output: html_notebook
+---
+
+```{r setup}
+suppressPackageStartupMessages({
+  library(data.table)
+  library(here)
+})
+
+here::i_am("code/11_eQTL_coloc/example_scripts/04_eqtl_explore.Rmd")
+
+repo_root <- here()
+tqtl_in_dir <- here("processed-data", "11_eQTL_coloc", "tqtl_in")
+tqtl_out_dir <- here("processed-data", "11_eQTL_coloc", "tqtl_out")
+summary_dir <- file.path(tqtl_out_dir, "summary")
+dir.create(summary_dir, recursive = TRUE, showWarnings = FALSE)
+```
+
+```{r load-manifest-and-degs}
+manifest_file <- file.path(tqtl_in_dir, "prep_manifest.csv")
+stopifnot(file.exists(manifest_file))
+
+manifest <- fread(manifest_file)
+manifest <- manifest[status == "prepared", .(dataset_id, context = seurat_label, split)]
+manifest[, split := fifelse(split == "male", "male",
+                     fifelse(split == "female", "female", "all"))]
+
+deg_env <- new.env(parent = globalenv())
+source(here("code", "11_eQTL_coloc", "03_load_DEG_results.R"), local = deg_env, chdir = FALSE)
+
+context_order <- names(deg_env$SEURAT_CONTEXT_TO_DATASET_ID)
+split_order <- c("all", "male", "female")
+
+stopifnot(length(unique(manifest$dataset_id)) == nrow(manifest))
+stopifnot(all(manifest$dataset_id %in% names(deg_env$deg_by_dataset_id)))
+
+manifest <- manifest[order(match(split, split_order), match(context, context_order))]
+manifest
+```
+
+```{r helpers}
+required_indep_cols <- c("phenotype_id", "variant_id", "rank")
+
+read_map_independent <- function(dataset_id) {
+  rel_path <- file.path("processed-data", "11_eQTL_coloc", "tqtl_out",
+                        paste0(dataset_id, ".gene.map_independent.txt.gz"))
+  abs_path <- file.path(repo_root, rel_path)
+
+  if (!file.exists(abs_path)) {
+    return(list(
+      status = "missing_map_independent",
+      rel_path = NA_character_,
+      dt = NULL
+    ))
+  }
+
+  dt <- fread(abs_path)
+  missing_cols <- setdiff(required_indep_cols, names(dt))
+  if (length(missing_cols) > 0) {
+    stop(
+      "Missing required columns in ", rel_path, ": ",
+      paste(missing_cols, collapse = ", ")
+    )
+  }
+
+  list(
+    status = "ok",
+    rel_path = rel_path,
+    dt = dt
+  )
+}
+
+collapse_egenes <- function(dt) {
+  unique(dt[, .(gene_id = phenotype_id)])
+}
+
+collapse_gene_list <- function(x) {
+  x <- sort(unique(x[!is.na(x) & nzchar(x)]))
+  if (length(x) == 0) "" else paste(x, collapse = ", ")
+}
+
+summarize_dataset_counts <- function(dataset_id, context, split, file_info) {
+  if (identical(file_info$status, "missing_map_independent")) {
+    return(data.table(
+      dataset_id = dataset_id,
+      context = context,
+      split = split,
+      status = file_info$status,
+      map_independent_file = NA_character_,
+      n_independent_signals = NA_integer_,
+      n_eGenes = NA_integer_,
+      max_rank = NA_integer_,
+      lead_variant_count = NA_integer_
+    ))
+  }
+
+  dt <- file_info$dt
+  data.table(
+    dataset_id = dataset_id,
+    context = context,
+    split = split,
+    status = file_info$status,
+    map_independent_file = file_info$rel_path,
+    n_independent_signals = nrow(dt),
+    n_eGenes = uniqueN(dt$phenotype_id),
+    max_rank = as.integer(max(dt$rank, na.rm = TRUE)),
+    lead_variant_count = uniqueN(dt$variant_id)
+  )
+}
+
+summarize_dataset_overlap <- function(dataset_id, context, split, file_info, deg_dt) {
+  n_context_degs <- nrow(deg_dt)
+
+  if (identical(file_info$status, "missing_map_independent")) {
+    return(data.table(
+      dataset_id = dataset_id,
+      context = context,
+      split = split,
+      status = file_info$status,
+      map_independent_file = NA_character_,
+      n_independent_signals = NA_integer_,
+      n_eGenes = NA_integer_,
+      n_context_DEGs = n_context_degs,
+      n_eGene_DEG_overlap = NA_integer_,
+      eGene_DEG_overlap_gene_ids = NA_character_,
+      eGene_DEG_overlap_gene_names = NA_character_
+    ))
+  }
+
+  dt <- file_info$dt
+  egenes <- collapse_egenes(dt)
+  overlap_dt <- merge(
+    egenes,
+    as.data.table(deg_dt),
+    by = "gene_id",
+    all = FALSE,
+    sort = FALSE
+  )
+
+  data.table(
+    dataset_id = dataset_id,
+    context = context,
+    split = split,
+    status = file_info$status,
+    map_independent_file = file_info$rel_path,
+    n_independent_signals = nrow(dt),
+    n_eGenes = nrow(egenes),
+    n_context_DEGs = n_context_degs,
+    n_eGene_DEG_overlap = uniqueN(overlap_dt$gene_id),
+    eGene_DEG_overlap_gene_ids = collapse_gene_list(overlap_dt$gene_id),
+    eGene_DEG_overlap_gene_names = collapse_gene_list(overlap_dt$gene_name)
+  )
+}
+```
+
+```{r summarize-map-independent}
+summary_rows <- lapply(seq_len(nrow(manifest)), function(i) {
+  row <- manifest[i]
+  dataset_id <- row$dataset_id[[1]]
+  context <- row$context[[1]]
+  split <- row$split[[1]]
+
+  file_info <- read_map_independent(dataset_id)
+  deg_dt <- as.data.table(deg_env$deg_by_dataset_id[[dataset_id]])
+
+  list(
+    counts = summarize_dataset_counts(dataset_id, context, split, file_info),
+    overlap = summarize_dataset_overlap(dataset_id, context, split, file_info, deg_dt)
+  )
+})
+
+counts_dt <- rbindlist(lapply(summary_rows, `[[`, "counts"), use.names = TRUE)
+overlap_dt <- rbindlist(lapply(summary_rows, `[[`, "overlap"), use.names = TRUE)
+
+counts_dt <- counts_dt[order(match(split, split_order), match(context, context_order))]
+overlap_dt <- overlap_dt[order(match(split, split_order), match(context, context_order))]
+
+counts_dt
+overlap_dt
+```
+
+```{r write-csvs}
+split_to_suffix <- c(all = "all", male = "male", female = "female")
+
+counts_tables <- lapply(names(split_to_suffix), function(split_name) {
+  counts_dt[split == split_name]
+})
+names(counts_tables) <- names(split_to_suffix)
+
+overlap_tables <- lapply(names(split_to_suffix), function(split_name) {
+  overlap_dt[split == split_name]
+})
+names(overlap_tables) <- names(split_to_suffix)
+
+for (split_name in names(split_to_suffix)) {
+  suffix <- split_to_suffix[[split_name]]
+
+  fwrite(
+    counts_tables[[split_name]],
+    file.path(summary_dir, paste0("map_independent_counts_", suffix, ".csv"))
+  )
+  fwrite(
+    overlap_tables[[split_name]],
+    file.path(summary_dir, paste0("map_independent_deg_overlap_", suffix, ".csv"))
+  )
+}
+
+list.files(summary_dir, pattern = "\\.csv$", full.names = FALSE)
+```
+
+```{r preview-all}
+counts_tables$all
+overlap_tables$all[, .(
+  dataset_id, context, status, n_independent_signals, n_eGenes,
+  n_context_DEGs, n_eGene_DEG_overlap, eGene_DEG_overlap_gene_names
+)]
+```
+
+```{r preview-male}
+counts_tables$male
+overlap_tables$male[, .(
+  dataset_id, context, status, n_independent_signals, n_eGenes,
+  n_context_DEGs, n_eGene_DEG_overlap, eGene_DEG_overlap_gene_names
+)]
+```
+
+```{r preview-female}
+counts_tables$female
+overlap_tables$female[, .(
+  dataset_id, context, status, n_independent_signals, n_eGenes,
+  n_context_DEGs, n_eGene_DEG_overlap, eGene_DEG_overlap_gene_names
+)]
+```
