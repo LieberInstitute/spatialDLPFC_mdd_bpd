@@ -46,6 +46,60 @@ if(file.exists("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_modules-DEG-s
 	cat("\nSaved ORA GO results to: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_modules-DEG-subset-refined_ORA-GO-results.rda\n")
 }
 
+# plot GO summary
+# how consistent is the GO phenotype with the DEGs in the module
+resList = lapply(names(ora_modules), function(x) {
+  res1 = ora_modules[[x]]@result
+  t1 = strsplit(res1$geneID, "/")
+  if(length(t1)>1) {
+    t2 = unique(do.call(c, t1))
+  } else {
+    t2 = unique(t1[[1]])
+  }
+  return(t2)
+})
+names(resList) <- names(ora_modules)
+
+totalList = lapply(names(ora_modules), function(x) {
+  if(x=="missing") {
+    return(66)
+  } else {
+    return(nrow(filter(refined.modules, TF==x))+1)
+  }
+})
+names(totalList) = names(ora_modules)
+
+df1 = data.frame("module"=names(ora_modules), "n_genes"=unlist(totalList), 
+           "prop_GO"=sapply(names(ora_modules), function(x) round(length(resList[[x]])/totalList[[x]],2)))
+
+df1$mod_group = factor(df1$module, levels=names(ora_modules),
+                       labels=c("Vasc","Vasc","Micro",
+                                "multi","multi","multi",
+                                "Astro",
+                                "ExcN","InhN","ExcN","ExcN","ExcN",
+                                "Oligo","Oligo","Oligo",
+                                "multi"))
+
+col.pal = c("Vasc"=cpList$low.res.light[["Micro.Vasc"]],
+            "Micro"=cpList$low.res.light[["L3"]],
+            cpList$low.res.light[c("Astro","Oligo")],
+            "InhN"=cpList$low.res.light[["Inhb"]],
+            "ExcN"=cpList$low.res.light[["L2"]],
+            "multi"="grey"
+)
+
+p1 <- ggplot(df1, aes(x=n_genes, y=prop_GO, fill=mod_group))+
+  ggrepel::geom_label_repel(aes(label=module), min.segment.length=0)+
+  geom_point(shape=21, size=2)+scale_fill_manual(values=col.pal)+
+  #geom_label(aes(label=module), nudge_y = .015)+
+  coord_cartesian(xlim=c(0,80), ylim=c(0,1))+
+  labs(x="Module size (# DEGs)", y="Prop. of module represented\nin sig. GO terms")+
+  theme_bw()+theme(panel.grid.minor=element_blank(), aspect.ratio=1,
+                   legend.position="none")
+
+ggsave(file="plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_subset-refined-modules_ORA-GO-scatter.pdf",
+       p1, width=5, height=5)
+
 # plot select terms
 select.terms = c("GO:0150104","GO:0003018","GO:2001214", #A2M
                  "GO:0071356","GO:0002526","GO:0035456", #IFITM3
@@ -100,7 +154,7 @@ plot.df = mutate(plot.df, ID= factor(ID, levels=rev(select.terms)),
 
 plot.df$Description2 = factor(plot.df$Description, levels=unique(plot.df$Description))
 
-p1 <- ggplot(plot.df, aes(y=Description2, x=module, size=Count, color=log2(FoldEnrichment)))+
+p2 <- ggplot(plot.df, aes(y=Description2, x=module, size=Count, color=log2(FoldEnrichment)))+
   geom_count()+
   scale_color_gradient("log2\nFold\nEnrich.", low="white", high="black", limits=c(0,8))+
   scale_size("# DEGs", range=c(2,6), breaks=c(3,9,15,21))+
@@ -110,7 +164,7 @@ p1 <- ggplot(plot.df, aes(y=Description2, x=module, size=Count, color=log2(FoldE
 		strip.text.y=element_text(angle=0))
 
 ggsave(file="plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_subset-refined-modules_ORA-GO-dotplot.pdf",
-	p1, width=7, height=10)
+	p2, width=7, height=10)
 cat("\nSaved representative term dotplot to: plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_subset-refined-modules_ORA-GO-dotplot.pdf\n")
 
 
