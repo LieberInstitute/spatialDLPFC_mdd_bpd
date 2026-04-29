@@ -2,11 +2,11 @@ This project folder is for code related to eQTL and colocalization analyzes for 
 
 ## MBv project summary
 
-*   **Study Goal:** The project aims to investigate **sex-specific gene expression changes associated with Major Depressive Disorder (MDD) and Bipolar Disorder (BPD)** across the cortical layers of the dorsolateral prefrontal cortex (dlPFC). 
+*   **Study Goal:** The project aims to investigate **sex-specific gene expression changes associated with Major Depressive Disorder (MDD) and Bipolar Disorder (BPD)** across the cortical layers of the dorsolateral prefrontal cortex (dlPFC).
 *   **Cohort & Data Collection:** The study utilizes postmortem tissue from **119 adult human brain donors**, evenly split by sex across three diagnostic groups: Neurotypical Controls (NTC, n=40), MDD (n=39), and BPD (n=40).
-*   **Technology & Resolution:** Data was generated using the **10x Genomics Visium Spatial RNA-sequencing platform**, capturing spatial transcriptomics (SRT) at a 55um spot resolution. 
+*   **Technology & Resolution:** Data was generated using the **10x Genomics Visium Spatial RNA-sequencing platform**, capturing spatial transcriptomics (SRT) at a 55um spot resolution.
 *   **Data Structure:** The initial unsupervised clustering identified **6 spatial domains** (L1, L2, L3.4, L5, L6, and White Matter). The data from 119 capture areas across 30 slides was pseudobulked by domain and donor, resulting in approximately 690 high-quality samples containing ~14,000 genes for downstream analyses.
-*   **Alternative Annotation:** The team explored a Seurat label-transfer approach using single-nucleus RNA-seq to annotate spots by **cell type** (e.g., inhibitory neurons, astrocytes, vasculature) rather than just spatial layers, providing a cleaner biological signal for downstream regulatory networks. 
+*   **Alternative Annotation:** The team explored a Seurat label-transfer approach using single-nucleus RNA-seq to annotate spots by **cell type** (e.g., inhibitory neurons, astrocytes, vasculature) rather than just spatial layers, providing a cleaner biological signal for downstream regulatory networks.
 
 ### Differential Gene Expression (DGE) Models
 
@@ -22,7 +22,7 @@ The current folder contains code for the eQTL and colocalization stages:
 *   **Input Data Pivot:** While initially planned for the 6 spatial domains, the team later decided to run the eQTL analysis on the pseudobulks derived from the **Seurat cell-type labels** (removing the "low UMI" cluster). This aligns the eQTL inputs with the Gene Regulatory Network (GRNBoost/SCENIC) inputs.
 *   **Sex-Stratified eQTLs:** Because sex is a major driver of transcriptional differences in this cohort, the eQTL models will be run across three splits: **all donors combined, males only (~60 donors), and females only (~60 donors)**.
 *   **Batch Covariates:** The team debated calculating local expression PCs for each group using the `sva` package vs. reusing the global `PC3` variable from the DGE analyses. They concluded that utilizing the existing `PC3` variable as used in DGE acts as a solid shortcut to adjust for technical variation (like slide and sequencing batch) before the eQTL expression PCs capture remaining variance.
-*   **Colocalization Analysis:** Once significant spatial/cell-type eQTLs (SNP-gene pairs within a +/- 1 Megabase window) are identified, they will be subjected to colocalization analysis (coloc.abf). This tests if the exact same variant explains both the eQTL expression changes and the genetic risk from GWAS datasets. 
+*   **Colocalization Analysis:** Once significant spatial/cell-type eQTLs (SNP-gene pairs within a +/- 1 Megabase window) are identified, they will be subjected to colocalization analysis (coloc.abf). This tests if the exact same variant explains both the eQTL expression changes and the genetic risk from GWAS datasets.
 *   **GWAS References for Colocalization:** we will compare eQTLs against multiple European-ancestry summary statistics to avoid muddying the signals; independently check **Schizophrenia (SCZ), MDD, and Bipolar GWAS datasets**, as well as a newer **cross-disorder/multivariate psychiatric GWAS**.
 
 ## TensorQTL Input Preparation (local `processed-data`)
@@ -95,3 +95,35 @@ Per-context DEG sets should be defined as:
 This keeps PRECAST/domain DEG support global while avoiding a forced one-to-one mapping from PRECAST domains onto the 8 Seurat contexts used by the current eQTL workflow.
 
 Use `gene_id` as the primary overlap key against tensorQTL phenotypes. Keep `gene_name` for reporting and validation against the author text list.
+
+The default `n_context_DEGs` overlap summaries use this broad per-context reference, so all/male/female eQTL splits share the same DEG reference set and several contexts are close to the 523 Seurat layer-adjusted genes. Additional DEG-view summaries in `03_eqtl_explore.Rmd` separate stricter interpretations: `broad_interaction`, `context_localized`, `sex_specific`, and `context_and_sex_specific`. Context-aware views use only the eight Seurat eQTL contexts above, not PRECAST/smoothed domains.
+
+DEG-view matching to eQTL strata:
+
+* `broad_interaction` is the main Jacqui-recommended broad support set. It is not context- or sex-matched to a specific eQTL stratum; it is best for inclusive screening.
+* `context_localized` is the best context-matched view for all-donor eQTLs. Its DEG provenance is only the Seurat layer-restricted table, filtered to `adj.P.Val < 0.05` and `n_ttest_sig_<context> > 0`. It is not derived from male/female DEG lists, so the same context set is used for all, male, and female eQTL splits.
+* `sex_specific` is sex-matched but not context-matched. It uses all four DEG tables and any post-hoc sex-specific t-test flag matching `F_*_ttest == "padj<.05"` or `M_*_ttest == "padj<.05"`. In all-donor eQTL summaries, female and male DEG sets are reported as separate `deg_sex` rows; those are the same female and male DEG sets used for the female and male eQTL splits.
+* `context_and_sex_specific` is the closest match for sex-stratified eQTLs because it matches both the Seurat eQTL context and the eQTL sex split. Its DEG provenance is only the Seurat layer-restricted table and context-sex columns such as `Astro_F_NTC.MDD_ttest == "padj<.05"`. In all-donor eQTL summaries, female and male context-sex DEG sets are reported separately rather than merged.
+
+### Additional DGE list note
+
+[Jacqui on Slack:]
+
+I think right now the goal is to paint with a broad brush, and so we would like to use all of the genes with sig. dx*sex interaction (F-test adj, p<.05) in either the PRECAST (smoothed) annotation (6 domains) or the Seurat annotations (8 clusters). Here are a few reasons:
+
+  - The layer-adjusted model results are highly concordant (D-E in attached image)
+  - The layer-restricted model results are mostly concordant (F-G in attached image)
+  - The pseudobulk samples you are working with share characteristics of both annotation sets. Like the PRECAST domains there are no spots that were annotated to the low UMI cluster. Like the Seurat model results, the spots are aggregated based on cell-type labels in to 8 clusters. For the Seurat DE models, the low UMI cluster spots were included. So the pseudobulk data you have is identical to neither.
+  - We used all of the genes with sig. dx*sex interaction in either model when we constructed our DEG modules.
+
+
+A txt list of all of these genes is present here:
+ `raw-data/SCENIC_aux/tf_lists/MBv_PRECAST-Seurat_F-test-adjp-05.txt`
+That list is a compilation (union) of the two files you specified plus these two files:
+  - Layer-adjusted domains: `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
+  - Layer-restricted domains: `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
+
+## R coding agent instructions
+  - use single line comments starting with '## ' and lower case, to briefly comment/explain non-trivial code blocks generated
+  - prefer base R and data.table over dplyr and other tidyverse packages
+  - use here::i_am('.git/HEAD') in R/Rmd to anchor the project base folder, make all project paths relative to it
