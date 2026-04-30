@@ -585,3 +585,490 @@ load_DEGs <- function(repo_root = NULL, verbose = TRUE,
     files = files
   )
 }
+
+EQTL_REQUIRED_MAP_CIS_COLS <- c("phenotype_id", "variant_id", "qval")
+EQTL_REQUIRED_INDEP_COLS <- c("phenotype_id", "variant_id", "rank", "pval_perm")
+
+require_data_table <- function() {
+  if (!requireNamespace("data.table", quietly = TRUE)) {
+    stop("The data.table package is required")
+  }
+  invisible(TRUE)
+}
+
+path_relative_to <- function(path, root) {
+  path_norm <- normalizePath(path, mustWork = FALSE)
+  root_norm <- normalizePath(root, mustWork = TRUE)
+  prefix <- paste0(root_norm, .Platform$file.sep)
+  if (startsWith(path_norm, prefix)) return(sub(paste0("^", prefix), "", path_norm))
+  path_norm
+}
+
+add_filename_suffix <- function(filename, suffix = "") {
+  if (is.null(suffix) || !nzchar(suffix)) return(filename)
+  sub("(\\.[^.]+)$", paste0(suffix, "\\1"), filename)
+}
+
+load_eqtl_manifest <- function(tqtl_in_dir, context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                               split_order = DEG_SPLITS) {
+  require_data_table()
+  manifest_file <- file.path(tqtl_in_dir, "prep_manifest.csv")
+  if (!file.exists(manifest_file)) stop("Missing tensorQTL manifest: ", manifest_file)
+
+  manifest <- data.table::fread(manifest_file)
+  req <- c("dataset_id", "seurat_label", "split", "status")
+  missing_cols <- setdiff(req, names(manifest))
+  if (length(missing_cols) > 0) {
+    stop("Missing manifest columns in ", manifest_file, ": ", paste(missing_cols, collapse = ", "))
+  }
+
+  if (!"covariate_model" %in% names(manifest)) manifest[, covariate_model := "base"]
+  manifest <- manifest[
+    status == "prepared",
+    .(dataset_id, context = seurat_label, split, covariate_model)
+  ]
+  manifest[, split := data.table::fifelse(
+    split == "male",
+    "male",
+    data.table::fifelse(split == "female", "female", "all")
+  )]
+
+  if (anyDuplicated(manifest$dataset_id)) {
+    stop("Duplicate dataset_id values in manifest: ", manifest_file)
+  }
+  unexpected_context <- setdiff(unique(manifest$context), context_order)
+  if (length(unexpected_context) > 0) {
+    stop("Unexpected manifest context(s): ", paste(unexpected_context, collapse = ", "))
+  }
+  unexpected_split <- setdiff(unique(manifest$split), split_order)
+  if (length(unexpected_split) > 0) {
+    stop("Unexpected manifest split(s): ", paste(unexpected_split, collapse = ", "))
+  }
+
+  manifest[order(match(split, split_order), match(context, context_order))]
+}
+
+read_eqtl_table <- function(dataset_id, tqtl_out_dir, suffix, required_cols,
+                            missing_status, repo_root = NULL) {
+  require_data_table()
+  abs_path <- file.path(tqtl_out_dir, paste0(dataset_id, ".gene.", suffix))
+  rel_path <- if (is.null(repo_root)) abs_path else path_relative_to(abs_path, repo_root)
+
+  if (!file.exists(abs_path)) {
+    return(list(status = missing_status, rel_path = NA_character_, dt = NULL))
+  }
+  if (file.info(abs_path)$size == 0) {
+    stop("Empty tensorQTL result file: ", rel_path)
+  }
+
+  dt <- data.table::fread(abs_path)
+  missing_cols <- setdiff(required_cols, names(dt))
+  if (length(missing_cols) > 0) {
+    stop("Missing required columns in ", rel_path, ": ", paste(missing_cols, collapse = ", "))
+  }
+
+  list(status = "ok", rel_path = rel_path, dt = dt)
+}
+
+read_map_cis <- function(dataset_id, tqtl_out_dir, repo_root = NULL,
+                         required_cols = EQTL_REQUIRED_MAP_CIS_COLS) {
+  read_eqtl_table(
+    dataset_id = dataset_id,
+    tqtl_out_dir = tqtl_out_dir,
+    suffix = "map_cis.tab.gz",
+    required_cols = required_cols,
+    missing_status = "missing_map_cis",
+    repo_root = repo_root
+  )
+}
+
+read_map_independent <- function(dataset_id, tqtl_out_dir, repo_root = NULL,
+                                 required_cols = EQTL_REQUIRED_INDEP_COLS) {
+  read_eqtl_table(
+    dataset_id = dataset_id,
+    tqtl_out_dir = tqtl_out_dir,
+    suffix = "map_independent.txt.gz",
+    required_cols = required_cols,
+    missing_status = "missing_map_independent",
+    repo_root = repo_root
+  )
+}
+
+collapse_egenes <- function(dt) {
+  require_data_table()
+  unique(dt[, .(gene_id = phenotype_id)])
+}
+
+collapse_gene_list <- function(x) {
+  x <- sort(unique(x[!is.na(x) & nzchar(x)]))
+  if (length(x) == 0) "" else paste(x, collapse = ", ")
+}
+
+tag_eqtl_results <- function(dt, dataset_id, context, split, deg_dt,
+                             g2sym, gwas_set, gwas1e6_set) {
+  require_data_table()
+  out <- data.table::copy(dt)
+  deg_gene_ids <- unique(data.table::as.data.table(deg_dt)$gene_id)
+
+  out[, `:=`(
+    dataset_id = dataset_id,
+    context = context,
+    split = split,
+    gene_id = phenotype_id,
+    gene_name = g2sym[phenotype_id],
+    dge = as.integer(phenotype_id %in% deg_gene_ids),
+    gwas = as.integer(variant_id %in% gwas_set),
+    gwas_1e6 = as.integer(variant_id %in% gwas1e6_set)
+  )]
+
+  out[]
+}
+
+complete_summary_grid <- function(context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                                  split_order = DEG_SPLITS) {
+  require_data_table()
+  data.table::CJ(split = split_order, context = context_order, unique = TRUE)
+}
+
+fill_summary_missing <- function(out, count_cols, text_cols) {
+  for (col in count_cols) data.table::set(out, which(is.na(out[[col]])), col, 0L)
+  for (col in text_cols) data.table::set(out, which(is.na(out[[col]])), col, "")
+  out
+}
+
+summarize_tagged_eqtls <- function(dt, context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                                   split_order = DEG_SPLITS) {
+  require_data_table()
+  if (nrow(dt) == 0) {
+    out <- complete_summary_grid(context_order = context_order, split_order = split_order)
+    out[, `:=`(
+      n_eGenes = 0L,
+      n_GWAS = 0L,
+      n_GWAS_1e6 = 0L,
+      n_DEG = 0L,
+      n_DEG_GWAS = 0L,
+      GWAS = "",
+      DEGS = "",
+      DEG_GWAS = ""
+    )]
+    return(out[])
+  }
+
+  obs <- dt[, .(
+    n_eGenes = data.table::uniqueN(phenotype_id),
+    n_GWAS = data.table::uniqueN(phenotype_id[gwas == 1]),
+    n_GWAS_1e6 = data.table::uniqueN(phenotype_id[gwas_1e6 == 1]),
+    n_DEG = data.table::uniqueN(gene_id[dge == 1]),
+    n_DEG_GWAS = data.table::uniqueN(phenotype_id[dge == 1 & gwas == 1]),
+    GWAS = collapse_gene_list(gene_name[gwas == 1]),
+    DEGS = collapse_gene_list(gene_name[dge == 1]),
+    DEG_GWAS = collapse_gene_list(gene_name[dge == 1 & gwas == 1])
+  ), by = .(split, context)]
+
+  out <- merge(
+    complete_summary_grid(context_order = context_order, split_order = split_order),
+    obs,
+    by = c("split", "context"),
+    all.x = TRUE
+  )
+  fill_summary_missing(
+    out,
+    count_cols = c("n_eGenes", "n_GWAS", "n_GWAS_1e6", "n_DEG", "n_DEG_GWAS"),
+    text_cols = c("GWAS", "DEGS", "DEG_GWAS")
+  )[order(match(split, split_order), match(context, context_order))]
+}
+
+summarize_independent_signals <- function(dt, context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                                          split_order = DEG_SPLITS) {
+  require_data_table()
+  if (nrow(dt) == 0) {
+    return(summarize_tagged_eqtls(dt, context_order = context_order, split_order = split_order))
+  }
+
+  obs <- dt[, .(
+    n_eGenes = .N,
+    n_GWAS = sum(gwas == 1),
+    n_GWAS_1e6 = sum(gwas_1e6 == 1),
+    n_DEG = data.table::uniqueN(gene_id[dge == 1]),
+    n_DEG_GWAS = sum(dge == 1 & gwas == 1),
+    GWAS = collapse_gene_list(gene_name[gwas == 1]),
+    DEGS = collapse_gene_list(gene_name[dge == 1]),
+    DEG_GWAS = collapse_gene_list(gene_name[dge == 1 & gwas == 1])
+  ), by = .(split, context)]
+
+  out <- merge(
+    complete_summary_grid(context_order = context_order, split_order = split_order),
+    obs,
+    by = c("split", "context"),
+    all.x = TRUE
+  )
+  fill_summary_missing(
+    out,
+    count_cols = c("n_eGenes", "n_GWAS", "n_GWAS_1e6", "n_DEG", "n_DEG_GWAS"),
+    text_cols = c("GWAS", "DEGS", "DEG_GWAS")
+  )[order(match(split, split_order), match(context, context_order))]
+}
+
+summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
+                                     context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                                     split_order = DEG_SPLITS,
+                                     signal_count = FALSE) {
+  require_data_table()
+  view_dt <- data.table::as.data.table(degs$views$long)
+  view_dt <- view_dt[, .(
+    deg_view, context, split, deg_sex, gene_id,
+    deg_gene_name = gene_name
+  )]
+
+  view_counts <- view_dt[, .(
+    n_DEG_reference = data.table::uniqueN(gene_id)
+  ), by = .(deg_view, context, split, deg_sex)]
+
+  template <- merge(
+    manifest[, .(dataset_id, context, split)],
+    view_counts,
+    by = c("context", "split"),
+    all.x = FALSE,
+    all.y = TRUE,
+    allow.cartesian = TRUE
+  )
+
+  totals <- eqtl_dt[, .(
+    n_eQTL_records = .N,
+    n_eGenes = if (signal_count) .N else data.table::uniqueN(phenotype_id),
+    n_GWAS = if (signal_count) sum(gwas == 1) else data.table::uniqueN(phenotype_id[gwas == 1]),
+    n_GWAS_1e6 = if (signal_count) sum(gwas_1e6 == 1) else data.table::uniqueN(phenotype_id[gwas_1e6 == 1])
+  ), by = .(dataset_id, context, split)]
+
+  overlap_dt <- merge(
+    eqtl_dt,
+    view_dt,
+    by = c("context", "split", "gene_id"),
+    all = FALSE,
+    allow.cartesian = TRUE
+  )
+
+  overlaps <- overlap_dt[, .(
+    n_eGene_DEG_overlap = data.table::uniqueN(gene_id),
+    n_DEG_GWAS = if (signal_count) sum(gwas == 1) else data.table::uniqueN(gene_id[gwas == 1]),
+    eGene_DEG_overlap_gene_ids = collapse_gene_list(gene_id),
+    eGene_DEG_overlap_gene_names = collapse_gene_list(deg_gene_name),
+    DEG_GWAS = collapse_gene_list(deg_gene_name[gwas == 1])
+  ), by = .(dataset_id, context, split, deg_view, deg_sex)]
+
+  out <- merge(template, totals, by = c("dataset_id", "context", "split"), all.x = TRUE)
+  out <- merge(
+    out,
+    overlaps,
+    by = c("dataset_id", "context", "split", "deg_view", "deg_sex"),
+    all.x = TRUE
+  )
+
+  fill_summary_missing(
+    out,
+    count_cols = c(
+      "n_eQTL_records", "n_eGenes", "n_GWAS", "n_GWAS_1e6",
+      "n_eGene_DEG_overlap", "n_DEG_GWAS"
+    ),
+    text_cols = c("eGene_DEG_overlap_gene_ids", "eGene_DEG_overlap_gene_names", "DEG_GWAS")
+  )
+
+  view_order <- c(
+    "broad_interaction",
+    "context_localized",
+    "sex_specific",
+    "context_and_sex_specific"
+  )
+  out[order(
+    match(split, split_order),
+    match(context, context_order),
+    match(deg_view, view_order),
+    deg_sex
+  )]
+}
+
+summarize_dataset_counts <- function(dataset_id, context, split, file_info) {
+  require_data_table()
+  if (identical(file_info$status, "missing_map_independent")) {
+    return(data.table::data.table(
+      dataset_id = dataset_id,
+      context = context,
+      split = split,
+      status = file_info$status,
+      map_independent_file = NA_character_,
+      n_independent_signals = NA_integer_,
+      n_eGenes = NA_integer_,
+      max_rank = NA_integer_,
+      lead_variant_count = NA_integer_
+    ))
+  }
+
+  dt <- file_info$dt
+  data.table::data.table(
+    dataset_id = dataset_id,
+    context = context,
+    split = split,
+    status = file_info$status,
+    map_independent_file = file_info$rel_path,
+    n_independent_signals = nrow(dt),
+    n_eGenes = data.table::uniqueN(dt$phenotype_id),
+    max_rank = as.integer(max(dt$rank, na.rm = TRUE)),
+    lead_variant_count = data.table::uniqueN(dt$variant_id)
+  )
+}
+
+summarize_dataset_overlap <- function(dataset_id, context, split, file_info, deg_dt) {
+  require_data_table()
+  n_context_degs <- nrow(deg_dt)
+
+  if (identical(file_info$status, "missing_map_independent")) {
+    return(data.table::data.table(
+      dataset_id = dataset_id,
+      context = context,
+      split = split,
+      status = file_info$status,
+      map_independent_file = NA_character_,
+      n_independent_signals = NA_integer_,
+      n_eGenes = NA_integer_,
+      n_context_DEGs = n_context_degs,
+      n_eGene_DEG_overlap = NA_integer_,
+      eGene_DEG_overlap_gene_ids = NA_character_,
+      eGene_DEG_overlap_gene_names = NA_character_
+    ))
+  }
+
+  dt <- file_info$dt
+  egenes <- collapse_egenes(dt)
+  overlap_dt <- merge(
+    egenes,
+    data.table::as.data.table(deg_dt),
+    by = "gene_id",
+    all = FALSE,
+    sort = FALSE
+  )
+
+  data.table::data.table(
+    dataset_id = dataset_id,
+    context = context,
+    split = split,
+    status = file_info$status,
+    map_independent_file = file_info$rel_path,
+    n_independent_signals = nrow(dt),
+    n_eGenes = nrow(egenes),
+    n_context_DEGs = n_context_degs,
+    n_eGene_DEG_overlap = data.table::uniqueN(overlap_dt$gene_id),
+    eGene_DEG_overlap_gene_ids = collapse_gene_list(overlap_dt$gene_id),
+    eGene_DEG_overlap_gene_names = collapse_gene_list(overlap_dt$gene_name)
+  )
+}
+
+summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set, gwas1e6_set,
+                                    repo_root,
+                                    context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                                    split_order = DEG_SPLITS) {
+  require_data_table()
+  manifest <- load_eqtl_manifest(
+    tqtl_in_dir = config$tqtl_in_dir,
+    context_order = context_order,
+    split_order = split_order
+  )
+  if (!all(manifest$dataset_id %in% names(degs$by_dataset_id))) {
+    missing_ids <- setdiff(manifest$dataset_id, names(degs$by_dataset_id))
+    stop("Missing DEG context sets for dataset IDs: ", paste(missing_ids, collapse = ", "))
+  }
+
+  summary_rows <- lapply(seq_len(nrow(manifest)), function(i) {
+    row <- manifest[i]
+    dataset_id <- row$dataset_id[[1]]
+    context <- row$context[[1]]
+    split <- row$split[[1]]
+
+    map_cis_info <- read_map_cis(dataset_id, tqtl_out_dir = config$tqtl_out_dir, repo_root = repo_root)
+    indep_info <- read_map_independent(dataset_id, tqtl_out_dir = config$tqtl_out_dir, repo_root = repo_root)
+    deg_dt <- data.table::as.data.table(degs$by_dataset_id[[dataset_id]])
+
+    list(
+      counts = summarize_dataset_counts(dataset_id, context, split, indep_info),
+      overlap = summarize_dataset_overlap(dataset_id, context, split, indep_info, deg_dt),
+      map_cis = if (identical(map_cis_info$status, "ok")) {
+        tag_eqtl_results(map_cis_info$dt, dataset_id, context, split, deg_dt, g2sym, gwas_set, gwas1e6_set)
+      } else {
+        NULL
+      },
+      independent = if (identical(indep_info$status, "ok")) {
+        tag_eqtl_results(indep_info$dt, dataset_id, context, split, deg_dt, g2sym, gwas_set, gwas1e6_set)
+      } else {
+        NULL
+      }
+    )
+  })
+
+  counts_dt <- data.table::rbindlist(lapply(summary_rows, `[[`, "counts"), use.names = TRUE)
+  overlap_dt <- data.table::rbindlist(lapply(summary_rows, `[[`, "overlap"), use.names = TRUE)
+  map_cis_all <- data.table::rbindlist(lapply(summary_rows, `[[`, "map_cis"), use.names = TRUE, fill = TRUE)
+  indep_all <- data.table::rbindlist(lapply(summary_rows, `[[`, "independent"), use.names = TRUE, fill = TRUE)
+
+  counts_dt <- counts_dt[order(match(split, split_order), match(context, context_order))]
+  overlap_dt <- overlap_dt[order(match(split, split_order), match(context, context_order))]
+
+  map_cis_summary <- summarize_tagged_eqtls(
+    map_cis_all[qval < 0.05],
+    context_order = context_order,
+    split_order = split_order
+  )
+
+  parent_q <- map_cis_all[, .(phenotype_id, dataset_id, qval_parent = qval)]
+  indep_f <- merge(indep_all, parent_q, by = c("phenotype_id", "dataset_id"), all = FALSE)
+  indep_f <- indep_f[qval_parent < 0.05 & pval_perm < 0.05]
+  map_independent_summary <- summarize_independent_signals(
+    indep_f,
+    context_order = context_order,
+    split_order = split_order
+  )
+
+  map_cis_deg_view_summary <- summarize_eqtl_deg_views(
+    map_cis_all[qval < 0.05],
+    manifest = manifest,
+    degs = degs,
+    context_order = context_order,
+    split_order = split_order
+  )
+  map_independent_deg_view_summary <- summarize_eqtl_deg_views(
+    indep_f,
+    manifest = manifest,
+    degs = degs,
+    context_order = context_order,
+    split_order = split_order,
+    signal_count = TRUE
+  )
+  map_independent_deg_view_overlap <- summarize_eqtl_deg_views(
+    indep_all,
+    manifest = manifest,
+    degs = degs,
+    context_order = context_order,
+    split_order = split_order
+  )
+
+  split_to_suffix <- c(all = "all", male = "male", female = "female")
+  counts_tables <- lapply(names(split_to_suffix), function(split_name) counts_dt[split == split_name])
+  names(counts_tables) <- names(split_to_suffix)
+  overlap_tables <- lapply(names(split_to_suffix), function(split_name) overlap_dt[split == split_name])
+  names(overlap_tables) <- names(split_to_suffix)
+
+  list(
+    analysis = config$analysis,
+    manifest = manifest,
+    counts_dt = counts_dt,
+    overlap_dt = overlap_dt,
+    map_cis_all = map_cis_all,
+    indep_all = indep_all,
+    indep_f = indep_f,
+    map_cis_summary = map_cis_summary,
+    map_independent_summary = map_independent_summary,
+    map_cis_deg_view_summary = map_cis_deg_view_summary,
+    map_independent_deg_view_summary = map_independent_deg_view_summary,
+    map_independent_deg_view_overlap = map_independent_deg_view_overlap,
+    counts_tables = counts_tables,
+    overlap_tables = overlap_tables
+  )
+}

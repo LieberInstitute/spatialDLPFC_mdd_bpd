@@ -144,5 +144,5 @@ That list is a compilation (union) of the two files you specified plus these two
 
 ## R coding agent instructions
   - use single line comments starting with '## ' and lower case, to briefly comment/explain non-trivial code blocks generated
-  - prefer base R and data.table over dplyr and other tidyverse packages
   - use here::i_am('.git/HEAD') in R/Rmd to anchor the project base folder, make all project paths relative to it
+  - prefer base R and data.table over dplyr for data manipulation, reshaping, filtering etc.; avoid local/global variable name conflicts/clash with data.table columns which can lead to serious silent logic bugs with data.table notation
