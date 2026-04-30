@@ -6,12 +6,14 @@ repo_root=$(cd "${script_dir}/../.." && pwd)
 
 in_dir="${repo_root}/processed-data/11_eQTL_coloc/tqtl_in"
 out_dir="${repo_root}/processed-data/11_eQTL_coloc/tqtl_out"
-manifest="${in_dir}/prep_manifest.csv"
 mapping_py="${script_dir}/02a_tensorQTL_cis.py"
 py_bin="${script_dir}/.venv/bin/python"
 
 dry_run=0
 force=0
+analysis="base"
+input_dir_explicit=0
+output_dir_explicit=0
 start_from=""
 only_regex=""
 declare -a user_datasets=()
@@ -21,12 +23,14 @@ usage() {
 Usage:
   ./02_run_tensorQTL.sh [options] [dataset_id ...]
 
-Runs tensorQTL (02a_tensorQTL_cis.py) for prepared datasets in:
-  processed-data/11_eQTL_coloc/tqtl_in
+Runs tensorQTL (02a_tensorQTL_cis.py) for prepared datasets.
 
 Options:
   --dry-run            Show detected datasets/commands only; do not run
   --force              Re-run datasets even if <dataset>.gene.map_cis.tab.gz exists
+  --analysis <name>    Input/output series: base or nspots (default: base)
+  --input-dir <path>   Override prepared tensorQTL input directory
+  --output-dir <path>  Override tensorQTL output directory
   --start-from <id>    Start at this dataset (sorted order), skipping previous
   --only <regex>       Keep only dataset IDs matching regex
   -h, --help           Show this help
@@ -44,6 +48,23 @@ while [[ $# -gt 0 ]]; do
     --force)
       force=1
       shift
+      ;;
+    --analysis)
+      [[ $# -ge 2 ]] || { echo "Missing value for --analysis" >&2; exit 1; }
+      analysis="$2"
+      shift 2
+      ;;
+    --input-dir)
+      [[ $# -ge 2 ]] || { echo "Missing value for --input-dir" >&2; exit 1; }
+      in_dir="$2"
+      input_dir_explicit=1
+      shift 2
+      ;;
+    --output-dir)
+      [[ $# -ge 2 ]] || { echo "Missing value for --output-dir" >&2; exit 1; }
+      out_dir="$2"
+      output_dir_explicit=1
+      shift 2
       ;;
     --start-from)
       [[ $# -ge 2 ]] || { echo "Missing value for --start-from" >&2; exit 1; }
@@ -77,6 +98,25 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+case "${analysis}" in
+  base)
+    ;;
+  nspots)
+    if [[ ${input_dir_explicit} -eq 0 ]]; then
+      in_dir="${repo_root}/processed-data/11_eQTL_coloc/nspots/tqtl_in"
+    fi
+    if [[ ${output_dir_explicit} -eq 0 ]]; then
+      out_dir="${repo_root}/processed-data/11_eQTL_coloc/nspots/tqtl_out"
+    fi
+    ;;
+  *)
+    echo "Unsupported --analysis: ${analysis}; expected base or nspots" >&2
+    exit 1
+    ;;
+esac
+
+manifest="${in_dir}/prep_manifest.csv"
 
 [[ -d "${in_dir}" ]] || { echo "Missing input directory: ${in_dir}" >&2; exit 1; }
 [[ -f "${mapping_py}" ]] || { echo "Missing runner script: ${mapping_py}" >&2; exit 1; }
@@ -150,6 +190,7 @@ for ds in "${dataset_ids[@]}"; do
 done
 
 echo "Python: ${py_bin}"
+echo "Analysis: ${analysis}"
 echo "Input dir: ${in_dir}"
 echo "Output dir: ${out_dir}"
 echo "Datasets (${#dataset_ids[@]}): ${dataset_ids[*]}"

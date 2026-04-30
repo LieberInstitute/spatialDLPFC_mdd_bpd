@@ -37,6 +37,7 @@ default_options <- function(repo_root) {
     snp_pcs_file = file.path(repo_root, "processed-data", "00_genotypes", "plink2", "merged_maf05_pca.eigenvec"),
     out_dir = file.path(repo_root, "processed-data", "11_eQTL_coloc", "tqtl_in"),
     splits = "all,male,female",
+    model = "base",
     min_samples = 20L,
     write_spe = FALSE,
     check_only = FALSE,
@@ -59,6 +60,7 @@ usage <- function(defaults, con = stdout()) {
     "      --snp-pcs-file PATH  SNP PCs eigenvec file.\n",
     "      --out-dir PATH       Output directory for prepared tensorQTL inputs.\n",
     "      --splits CSV         Comma-separated subset of: all,male,female.\n",
+    "      --model MODEL        Covariate model: base or nspots.\n",
     "      --min-samples INT    Minimum samples required per dataset.\n\n",
     "Resolved defaults:\n",
     "  repo_root:      ", defaults$repo_root, "\n",
@@ -67,6 +69,7 @@ usage <- function(defaults, con = stdout()) {
     "  snp_pcs_file:   ", defaults$snp_pcs_file, "\n",
     "  out_dir:        ", defaults$out_dir, "\n",
     "  splits:         ", defaults$splits, "\n",
+    "  model:          ", defaults$model, "\n",
     "  min_samples:    ", defaults$min_samples, "\n",
     "  write_spe:      ", defaults$write_spe, "\n",
     "  check_only:     ", defaults$check_only, "\n",
@@ -84,6 +87,7 @@ parse_args <- function(args, defaults) {
   }
 
   opt <- defaults
+  out_dir_explicit <- FALSE
   i <- 1L
   while (i <= length(args)) {
     a <- args[[i]]
@@ -100,11 +104,26 @@ parse_args <- function(args, defaults) {
     if (key == "spe-file") opt$spe_file <- val
     else if (key == "geno-prefix") opt$geno_prefix <- val
     else if (key == "snp-pcs-file") opt$snp_pcs_file <- val
-    else if (key == "out-dir") opt$out_dir <- val
+    else if (key == "out-dir") {
+      opt$out_dir <- val
+      out_dir_explicit <- TRUE
+    }
     else if (key == "splits") opt$splits <- val
+    else if (key == "model") opt$model <- val
     else if (key == "min-samples") opt$min_samples <- suppressWarnings(as.integer(val))
     else cli_fail("Unknown argument: --", key, show_usage = TRUE, defaults = defaults)
     i <- i + 2L
+  }
+
+  allowed_models <- c("base", "nspots")
+  if (!(opt$model %in% allowed_models)) {
+    cli_fail(
+      "`--model` must be one of: ", paste(allowed_models, collapse = ", "),
+      show_usage = TRUE, defaults = defaults
+    )
+  }
+  if (identical(opt$model, "nspots") && !out_dir_explicit) {
+    opt$out_dir <- file.path(opt$repo_root, "processed-data", "11_eQTL_coloc", "nspots", "tqtl_in")
   }
 
   if (is.na(opt$min_samples) || opt$min_samples < 1L) {
@@ -128,6 +147,7 @@ print_effective_options <- function(opt, defaults, args) {
   cat("SNP PCs:", opt$snp_pcs_file, "\n")
   cat("Output dir:", opt$out_dir, "\n")
   cat("Splits:", opt$splits, "\n")
+  cat("Covariate model:", opt$model, "\n")
   cat("Min samples:", opt$min_samples, "\n")
   cat("Write SPE:", opt$write_spe, "\n")
   cat("Check only:", opt$check_only, "\n")
@@ -250,6 +270,12 @@ if (!"age" %in% names(cd)) stop("Missing age column")
 cd$age <- suppressWarnings(as.numeric(cd$age))
 if (any(is.na(cd$age))) stop("age column contains non-numeric values")
 
+if (identical(opt$model, "nspots")) {
+  if (!"nspots" %in% names(cd)) stop("Missing nspots column required for --model nspots")
+  cd$nspots <- suppressWarnings(as.numeric(cd$nspots))
+  if (any(is.na(cd$nspots))) stop("nspots column contains non-numeric values")
+}
+
 if ("PC3" %in% names(cd)) {
   cd$PC3 <- suppressWarnings(as.numeric(cd$PC3))
 } else if ("pc3" %in% names(cd)) {
@@ -269,6 +295,7 @@ colData(spe)$DX <- cd$DX
 colData(spe)$sex <- cd$sex
 colData(spe)$age <- cd$age
 colData(spe)$PC3 <- cd$PC3
+if (identical(opt$model, "nspots")) colData(spe)$nspots <- cd$nspots
 
 snpPCs <- fread(opt$snp_pcs_file, data.table = FALSE)
 if (!("SAMPLE_ID" %in% colnames(snpPCs))) {
@@ -427,6 +454,7 @@ for (cluster in clusters) {
         dataset_id = ds_id,
         seurat_label = cluster,
         split = split,
+        covariate_model = opt$model,
         n_samples = sum(sel),
         n_genes_bed = NA_integer_,
         n_genes_pca = NA_integer_,
@@ -446,6 +474,7 @@ for (cluster in clusters) {
         dataset_id = ds_id,
         seurat_label = cluster,
         split = split,
+        covariate_model = opt$model,
         n_samples = ncol(spe_sub),
         n_genes_bed = NA_integer_,
         n_genes_pca = NA_integer_,
@@ -463,6 +492,7 @@ for (cluster in clusters) {
         dataset_id = ds_id,
         seurat_label = cluster,
         split = split,
+        covariate_model = opt$model,
         n_samples = ncol(spe_sub),
         n_genes_bed = NA_integer_,
         n_genes_pca = NA_integer_,
@@ -487,12 +517,21 @@ for (cluster in clusters) {
     pd$DX <- factor(as.character(pd$DX), levels = c("NTC", "MDD", "BPD"))
     pd$age <- as.numeric(pd$age)
     pd$PC3 <- as.numeric(pd$PC3)
+    if (identical(opt$model, "nspots")) pd$nspots <- as.numeric(pd$nspots)
 
     if (split == "all") {
       pd$sex <- factor(as.character(pd$sex), levels = c("M", "F"))
-      model_formula <- as.formula("~ DX + sex + age + PC3 + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5")
+      if (identical(opt$model, "nspots")) {
+        model_formula <- as.formula("~ DX + sex + age + PC3 + nspots + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5")
+      } else {
+        model_formula <- as.formula("~ DX + sex + age + PC3 + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5")
+      }
     } else {
-      model_formula <- as.formula("~ DX + age + PC3 + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5")
+      if (identical(opt$model, "nspots")) {
+        model_formula <- as.formula("~ DX + age + PC3 + nspots + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5")
+      } else {
+        model_formula <- as.formula("~ DX + age + PC3 + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5")
+      }
     }
 
     model <- model.matrix(model_formula, data = pd)
@@ -549,6 +588,7 @@ for (cluster in clusters) {
       dataset_id = ds_id,
       seurat_label = cluster,
       split = split,
+      covariate_model = opt$model,
       n_samples = ncol(spe_sub),
       n_genes_bed = res$n_genes_bed,
       n_genes_pca = res$n_genes_pca,

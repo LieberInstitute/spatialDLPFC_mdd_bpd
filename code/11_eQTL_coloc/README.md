@@ -34,6 +34,8 @@ Canonical local input/output locations for this folder:
 * `processed-data/00_genotypes/plink2/merged_maf05_pca.eigenvec` (generated locally)
 * `processed-data/11_eQTL_coloc/tqtl_in` (prepared tensorQTL inputs)
 * `processed-data/11_eQTL_coloc/tqtl_out` (tensorQTL outputs)
+* `processed-data/11_eQTL_coloc/nspots/tqtl_in` (parallel nspots-adjusted tensorQTL inputs)
+* `processed-data/11_eQTL_coloc/nspots/tqtl_out` (parallel nspots-adjusted tensorQTL outputs)
 
 Prep workflow:
 
@@ -47,7 +49,17 @@ Direct prep entrypoint:
 * `Rscript ./01_prep_inputs.R --help` shows usage plus the exact resolved defaults and exits.
 * `Rscript ./01_prep_inputs.R --check-only` performs the full validation/manifest pass without writing outputs.
 * `Rscript ./01_prep_inputs.R --dry-run` is an alias for `--check-only`.
+* `Rscript ./01_prep_inputs.R --model base` is the default baseline model and writes to `processed-data/11_eQTL_coloc/tqtl_in`.
+* `Rscript ./01_prep_inputs.R --model nspots` adds `nspots` to the covariate model, recomputes expression PCs with that expanded design matrix, and writes to `processed-data/11_eQTL_coloc/nspots/tqtl_in` unless `--out-dir` is supplied.
 * If staged inputs are missing, `01_prep_inputs.R` reports the missing files and advises running `./stage_required_data.sh` and/or `./00_get_SNP_PCs.sh`.
+
+Covariate models:
+
+* baseline all-donor inputs use `~ DX + sex + age + PC3 + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5`, plus expression PCs.
+* baseline male/female inputs use `~ DX + age + PC3 + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5`, plus expression PCs.
+* nspots all-donor inputs use `~ DX + sex + age + PC3 + nspots + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5`, plus expression PCs.
+* nspots male/female inputs use `~ DX + age + PC3 + nspots + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5`, plus expression PCs.
+* `prep_manifest.csv` records the covariate series in `covariate_model`.
 
 Prepared dataset naming convention in `tqtl_in`:
 
@@ -55,6 +67,7 @@ Prepared dataset naming convention in `tqtl_in`:
 * `all` split has no suffix (e.g., `astro`)
 * male/female splits use `_m` and `_f` (e.g., `astro_m`, `astro_f`)
 * `micro-vasc` is renamed to `uvasc` (`uvasc`, `uvasc_m`, `uvasc_f`)
+* The nspots series keeps the same dataset IDs; the directory path distinguishes baseline from nspots-adjusted inputs and outputs.
 
 Current stratum labels are Seurat-derived (cell-type-like labels):
 `Astro`, `Inhb`, `L2.3`, `L4`, `L5`, `L6`, `Micro.Vasc`/`uvasc`, `Oligo`.
@@ -64,12 +77,18 @@ Convenience wrappers:
 * `./prepare_tensorqtl_inputs.sh` is deprecated but still available as a shim that runs all 3 prep steps above.
 * `./prepare_tensorqtl_inputs.sh --check-only` is deprecated but still validates preconditions without writing outputs.
 * `./02_run_tensorQTL.sh` runs `02a_tensorQTL_cis.py` across all prepared dataset IDs in `tqtl_in` (manifest-driven if available).
+* `./02_run_tensorQTL.sh --analysis nspots` runs the same mapper against `processed-data/11_eQTL_coloc/nspots/tqtl_in` and writes to `processed-data/11_eQTL_coloc/nspots/tqtl_out`.
+* `./02_run_tensorQTL.sh --input-dir PATH --output-dir PATH` can run any explicitly supplied prepared input/output pair.
 
 Common run patterns:
 
 * `./02_run_tensorQTL.sh --dry-run` to list detected contexts
 * `./02_run_tensorQTL.sh --start-from l5_m` to resume from a context
 * `./02_run_tensorQTL.sh --only '^(l[2-6]|uvasc)(|_[mf])$'` to restrict contexts
+* `Rscript ./01_prep_inputs.R --model nspots --check-only` to validate the nspots design without writing files
+* `Rscript ./01_prep_inputs.R --model nspots` to prepare all nspots-adjusted inputs
+* `./02_run_tensorQTL.sh --analysis nspots --dry-run` to list nspots-adjusted tensorQTL commands
+* `./02_run_tensorQTL.sh --analysis nspots --only '^astro$'` to run one nspots-adjusted dataset
 
 ## DGE Comparison Inputs
 
