@@ -35,6 +35,17 @@ DEG_FILE_SPECS <- list(
   )
 )
 
+CUSTOM_CLUSTER_DEG_FILE_SPECS <- list(
+  custom_layer_adjusted = file.path(
+    "processed-data", "07_dx_DE",
+    "layer-adjusted-pc3-age-nspots_custom-cluster_dx-sex_degs-F-test-t-test.csv"
+  ),
+  custom_layer_restricted = file.path(
+    "processed-data", "07_dx_DE",
+    "layer-restricted-pc3-age-nspots_custom-cluster_dx-sex_degs-F-test-t-test.csv"
+  )
+)
+
 AUTHOR_UNION_REL_PATH <- file.path(
   "raw-data", "SCENIC_aux", "tf_lists", "MBv_PRECAST-Seurat_F-test-adjp-05.txt"
 )
@@ -57,6 +68,19 @@ SEURAT_CONTEXT_TO_DATASET_ID <- c(
   "L6" = "l6",
   "Micro.Vasc" = "uvasc",
   "Oligo" = "oligo"
+)
+
+CUSTOM_CONTEXT_TO_DATASET_ID <- c(
+  "Astro.L1" = "astro-l1",
+  "Astro.Nrn" = "astro-nrn",
+  "Inhb" = "inhb",
+  "L2" = "l2",
+  "L3" = "l3",
+  "L4" = "l4",
+  "L5" = "l5",
+  "L6" = "l6",
+  "Micro.Vasc" = "uvasc",
+  "WM" = "wm"
 )
 
 DEG_SEX_PREFIX <- c(female = "F", male = "M")
@@ -466,7 +490,45 @@ build_deg_views <- function(deg_global, deg_tables,
   )
 }
 
-load_DEGs <- function(repo_root = NULL, verbose = TRUE,
+build_custom_cluster_deg_views <- function(custom_by_context, broad_global, splits = c("all")) {
+  rows <- list()
+  for (split_name in splits) {
+    for (context_name in names(custom_by_context)) {
+      rows[[length(rows) + 1L]] <- make_deg_view_rows(
+        custom_by_context[[context_name]],
+        deg_view = "custom_primary",
+        context = context_name,
+        split = split_name
+      )
+      rows[[length(rows) + 1L]] <- make_deg_view_rows(
+        broad_global,
+        deg_view = "broad_PRECAST_Seurat_sensitivity",
+        context = context_name,
+        split = split_name
+      )
+    }
+  }
+
+  long <- do.call(rbind, rows)
+  rownames(long) <- NULL
+
+  counts <- aggregate(
+    gene_id ~ deg_view + context + split + deg_sex,
+    data = long,
+    FUN = function(x) length(unique(x)),
+    na.action = NULL
+  )
+  names(counts)[names(counts) == "gene_id"] <- "n_genes"
+  rownames(counts) <- NULL
+
+  list(
+    long = long,
+    counts = counts,
+    sex_sets = list()
+  )
+}
+
+load_standard_DEGs <- function(repo_root = NULL, verbose = TRUE,
                       host = JHPCE_HOST, remote_root = JHPCE_REPO_ROOT) {
   repo_root <- resolve_repo_root(repo_root)
 
@@ -583,6 +645,145 @@ load_DEGs <- function(repo_root = NULL, verbose = TRUE,
     views = deg_views,
     validation = deg_validation,
     files = files
+  )
+}
+
+load_custom_cluster_DEGs <- function(repo_root = NULL, verbose = TRUE,
+                                     host = JHPCE_HOST, remote_root = JHPCE_REPO_ROOT) {
+  repo_root <- resolve_repo_root(repo_root)
+
+  custom_file_paths <- lapply(CUSTOM_CLUSTER_DEG_FILE_SPECS, function(rel_path) {
+    ensure_local_file(
+      repo_root = repo_root,
+      rel_path = rel_path,
+      host = host,
+      remote_root = remote_root
+    )
+  })
+  custom_tables <- Map(
+    f = function(path, label) load_deg_summary(path = path, label = label),
+    path = custom_file_paths,
+    label = names(custom_file_paths)
+  )
+  custom_tables <- custom_tables[names(CUSTOM_CLUSTER_DEG_FILE_SPECS)]
+
+  broad_degs <- load_standard_DEGs(
+    repo_root = repo_root,
+    verbose = FALSE,
+    host = host,
+    remote_root = remote_root
+  )
+
+  custom_global <- collapse_gene_table(
+    do.call(
+      rbind,
+      lapply(unname(custom_tables), function(df) df[, c("gene_id", "gene_name"), drop = FALSE])
+    ),
+    label = "custom-cluster DEG summaries"
+  )
+
+  custom_layer_adjusted_genes <- collapse_gene_table(
+    custom_tables$custom_layer_adjusted,
+    label = "custom_layer_adjusted"
+  )
+
+  custom_lr_df <- custom_tables$custom_layer_restricted
+  custom_by_context <- lapply(names(CUSTOM_CONTEXT_TO_DATASET_ID), function(context_name) {
+    col_name <- paste0("n_ttest_sig_", context_name)
+    if (!(col_name %in% names(custom_lr_df))) {
+      stop("Missing required custom-cluster DEG column: ", col_name)
+    }
+
+    localized_lr <- custom_lr_df[!is.na(custom_lr_df[[col_name]]) & custom_lr_df[[col_name]] > 0, , drop = FALSE]
+    collapse_gene_table(
+      rbind(custom_layer_adjusted_genes, localized_lr[, c("gene_id", "gene_name"), drop = FALSE]),
+      label = paste0("deg_by_custom_context:", context_name)
+    )
+  })
+  names(custom_by_context) <- names(CUSTOM_CONTEXT_TO_DATASET_ID)
+
+  custom_by_dataset_id <- dataset_id_map_from_context_sets(
+    custom_by_context,
+    context_to_dataset_id = CUSTOM_CONTEXT_TO_DATASET_ID
+  )
+  custom_views <- build_custom_cluster_deg_views(
+    custom_by_context = custom_by_context,
+    broad_global = broad_degs$global,
+    splits = c("all")
+  )
+
+  deg_validation <- list(
+    source_counts = vapply(custom_tables, nrow, integer(1)),
+    global_gene_id_count = nrow(custom_global),
+    global_gene_name_count = length(unique(custom_global$gene_name)),
+    broad_PRECAST_Seurat_gene_id_count = nrow(broad_degs$global),
+    broad_PRECAST_Seurat_overlap_gene_id_count = length(intersect(custom_global$gene_id, broad_degs$global$gene_id)),
+    custom_lr_localized_gene_name_counts = vapply(
+      names(CUSTOM_CONTEXT_TO_DATASET_ID),
+      function(context_name) {
+        col_name <- paste0("n_ttest_sig_", context_name)
+        sum(custom_lr_df[[col_name]] > 0, na.rm = TRUE)
+      },
+      integer(1)
+    ),
+    custom_context_gene_name_counts = vapply(
+      custom_by_context,
+      function(df) length(unique(df$gene_name)),
+      integer(1)
+    ),
+    deg_view_gene_counts = custom_views$counts
+  )
+
+  files <- c(
+    custom_file_paths,
+    broad_sensitivity_files = broad_degs$files
+  )
+
+  if (isTRUE(verbose)) {
+    cat("Loaded custom-cluster DEG summaries.\n")
+    cat("Repo root:", repo_root, "\n")
+    for (nm in names(custom_tables)) {
+      cat(sprintf("  %s: %d rows\n", nm, nrow(custom_tables[[nm]])))
+    }
+    cat("Custom union (gene_id):", deg_validation$global_gene_id_count, "\n")
+    cat("Broad PRECAST+Seurat union (gene_id):", deg_validation$broad_PRECAST_Seurat_gene_id_count, "\n")
+    cat("Custom/broad overlap (gene_id):", deg_validation$broad_PRECAST_Seurat_overlap_gene_id_count, "\n")
+    cat("Per-context custom overlap set sizes (gene_name):\n")
+    for (ctx in names(deg_validation$custom_context_gene_name_counts)) {
+      ds_id <- unname(CUSTOM_CONTEXT_TO_DATASET_ID[[ctx]])
+      cat(sprintf("  %s (%s): %d\n", ctx, ds_id, deg_validation$custom_context_gene_name_counts[[ctx]]))
+    }
+  }
+
+  list(
+    tables = custom_tables,
+    global = custom_global,
+    by_custom_context = custom_by_context,
+    by_dataset_id = custom_by_dataset_id,
+    views = custom_views,
+    validation = deg_validation,
+    files = files,
+    broad_sensitivity = broad_degs
+  )
+}
+
+load_DEGs <- function(repo_root = NULL, mode = c("standard", "custom_cluster"), verbose = TRUE,
+                      host = JHPCE_HOST, remote_root = JHPCE_REPO_ROOT) {
+  mode <- match.arg(mode)
+  if (identical(mode, "custom_cluster")) {
+    return(load_custom_cluster_DEGs(
+      repo_root = repo_root,
+      verbose = verbose,
+      host = host,
+      remote_root = remote_root
+    ))
+  }
+
+  load_standard_DEGs(
+    repo_root = repo_root,
+    verbose = verbose,
+    host = host,
+    remote_root = remote_root
   )
 }
 
@@ -874,6 +1075,8 @@ summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
   )
 
   view_order <- c(
+    "custom_primary",
+    "broad_PRECAST_Seurat_sensitivity",
     "broad_interaction",
     "context_localized",
     "sex_specific",

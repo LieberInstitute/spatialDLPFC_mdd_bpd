@@ -28,7 +28,7 @@ Runs tensorQTL (02a_tensorQTL_cis.py) for prepared datasets.
 Options:
   --dry-run            Show detected datasets/commands only; do not run
   --force              Re-run datasets even if <dataset>.gene.map_cis.tab.gz exists
-  --analysis <name>    Input/output series: base or nspots (default: base)
+  --analysis <name>    Input/output series: base, nspots, or custom_cluster_nspots (default: base)
   --input-dir <path>   Override prepared tensorQTL input directory
   --output-dir <path>  Override tensorQTL output directory
   --start-from <id>    Start at this dataset (sorted order), skipping previous
@@ -110,8 +110,16 @@ case "${analysis}" in
       out_dir="${repo_root}/processed-data/11_eQTL_coloc/nspots/tqtl_out"
     fi
     ;;
+  custom_cluster_nspots)
+    if [[ ${input_dir_explicit} -eq 0 ]]; then
+      in_dir="${repo_root}/processed-data/11_eQTL_coloc/custom_cluster_nspots/tqtl_in"
+    fi
+    if [[ ${output_dir_explicit} -eq 0 ]]; then
+      out_dir="${repo_root}/processed-data/11_eQTL_coloc/custom_cluster_nspots/tqtl_out"
+    fi
+    ;;
   *)
-    echo "Unsupported --analysis: ${analysis}; expected base or nspots" >&2
+    echo "Unsupported --analysis: ${analysis}; expected base, nspots, or custom_cluster_nspots" >&2
     exit 1
     ;;
 esac

@@ -32,9 +32,34 @@ analysis_configs <- list(
     analysis = "nspots",
     tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "nspots", "tqtl_in"),
     tqtl_out_dir = here("processed-data", "11_eQTL_coloc", "nspots", "tqtl_out"),
-    summary_suffix = "_nspots"
+    summary_suffix = "_nspots",
+    deg_mode = "standard",
+    context_order = context_order,
+    split_order = split_order
   )
 )
+analysis_configs$base$deg_mode <- "standard"
+analysis_configs$base$context_order <- context_order
+analysis_configs$base$split_order <- split_order
+
+custom_config <- list(
+  analysis = "custom_cluster_nspots",
+  tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster_nspots", "tqtl_in"),
+  tqtl_out_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster_nspots", "tqtl_out"),
+  summary_suffix = "_custom_cluster_nspots",
+  deg_mode = "custom_cluster",
+  context_order = names(CUSTOM_CONTEXT_TO_DATASET_ID),
+  split_order = "all"
+)
+custom_manifest <- file.path(custom_config$tqtl_in_dir, "prep_manifest.csv")
+custom_outputs <- list.files(
+  custom_config$tqtl_out_dir,
+  pattern = "\\.gene\\.map_cis\\.tab\\.gz$",
+  full.names = TRUE
+)
+if (file.exists(custom_manifest) && length(custom_outputs) > 0) {
+  analysis_configs$custom_cluster_nspots <- custom_config
+}
 ```
 
 ```{r load-shared-inputs}
@@ -42,7 +67,12 @@ granges <- load_gene_ranges(repo_root = repo_root)
 g2sym <- setNames(granges$gene_name, granges$gene_id)
 sym2ensg <- setNames(granges$gene_id, granges$gene_name)
 
-degs <- load_DEGs(repo_root = repo_root)
+degs_by_mode <- list(
+  standard = load_DEGs(repo_root = repo_root, mode = "standard")
+)
+if (any(vapply(analysis_configs, function(config) identical(config$deg_mode, "custom_cluster"), logical(1)))) {
+  degs_by_mode$custom_cluster <- load_DEGs(repo_root = repo_root, mode = "custom_cluster")
+}
 
 scz_gwas_file <- file.path(ref_dir, "SCZ_GWAS_flt_1e-6_R.8.tab.gz")
 stopifnot(file.exists(scz_gwas_file))
@@ -59,8 +89,8 @@ analysis_manifests <- lapply(
   analysis_configs,
   function(config) load_eqtl_manifest(
     tqtl_in_dir = config$tqtl_in_dir,
-    context_order = context_order,
-    split_order = split_order
+    context_order = config$context_order,
+    split_order = config$split_order
   )
 )
 
@@ -68,7 +98,9 @@ lapply(analysis_manifests, function(x) x[, .N, by = .(split, covariate_model)])
 ```
 
 ```{r plotting-helpers}
-eqtl_barchart <- function(mapsum, indep = FALSE, analysis_label = NULL) {
+eqtl_barchart <- function(mapsum, indep = FALSE, analysis_label = NULL,
+                          context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                          split_order = DEG_SPLITS) {
   dt <- copy(mapsum)
   dt[, context := factor(context, levels = context_order)]
   dt[, split := factor(split, levels = split_order)]
@@ -108,7 +140,9 @@ eqtl_barchart <- function(mapsum, indep = FALSE, analysis_label = NULL) {
     )
 }
 
-deg_view_barchart <- function(view_summary, title) {
+deg_view_barchart <- function(view_summary, title,
+                              context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                              split_order = DEG_SPLITS) {
   dt <- copy(view_summary)
   dt[, context := factor(context, levels = context_order)]
   dt[, split := factor(split, levels = split_order)]
@@ -156,13 +190,25 @@ write_analysis_summaries <- function(result, config) {
 
   ggsave(
     filename = summary_path("map_cis_summary_barchart.pdf", suffix),
-    plot = eqtl_barchart(result$map_cis_summary, indep = FALSE, analysis_label = config$analysis),
+    plot = eqtl_barchart(
+      result$map_cis_summary,
+      indep = FALSE,
+      analysis_label = config$analysis,
+      context_order = config$context_order,
+      split_order = config$split_order
+    ),
     width = 11,
     height = 12
   )
   ggsave(
     filename = summary_path("map_independent_summary_barchart.pdf", suffix),
-    plot = eqtl_barchart(result$map_independent_summary, indep = TRUE, analysis_label = config$analysis),
+    plot = eqtl_barchart(
+      result$map_independent_summary,
+      indep = TRUE,
+      analysis_label = config$analysis,
+      context_order = config$context_order,
+      split_order = config$split_order
+    ),
     width = 11,
     height = 12
   )
@@ -170,7 +216,9 @@ write_analysis_summaries <- function(result, config) {
     filename = summary_path("map_cis_deg_view_summary_barchart.pdf", suffix),
     plot = deg_view_barchart(
       result$map_cis_deg_view_summary,
-      paste0("map-cis DEG-view overlaps (", config$analysis, ")")
+      paste0("map-cis DEG-view overlaps (", config$analysis, ")"),
+      context_order = config$context_order,
+      split_order = config$split_order
     ),
     width = 14,
     height = 14
@@ -179,7 +227,9 @@ write_analysis_summaries <- function(result, config) {
     filename = summary_path("map_independent_deg_view_summary_barchart.pdf", suffix),
     plot = deg_view_barchart(
       result$map_independent_deg_view_summary,
-      paste0("independent signal DEG-view overlaps (", config$analysis, ")")
+      paste0("independent signal DEG-view overlaps (", config$analysis, ")"),
+      context_order = config$context_order,
+      split_order = config$split_order
     ),
     width = 14,
     height = 14
@@ -205,13 +255,13 @@ analysis_results <- lapply(names(analysis_configs), function(analysis_name) {
   config <- analysis_configs[[analysis_name]]
   summarize_eqtl_analysis(
     config = config,
-    degs = degs,
+    degs = degs_by_mode[[config$deg_mode]],
     g2sym = g2sym,
     gwas_set = gwas_set,
     gwas1e6_set = gwas1e6_set,
     repo_root = repo_root,
-    context_order = context_order,
-    split_order = split_order
+    context_order = config$context_order,
+    split_order = config$split_order
   )
 })
 names(analysis_results) <- names(analysis_configs)

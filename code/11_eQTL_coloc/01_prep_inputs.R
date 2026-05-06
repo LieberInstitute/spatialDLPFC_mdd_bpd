@@ -38,6 +38,8 @@ default_options <- function(repo_root) {
     out_dir = file.path(repo_root, "processed-data", "11_eQTL_coloc", "tqtl_in"),
     splits = "all,male,female",
     model = "base",
+    cluster_col = "seurat_label",
+    analysis_label = "seurat",
     min_samples = 20L,
     write_spe = FALSE,
     check_only = FALSE,
@@ -48,7 +50,7 @@ default_options <- function(repo_root) {
 usage <- function(defaults, con = stdout()) {
   cat(
     "Usage: 01_prep_inputs.R [options]\n\n",
-    "Prepare tensorQTL BED/covariate/expression-PC inputs per seurat_label.\n",
+    "Prepare tensorQTL BED/covariate/expression-PC inputs per grouping column.\n",
     "If no arguments are supplied, the built-in defaults below are used and the prep run starts immediately.\n\n",
     "Options:\n",
     "  -h, --help               Show this help and exit. Valid only as the sole argument.\n",
@@ -61,6 +63,8 @@ usage <- function(defaults, con = stdout()) {
     "      --out-dir PATH       Output directory for prepared tensorQTL inputs.\n",
     "      --splits CSV         Comma-separated subset of: all,male,female.\n",
     "      --model MODEL        Covariate model: base or nspots.\n",
+    "      --cluster-col NAME   Grouping column: seurat_label or custom_cluster.\n",
+    "      --analysis-label ID  Label recorded in prep_manifest.csv.\n",
     "      --min-samples INT    Minimum samples required per dataset.\n\n",
     "Resolved defaults:\n",
     "  repo_root:      ", defaults$repo_root, "\n",
@@ -70,6 +74,8 @@ usage <- function(defaults, con = stdout()) {
     "  out_dir:        ", defaults$out_dir, "\n",
     "  splits:         ", defaults$splits, "\n",
     "  model:          ", defaults$model, "\n",
+    "  cluster_col:    ", defaults$cluster_col, "\n",
+    "  analysis_label: ", defaults$analysis_label, "\n",
     "  min_samples:    ", defaults$min_samples, "\n",
     "  write_spe:      ", defaults$write_spe, "\n",
     "  check_only:     ", defaults$check_only, "\n",
@@ -110,6 +116,8 @@ parse_args <- function(args, defaults) {
     }
     else if (key == "splits") opt$splits <- val
     else if (key == "model") opt$model <- val
+    else if (key == "cluster-col") opt$cluster_col <- val
+    else if (key == "analysis-label") opt$analysis_label <- val
     else if (key == "min-samples") opt$min_samples <- suppressWarnings(as.integer(val))
     else cli_fail("Unknown argument: --", key, show_usage = TRUE, defaults = defaults)
     i <- i + 2L
@@ -130,6 +138,17 @@ parse_args <- function(args, defaults) {
     cli_fail("`--min-samples` must be a positive integer.", show_usage = TRUE, defaults = defaults)
   }
 
+  allowed_cluster_cols <- c("seurat_label", "custom_cluster")
+  if (!(opt$cluster_col %in% allowed_cluster_cols)) {
+    cli_fail(
+      "`--cluster-col` must be one of: ", paste(allowed_cluster_cols, collapse = ", "),
+      show_usage = TRUE, defaults = defaults
+    )
+  }
+  if (!nzchar(opt$analysis_label)) {
+    cli_fail("`--analysis-label` must not be empty.", show_usage = TRUE, defaults = defaults)
+  }
+
   list(mode = "run", opt = opt)
 }
 
@@ -148,6 +167,8 @@ print_effective_options <- function(opt, defaults, args) {
   cat("Output dir:", opt$out_dir, "\n")
   cat("Splits:", opt$splits, "\n")
   cat("Covariate model:", opt$model, "\n")
+  cat("Cluster column:", opt$cluster_col, "\n")
+  cat("Analysis label:", opt$analysis_label, "\n")
   cat("Min samples:", opt$min_samples, "\n")
   cat("Write SPE:", opt$write_spe, "\n")
   cat("Check only:", opt$check_only, "\n")
@@ -230,13 +251,19 @@ spe <- get(obj_names[which(is_spe)[1]], envir = spe_env)
 
 cd <- as.data.frame(colData(spe))
 
-if (!"seurat_label" %in% names(cd)) {
+if (identical(opt$cluster_col, "seurat_label") && !"seurat_label" %in% names(cd)) {
   seurat_cols <- grep("^seurat_", names(cd), value = TRUE)
   if (length(seurat_cols) == 0) stop("Missing seurat_label and no seurat_* column found")
   cd$seurat_label <- cd[[seurat_cols[[1]]]]
 }
 
-cd$seurat_label <- as.factor(as.character(cd$seurat_label))
+if (!(opt$cluster_col %in% names(cd))) {
+  stop("Missing cluster column in colData: ", opt$cluster_col)
+}
+cd$cluster_label <- as.factor(as.character(cd[[opt$cluster_col]]))
+if (any(is.na(cd$cluster_label)) || any(!nzchar(as.character(cd$cluster_label)))) {
+  stop("Cluster column contains missing or empty values: ", opt$cluster_col)
+}
 
 if (!"brnum" %in% names(cd)) {
   if ("BrNum" %in% names(cd)) {
@@ -289,7 +316,7 @@ if ("PC3" %in% names(cd)) {
 }
 if (any(is.na(cd$PC3))) stop("PC3 contains NA values")
 
-colData(spe)$seurat_label <- cd$seurat_label
+colData(spe)$cluster_label <- cd$cluster_label
 colData(spe)$brnum <- cd$brnum
 colData(spe)$DX <- cd$DX
 colData(spe)$sex <- cd$sex
@@ -436,11 +463,11 @@ splits <- splits[nchar(splits) > 0]
 allowed_splits <- c("all", "male", "female")
 if (!all(splits %in% allowed_splits)) stop("Unsupported split(s): ", paste(setdiff(splits, allowed_splits), collapse = ", "))
 
-clusters <- sort(unique(as.character(colData(spe)$seurat_label)))
+clusters <- sort(unique(as.character(colData(spe)$cluster_label)))
 manifest <- list()
 
 for (cluster in clusters) {
-  cluster_mask <- as.character(colData(spe)$seurat_label) == cluster
+  cluster_mask <- as.character(colData(spe)$cluster_label) == cluster
   for (split in splits) {
     split_mask <- rep(TRUE, ncol(spe))
     if (split == "male") split_mask <- as.character(colData(spe)$sex) == "M"
@@ -453,6 +480,8 @@ for (cluster in clusters) {
       manifest[[length(manifest) + 1L]] <- data.frame(
         dataset_id = ds_id,
         seurat_label = cluster,
+        cluster_col = opt$cluster_col,
+        analysis_label = opt$analysis_label,
         split = split,
         covariate_model = opt$model,
         n_samples = sum(sel),
@@ -473,6 +502,8 @@ for (cluster in clusters) {
       manifest[[length(manifest) + 1L]] <- data.frame(
         dataset_id = ds_id,
         seurat_label = cluster,
+        cluster_col = opt$cluster_col,
+        analysis_label = opt$analysis_label,
         split = split,
         covariate_model = opt$model,
         n_samples = ncol(spe_sub),
@@ -491,6 +522,8 @@ for (cluster in clusters) {
       manifest[[length(manifest) + 1L]] <- data.frame(
         dataset_id = ds_id,
         seurat_label = cluster,
+        cluster_col = opt$cluster_col,
+        analysis_label = opt$analysis_label,
         split = split,
         covariate_model = opt$model,
         n_samples = ncol(spe_sub),
@@ -587,6 +620,8 @@ for (cluster in clusters) {
     manifest[[length(manifest) + 1L]] <- data.frame(
       dataset_id = ds_id,
       seurat_label = cluster,
+      cluster_col = opt$cluster_col,
+      analysis_label = opt$analysis_label,
       split = split,
       covariate_model = opt$model,
       n_samples = ncol(spe_sub),

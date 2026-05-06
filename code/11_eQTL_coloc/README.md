@@ -90,6 +90,47 @@ Common run patterns:
 * `./02_run_tensorQTL.sh --analysis nspots --dry-run` to list nspots-adjusted tensorQTL commands
 * `./02_run_tensorQTL.sh --analysis nspots --only '^astro$'` to run one nspots-adjusted dataset
 
+### Custom-cluster tensorQTL inputs
+
+The custom-cluster workflow is an additional analysis series and does not reuse or overwrite the existing Seurat `tqtl_in` or nspots `nspots/tqtl_in` inputs.
+
+Custom prep uses the JHPCE-derived object:
+
+* `processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo_sample-custom-cluster_norm-filt.Rdata`
+
+Primary custom model:
+
+* grouping column: `custom_cluster`
+* split: `all`
+* covariates: `DX + sex + age + PC3 + nspots + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5`, plus expression PCs
+* output input directory: `processed-data/11_eQTL_coloc/custom_cluster_nspots/tqtl_in`
+* tensorQTL output directory: `processed-data/11_eQTL_coloc/custom_cluster_nspots/tqtl_out`
+
+Prepare custom inputs:
+
+```bash
+./stage_required_data.sh
+Rscript ./01_prep_inputs.R \
+  --spe-file ../../processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo_sample-custom-cluster_norm-filt.Rdata \
+  --cluster-col custom_cluster \
+  --analysis-label custom_cluster_nspots \
+  --model nspots \
+  --splits all \
+  --out-dir ../../processed-data/11_eQTL_coloc/custom_cluster_nspots/tqtl_in
+```
+
+Run custom tensorQTL:
+
+```bash
+./02_run_tensorQTL.sh --analysis custom_cluster_nspots
+```
+
+Dry-run only:
+
+```bash
+./02_run_tensorQTL.sh --analysis custom_cluster_nspots --dry-run
+```
+
 ## DGE Comparison Inputs
 
 Use the final DEG summary CSVs as the source of significance, with DEG status defined by the F-test BH-adjusted p-value (`adj.P.Val < 0.05`) from the summary files. Do not add a global `n_ttest_sig > 0` filter.
@@ -114,6 +155,13 @@ Per-context DEG sets should be defined as:
 This keeps PRECAST/domain DEG support global while avoiding a forced one-to-one mapping from PRECAST domains onto the 8 Seurat contexts used by the current eQTL workflow.
 
 Use `gene_id` as the primary overlap key against tensorQTL phenotypes. Keep `gene_name` for reporting and validation against the author text list.
+
+For the custom-cluster tensorQTL series, use the custom-cluster DEG summaries as the primary DEG reference:
+
+* `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_custom-cluster_dx-sex_degs-F-test-t-test.csv`
+* `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_custom-cluster_dx-sex_degs-F-test-t-test.csv`
+
+The primary custom context set is all custom layer-adjusted F-test-significant genes plus custom layer-restricted genes localized by `n_ttest_sig_<custom_cluster> > 0`. The PRECAST+Seurat broad union remains a sensitivity/reference view named `broad_PRECAST_Seurat_sensitivity`.
 
 The default `n_context_DEGs` overlap summaries use this broad per-context reference, so all/male/female eQTL splits share the same DEG reference set and several contexts are close to the 523 Seurat layer-adjusted genes. Additional DEG-view summaries in `03_eqtl_explore.Rmd` separate stricter interpretations: `broad_interaction`, `context_localized`, `sex_specific`, and `context_and_sex_specific`. Context-aware views use only the eight Seurat eQTL contexts above, not PRECAST/smoothed domains.
 
