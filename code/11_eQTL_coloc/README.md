@@ -10,9 +10,32 @@ This project folder is for code related to eQTL and colocalization analyzes for 
 
 ### Differential Gene Expression (DGE) Models
 
-The team utilized a `limma` framework to leverage the interaction between diagnosis and sex (`dx*sex`), maximizing the statistical power of the 119 donors. Two primary models were designed, both utilizing covariates for technical batch effects (global PC3), age, and the number of spots per pseudobulk sample (`nspots`):
-1.  **Layer-Adjusted (L-A) Model:** `~ dx*sex + domain + PC3 + age + nspots`. This model tests the overall influence of diagnosis and sex on gene expression while statistically adjusting for the differences between spatial layers.
-2.  **Layer-Restricted (L-R) Model:** `~ dx*sex*domain + PC3 + age + nspots`. This model directly probes the interaction between diagnosis, sex, and spatial domain, allowing the team to identify gene expression changes restricted to specific layers (e.g., White Matter alterations specifically in females).
+The project DGE analyses use `limma-voom` models on donor-level pseudobulk expression with diagnosis, sex, annotation context, global PC3, age, and `nspots` covariates.
+
+Important terminology note: some information refers to genes with significant `dx*sex interaction`. In the current `code/07_dx_DE` implementation, the final `dx-sex_degs-F-test-t-test.csv` files are generated from sex-stratified diagnosis contrasts such as `F_NTC.MDD`, `M_NTC.MDD`, `F_NTC.BPD`, and `M_NTC.BPD`, followed by an omnibus F-test across the tested contrasts.
+
+A safer wording for these files could be:
+
+- F-test significant dx/sex DGE genes
+- genes with sex-stratified diagnosis-associated DGE signal
+- broad dx/sex DGE-supported genes
+
+We cannot claim that every gene in these lists has a formal diagnosis-by-sex interaction-only effect unless a contrast matrix explicitly testing only interaction terms is used.
+
+2 related DGE model families are used:
+
+1. **Layer-/context-adjusted (L-A) model:** `~ 0 + condition:sex + context + PC3 + age + nspots`
+
+   This model tests sex-stratified diagnosis contrasts while adjusting for annotation context. Depending on the run, `context` is either a PRECAST smoothed spatial domain or a Seurat label-transfer cluster.
+
+2. **Layer-/context-restricted (L-R) model:** `~ 0 + condition:context:sex + PC3 + age + nspots`
+
+   This model estimates the same diagnosis-by-sex contrast structure within each annotation context, allowing DGE evidence to be localized to a PRECAST spatial domain or a Seurat cluster.
+
+The historical labels `layer-adjusted` and `layer-restricted` are retained in file names. For interpretation in this folder, read `layer` as annotation context:
+
+- PRECAST/smoothed runs use 6 spatial domains: L1, L2, L3.4, L5, L6, WM.
+- Seurat runs use 8 cell-type-like clusters: Astro, Inhb, L2.3, L4, L5, L6, Micro.Vasc, Oligo.
 
 ### Models to be Considered for eQTL and Colocalization Analyses
 
@@ -133,62 +156,119 @@ Dry-run only:
 
 ## DGE Comparison Inputs
 
-Use the final DEG summary CSVs as the source of significance, with DEG status defined by the F-test BH-adjusted p-value (`adj.P.Val < 0.05`) from the summary files. Do not add a global `n_ttest_sig > 0` filter.
+Use the final DEG summary CSVs as the source of DGE significance, with DEG status defined by the F-test BH-adjusted p-value (`adj.P.Val < 0.05`) from the summary files.
+
+Do not add a global `n_ttest_sig > 0` filter when reconstructing Jacqui's broad DEG universe. The post-hoc t-test columns are useful for localizing and interpreting effects, but Jacqui's recommended broad list is based on F-test significance.
+
+Recommended language:
+
+- Use: "F-test significant dx/sex DGE genes"
+- Use: "sex-stratified diagnosis-associated DGE genes"
+- Use: "broad PRECAST-or-Seurat DGE-supported genes"
+- Avoid: "all genes with a formal dx-by-sex interaction effect"
+
+The shorthand `dx*sex DEG` is useful for matching existing project file names and Slack language, but it should not be overinterpreted as proving a formal interaction-only effect for every gene.
 
 Global DEG support for this project comes from the union of all four author-recommended DEG summaries in `processed-data/07_dx_DE`:
 
-* `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
-* `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
-* `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
-* `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
+- `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
+- `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
+- `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
+- `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
 
 The author-provided union list at `raw-data/SCENIC_aux/tf_lists/MBv_PRECAST-Seurat_F-test-adjp-05.txt` is useful as a validation artifact for the reconstructed four-file union by `gene_name`.
 
-Per-context eQTL overlap remains anchored to the current Seurat strata:
-`Astro`, `Inhb`, `L2.3`, `L4`, `L5`, `L6`, `Micro.Vasc`, and `Oligo`.
+The tensorQTL results in this folder are Seurat-context eQTLs. Therefore, DEG/eQTL overlaps have two distinct interpretations:
 
-Per-context DEG sets should be defined as:
+1. **Global DEG support**
 
-* all Seurat `layer-adjusted` F-test-significant genes, plus
-* Seurat `layer-restricted` F-test-significant genes localized to that context via `n_ttest_sig_<context> > 0`
+   Ask whether an eQTL eGene is present in the broad PRECAST-or-Seurat DEG universe. This is the closest match to Jacqui's Slack guidance to "paint with a broad brush."
 
-This keeps PRECAST/domain DEG support global while avoiding a forced one-to-one mapping from PRECAST domains onto the 8 Seurat contexts used by the current eQTL workflow.
+2. **Seurat context support**
+
+   Ask whether an eQTL eGene is DEG-supported in the same Seurat context used for tensorQTL. This is more specific, but it uses only the Seurat DEG files because PRECAST domains do not map one-to-one onto the 8 Seurat eQTL strata.
 
 Use `gene_id` as the primary overlap key against tensorQTL phenotypes. Keep `gene_name` for reporting and validation against the author text list.
 
-For the custom-cluster tensorQTL series, use the custom-cluster DEG summaries as the primary DEG reference:
+### Additional DGE list notes/info
 
-* `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_custom-cluster_dx-sex_degs-F-test-t-test.csv`
-* `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_custom-cluster_dx-sex_degs-F-test-t-test.csv`
-
-The primary custom context set is all custom layer-adjusted F-test-significant genes plus custom layer-restricted genes localized by `n_ttest_sig_<custom_cluster> > 0`. The PRECAST+Seurat broad union remains a sensitivity/reference view named `broad_PRECAST_Seurat_sensitivity`.
-
-The default `n_context_DEGs` overlap summaries use this broad per-context reference, so all/male/female eQTL splits share the same DEG reference set and several contexts are close to the 523 Seurat layer-adjusted genes. Additional DEG-view summaries in `03_eqtl_explore.Rmd` separate stricter interpretations: `broad_interaction`, `context_localized`, `sex_specific`, and `context_and_sex_specific`. Context-aware views use only the eight Seurat eQTL contexts above, not PRECAST/smoothed domains.
-
-DEG-view matching to eQTL strata:
-
-* `broad_interaction` is the main Jacqui-recommended broad support set. It is not context- or sex-matched to a specific eQTL stratum; it is best for inclusive screening.
-* `context_localized` is the best context-matched view for all-donor eQTLs. Its DEG provenance is only the Seurat layer-restricted table, filtered to `adj.P.Val < 0.05` and `n_ttest_sig_<context> > 0`. It is not derived from male/female DEG lists, so the same context set is used for all, male, and female eQTL splits.
-* `sex_specific` is sex-matched but not context-matched. It uses all four DEG tables and any post-hoc sex-specific t-test flag matching `F_*_ttest == "padj<.05"` or `M_*_ttest == "padj<.05"`. In all-donor eQTL summaries, female and male DEG sets are reported as separate `deg_sex` rows; those are the same female and male DEG sets used for the female and male eQTL splits.
-* `context_and_sex_specific` is the closest match for sex-stratified eQTLs because it matches both the Seurat eQTL context and the eQTL sex split. Its DEG provenance is only the Seurat layer-restricted table and context-sex columns such as `Astro_F_NTC.MDD_ttest == "padj<.05"`. In all-donor eQTL summaries, female and male context-sex DEG sets are reported separately rather than merged.
-
-### Additional DGE list note
-
-[Jacqui on Slack:]
-
-I think right now the goal is to paint with a broad brush, and so we would like to use all of the genes with sig. dx*sex interaction (F-test adj, p<.05) in either the PRECAST (smoothed) annotation (6 domains) or the Seurat annotations (8 clusters). Here are a few reasons:
+For now the goal is to paint with a broad brush, and so we would like to use all of the genes with sig. dx*sex interaction (F-test adj, p<.05) in either the PRECAST (smoothed) annotation (6 domains) or the Seurat annotations (8 clusters).
 
   - The layer-adjusted model results are highly concordant (D-E in attached image)
   - The layer-restricted model results are mostly concordant (F-G in attached image)
   - The pseudobulk samples you are working with share characteristics of both annotation sets. Like the PRECAST domains there are no spots that were annotated to the low UMI cluster. Like the Seurat model results, the spots are aggregated based on cell-type labels in to 8 clusters. For the Seurat DE models, the low UMI cluster spots were included. So the pseudobulk data you have is identical to neither.
   - We used all of the genes with sig. dx*sex interaction in either model when we constructed our DEG modules.
 
-
 A txt list of all of these genes is present here:
  `raw-data/SCENIC_aux/tf_lists/MBv_PRECAST-Seurat_F-test-adjp-05.txt`
 That list is a compilation (union) of the two files you specified plus these two files:
   - Layer-adjusted domains: `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
   - Layer-restricted domains: `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
+
+### DEG views used for eQTL overlap summaries
+
+The overlap code can report 4 DEG views.
+For preliminary reporting, prioritize the first two views:
+
+1. `broad_interaction`
+2. `context_localized`
+
+The sex-aware views are useful secondary or backup analyses for male/female tensorQTL splits:
+
+3. `sex_specific`
+4. `context_and_sex_specific`
+
+#### 1. `broad_interaction`: inclusive project-level DGE support
+
+Definition: Union of F-test significant genes from all 4 recommended DEG files:
+  - PRECAST L-A
+  - PRECAST L-R
+  - Seurat L-A
+  - Seurat L-R
+
+Matching to eQTLs:
+- Not context-matched.
+- Not sex-matched.
+- Gene-level overlap only.
+
+This is a primary broad screening view, "painting with a broad brush".
+- Answers: is this eQTL eGene in the project-level dx/sex DGE universe?
+
+#### 2. `context_localized`: same Seurat context support
+
+Definition:
+- Seurat L-R F-test significant genes localized to the same Seurat context via `n_ttest_sig_<context> > 0`.
+
+Matching to eQTLs: context-matched, not sex-matched.
+
+This is a primary context-aware view for all-donor Seurat eQTLs, showing eGenes overlapping Seurat L-R DEGs localized to the same cluster.
+- Answers: is this eQTL eGene DEG-supported in the same Seurat cluster?
+
+Note: this view excludes PRECAST-only DGE support because PRECAST domains do not map cleanly onto the Seurat eQTL contexts.
+
+#### 3. `sex_specific`: same-sex support without context matching
+
+Definition: Genes from all four DEG tables with a post-hoc sex-specific t-test flag matching the eQTL split:
+  - female eQTLs use `F_*_ttest`
+  - male eQTLs use `M_*_ttest`
+
+Matching to eQTLs: Sex-matched, not context-matched.Secondary view for sex-stratified eQTLs.
+- Answers: does a male or female eQTL eGene overlap any same-sex DGE-supported gene, regardless of annotation context?
+
+This is not a context-localized result, so it is broader than the Seurat eQTL context.
+
+#### 4. `context_and_sex_specific`: strict same Seurat context and same sex support
+
+Definition:
+- Seurat L-R genes with both matching context and matching sex-specific t-test evidence.
+- Example: for female Astro eQTLs, use columns such as `Astro_F_NTC.MDD_ttest`.
+
+Matching to eQTLs:Context-matched, sex-matched.
+- Strictest interpretive view for sex-stratified Seurat eQTLs.
+- Answers: does a sex-stratified eQTL eGene overlap a DEG in the same Seurat cluster and same sex?
+
+This view is expected to have smaller counts because it requires both same-context and same-sex DEG support.
+
 
 ## R coding agent instructions
   - use single line comments starting with '## ' and lower case, to briefly comment/explain non-trivial code blocks generated
