@@ -2,7 +2,7 @@
 #SBATCH --mem=5G
 #SBATCH --job-name=layer-restricted-seurat_scaled_lmFit-voom_revised-pb-filters_revised-gene-input
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07-1_covariate_sensitivity/logs/%x_%j_%a.log
-#SBATCH --array=1-7
+#SBATCH --array=8
 
 echo "**** Job starts ****"
 date

@@ -12,9 +12,10 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 #load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
-#load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
-load("processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo_sample-custom-cluster_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+#load("processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo_sample-custom-cluster_norm-filt.Rdata")
 dim(spe_pseudo)
+colnames(colData(spe_pseudo))[grep("subsets_mito_percent", colnames(colData(spe_pseudo)))] = "chrM_ratio"
 spe_pseudo$pc3 = reducedDim(spe_pseudo)[,"PC3"]
 
 #add extra covars
@@ -29,8 +30,8 @@ colData(spe_pseudo) <- new.cdata
 rowData(spe_pseudo)$high_expr_group_sample_id2 <- filterByExpr(spe_pseudo, group = spe_pseudo$sample_id)
 
 #rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$smoothed_k9_1663)
-#rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$seurat_label)
-rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$custom_cluster)
+rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$seurat_label)
+#rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$custom_cluster)
 
 spe_pseudo <- spe_pseudo[rowData(spe_pseudo)$high_expr_group_sample_id2==T & rowData(spe_pseudo)$high_expr_group_cluster2==T,]
 dim(spe_pseudo)
@@ -42,8 +43,8 @@ dge_pseudo <- calcNormFactors(dge_pseudo)
 
 #establish model
 #cat("\nLayer-adjusted model\ndx model: ~ 0 + group + smoothed_k9_1663 + pc3 + ", args[[1]], "\n")
-#cat("\nLayer-adjusted model\ndx model: ~ 0 + group + seurat_label + pc3 + ", args[[1]], "\n")
-cat("\nLayer-adjusted model\ndx model: ~ 0 + group + custom_cluster + pc3 + ", args[[1]], "\n")
+cat("\nLayer-adjusted model\ndx model: ~ 0 + group + seurat_label + pc3 + ", args[[1]], "\n")
+#cat("\nLayer-adjusted model\ndx model: ~ 0 + group + custom_cluster + pc3 + ", args[[1]], "\n")
 
 group = interaction(spe_pseudo$condition, spe_pseudo$sex)
 table(group)
@@ -52,8 +53,8 @@ colnames(colData(spe_pseudo))[grep(args[[1]], colnames(colData(spe_pseudo)))] <-
 if(args[[1]]!="Smoking") spe_pseudo$test_covar = scale(spe_pseudo$test_covar)
 dx_mod <- model.matrix(
   #~ 0 + group + smoothed_k9_1663 + pc3 + test_covar,
-  #~ 0 + group + seurat_label + pc3 + test_covar,
-  ~ 0 + group + custom_cluster + pc3 + test_covar,
+  ~ 0 + group + seurat_label + pc3 + test_covar,
+  #~ 0 + group + custom_cluster + pc3 + test_covar,
   colData(spe_pseudo)
 )
 colnames(dx_mod)[ncol(dx_mod)] = args[[1]]
@@ -65,19 +66,19 @@ corfit <- duplicateCorrelation(y, block = colData(spe_pseudo)$sample_id)
 fit <- lmFit(y, block = colData(spe_pseudo)$sample_id, correlation = corfit$consensus)
 
 #saveRDS(fit, paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-pc3-",
-#	args[[1]], ".rda"))
+#	gsub("_","-",args[[1]]), ".rda"))
 #cat("\nlmFit results/ object saved to:", paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-adjusted_smoothed-k9-1663_condition-sex_rev-gene-input_covars-pc3-",
-#	args[[1]], ".rda),"\n")
+#	gsub("_","-",args[[1]]), ".rda"),"\n")
 
-#saveRDS(fit, paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-adjusted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-",
+saveRDS(fit, paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-adjusted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-",
+        gsub("_","-",args[[1]]), ".rda"))
+cat("\nlmFit results/ object saved to:", paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-adjusted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-",
+        gsub("_","-",args[[1]]), ".rda"),"\n")
+
+#saveRDS(fit, paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-adjusted_custom-cluster_condition-sex_rev-gene-input_covars-pc3-",
 #        args[[1]], ".rda"))
-#cat("\nlmFit results/ object saved to:", paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-adjusted_seurat-pc30_condition-sex_rev-gene-input_covars-pc3-",
+#cat("\nlmFit results/ object saved to:", paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-adjusted_custom-cluster_condition-sex_rev-gene-input_covars-pc3-",
 #        args[[1]], ".rda),"\n")
-
-saveRDS(fit, paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-adjusted_custom-cluster_condition-sex_rev-gene-input_covars-pc3-",
-        args[[1]], ".rda"))
-cat("\nlmFit results/ object saved to:", paste0("processed-data/07-1_covariate_sensitivity/lmFit-voom_layer-adjusted_custom-cluster_condition-sex_rev-gene-input_covars-pc3-",
-        args[[1]], ".rda),"\n")
 
 
 
