@@ -171,10 +171,10 @@ The shorthand `dx*sex DEG` is useful for matching existing project file names an
 
 Global DEG support for this project comes from the union of all four author-recommended DEG summaries in `processed-data/07_dx_DE`:
 
-- `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
-- `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
-- `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
-- `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
+- PRECAST L-A: `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
+- PRECAST L-R: `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
+- Seurat L-A: `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
+- Seurat L-R: `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
 
 The author-provided union list at `raw-data/SCENIC_aux/tf_lists/MBv_PRECAST-Seurat_F-test-adjp-05.txt` is useful as a validation artifact for the reconstructed four-file union by `gene_name`.
 
@@ -218,13 +218,24 @@ The sex-aware views are useful secondary or backup analyses for male/female tens
 3. `sex_specific`
 4. `context_and_sex_specific`
 
+File mapping:
+
+| DEG view | DEG files used | Extra DEG filter after `adj.P.Val < 0.05` | eQTL matching |
+| --- | --- | --- | --- |
+| `broad_interaction` | PRECAST L-A, PRECAST L-R, Seurat L-A, Seurat L-R | none | gene only |
+| `context_localized` | Seurat L-R only | `n_ttest_sig_<Seurat context> > 0` | gene and Seurat context |
+| `sex_specific` | PRECAST L-A, PRECAST L-R, Seurat L-A, Seurat L-R | any same-sex post-hoc t-test flag: `F_*_ttest` for female or `M_*_ttest` for male | gene and sex |
+| `context_and_sex_specific` | Seurat L-R only | same-context, same-sex post-hoc t-test flag, for example `Astro_F_NTC.MDD_ttest` | gene, Seurat context, and sex |
+
+All four views start from F-test significant rows in the named files (`adj.P.Val < 0.05`). The post-hoc t-test columns only localize the already F-test significant DEG support by Seurat context and/or sex.
+
 #### 1. `broad_interaction`: inclusive project-level DGE support
 
 Definition: Union of F-test significant genes from all 4 recommended DEG files:
-  - PRECAST L-A
-  - PRECAST L-R
-  - Seurat L-A
-  - Seurat L-R
+  - PRECAST L-A: `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
+  - PRECAST L-R: `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
+  - Seurat L-A: `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
+  - Seurat L-R: `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
 
 Matching to eQTLs:
 - Not context-matched.
@@ -237,7 +248,8 @@ This is a primary broad screening view, "painting with a broad brush".
 #### 2. `context_localized`: same Seurat context support
 
 Definition:
-- Seurat L-R F-test significant genes localized to the same Seurat context via `n_ttest_sig_<context> > 0`.
+- Source file: `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
+- Filter: Seurat L-R F-test significant genes localized to the same Seurat context via `n_ttest_sig_<context> > 0`.
 
 Matching to eQTLs: context-matched, not sex-matched.
 
@@ -249,10 +261,14 @@ Note: this view excludes PRECAST-only DGE support because PRECAST domains do not
 #### 3. `sex_specific`: same-sex support without context matching
 
 Definition: Genes from all four DEG tables with a post-hoc sex-specific t-test flag matching the eQTL split:
+  - PRECAST L-A: `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
+  - PRECAST L-R: `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
+  - Seurat L-A: `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
+  - Seurat L-R: `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
   - female eQTLs use `F_*_ttest`
   - male eQTLs use `M_*_ttest`
 
-Matching to eQTLs: Sex-matched, not context-matched.Secondary view for sex-stratified eQTLs.
+Matching to eQTLs: Sex-matched, not context-matched. Secondary view for sex-stratified eQTLs.
 - Answers: does a male or female eQTL eGene overlap any same-sex DGE-supported gene, regardless of annotation context?
 
 This is not a context-localized result, so it is broader than the Seurat eQTL context.
@@ -260,10 +276,11 @@ This is not a context-localized result, so it is broader than the Seurat eQTL co
 #### 4. `context_and_sex_specific`: strict same Seurat context and same sex support
 
 Definition:
-- Seurat L-R genes with both matching context and matching sex-specific t-test evidence.
+- Source file: `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
+- Filter: Seurat L-R genes with both matching context and matching sex-specific t-test evidence.
 - Example: for female Astro eQTLs, use columns such as `Astro_F_NTC.MDD_ttest`.
 
-Matching to eQTLs:Context-matched, sex-matched.
+Matching to eQTLs: Context-matched, sex-matched.
 - Strictest interpretive view for sex-stratified Seurat eQTLs.
 - Answers: does a sex-stratified eQTL eGene overlap a DEG in the same Seurat cluster and same sex?
 
