@@ -52,6 +52,12 @@ AUTHOR_UNION_REL_PATH <- file.path(
 
 GENE_RANGES_REL_PATH <- file.path("processed-data", "ref", "granges.qs2")
 
+GWAS_BCF_FILES <- c(
+  BPD = file.path("GWAS-BPD", "bip2024_eur_no23andMe.hg38.bcf"),
+  MDD = file.path("GWAS-MDD", "pgc-mdd2025_no23andMe_eur_v3-49-24-11.hg38.bcf"),
+  SCZD = file.path("GWAS-SCZD", "PGC3_SCZ_wave3.european.autosome.public.v3.hg38.bcf")
+)
+
 DEFAULT_GENE_RANGES_SOURCE_RELS <- c(
   file.path(
     "processed-data", "06_pseudobulk", "Seurat",
@@ -112,6 +118,252 @@ resolve_repo_root <- function(repo_root = NULL) {
   }
 
   stop("Cannot determine repo root; pass repo_root")
+}
+
+gwas_check_disorder <- function(dis) {
+  dis <- toupper(dis)
+  if (!dis %in% names(GWAS_BCF_FILES)) {
+    stop("Unsupported disorder: ", dis, ". Expected one of: ", paste(names(GWAS_BCF_FILES), collapse = ", "))
+  }
+  dis
+}
+
+gwas_pval_tag <- function(pval) {
+  if (length(pval) != 1 || is.na(pval) || !is.finite(pval) || pval <= 0 || pval >= 1) {
+    stop("pval must be one finite value between 0 and 1")
+  }
+  tag <- formatC(pval, format = "e", digits = 0)
+  tag <- sub("e-0+", "e-", tag)
+  tag <- sub("e\\+0+", "e", tag)
+  tag <- sub("e\\+", "e", tag)
+  tag
+}
+
+gwas_si_tag <- function(si_min) {
+  if (length(si_min) != 1 || is.na(si_min) || !is.finite(si_min)) {
+    stop("si_min must be one finite value")
+  }
+  format(si_min, scientific = FALSE, trim = TRUE)
+}
+
+gwas_genotype_dir <- function(repo_root = NULL, genotype_dir = NULL) {
+  if (!is.null(genotype_dir)) return(normalizePath(genotype_dir, mustWork = TRUE))
+  file.path(resolve_repo_root(repo_root), "processed-data", "00_genotypes")
+}
+
+gwas_bcf_path <- function(dis, repo_root = NULL, genotype_dir = NULL) {
+  dis <- gwas_check_disorder(dis)
+  bcf_file <- file.path(gwas_genotype_dir(repo_root, genotype_dir), GWAS_BCF_FILES[[dis]])
+  if (!file.exists(bcf_file)) stop("Missing GWAS BCF for ", dis, ": ", bcf_file)
+  normalizePath(bcf_file, mustWork = TRUE)
+}
+
+gwas_cache_file <- function(dis, pval, repo_root = NULL, genotype_dir = NULL, si_min = 0.8) {
+  dis <- gwas_check_disorder(dis)
+  file.path(
+    gwas_genotype_dir(repo_root, genotype_dir),
+    sprintf("GWAS-%s_flt_p%s_SI%s.hg38.tab.gz", dis, gwas_pval_tag(pval), gwas_si_tag(si_min))
+  )
+}
+
+normalize_gwas_query_table <- function(dt, dis, pval, cache_file = NULL, si_min = 0.8) {
+  dis <- gwas_check_disorder(dis)
+  query_cols <- c("chr", "pos", "rsid", "a0", "a1", "beta", "beta_se", "lp", "N", "ns", "ncas", "impinfo")
+
+  if (nrow(dt) == 0) {
+    dt <- data.table::as.data.table(stats::setNames(replicate(length(query_cols), logical(), simplify = FALSE), query_cols))
+  } else {
+    if (ncol(dt) != length(query_cols)) {
+      stop("Unexpected GWAS query column count: ", ncol(dt), "; expected ", length(query_cols))
+    }
+    data.table::setnames(dt, query_cols)
+  }
+
+  dt[, `:=`(
+    chr = as.character(chr),
+    pos = as.integer(pos),
+    rsid = as.character(rsid),
+    a0 = as.character(a0),
+    a1 = as.character(a1),
+    beta = as.numeric(beta),
+    beta_se = as.numeric(beta_se),
+    lp = as.numeric(lp),
+    N = as.numeric(N),
+    ns = as.numeric(ns),
+    ncas = as.numeric(ncas),
+    impinfo = as.numeric(impinfo)
+  )]
+  dt[, p := 10^(-lp)]
+  dt[, variant_id := sprintf("%s:%s:%s:%s", chr, pos, a0, a1)]
+  data.table::setcolorder(dt, c("rsid", "chr", "pos", "a0", "a1", "beta", "beta_se", "N", "p", "impinfo", "ncas", "ns", "lp", "variant_id"))
+
+  attr(dt, "gwas_dis") <- dis
+  attr(dt, "gwas_pval") <- pval
+  attr(dt, "gwas_si_min") <- si_min
+  if (!is.null(cache_file)) {
+    attr(dt, "gwas_cache_file") <- cache_file
+    attr(dt, "gwas_cache_dir") <- dirname(cache_file)
+  }
+  dt
+}
+
+annotate_gwas_table <- function(dt, dis, pval, cache_file, si_min = 0.8) {
+  attr(dt, "gwas_dis") <- gwas_check_disorder(dis)
+  attr(dt, "gwas_pval") <- pval
+  attr(dt, "gwas_si_min") <- si_min
+  attr(dt, "gwas_cache_file") <- cache_file
+  attr(dt, "gwas_cache_dir") <- dirname(cache_file)
+  dt
+}
+
+loadGWAS <- function(dis, pval, repo_root = NULL, genotype_dir = NULL,
+                     si_min = 0.8, bcftools = "bcftools", use_cache = TRUE) {
+  dis <- gwas_check_disorder(dis)
+  cache_file <- gwas_cache_file(dis, pval, repo_root = repo_root, genotype_dir = genotype_dir, si_min = si_min)
+  if (use_cache && file.exists(cache_file)) {
+    return(annotate_gwas_table(data.table::fread(cache_file), dis, pval, cache_file, si_min))
+  }
+
+  bcf_file <- gwas_bcf_path(dis, repo_root = repo_root, genotype_dir = genotype_dir)
+  lp_min <- -log10(pval)
+  query_file <- tempfile(pattern = "gwas-query-", fileext = ".tab")
+  err_file <- tempfile(pattern = "gwas-query-err-", fileext = ".log")
+  on.exit(unlink(c(query_file, err_file)), add = TRUE)
+
+  ## query only the fields required by downstream eQTL and coloc steps.
+  status <- system2(
+    bcftools,
+    args = c(
+      "query",
+      "-i", shQuote(sprintf("FORMAT/LP>=%s && FORMAT/SI>=%s", format(lp_min, scientific = FALSE), gwas_si_tag(si_min))),
+      "-f", shQuote("%CHROM\t%POS\t%ID\t%REF\t%ALT[\t%ES\t%SE\t%LP\t%NE\t%NS\t%NC\t%SI]\n"),
+      shQuote(bcf_file)
+    ),
+    stdout = query_file,
+    stderr = err_file
+  )
+  if (!identical(status, 0L)) {
+    err <- if (file.exists(err_file)) readLines(err_file, warn = FALSE) else character()
+    stop(
+      "bcftools query failed for ", dis, ": ", bcf_file,
+      if (length(err) > 0) paste0("\n", paste(err, collapse = "\n")) else ""
+    )
+  }
+
+  dt <- if (file.exists(query_file) && file.info(query_file)$size > 0) {
+    data.table::fread(query_file, header = FALSE)
+  } else {
+    data.table::data.table()
+  }
+  dt <- normalize_gwas_query_table(dt, dis = dis, pval = pval, cache_file = cache_file, si_min = si_min)
+
+  dir.create(dirname(cache_file), recursive = TRUE, showWarnings = FALSE)
+  data.table::fwrite(dt, cache_file, sep = "\t", quote = FALSE)
+  annotate_gwas_table(dt, dis, pval, cache_file, si_min)
+}
+
+gwas_tqtl_cache_file <- function(gwas, plink2_prefix) {
+  dis <- attr(gwas, "gwas_dis")
+  pval <- attr(gwas, "gwas_pval")
+  si_min <- attr(gwas, "gwas_si_min")
+  cache_dir <- attr(gwas, "gwas_cache_dir")
+  if (is.null(dis) || is.null(pval) || is.null(si_min) || is.null(cache_dir)) {
+    stop("gwas must be returned by loadGWAS() so cache metadata is available")
+  }
+  file.path(
+    cache_dir,
+    sprintf(
+      "GWAS-%s_flt_p%s_SI%s_%s_tqtl-matched.tab.gz",
+      dis, gwas_pval_tag(pval), gwas_si_tag(si_min), basename(plink2_prefix)
+    )
+  )
+}
+
+read_plink2_pvar <- function(plink2_prefix) {
+  pvar_file <- paste0(plink2_prefix, ".pvar")
+  if (!file.exists(pvar_file)) stop("Missing PLINK2 pvar file: ", pvar_file)
+  pvar <- data.table::fread(pvar_file, skip = "#CHROM")
+  if ("#CHROM" %in% names(pvar)) data.table::setnames(pvar, "#CHROM", "CHROM")
+  req <- c("CHROM", "POS", "ID", "REF", "ALT")
+  missing_cols <- setdiff(req, names(pvar))
+  if (length(missing_cols) > 0) {
+    stop("Missing required pvar columns: ", paste(missing_cols, collapse = ", "))
+  }
+  pvar[, .(
+    chr = as.character(CHROM),
+    pos = as.integer(POS),
+    pvar_ref = as.character(REF),
+    pvar_alt = as.character(ALT),
+    pvar_variant_id = as.character(ID)
+  )]
+}
+
+matchGwasGeno <- function(gwas, plink2_prefix, use_cache = TRUE) {
+  cache_file <- gwas_tqtl_cache_file(gwas, plink2_prefix)
+  if (use_cache && file.exists(cache_file)) {
+    return(data.table::fread(cache_file))
+  }
+
+  req <- c("rsid", "chr", "pos", "a0", "a1", "beta", "beta_se", "N", "p", "ncas", "impinfo")
+  missing_cols <- setdiff(req, names(gwas))
+  if (length(missing_cols) > 0) {
+    stop("Missing required GWAS columns: ", paste(missing_cols, collapse = ", "))
+  }
+
+  pvar_info <- read_plink2_pvar(plink2_prefix)
+  gwas_dt <- data.table::copy(gwas)
+  gwas_dt[, gwas_row_id := .I]
+
+  exact <- merge(
+    gwas_dt,
+    pvar_info,
+    by.x = c("chr", "pos", "a0", "a1"),
+    by.y = c("chr", "pos", "pvar_ref", "pvar_alt"),
+    all = FALSE,
+    allow.cartesian = TRUE
+  )
+  if (nrow(exact) > 0) {
+    exact[, `:=`(
+      variant_id = pvar_variant_id,
+      A1 = a1,
+      A2 = a0,
+      match_mode = "exact",
+      match_rank = 1L
+    )]
+  }
+
+  swapped <- merge(
+    gwas_dt,
+    pvar_info,
+    by.x = c("chr", "pos", "a0", "a1"),
+    by.y = c("chr", "pos", "pvar_alt", "pvar_ref"),
+    all = FALSE,
+    allow.cartesian = TRUE
+  )
+  if (nrow(swapped) > 0) {
+    swapped[, `:=`(
+      beta = -beta,
+      variant_id = pvar_variant_id,
+      A1 = a0,
+      A2 = a1,
+      match_mode = "swapped",
+      match_rank = 2L
+    )]
+  }
+
+  gwas_tqtl <- data.table::rbindlist(list(exact, swapped), use.names = TRUE, fill = TRUE)
+  out_cols <- c("variant_id", "rsid", "A1", "A2", "beta", "beta_se", "N", "p", "ncas", "impinfo", "match_mode")
+  if (nrow(gwas_tqtl) == 0) {
+    gwas_tqtl <- data.table::as.data.table(stats::setNames(replicate(length(out_cols), logical(), simplify = FALSE), out_cols))
+  } else {
+    ## prefer exact matches if duplicate variant IDs appear.
+    data.table::setorder(gwas_tqtl, variant_id, match_rank, p)
+    gwas_tqtl <- gwas_tqtl[!duplicated(variant_id), ..out_cols]
+  }
+
+  dir.create(dirname(cache_file), recursive = TRUE, showWarnings = FALSE)
+  data.table::fwrite(gwas_tqtl, cache_file, sep = "\t", quote = FALSE)
+  gwas_tqtl
 }
 
 fetch_remote_file <- function(host, remote_path, local_path) {

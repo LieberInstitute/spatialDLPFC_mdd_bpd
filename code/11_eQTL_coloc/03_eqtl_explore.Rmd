@@ -77,9 +77,7 @@ if (any(vapply(analysis_configs, function(config) identical(config$deg_mode, "cu
   degs_by_mode$custom_cluster <- load_DEGs(repo_root = repo_root, mode = "custom_cluster")
 }
 
-scz_gwas_file <- file.path(ref_dir, "SCZ_GWAS_flt_1e-6_R.8.tab.gz")
-stopifnot(file.exists(scz_gwas_file))
-scz_gwas <- fread(scz_gwas_file)
+scz_gwas <- loadGWAS("SCZD", 1e-6, repo_root = repo_root)
 missing_gwas_cols <- setdiff(c("variant_id", "p"), names(scz_gwas))
 if (length(missing_gwas_cols) > 0) {
   stop("Missing required SCZ GWAS columns: ", paste(missing_gwas_cols, collapse = ", "))
