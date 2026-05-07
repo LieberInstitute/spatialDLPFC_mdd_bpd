@@ -15,7 +15,7 @@ demo$cond_sex = factor(paste(demo$condition, demo$sex), levels=c("NTC F","NTC M"
 p1 <- ggplot(demo, aes(x=cond_sex, y=RIN, color=condition))+
   ggbeeswarm::geom_beeswarm(cex=3, method = "center")+scale_color_manual(values=cpList$dx.pal)+
   geom_boxplot(outliers=F, color="black", fill="transparent", width=.7)+
-  ylim(0,10)+
+  scale_y_continuous(limits=c(0,10), breaks=c(0,2,4,6,8,10))+
   labs(title="RIN", x="", y="RIN")+
   theme_minimal()+theme(legend.position="none", panel.grid.minor=element_blank())
 
