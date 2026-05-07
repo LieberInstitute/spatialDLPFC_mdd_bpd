@@ -742,19 +742,13 @@ build_deg_views <- function(deg_global, deg_tables,
   )
 }
 
-build_custom_cluster_deg_views <- function(custom_by_context, broad_global, splits = c("all")) {
+build_custom_cluster_deg_views <- function(custom_by_context, splits = c("all")) {
   rows <- list()
   for (split_name in splits) {
     for (context_name in names(custom_by_context)) {
       rows[[length(rows) + 1L]] <- make_deg_view_rows(
         custom_by_context[[context_name]],
         deg_view = "custom_primary",
-        context = context_name,
-        split = split_name
-      )
-      rows[[length(rows) + 1L]] <- make_deg_view_rows(
-        broad_global,
-        deg_view = "broad_PRECAST_Seurat_sensitivity",
         context = context_name,
         split = split_name
       )
@@ -919,13 +913,6 @@ load_custom_cluster_DEGs <- function(repo_root = NULL, verbose = TRUE,
   )
   custom_tables <- custom_tables[names(CUSTOM_CLUSTER_DEG_FILE_SPECS)]
 
-  broad_degs <- load_standard_DEGs(
-    repo_root = repo_root,
-    verbose = FALSE,
-    host = host,
-    remote_root = remote_root
-  )
-
   custom_global <- collapse_gene_table(
     do.call(
       rbind,
@@ -960,7 +947,6 @@ load_custom_cluster_DEGs <- function(repo_root = NULL, verbose = TRUE,
   )
   custom_views <- build_custom_cluster_deg_views(
     custom_by_context = custom_by_context,
-    broad_global = broad_degs$global,
     splits = c("all")
   )
 
@@ -968,8 +954,6 @@ load_custom_cluster_DEGs <- function(repo_root = NULL, verbose = TRUE,
     source_counts = vapply(custom_tables, nrow, integer(1)),
     global_gene_id_count = nrow(custom_global),
     global_gene_name_count = length(unique(custom_global$gene_name)),
-    broad_PRECAST_Seurat_gene_id_count = nrow(broad_degs$global),
-    broad_PRECAST_Seurat_overlap_gene_id_count = length(intersect(custom_global$gene_id, broad_degs$global$gene_id)),
     custom_lr_localized_gene_name_counts = vapply(
       names(CUSTOM_CONTEXT_TO_DATASET_ID),
       function(context_name) {
@@ -986,10 +970,7 @@ load_custom_cluster_DEGs <- function(repo_root = NULL, verbose = TRUE,
     deg_view_gene_counts = custom_views$counts
   )
 
-  files <- c(
-    custom_file_paths,
-    broad_sensitivity_files = broad_degs$files
-  )
+  files <- custom_file_paths
 
   if (isTRUE(verbose)) {
     cat("Loaded custom-cluster DEG summaries.\n")
@@ -998,8 +979,6 @@ load_custom_cluster_DEGs <- function(repo_root = NULL, verbose = TRUE,
       cat(sprintf("  %s: %d rows\n", nm, nrow(custom_tables[[nm]])))
     }
     cat("Custom union (gene_id):", deg_validation$global_gene_id_count, "\n")
-    cat("Broad PRECAST+Seurat union (gene_id):", deg_validation$broad_PRECAST_Seurat_gene_id_count, "\n")
-    cat("Custom/broad overlap (gene_id):", deg_validation$broad_PRECAST_Seurat_overlap_gene_id_count, "\n")
     cat("Per-context custom overlap set sizes (gene_name):\n")
     for (ctx in names(deg_validation$custom_context_gene_name_counts)) {
       ds_id <- unname(CUSTOM_CONTEXT_TO_DATASET_ID[[ctx]])
@@ -1014,8 +993,7 @@ load_custom_cluster_DEGs <- function(repo_root = NULL, verbose = TRUE,
     by_dataset_id = custom_by_dataset_id,
     views = custom_views,
     validation = deg_validation,
-    files = files,
-    broad_sensitivity = broad_degs
+    files = files
   )
 }
 
@@ -1075,7 +1053,7 @@ load_eqtl_manifest <- function(tqtl_in_dir, context_order = names(SEURAT_CONTEXT
     stop("Missing manifest columns in ", manifest_file, ": ", paste(missing_cols, collapse = ", "))
   }
 
-  if (!"covariate_model" %in% names(manifest)) manifest[, covariate_model := "base"]
+  if (!"covariate_model" %in% names(manifest)) manifest[, covariate_model := "seurat"]
   manifest <- manifest[
     status == "prepared",
     .(dataset_id, context = seurat_label, split, covariate_model)
@@ -1328,7 +1306,6 @@ summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
 
   view_order <- c(
     "custom_primary",
-    "broad_PRECAST_Seurat_sensitivity",
     "broad_interaction",
     "context_localized",
     "sex_specific",

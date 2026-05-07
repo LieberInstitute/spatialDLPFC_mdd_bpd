@@ -41,7 +41,7 @@ The historical labels `layer-adjusted` and `layer-restricted` are retained in fi
 
 The current folder contains code for the eQTL and colocalization stages:
 
-*   **Baseline Model Structure:** Instead of running an "interaction eQTL" model (e.g., `genotype * diagnosis`), which historically yields very few results, the primary strategy will evaluate eQTLs using pseudo-bulking approaches (on sample per donor) to maximize minor allele frequency (MAF > 5%). The model will adjust for diagnosis, donor age, ancestry PCs (assuming mostly European ancestry), and batch effects.
+*   **Primary Model Structure:** Instead of running an "interaction eQTL" model (e.g., `genotype * diagnosis`), which historically yields very few results, the primary strategy will evaluate eQTLs using pseudo-bulking approaches (one sample per donor) to maximize minor allele frequency (MAF > 5%). The model will adjust for diagnosis, donor age, ancestry PCs (assuming mostly European ancestry), and batch effects.
 *   **Input Data Pivot:** While initially planned for the 6 spatial domains, the team later decided to run the eQTL analysis on the pseudobulks derived from the **Seurat cell-type labels** (removing the "low UMI" cluster). This aligns the eQTL inputs with the Gene Regulatory Network (GRNBoost/SCENIC) inputs.
 *   **Sex-Stratified eQTLs:** Because sex is a major driver of transcriptional differences in this cohort, the eQTL models will be run across three splits: **all donors combined, males only (~60 donors), and females only (~60 donors)**.
 *   **Batch Covariates:** The team debated calculating local expression PCs for each group using the `sva` package vs. reusing the global `PC3` variable from the DGE analyses. They concluded that utilizing the existing `PC3` variable as used in DGE acts as a solid shortcut to adjust for technical variation (like slide and sequencing batch) before the eQTL expression PCs capture remaining variance.
@@ -55,10 +55,10 @@ Canonical local input/output locations for this folder:
 * `processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata`
 * `processed-data/00_genotypes/plink2/merged_maf05.{pgen,psam,pvar}`
 * `processed-data/00_genotypes/plink2/merged_maf05_pca.eigenvec` (generated locally)
-* `processed-data/11_eQTL_coloc/tqtl_in` (prepared tensorQTL inputs)
-* `processed-data/11_eQTL_coloc/tqtl_out` (tensorQTL outputs)
-* `processed-data/11_eQTL_coloc/nspots/tqtl_in` (parallel nspots-adjusted tensorQTL inputs)
-* `processed-data/11_eQTL_coloc/nspots/tqtl_out` (parallel nspots-adjusted tensorQTL outputs)
+* `processed-data/11_eQTL_coloc/seurat/tqtl_in` (Seurat tensorQTL inputs)
+* `processed-data/11_eQTL_coloc/seurat/tqtl_out` (Seurat tensorQTL outputs)
+* `processed-data/11_eQTL_coloc/custom_cluster/tqtl_in` (custom-cluster tensorQTL inputs)
+* `processed-data/11_eQTL_coloc/custom_cluster/tqtl_out` (custom-cluster tensorQTL outputs)
 
 Prep workflow:
 
@@ -72,16 +72,13 @@ Direct prep entrypoint:
 * `Rscript ./01_prep_inputs.R --help` shows usage plus the exact resolved defaults and exits.
 * `Rscript ./01_prep_inputs.R --check-only` performs the full validation/manifest pass without writing outputs.
 * `Rscript ./01_prep_inputs.R --dry-run` is an alias for `--check-only`.
-* `Rscript ./01_prep_inputs.R --model base` is the default baseline model and writes to `processed-data/11_eQTL_coloc/tqtl_in`.
-* `Rscript ./01_prep_inputs.R --model nspots` adds `nspots` to the covariate model, recomputes expression PCs with that expanded design matrix, and writes to `processed-data/11_eQTL_coloc/nspots/tqtl_in` unless `--out-dir` is supplied.
+* `Rscript ./01_prep_inputs.R --model nspots` is the default Seurat prep run and writes to `processed-data/11_eQTL_coloc/seurat/tqtl_in` unless `--out-dir` is supplied.
 * If staged inputs are missing, `01_prep_inputs.R` reports the missing files and advises running `./stage_required_data.sh` and/or `./00_get_SNP_PCs.sh`.
 
 Covariate models:
 
-* baseline all-donor inputs use `~ DX + sex + age + PC3 + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5`, plus expression PCs.
-* baseline male/female inputs use `~ DX + age + PC3 + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5`, plus expression PCs.
-* nspots all-donor inputs use `~ DX + sex + age + PC3 + nspots + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5`, plus expression PCs.
-* nspots male/female inputs use `~ DX + age + PC3 + nspots + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5`, plus expression PCs.
+* all-donor inputs use `~ DX + sex + age + PC3 + nspots + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5`, plus expression PCs.
+* male/female inputs use `~ DX + age + PC3 + nspots + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5`, plus expression PCs.
 * `prep_manifest.csv` records the covariate series in `covariate_model`.
 
 Prepared dataset naming convention in `tqtl_in`:
@@ -90,7 +87,7 @@ Prepared dataset naming convention in `tqtl_in`:
 * `all` split has no suffix (e.g., `astro`)
 * male/female splits use `_m` and `_f` (e.g., `astro_m`, `astro_f`)
 * `micro-vasc` is renamed to `uvasc` (`uvasc`, `uvasc_m`, `uvasc_f`)
-* The nspots series keeps the same dataset IDs; the directory path distinguishes baseline from nspots-adjusted inputs and outputs.
+* Seurat dataset IDs are unchanged by the series directory path.
 
 Current stratum labels are Seurat-derived (cell-type-like labels):
 `Astro`, `Inhb`, `L2.3`, `L4`, `L5`, `L6`, `Micro.Vasc`/`uvasc`, `Oligo`.
@@ -99,8 +96,9 @@ Convenience wrappers:
 
 * `./prepare_tensorqtl_inputs.sh` is deprecated but still available as a shim that runs all 3 prep steps above.
 * `./prepare_tensorqtl_inputs.sh --check-only` is deprecated but still validates preconditions without writing outputs.
-* `./02_run_tensorQTL.sh` runs `02a_tensorQTL_cis.py` across all prepared dataset IDs in `tqtl_in` (manifest-driven if available).
-* `./02_run_tensorQTL.sh --analysis nspots` runs the same mapper against `processed-data/11_eQTL_coloc/nspots/tqtl_in` and writes to `processed-data/11_eQTL_coloc/nspots/tqtl_out`.
+* `./02_run_tensorQTL.sh` runs `02a_tensorQTL_cis.py` across all prepared Seurat dataset IDs (manifest-driven if available).
+* `./02_run_tensorQTL.sh --analysis seurat` runs against `processed-data/11_eQTL_coloc/seurat/tqtl_in` and writes to `processed-data/11_eQTL_coloc/seurat/tqtl_out`.
+* `./02_run_tensorQTL.sh --analysis custom_cluster` runs against `processed-data/11_eQTL_coloc/custom_cluster/tqtl_in` and writes to `processed-data/11_eQTL_coloc/custom_cluster/tqtl_out`.
 * `./02_run_tensorQTL.sh --input-dir PATH --output-dir PATH` can run any explicitly supplied prepared input/output pair.
 
 Common run patterns:
@@ -108,14 +106,14 @@ Common run patterns:
 * `./02_run_tensorQTL.sh --dry-run` to list detected contexts
 * `./02_run_tensorQTL.sh --start-from l5_m` to resume from a context
 * `./02_run_tensorQTL.sh --only '^(l[2-6]|uvasc)(|_[mf])$'` to restrict contexts
-* `Rscript ./01_prep_inputs.R --model nspots --check-only` to validate the nspots design without writing files
-* `Rscript ./01_prep_inputs.R --model nspots` to prepare all nspots-adjusted inputs
-* `./02_run_tensorQTL.sh --analysis nspots --dry-run` to list nspots-adjusted tensorQTL commands
-* `./02_run_tensorQTL.sh --analysis nspots --only '^astro$'` to run one nspots-adjusted dataset
+* `Rscript ./01_prep_inputs.R --model nspots --check-only` to validate the Seurat design without writing files
+* `Rscript ./01_prep_inputs.R --model nspots` to prepare all Seurat inputs
+* `./02_run_tensorQTL.sh --analysis seurat --dry-run` to list Seurat tensorQTL commands
+* `./02_run_tensorQTL.sh --analysis seurat --only '^astro$'` to run one Seurat dataset
 
 ### Custom-cluster tensorQTL inputs
 
-The custom-cluster workflow is an additional analysis series and does not reuse or overwrite the existing Seurat `tqtl_in` or nspots `nspots/tqtl_in` inputs.
+The custom-cluster workflow is an additional analysis series and does not reuse or overwrite the Seurat inputs.
 
 Custom prep uses the JHPCE-derived object:
 
@@ -126,32 +124,31 @@ Primary custom model:
 * grouping column: `custom_cluster`
 * split: `all`
 * covariates: `DX + sex + age + PC3 + nspots + snpPC1 + snpPC2 + snpPC3 + snpPC4 + snpPC5`, plus expression PCs
-* output input directory: `processed-data/11_eQTL_coloc/custom_cluster_nspots/tqtl_in`
-* tensorQTL output directory: `processed-data/11_eQTL_coloc/custom_cluster_nspots/tqtl_out`
+* output input directory: `processed-data/11_eQTL_coloc/custom_cluster/tqtl_in`
+* tensorQTL output directory: `processed-data/11_eQTL_coloc/custom_cluster/tqtl_out`
 
 Prepare custom inputs:
 
 ```bash
 ./stage_required_data.sh
 Rscript ./01_prep_inputs.R \
-  --spe-file ../../processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo_sample-custom-cluster_norm-filt.Rdata \
   --cluster-col custom_cluster \
-  --analysis-label custom_cluster_nspots \
+  --analysis-label custom_cluster \
   --model nspots \
   --splits all \
-  --out-dir ../../processed-data/11_eQTL_coloc/custom_cluster_nspots/tqtl_in
+  --out-dir ../../processed-data/11_eQTL_coloc/custom_cluster/tqtl_in
 ```
 
 Run custom tensorQTL:
 
 ```bash
-./02_run_tensorQTL.sh --analysis custom_cluster_nspots
+./02_run_tensorQTL.sh --analysis custom_cluster
 ```
 
 Dry-run only:
 
 ```bash
-./02_run_tensorQTL.sh --analysis custom_cluster_nspots --dry-run
+./02_run_tensorQTL.sh --analysis custom_cluster --dry-run
 ```
 
 ## DGE Comparison Inputs
@@ -286,8 +283,10 @@ Matching to eQTLs: Context-matched, sex-matched.
 
 This view is expected to have smaller counts because it requires both same-context and same-sex DEG support.
 
+## eQTL results to consider
+For presenting eQTL results and downstream processing, use only the `seurat` and `custom_cluster` tensorQTL series under `processed-data/11_eQTL_coloc/`.
 
 ## R coding agent instructions
   - use single line comments starting with '## ' and lower case, to briefly comment/explain non-trivial code blocks generated
-  - use here::i_am('.git/HEAD') in R/Rmd to anchor the project base folder, make all project paths relative to it
-  - prefer base R and data.table over dplyr for data manipulation, reshaping, filtering etc.; avoid local/global variable name conflicts/clash with data.table columns which can lead to serious silent logic bugs with data.table notation
+  - use here::i_am('.git/HEAD') in R/Rmd to anchor the project root folder, make all project paths relative to it
+  - prefer built-in R and data.table over dplyr for data manipulation, reshaping, filtering etc.; avoid local/global variable name conflicts/clash with data.table columns which can lead to serious silent logic bugs with data.table notation

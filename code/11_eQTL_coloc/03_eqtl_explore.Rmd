@@ -13,7 +13,7 @@ here::i_am('.git/HEAD')
 
 repo_root <- here()
 ref_dir <- here("processed-data", "ref")
-summary_dir <- here("processed-data", "11_eQTL_coloc", "tqtl_out", "summary")
+summary_dir <- here("processed-data", "11_eQTL_coloc", "summary")
 dir.create(summary_dir, recursive = TRUE, showWarnings = FALSE)
 
 source(here("code", "11_eQTL_coloc", "utils.R"), chdir = FALSE)
@@ -22,46 +22,33 @@ context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
 split_order <- c("all", "male", "female")
 
 analysis_configs <- list(
-  base = list(
-    analysis = "base",
-    tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "tqtl_in"),
-    tqtl_out_dir = here("processed-data", "11_eQTL_coloc", "tqtl_out"),
-    summary_suffix = ""
-  ),
-  nspots = list(
-    analysis = "nspots",
-    tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "nspots", "tqtl_in"),
-    tqtl_out_dir = here("processed-data", "11_eQTL_coloc", "nspots", "tqtl_out"),
-    summary_suffix = "_nspots",
+  seurat = list(
+    analysis = "seurat",
+    tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_in"),
+    tqtl_out_dir = here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_out"),
+    summary_suffix = "_seurat",
     deg_mode = "standard",
     context_order = context_order,
     split_order = split_order
   )
 )
-analysis_configs$base$deg_mode <- "standard"
-analysis_configs$base$context_order <- context_order
-analysis_configs$base$split_order <- split_order
-## exlude custom_cluster_nspots analysis for now
-EXCLUDE_CUSTOM_CLUSTER_NSPOTS <- TRUE
-if (!EXCLUDE_CUSTOM_CLUSTER_NSPOTS) {
-  custom_config <- list(
-    analysis = "custom_cluster_nspots",
-    tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster_nspots", "tqtl_in"),
-    tqtl_out_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster_nspots", "tqtl_out"),
-    summary_suffix = "_custom_cluster_nspots",
-    deg_mode = "custom_cluster",
-    context_order = names(CUSTOM_CONTEXT_TO_DATASET_ID),
-    split_order = "all"
-  )
-  custom_manifest <- file.path(custom_config$tqtl_in_dir, "prep_manifest.csv")
-  custom_outputs <- list.files(
-    custom_config$tqtl_out_dir,
-    pattern = "\\.gene\\.map_cis\\.tab\\.gz$",
-    full.names = TRUE
-  )
-  if (file.exists(custom_manifest) && length(custom_outputs) > 0) {
-    analysis_configs$custom_cluster_nspots <- custom_config
-  }
+custom_config <- list(
+  analysis = "custom_cluster",
+  tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster", "tqtl_in"),
+  tqtl_out_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster", "tqtl_out"),
+  summary_suffix = "_custom_cluster",
+  deg_mode = "custom_cluster",
+  context_order = names(CUSTOM_CONTEXT_TO_DATASET_ID),
+  split_order = "all"
+)
+custom_manifest <- file.path(custom_config$tqtl_in_dir, "prep_manifest.csv")
+custom_outputs <- list.files(
+  custom_config$tqtl_out_dir,
+  pattern = "\\.gene\\.map_cis\\.tab\\.gz$",
+  full.names = TRUE
+)
+if (file.exists(custom_manifest) && length(custom_outputs) > 0) {
+  analysis_configs$custom_cluster <- custom_config
 }
 ```
 
@@ -165,6 +152,71 @@ deg_view_barchart <- function(view_summary, title,
     )
 }
 
+broad_eqtl_count_barchart <- function(mapsum, view_summary, deg_view, title, ytitle,
+                                      context_order, split_order) {
+  required_map_cols <- c("context", "split", "n_eGenes")
+  required_view_cols <- c("context", "split", "deg_view", "deg_sex", "n_eGene_DEG_overlap")
+  missing_map_cols <- setdiff(required_map_cols, names(mapsum))
+  missing_view_cols <- setdiff(required_view_cols, names(view_summary))
+  if (length(missing_map_cols) > 0) {
+    stop("Missing broad plot map columns: ", paste(missing_map_cols, collapse = ", "))
+  }
+  if (length(missing_view_cols) > 0) {
+    stop("Missing broad plot view columns: ", paste(missing_view_cols, collapse = ", "))
+  }
+
+  dt <- copy(mapsum[, .(context, split, n_eGenes)])
+  target_deg_view <- deg_view
+  view_dt <- copy(
+    view_summary[deg_view == target_deg_view & deg_sex == "all",
+      .(context, split, n_eGene_DEG_overlap)
+    ]
+  )
+  if (nrow(view_dt) == 0) {
+    stop("No rows available for DEG view: ", deg_view)
+  }
+
+  dt <- merge(dt, view_dt, by = c("context", "split"), all.x = TRUE)
+  dt[is.na(n_eGene_DEG_overlap), n_eGene_DEG_overlap := 0L]
+  dt[, context := factor(context, levels = context_order)]
+  dt[, split := factor(split, levels = split_order)]
+  dt <- dt[!is.na(context) & !is.na(split)]
+  dt[, lab_overlap := sprintf("DEG: %d", n_eGene_DEG_overlap)]
+  max_count <- max(dt$n_eGenes, na.rm = TRUE)
+  if (!is.finite(max_count) || max_count <= 0) {
+    max_count <- 1
+  }
+  dt[, y_count := n_eGenes + max_count * 0.025]
+  dt[, y_overlap := n_eGenes + max_count * 0.100]
+
+  ## keep split colors stable across Seurat and custom-cluster plots
+  split_colors <- c(all = "#4D4D4D", male = "#2B6CB0", female = "#C05621")
+  split_colors <- split_colors[intersect(names(split_colors), split_order)]
+  dodge <- position_dodge(width = 0.82)
+
+  ggplot(dt, aes(x = context, y = n_eGenes, fill = split)) +
+    geom_col(position = dodge, width = 0.72, color = "grey30", linewidth = 0.2) +
+    geom_text(
+      aes(y = y_count, label = n_eGenes),
+      position = dodge, vjust = 0, fontface = "bold", size = 4.0
+    ) +
+    geom_text(
+      aes(y = y_overlap, label = lab_overlap),
+      position = dodge, vjust = 0, size = 3.4, color = "black"
+    ) +
+    scale_fill_manual(values = split_colors, drop = FALSE) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.38))) +
+    labs(x = NULL, y = ytitle, fill = "Split", title = title) +
+    theme_bw(base_size = 12) +
+    theme(
+      panel.grid.minor = element_blank(),
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.ticks.x = element_blank(),
+      legend.position = "top",
+      strip.background = element_rect(fill = "grey95", color = "grey80")
+    )
+}
+
 summary_path <- function(filename, suffix = "") {
   file.path(summary_dir, add_filename_suffix(filename, suffix))
 }
@@ -236,7 +288,69 @@ write_analysis_summaries <- function(result, config) {
     height = 14
   )
 
-  for (split_name in c("all", "male", "female")) {
+  if (identical(config$analysis, "seurat")) {
+    ggsave(
+      filename = summary_path("map_cis_broad_interaction_grouped_barchart.pdf", suffix),
+      plot = broad_eqtl_count_barchart(
+        result$map_cis_summary,
+        result$map_cis_deg_view_summary,
+        deg_view = "broad_interaction",
+        title = "Lead cis-eQTLs by Seurat context (broad interaction)",
+        ytitle = "eGenes discovered (lead cis-eQTLs, q < 0.05)",
+        context_order = config$context_order,
+        split_order = config$split_order
+      ),
+      width = 14,
+      height = 7.5
+    )
+    ggsave(
+      filename = summary_path("map_independent_broad_interaction_grouped_barchart.pdf", suffix),
+      plot = broad_eqtl_count_barchart(
+        result$map_independent_summary,
+        result$map_independent_deg_view_summary,
+        deg_view = "broad_interaction",
+        title = "Independent cis-eQTLs by Seurat context (broad interaction)",
+        ytitle = "Total independent cis-eQTL signals",
+        context_order = config$context_order,
+        split_order = config$split_order
+      ),
+      width = 14,
+      height = 7.5
+    )
+  }
+
+  if (identical(config$analysis, "custom_cluster")) {
+    ggsave(
+      filename = summary_path("map_cis_custom_primary_barchart.pdf", suffix),
+      plot = broad_eqtl_count_barchart(
+        result$map_cis_summary,
+        result$map_cis_deg_view_summary,
+        deg_view = "custom_primary",
+        title = "Lead cis-eQTLs by custom cluster (custom primary)",
+        ytitle = "eGenes discovered (lead cis-eQTLs, q < 0.05)",
+        context_order = config$context_order,
+        split_order = config$split_order
+      ),
+      width = 14,
+      height = 7.5
+    )
+    ggsave(
+      filename = summary_path("map_independent_custom_primary_barchart.pdf", suffix),
+      plot = broad_eqtl_count_barchart(
+        result$map_independent_summary,
+        result$map_independent_deg_view_summary,
+        deg_view = "custom_primary",
+        title = "Independent cis-eQTLs by custom cluster (custom primary)",
+        ytitle = "Total independent cis-eQTL signals",
+        context_order = config$context_order,
+        split_order = config$split_order
+      ),
+      width = 14,
+      height = 7.5
+    )
+  }
+
+  for (split_name in names(result$overlap_tables)) {
     preview_dt <- result$overlap_tables[[split_name]][, .(
       dataset_id, context, status, n_independent_signals, n_eGenes,
       n_context_DEGs, n_eGene_DEG_overlap, eGene_DEG_overlap_gene_names
@@ -274,145 +388,4 @@ lapply(analysis_results, function(x) x$counts_dt)
 invisible(Map(write_analysis_summaries, analysis_results, analysis_configs))
 
 list.files(summary_dir, pattern = "\\.(csv|pdf)$", full.names = FALSE)
-```
-
-```{r SKIP compare-base-nspots}
-compare_cols <- c("split", "context")
-map_cis_compare <- merge(
-  analysis_results$base$map_cis_summary[, c(compare_cols, "n_eGenes"), with = FALSE],
-  analysis_results$nspots$map_cis_summary[, c(compare_cols, "n_eGenes"), with = FALSE],
-  by = compare_cols,
-  suffixes = c("_base", "_nspots")
-)
-map_cis_compare[, delta_n_eGenes := n_eGenes_nspots - n_eGenes_base]
-map_cis_compare[order(match(split, split_order), match(context, context_order))]
-
-map_independent_compare <- merge(
-  analysis_results$base$map_independent_summary[, c(compare_cols, "n_eGenes"), with = FALSE],
-  analysis_results$nspots$map_independent_summary[, c(compare_cols, "n_eGenes"), with = FALSE],
-  by = compare_cols,
-  suffixes = c("_base", "_nspots")
-)
-map_independent_compare[, delta_n_eGenes := n_eGenes_nspots - n_eGenes_base]
-map_independent_compare[order(match(split, split_order), match(context, context_order))]
-```
-
-```{r SKIP compare-base-nspots-wide}
-compare_base_nspots <- function(base_dt, nspots_dt, keys, metrics) {
-  missing_base <- setdiff(c(keys, metrics), names(base_dt))
-  missing_nspots <- setdiff(c(keys, metrics), names(nspots_dt))
-  if (length(missing_base) > 0) {
-    stop("Missing base comparison columns: ", paste(missing_base, collapse = ", "))
-  }
-  if (length(missing_nspots) > 0) {
-    stop("Missing nspots comparison columns: ", paste(missing_nspots, collapse = ", "))
-  }
-  if (anyDuplicated(base_dt[, keys, with = FALSE]) > 0) {
-    stop("Base comparison table has duplicated keys: ", paste(keys, collapse = ", "))
-  }
-  if (anyDuplicated(nspots_dt[, keys, with = FALSE]) > 0) {
-    stop("nspots comparison table has duplicated keys: ", paste(keys, collapse = ", "))
-  }
-
-  base_sub <- copy(base_dt[, c(keys, metrics), with = FALSE])
-  nspots_sub <- copy(nspots_dt[, c(keys, metrics), with = FALSE])
-  setnames(base_sub, metrics, paste0(metrics, "_base"))
-  setnames(nspots_sub, metrics, paste0(metrics, "_nspots"))
-
-  out <- merge(base_sub, nspots_sub, by = keys, all = FALSE)
-  if (nrow(out) != nrow(base_sub) || nrow(out) != nrow(nspots_sub)) {
-    stop("Base and nspots comparison tables do not have matching key sets")
-  }
-
-  for (metric in metrics) {
-    out[, paste0("delta_", metric) := get(paste0(metric, "_nspots")) - get(paste0(metric, "_base"))]
-  }
-
-  display_keys <- keys
-  if ("split" %in% names(out)) {
-    setnames(out, "split", "group")
-    display_keys[display_keys == "split"] <- "group"
-  }
-  metric_cols <- unlist(lapply(metrics, function(metric) {
-    c(paste0(metric, "_base"), paste0(metric, "_nspots"), paste0("delta_", metric))
-  }), use.names = FALSE)
-  setcolorder(out, c(display_keys, metric_cols))
-
-  order_expr <- list()
-  if ("group" %in% names(out)) order_expr[[length(order_expr) + 1L]] <- match(out$group, split_order)
-  if ("context" %in% names(out)) order_expr[[length(order_expr) + 1L]] <- match(out$context, context_order)
-  for (col in c("deg_view", "deg_sex", "dataset_id")) {
-    if (col %in% names(out)) order_expr[[length(order_expr) + 1L]] <- out[[col]]
-  }
-  if (length(order_expr) > 0) {
-    out <- out[do.call(order, order_expr)]
-  }
-
-  out[]
-}
-
-overall_compare_metrics <- c("n_eGenes", "n_GWAS", "n_GWAS_1e6", "n_DEG", "n_DEG_GWAS")
-deg_view_compare_metrics <- c(
-  "n_DEG_reference", "n_eQTL_records", "n_eGenes", "n_GWAS",
-  "n_GWAS_1e6", "n_eGene_DEG_overlap", "n_DEG_GWAS"
-)
-
-map_cis_summary_compare <- compare_base_nspots(
-  analysis_results$base$map_cis_summary,
-  analysis_results$nspots$map_cis_summary,
-  keys = c("split", "context"),
-  metrics = overall_compare_metrics
-)
-map_independent_summary_compare <- compare_base_nspots(
-  analysis_results$base$map_independent_summary,
-  analysis_results$nspots$map_independent_summary,
-  keys = c("split", "context"),
-  metrics = overall_compare_metrics
-)
-
-deg_view_keys <- c("dataset_id", "context", "split", "deg_view", "deg_sex")
-map_cis_deg_view_compare <- compare_base_nspots(
-  analysis_results$base$map_cis_deg_view_summary,
-  analysis_results$nspots$map_cis_deg_view_summary,
-  keys = deg_view_keys,
-  metrics = deg_view_compare_metrics
-)
-map_independent_deg_view_compare <- compare_base_nspots(
-  analysis_results$base$map_independent_deg_view_summary,
-  analysis_results$nspots$map_independent_deg_view_summary,
-  keys = deg_view_keys,
-  metrics = deg_view_compare_metrics
-)
-map_independent_deg_view_overlap_compare <- compare_base_nspots(
-  analysis_results$base$map_independent_deg_view_overlap,
-  analysis_results$nspots$map_independent_deg_view_overlap,
-  keys = deg_view_keys,
-  metrics = deg_view_compare_metrics
-)
-
-map_cis_summary_compare
-map_independent_summary_compare
-map_cis_deg_view_compare
-map_independent_deg_view_compare
-map_independent_deg_view_overlap_compare
-```
-
-```{r preview-all}
-analysis_results$base$counts_tables$all
-analysis_results$nspots$counts_tables$all
-analysis_results$base$overlap_tables$all[, .(
-  dataset_id, context, status, n_independent_signals, n_eGenes,
-  n_context_DEGs, n_eGene_DEG_overlap, eGene_DEG_overlap_gene_names
-)]
-analysis_results$nspots$overlap_tables$all[, .(
-  dataset_id, context, status, n_independent_signals, n_eGenes,
-  n_context_DEGs, n_eGene_DEG_overlap, eGene_DEG_overlap_gene_names
-)]
-```
-
-```{r preview-sex-splits}
-analysis_results$base$counts_tables$male
-analysis_results$nspots$counts_tables$male
-analysis_results$base$counts_tables$female
-analysis_results$nspots$counts_tables$female
 ```

@@ -26,8 +26,8 @@ print(f'Pandas {pd.__version__}')
 print(f'tensorqtl {tensorqtl.__version__}')
 
 repo_root = Path(__file__).resolve().parents[2]
-default_in_dir = str(repo_root / 'processed-data' / '11_eQTL_coloc' / 'tqtl_in')
-default_out_dir = str(repo_root / 'processed-data' / '11_eQTL_coloc' / 'tqtl_out')
+default_in_dir = str(repo_root / 'processed-data' / '11_eQTL_coloc' / 'seurat' / 'tqtl_in')
+default_out_dir = str(repo_root / 'processed-data' / '11_eQTL_coloc' / 'seurat' / 'tqtl_out')
 default_plink = str(repo_root / 'processed-data' / '00_genotypes' / 'plink2' / 'merged_maf05')
 
 parser = argparse.ArgumentParser(

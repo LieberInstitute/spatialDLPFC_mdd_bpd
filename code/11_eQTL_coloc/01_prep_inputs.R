@@ -35,9 +35,9 @@ default_options <- function(repo_root) {
                          "spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata"),
     geno_prefix = file.path(repo_root, "processed-data", "00_genotypes", "plink2", "merged_maf05"),
     snp_pcs_file = file.path(repo_root, "processed-data", "00_genotypes", "plink2", "merged_maf05_pca.eigenvec"),
-    out_dir = file.path(repo_root, "processed-data", "11_eQTL_coloc", "tqtl_in"),
+    out_dir = file.path(repo_root, "processed-data", "11_eQTL_coloc", "seurat", "tqtl_in"),
     splits = "all,male,female",
-    model = "base",
+    model = "nspots",
     cluster_col = "seurat_label",
     analysis_label = "seurat",
     min_samples = 20L,
@@ -62,7 +62,7 @@ usage <- function(defaults, con = stdout()) {
     "      --snp-pcs-file PATH  SNP PCs eigenvec file.\n",
     "      --out-dir PATH       Output directory for prepared tensorQTL inputs.\n",
     "      --splits CSV         Comma-separated subset of: all,male,female.\n",
-    "      --model MODEL        Covariate model: base or nspots.\n",
+    "      --model MODEL        Covariate model: nspots.\n",
     "      --cluster-col NAME   Grouping column: seurat_label or custom_cluster.\n",
     "      --analysis-label ID  Label recorded in prep_manifest.csv.\n",
     "      --min-samples INT    Minimum samples required per dataset.\n\n",
@@ -93,7 +93,9 @@ parse_args <- function(args, defaults) {
   }
 
   opt <- defaults
+  spe_file_explicit <- FALSE
   out_dir_explicit <- FALSE
+  analysis_label_explicit <- FALSE
   i <- 1L
   while (i <= length(args)) {
     a <- args[[i]]
@@ -107,7 +109,10 @@ parse_args <- function(args, defaults) {
     }
     if (i == length(args)) cli_fail("Missing value for argument: ", a, show_usage = TRUE, defaults = defaults)
     val <- args[[i + 1L]]
-    if (key == "spe-file") opt$spe_file <- val
+    if (key == "spe-file") {
+      opt$spe_file <- val
+      spe_file_explicit <- TRUE
+    }
     else if (key == "geno-prefix") opt$geno_prefix <- val
     else if (key == "snp-pcs-file") opt$snp_pcs_file <- val
     else if (key == "out-dir") {
@@ -117,13 +122,16 @@ parse_args <- function(args, defaults) {
     else if (key == "splits") opt$splits <- val
     else if (key == "model") opt$model <- val
     else if (key == "cluster-col") opt$cluster_col <- val
-    else if (key == "analysis-label") opt$analysis_label <- val
+    else if (key == "analysis-label") {
+      opt$analysis_label <- val
+      analysis_label_explicit <- TRUE
+    }
     else if (key == "min-samples") opt$min_samples <- suppressWarnings(as.integer(val))
     else cli_fail("Unknown argument: --", key, show_usage = TRUE, defaults = defaults)
     i <- i + 2L
   }
 
-  allowed_models <- c("base", "nspots")
+  allowed_models <- c("nspots")
   if (!(opt$model %in% allowed_models)) {
     cli_fail(
       "`--model` must be one of: ", paste(allowed_models, collapse = ", "),
@@ -131,7 +139,7 @@ parse_args <- function(args, defaults) {
     )
   }
   if (identical(opt$model, "nspots") && !out_dir_explicit) {
-    opt$out_dir <- file.path(opt$repo_root, "processed-data", "11_eQTL_coloc", "nspots", "tqtl_in")
+    opt$out_dir <- file.path(opt$repo_root, "processed-data", "11_eQTL_coloc", "seurat", "tqtl_in")
   }
 
   if (is.na(opt$min_samples) || opt$min_samples < 1L) {
@@ -144,6 +152,20 @@ parse_args <- function(args, defaults) {
       "`--cluster-col` must be one of: ", paste(allowed_cluster_cols, collapse = ", "),
       show_usage = TRUE, defaults = defaults
     )
+  }
+  if (identical(opt$cluster_col, "custom_cluster")) {
+    if (!spe_file_explicit) {
+      opt$spe_file <- file.path(
+        opt$repo_root, "processed-data", "06_pseudobulk", "custom_cluster",
+        "spe_n119_pseudo_sample-custom-cluster_norm-filt.Rdata"
+      )
+    }
+    if (!analysis_label_explicit) {
+      opt$analysis_label <- "custom_cluster"
+    }
+    if (!out_dir_explicit) {
+      opt$out_dir <- file.path(opt$repo_root, "processed-data", "11_eQTL_coloc", "custom_cluster", "tqtl_in")
+    }
   }
   if (!nzchar(opt$analysis_label)) {
     cli_fail("`--analysis-label` must not be empty.", show_usage = TRUE, defaults = defaults)
@@ -446,8 +468,8 @@ sanitize <- function(x) {
 }
 
 dataset_id_from <- function(cluster, split) {
-  base <- sanitize(cluster)
-  if (base == "micro-vasc") base <- "uvasc"
+  cluster_id <- sanitize(cluster)
+  if (cluster_id == "micro-vasc") cluster_id <- "uvasc"
   suffix <- switch(
     split,
     all = "",
@@ -455,7 +477,7 @@ dataset_id_from <- function(cluster, split) {
     female = "_f",
     stop("Unsupported split: ", split)
   )
-  paste0(base, suffix)
+  paste0(cluster_id, suffix)
 }
 
 splits <- trimws(unlist(strsplit(opt$splits, ",", fixed = TRUE)))
@@ -593,11 +615,11 @@ for (cluster in clusters) {
     }
 
     if (!opt$check_only) {
-      fn_base <- file.path(opt$out_dir, paste0(ds_id, ".gene"))
-      fn_exprpcs <- paste0(fn_base, ".exprPCs.qs2")
-      fn_covars <- paste0(fn_base, ".covars.txt")
-      fn_bed <- paste0(fn_base, ".expr.bed.gz")
-      fn_spe <- paste0(fn_base, ".spe.qs2")
+      fn_prefix <- file.path(opt$out_dir, paste0(ds_id, ".gene"))
+      fn_exprpcs <- paste0(fn_prefix, ".exprPCs.qs2")
+      fn_covars <- paste0(fn_prefix, ".covars.txt")
+      fn_bed <- paste0(fn_prefix, ".expr.bed.gz")
+      fn_spe <- paste0(fn_prefix, ".spe.qs2")
 
       qs_save(ffPCs, file = fn_exprpcs)
 

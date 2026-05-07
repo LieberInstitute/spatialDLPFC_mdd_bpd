@@ -38,13 +38,13 @@ if [[ ! -f "${jhpce_loc_file}" ]]; then
   exit 1
 fi
 
-jhpce_base=$(tr -d ' \t\r\n' < "${jhpce_loc_file}")
-if [[ -z "${jhpce_base}" ]]; then
-  echo "Empty JHPCE base path in ${jhpce_loc_file}" >&2
+jhpce_root=$(tr -d ' \t\r\n' < "${jhpce_loc_file}")
+if [[ -z "${jhpce_root}" ]]; then
+  echo "Empty JHPCE root path in ${jhpce_loc_file}" >&2
   exit 1
 fi
-# normalize to no trailing slash
-jhpce_base=${jhpce_base%/}
+## normalize to no trailing slash
+jhpce_root=${jhpce_root%/}
 
 required_files=(
   "processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata"
@@ -67,7 +67,7 @@ missing=0
 fetched=0
 
 echo "Repo root: ${repo_root}"
-echo "Remote base: ${jhpce_base}"
+echo "Remote root: ${jhpce_root}"
 
 for rel in "${required_files[@]}"; do
   local_path="${repo_root}/${rel}"
@@ -78,7 +78,7 @@ for rel in "${required_files[@]}"; do
   echo "[MISS] ${rel}"
   missing=$((missing + 1))
   if [[ ${check_only} -eq 0 ]]; then
-    remote_path="${jhpce_base}/${rel}"
+    remote_path="${jhpce_root}/${rel}"
     mkdir -p "$(dirname "${local_path}")"
     rsync -av "jt:${remote_path}" "${local_path}"
     if [[ -f "${local_path}" ]]; then

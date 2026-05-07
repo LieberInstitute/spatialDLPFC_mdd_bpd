@@ -4,14 +4,14 @@ set -euo pipefail
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd "${script_dir}/../.." && pwd)
 
-in_dir="${repo_root}/processed-data/11_eQTL_coloc/tqtl_in"
-out_dir="${repo_root}/processed-data/11_eQTL_coloc/tqtl_out"
+in_dir="${repo_root}/processed-data/11_eQTL_coloc/seurat/tqtl_in"
+out_dir="${repo_root}/processed-data/11_eQTL_coloc/seurat/tqtl_out"
 mapping_py="${script_dir}/02a_tensorQTL_cis.py"
 py_bin="${script_dir}/.venv/bin/python"
 
 dry_run=0
 force=0
-analysis="base"
+analysis="seurat"
 input_dir_explicit=0
 output_dir_explicit=0
 start_from=""
@@ -28,7 +28,7 @@ Runs tensorQTL (02a_tensorQTL_cis.py) for prepared datasets.
 Options:
   --dry-run            Show detected datasets/commands only; do not run
   --force              Re-run datasets even if <dataset>.gene.map_cis.tab.gz exists
-  --analysis <name>    Input/output series: base, nspots, or custom_cluster_nspots (default: base)
+  --analysis <name>    Input/output series: seurat or custom_cluster (default: seurat)
   --input-dir <path>   Override prepared tensorQTL input directory
   --output-dir <path>  Override tensorQTL output directory
   --start-from <id>    Start at this dataset (sorted order), skipping previous
@@ -100,26 +100,24 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "${analysis}" in
-  base)
-    ;;
-  nspots)
+  seurat)
     if [[ ${input_dir_explicit} -eq 0 ]]; then
-      in_dir="${repo_root}/processed-data/11_eQTL_coloc/nspots/tqtl_in"
+      in_dir="${repo_root}/processed-data/11_eQTL_coloc/seurat/tqtl_in"
     fi
     if [[ ${output_dir_explicit} -eq 0 ]]; then
-      out_dir="${repo_root}/processed-data/11_eQTL_coloc/nspots/tqtl_out"
+      out_dir="${repo_root}/processed-data/11_eQTL_coloc/seurat/tqtl_out"
     fi
     ;;
-  custom_cluster_nspots)
+  custom_cluster)
     if [[ ${input_dir_explicit} -eq 0 ]]; then
-      in_dir="${repo_root}/processed-data/11_eQTL_coloc/custom_cluster_nspots/tqtl_in"
+      in_dir="${repo_root}/processed-data/11_eQTL_coloc/custom_cluster/tqtl_in"
     fi
     if [[ ${output_dir_explicit} -eq 0 ]]; then
-      out_dir="${repo_root}/processed-data/11_eQTL_coloc/custom_cluster_nspots/tqtl_out"
+      out_dir="${repo_root}/processed-data/11_eQTL_coloc/custom_cluster/tqtl_out"
     fi
     ;;
   *)
-    echo "Unsupported --analysis: ${analysis}; expected base, nspots, or custom_cluster_nspots" >&2
+    echo "Unsupported --analysis: ${analysis}; expected seurat or custom_cluster" >&2
     exit 1
     ;;
 esac
