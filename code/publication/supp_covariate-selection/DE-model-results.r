@@ -149,8 +149,8 @@ df.both = bind_rows(mutate(df1, model="L-A"), mutate(df2, model="L-R")) %>%
 p1 <- ggplot(df.both, aes(x=covar, y=n, fill=annotation))+
   geom_bar(stat="identity", position="dodge", color="black", linewidth=.5)+
   scale_fill_manual(values=c("white","grey"))+
-  facet_grid(cols=vars(statistic), rows=vars(model))+
-  labs(title="gene repeats counted", fill="")+
+  facet_grid(rows=vars(statistic), cols=vars(model), scales="free_y")+
+  labs(title="gene repeats counted", fill="", y="# genes")+
   theme_minimal()+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.5),
 	legend.text=element_text(size=6), legend.key.size=unit(6,"pt"), panel.grid.minor=element_blank())
 
@@ -160,7 +160,7 @@ df1_single = bind_rows(filter(la.all, adj.P.Val<.05) %>% group_by(annotation, co
                 filter(lat.all, adj.P.Val<.05) %>% distinct(covar, annotation, gene_id) %>% 
                   group_by(covar, annotation, .drop=F) %>% tally() %>%
                   mutate(statistic="t-test"),
-                distinct(la.degs, covar, annotation, gene_id) %>% 
+                distinct(la.degs, covar, coef, annotation, gene_id) %>% 
                   group_by(annotation, covar, .drop=F) %>% tally() %>% 
                   mutate(statistic="F-test and t-test"))
 
@@ -176,17 +176,25 @@ df2_single = bind_rows(filter(lr.all, adj.P.Val<.05) %>% group_by(annotation, co
 
 df.both_single = bind_rows(mutate(df1_single, model="L-A"), mutate(df2_single, model="L-R")) %>%
   mutate(model=factor(model, levels=c("L-A","L-R")),
-         statistic=factor(statistic, levels=c("F-test","t-test","F-test and t-test")))
+         statistic=factor(statistic, levels=c("F-test","t-test","F-test and t-test"),
+	labels= c("F-test","t-test","F-test and t-test\n(repeats removed)")))
 
-p2 <- ggplot(df.both_single, aes(x=covar, y=n, fill=annotation))+
+
+df.both2 = bind_rows(df.both, filter(df.both_single, statistic=="F-test and t-test\n(repeats removed)") %>%
+	mutate(statistic=factor(statistic, levels=c("F-test","t-test","F-test and t-test","F-test and t-test\n(repeats removed)"))))
+
+p2 <- ggplot(df.both2, aes(x=covar, y=n, fill=annotation))+
   geom_bar(stat="identity", position="dodge", color="black", linewidth=.5)+
   scale_fill_manual(values=c("white","grey"))+
-  facet_grid(cols=vars(statistic), rows=vars(model))+
-  labs(title="limit 1 count per gene per dx*sex group", fill="")+
+  facet_grid(rows=vars(statistic), cols=vars(model), scales="free_y")+
+  labs(#title="limit 1 count per gene per dx*sex group", 
+	fill="", y="# genes")+
   theme_minimal()+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.5),
-	legend.text=element_text(size=6), legend.key.size=unit(6,"pt"), panel.grid.minor=element_blank())
+	#legend.text=element_text(size=6), legend.key.size=unit(6,"pt"), 
+	panel.grid.minor=element_blank(),
+	strip.text.y=element_text(size=8, angle=0), legend.position="none")
 
-pdf(file="plots/publication/supp_covariate-selection/DE-results-per-covar_barplot.pdf", height=4, width=6.5)
+pdf(file="plots/publication/supp_covariate-selection/DE-results-per-covar_barplot-transpose.pdf", height=7, width=5)
 p1
 p2
 dev.off()

@@ -34,8 +34,10 @@ other.vars = c("nspots", "chrM_ratio", "pc3","age", "BMI", "RIN", "Smoking", "sl
 
 # collinearity of donor-level variables
 cor1 = cor(demo[,c("age","RIN","BMI")])
+cor1_num = signif(cor1, digits=3)
 cor1[cor1==1] = NA
-phm1 = pheatmap(cor1, cluster_rows=F, cluster_cols=F, main="Donor-level variables",
+
+phm1 = pheatmap(cor1, display_numbers= cor1_num, cluster_rows=F, cluster_cols=F, main="Donor-level variables",
          color=colorRampPalette(RColorBrewer::brewer.pal(n=7, "RdBu")[7:1])(100),
          breaks=seq(-1, 1, length.out=101), na_col = "grey50", angle_col=0)
 

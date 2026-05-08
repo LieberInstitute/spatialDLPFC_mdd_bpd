@@ -1,0 +1,146 @@
+**** Job starts ****
+Fri May  8 10:42:39 AM EDT 2026
+**** JHPCE info ****
+User: jthompso
+Job id: 31826648
+Job name: sf-covars_demo-with-lm
+Node(s): compute-120
+Node memory requested: 3072
+n Tasks: 
+Loading conda_R/4.4.x
+
+Currently Loaded Modules:
+  1) JHPCE_ROCKY9_DEFAULT_ENV   3) conda/3-24.3.0
+  2) JHPCE_tools/3.0            4) conda_R/4.4.x
+
+ 
+
+
+
+Chi-squared of dx on smoking status...
+
+	Pearson's Chi-squared test
+
+data:  M
+X-squared = 29.096, df = 2, p-value = 4.807e-07
+
+
+
+Linear regression of dx*sex on donor covars...
+>>> Age...
+
+Call:
+lm(formula = age ~ condition * sex, data = demo)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-24.942  -9.035   3.758   8.890  19.595 
+
+Coefficients:
+                  Estimate Std. Error t value Pr(>|t|)    
+(Intercept)         43.135      2.573  16.764   <2e-16 ***
+conditionMDD         0.515      3.639   0.142    0.888    
+conditionNTC         0.470      3.639   0.129    0.897    
+sexM                 0.850      3.639   0.234    0.816    
+conditionMDD:sexM    1.642      5.180   0.317    0.752    
+conditionNTC:sexM   -1.345      5.146  -0.261    0.794    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 11.51 on 113 degrees of freedom
+Multiple R-squared:  0.00814,	Adjusted R-squared:  -0.03575 
+F-statistic: 0.1855 on 5 and 113 DF,  p-value: 0.9676
+
+
+>>> BMI...
+
+Call:
+lm(formula = BMI ~ condition * sex, data = demo)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-12.02  -5.92  -1.16   4.26  35.42 
+
+Coefficients:
+                  Estimate Std. Error t value Pr(>|t|)    
+(Intercept)        31.3200     1.9264  16.258   <2e-16 ***
+conditionMDD        0.8400     2.7244   0.308    0.758    
+conditionNTC       -1.1000     2.7244  -0.404    0.687    
+sexM               -1.4800     2.7244  -0.543    0.588    
+conditionMDD:sexM   0.6516     3.8782   0.168    0.867    
+conditionNTC:sexM   2.7400     3.8529   0.711    0.478    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 8.615 on 113 degrees of freedom
+Multiple R-squared:  0.008788,	Adjusted R-squared:  -0.03507 
+F-statistic: 0.2004 on 5 and 113 DF,  p-value: 0.9617
+
+
+>>> RIN...
+
+Call:
+lm(formula = RIN ~ condition * sex, data = demo)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-1.4200 -0.6700 -0.0200  0.6725  1.5300 
+
+Coefficients:
+                  Estimate Std. Error t value Pr(>|t|)    
+(Intercept)         8.0250     0.1714  46.827   <2e-16 ***
+conditionMDD       -0.1500     0.2424  -0.619    0.537    
+conditionNTC       -0.6050     0.2424  -2.496    0.014 *  
+sexM               -0.0550     0.2424  -0.227    0.821    
+conditionMDD:sexM   0.1958     0.3450   0.568    0.571    
+conditionNTC:sexM   0.5650     0.3427   1.648    0.102    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.7664 on 113 degrees of freedom
+Multiple R-squared:  0.07274,	Adjusted R-squared:  0.03171 
+F-statistic: 1.773 on 5 and 113 DF,  p-value: 0.1241
+
+Warning message:
+In `position_beeswarm`, method `center` discretizes the data axis (a.k.a the
+continuous or non-grouped axis).
+This may result in changes to the position of the points along that axis,
+proportional to the value of `cex`.
+This warning is displayed once per session. 
+null device 
+          1 
+
+
+Reproducibility information:
+[1] "2026-05-08 10:42:43 EDT"
+   user  system elapsed 
+  2.384   0.213   3.007 
+R version 4.4.3 Patched (2025-02-28 r88218)
+Platform: x86_64-conda-linux-gnu
+Running under: Rocky Linux 9.4 (Blue Onyx)
+
+Matrix products: default
+BLAS:   /jhpce/shared/community/core/conda_R/4.4.x/R/lib64/R/lib/libRblas.so 
+LAPACK: /jhpce/shared/community/core/conda_R/4.4.x/R/lib64/R/lib/libRlapack.so;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C               LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8    LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C             LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: US/Eastern
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] ggplot2_3.5.2 dplyr_1.1.4  
+
+loaded via a namespace (and not attached):
+ [1] labeling_0.4.3     RColorBrewer_1.1-3 R6_2.6.1           tidyselect_1.2.1   vipor_0.4.7        farver_2.1.2      
+ [7] magrittr_2.0.3     gtable_0.3.6       glue_1.8.0         tibble_3.2.1       dichromat_2.0-0.1  pkgconfig_2.0.3   
+[13] generics_0.1.4     lifecycle_1.0.4    cli_3.6.5          ggbeeswarm_0.7.2   scales_1.4.0       grid_4.4.3        
+[19] vctrs_0.6.5        withr_3.0.2        compiler_4.4.3     beeswarm_0.4.0     pillar_1.10.2      rlang_1.1.6       
+**** Job ends ****
+Fri May  8 10:42:43 AM EDT 2026

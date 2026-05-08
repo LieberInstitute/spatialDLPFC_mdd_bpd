@@ -8,6 +8,27 @@ set.seed(123)
 cpList <- readRDS("plots/colorPalettes.rds")
 
 demo = read.csv("processed-data/publication/demographics.csv")
+
+#chisq
+cat("\n\nChi-squared of dx on smoking status...\n")
+M = table(demo[,c("condition","Smoking")])
+(Xsq <- chisq.test(M))
+
+#lm
+cat("\n\nLinear regression of dx*sex on donor covars...")
+cat("\n>>> Age...\n")
+m1 = lm(age ~ condition*sex, data=demo)
+summary(m1)
+
+cat("\n>>> BMI...\n")
+m2 = lm(BMI ~ condition*sex, data=demo)
+summary(m2)
+
+cat("\n>>> RIN...\n")
+m3 = lm(RIN ~ condition*sex, data=demo)
+summary(m3)
+
+# now plotting
 demo$cond_sex = factor(paste(demo$condition, demo$sex), levels=c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M"),
                        labels=c("NTC\nF","NTC\nM","MDD\nF","MDD\nM","BPD\nF","BPD\nM"))
 
