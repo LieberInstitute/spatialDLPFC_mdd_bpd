@@ -290,3 +290,4 @@ For presenting eQTL results and downstream processing, use only the `seurat` and
   - use single line comments starting with '## ' and lower case, to briefly comment/explain non-trivial code blocks generated
   - use here::i_am('.git/HEAD') in R/Rmd to anchor the project root folder, make all project paths relative to it
   - prefer built-in R and data.table over dplyr for data manipulation, reshaping, filtering etc.; avoid local/global variable name conflicts/clash with data.table columns which can lead to serious silent logic bugs with data.table notation
+  - documentation and markdown files should use a neutral professional tone, be very concise;avoid redundant or unnecessary statements

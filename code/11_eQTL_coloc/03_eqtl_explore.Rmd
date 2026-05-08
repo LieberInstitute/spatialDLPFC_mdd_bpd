@@ -13,8 +13,7 @@ here::i_am('.git/HEAD')
 
 repo_root <- here()
 ref_dir <- here("processed-data", "ref")
-summary_dir <- here("processed-data", "11_eQTL_coloc", "summary")
-dir.create(summary_dir, recursive = TRUE, showWarnings = FALSE)
+WRITE_DEG_VIEW_TABLES <- FALSE
 
 source(here("code", "11_eQTL_coloc", "utils.R"), chdir = FALSE)
 
@@ -26,7 +25,7 @@ analysis_configs <- list(
     analysis = "seurat",
     tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_in"),
     tqtl_out_dir = here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_out"),
-    summary_suffix = "_seurat",
+    tables_dir = here("processed-data", "11_eQTL_coloc", "seurat", "tables"),
     deg_mode = "standard",
     context_order = context_order,
     split_order = split_order
@@ -36,8 +35,8 @@ custom_config <- list(
   analysis = "custom_cluster",
   tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster", "tqtl_in"),
   tqtl_out_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster", "tqtl_out"),
-  summary_suffix = "_custom_cluster",
-  deg_mode = "custom_cluster",
+  tables_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster", "tables"),
+  deg_mode = "standard",
   context_order = names(CUSTOM_CONTEXT_TO_DATASET_ID),
   split_order = "all"
 )
@@ -57,13 +56,9 @@ granges <- load_gene_ranges(repo_root = repo_root)
 g2sym <- setNames(granges$gene_name, granges$gene_id)
 sym2ensg <- setNames(granges$gene_id, granges$gene_name)
 
-degs_by_mode <- list(
-  standard = load_DEGs(repo_root = repo_root, mode = "standard")
-)
-if (any(vapply(analysis_configs, function(config) identical(config$deg_mode, "custom_cluster"), logical(1)))) {
-  degs_by_mode$custom_cluster <- load_DEGs(repo_root = repo_root, mode = "custom_cluster")
-}
+degs_by_mode <- list(standard = load_DEGs(repo_root = repo_root, mode = "standard"))
 
+## use the local cached query, but keep only standard-significant variants downstream.
 scz_gwas <- loadGWAS("SCZD", 1e-6, repo_root = repo_root)
 missing_gwas_cols <- setdiff(c("variant_id", "p"), names(scz_gwas))
 if (length(missing_gwas_cols) > 0) {
@@ -71,7 +66,6 @@ if (length(missing_gwas_cols) > 0) {
 }
 
 gwas_set <- unique(scz_gwas[p < 5e-8 & !is.na(variant_id), variant_id])
-gwas1e6_set <- unique(scz_gwas[!is.na(variant_id), variant_id])
 
 analysis_manifests <- lapply(
   analysis_configs,
@@ -92,7 +86,7 @@ eqtl_barchart <- function(mapsum, indep = FALSE, analysis_label = NULL,
   dt <- copy(mapsum)
   dt[, context := factor(context, levels = context_order)]
   dt[, split := factor(split, levels = split_order)]
-  dt[, lab_above := sprintf("GWAS: %d\nDEG: %d\nDEG+GWAS: %d", n_GWAS, n_DEG, n_DEG_GWAS)]
+  dt[, lab_above := sprintf("SCZD GWAS: %d\nDEG: %d\nDEG+SCZD: %d", n_SCZD_GWAS, n_DEG, n_DEG_SCZD_GWAS)]
   dt[, y_top := fifelse(n_eGenes > 0, n_eGenes, 0)]
 
   ytitle <- if (indep) {
@@ -217,147 +211,27 @@ broad_eqtl_count_barchart <- function(mapsum, view_summary, deg_view, title, yti
     )
 }
 
-summary_path <- function(filename, suffix = "") {
-  file.path(summary_dir, add_filename_suffix(filename, suffix))
+table_path <- function(config, filename) {
+  file.path(config$tables_dir, filename)
 }
 
-write_analysis_summaries <- function(result, config) {
-  suffix <- config$summary_suffix
+write_analysis_tables <- function(result, config, write_deg_view_tables = FALSE) {
+  dir.create(config$tables_dir, recursive = TRUE, showWarnings = FALSE)
 
-  for (split_name in names(result$counts_tables)) {
+  fwrite(result$manifest_qc, table_path(config, "manifest_qc.csv"))
+  fwrite(result$map_cis_summary, table_path(config, "map_cis_summary.csv"))
+  fwrite(result$map_independent_summary, table_path(config, "map_independent_summary.csv"))
+  fwrite(result$map_cis_significant, table_path(config, "map_cis_significant.csv.gz"))
+  fwrite(result$map_independent_significant, table_path(config, "map_independent_significant.csv.gz"))
+
+  if (isTRUE(write_deg_view_tables) && !is.null(result$deg_view_tables)) {
     fwrite(
-      result$counts_tables[[split_name]],
-      summary_path(paste0("map_independent_counts_", split_name, ".csv"), suffix)
+      result$deg_view_tables$map_cis_deg_view_summary,
+      table_path(config, "map_cis_deg_view_summary.csv")
     )
     fwrite(
-      result$overlap_tables[[split_name]],
-      summary_path(paste0("map_independent_deg_overlap_", split_name, ".csv"), suffix)
-    )
-  }
-
-  fwrite(result$map_cis_summary, summary_path("map_cis_summary.csv", suffix))
-  fwrite(result$map_independent_summary, summary_path("map_independent_summary.csv", suffix))
-  fwrite(result$map_cis_deg_view_summary, summary_path("map_cis_deg_view_summary.csv", suffix))
-  fwrite(result$map_independent_deg_view_summary, summary_path("map_independent_deg_view_summary.csv", suffix))
-  fwrite(result$map_independent_deg_view_overlap, summary_path("map_independent_deg_view_overlap.csv", suffix))
-
-  ggsave(
-    filename = summary_path("map_cis_summary_barchart.pdf", suffix),
-    plot = eqtl_barchart(
-      result$map_cis_summary,
-      indep = FALSE,
-      analysis_label = config$analysis,
-      context_order = config$context_order,
-      split_order = config$split_order
-    ),
-    width = 11,
-    height = 12
-  )
-  ggsave(
-    filename = summary_path("map_independent_summary_barchart.pdf", suffix),
-    plot = eqtl_barchart(
-      result$map_independent_summary,
-      indep = TRUE,
-      analysis_label = config$analysis,
-      context_order = config$context_order,
-      split_order = config$split_order
-    ),
-    width = 11,
-    height = 12
-  )
-  ggsave(
-    filename = summary_path("map_cis_deg_view_summary_barchart.pdf", suffix),
-    plot = deg_view_barchart(
-      result$map_cis_deg_view_summary,
-      paste0("map-cis DEG-view overlaps (", config$analysis, ")"),
-      context_order = config$context_order,
-      split_order = config$split_order
-    ),
-    width = 14,
-    height = 14
-  )
-  ggsave(
-    filename = summary_path("map_independent_deg_view_summary_barchart.pdf", suffix),
-    plot = deg_view_barchart(
-      result$map_independent_deg_view_summary,
-      paste0("independent signal DEG-view overlaps (", config$analysis, ")"),
-      context_order = config$context_order,
-      split_order = config$split_order
-    ),
-    width = 14,
-    height = 14
-  )
-
-  if (identical(config$analysis, "seurat")) {
-    ggsave(
-      filename = summary_path("map_cis_broad_interaction_grouped_barchart.pdf", suffix),
-      plot = broad_eqtl_count_barchart(
-        result$map_cis_summary,
-        result$map_cis_deg_view_summary,
-        deg_view = "broad_interaction",
-        title = "Lead cis-eQTLs by Seurat context (broad interaction)",
-        ytitle = "eGenes discovered (lead cis-eQTLs, q < 0.05)",
-        context_order = config$context_order,
-        split_order = config$split_order
-      ),
-      width = 14,
-      height = 7.5
-    )
-    ggsave(
-      filename = summary_path("map_independent_broad_interaction_grouped_barchart.pdf", suffix),
-      plot = broad_eqtl_count_barchart(
-        result$map_independent_summary,
-        result$map_independent_deg_view_summary,
-        deg_view = "broad_interaction",
-        title = "Independent cis-eQTLs by Seurat context (broad interaction)",
-        ytitle = "Total independent cis-eQTL signals",
-        context_order = config$context_order,
-        split_order = config$split_order
-      ),
-      width = 14,
-      height = 7.5
-    )
-  }
-
-  if (identical(config$analysis, "custom_cluster")) {
-    ggsave(
-      filename = summary_path("map_cis_custom_primary_barchart.pdf", suffix),
-      plot = broad_eqtl_count_barchart(
-        result$map_cis_summary,
-        result$map_cis_deg_view_summary,
-        deg_view = "custom_primary",
-        title = "Lead cis-eQTLs by custom cluster (custom primary)",
-        ytitle = "eGenes discovered (lead cis-eQTLs, q < 0.05)",
-        context_order = config$context_order,
-        split_order = config$split_order
-      ),
-      width = 14,
-      height = 7.5
-    )
-    ggsave(
-      filename = summary_path("map_independent_custom_primary_barchart.pdf", suffix),
-      plot = broad_eqtl_count_barchart(
-        result$map_independent_summary,
-        result$map_independent_deg_view_summary,
-        deg_view = "custom_primary",
-        title = "Independent cis-eQTLs by custom cluster (custom primary)",
-        ytitle = "Total independent cis-eQTL signals",
-        context_order = config$context_order,
-        split_order = config$split_order
-      ),
-      width = 14,
-      height = 7.5
-    )
-  }
-
-  for (split_name in names(result$overlap_tables)) {
-    preview_dt <- result$overlap_tables[[split_name]][, .(
-      dataset_id, context, status, n_independent_signals, n_eGenes,
-      n_context_DEGs, n_eGene_DEG_overlap, eGene_DEG_overlap_gene_names
-    )]
-    fwrite(
-      preview_dt,
-      summary_path(paste0("map_independent_deg_ovl_", split_name, "_summary.csv"), suffix)
+      result$deg_view_tables$map_independent_deg_view_summary,
+      table_path(config, "map_independent_deg_view_summary.csv")
     )
   }
 
@@ -373,19 +247,32 @@ analysis_results <- lapply(names(analysis_configs), function(analysis_name) {
     degs = degs_by_mode[[config$deg_mode]],
     g2sym = g2sym,
     gwas_set = gwas_set,
-    gwas1e6_set = gwas1e6_set,
     repo_root = repo_root,
+    include_deg_views = WRITE_DEG_VIEW_TABLES,
     context_order = config$context_order,
     split_order = config$split_order
   )
 })
 names(analysis_results) <- names(analysis_configs)
 
-lapply(analysis_results, function(x) x$counts_dt)
+lapply(analysis_results, function(x) list(
+  cis_rows = nrow(x$map_cis_significant),
+  independent_rows = nrow(x$map_independent_significant)
+))
 ```
 
-```{r write-summaries}
-invisible(Map(write_analysis_summaries, analysis_results, analysis_configs))
+```{r write-tables}
+invisible(Map(
+  function(result, config) write_analysis_tables(
+    result,
+    config,
+    write_deg_view_tables = WRITE_DEG_VIEW_TABLES
+  ),
+  analysis_results,
+  analysis_configs
+))
 
-list.files(summary_dir, pattern = "\\.(csv|pdf)$", full.names = FALSE)
+lapply(analysis_configs, function(config) {
+  list.files(config$tables_dir, pattern = "\\.csv(\\.gz)?$", full.names = FALSE)
+})
 ```

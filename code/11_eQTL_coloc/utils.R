@@ -1136,23 +1136,34 @@ collapse_gene_list <- function(x) {
 }
 
 tag_eqtl_results <- function(dt, dataset_id, context, split, deg_dt,
-                             g2sym, gwas_set, gwas1e6_set) {
+                             g2sym, gwas_set) {
   require_data_table()
   out <- data.table::copy(dt)
+  if ("V1" %in% names(out) && identical(out$V1, seq_len(nrow(out)) - 1L)) {
+    out[, V1 := NULL]
+  }
   deg_gene_ids <- unique(data.table::as.data.table(deg_dt)$gene_id)
 
+  ## add project annotations while preserving tensorQTL-native columns.
   out[, `:=`(
     dataset_id = dataset_id,
     context = context,
     split = split,
     gene_id = phenotype_id,
     gene_name = g2sym[phenotype_id],
-    dge = as.integer(phenotype_id %in% deg_gene_ids),
-    gwas = as.integer(variant_id %in% gwas_set),
-    gwas_1e6 = as.integer(variant_id %in% gwas1e6_set)
+    DEG = as.integer(phenotype_id %in% deg_gene_ids),
+    SCZD_GWAS = as.integer(variant_id %in% gwas_set)
   )]
 
+  front_cols <- c("dataset_id", "context", "split", "gene_id", "gene_name", "DEG", "SCZD_GWAS")
+  data.table::setcolorder(out, c(front_cols, setdiff(names(out), front_cols)))
   out[]
+}
+
+order_annotated_eqtl_cols <- function(dt) {
+  front_cols <- c("dataset_id", "context", "split", "gene_id", "gene_name", "DEG", "SCZD_GWAS")
+  data.table::setcolorder(dt, c(front_cols, setdiff(names(dt), front_cols)))
+  dt[]
 }
 
 complete_summary_grid <- function(context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
@@ -1167,77 +1178,87 @@ fill_summary_missing <- function(out, count_cols, text_cols) {
   out
 }
 
-summarize_tagged_eqtls <- function(dt, context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
-                                   split_order = DEG_SPLITS) {
+summary_template <- function(context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                             split_order = DEG_SPLITS,
+                             include_signal_count = FALSE) {
   require_data_table()
+  out <- complete_summary_grid(context_order = context_order, split_order = split_order)
+  if (isTRUE(include_signal_count)) out[, n_independent_signals := 0L]
+  out[, `:=`(
+    n_eGenes = 0L,
+    n_SCZD_GWAS = 0L,
+    n_DEG = 0L,
+    n_DEG_SCZD_GWAS = 0L,
+    SCZD_GWAS_genes = "",
+    DEG_genes = "",
+    DEG_SCZD_GWAS_genes = ""
+  )]
+  out[]
+}
+
+summarize_tagged_eqtls <- function(dt, context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                                   split_order = DEG_SPLITS,
+                                   signal_count = FALSE) {
+  require_data_table()
+  include_signal_count <- isTRUE(signal_count)
   if (nrow(dt) == 0) {
-    out <- complete_summary_grid(context_order = context_order, split_order = split_order)
-    out[, `:=`(
-      n_eGenes = 0L,
-      n_GWAS = 0L,
-      n_GWAS_1e6 = 0L,
-      n_DEG = 0L,
-      n_DEG_GWAS = 0L,
-      GWAS = "",
-      DEGS = "",
-      DEG_GWAS = ""
-    )]
-    return(out[])
+    return(summary_template(
+      context_order = context_order,
+      split_order = split_order,
+      include_signal_count = include_signal_count
+    ))
   }
 
-  obs <- dt[, .(
-    n_eGenes = data.table::uniqueN(phenotype_id),
-    n_GWAS = data.table::uniqueN(phenotype_id[gwas == 1]),
-    n_GWAS_1e6 = data.table::uniqueN(phenotype_id[gwas_1e6 == 1]),
-    n_DEG = data.table::uniqueN(gene_id[dge == 1]),
-    n_DEG_GWAS = data.table::uniqueN(phenotype_id[dge == 1 & gwas == 1]),
-    GWAS = collapse_gene_list(gene_name[gwas == 1]),
-    DEGS = collapse_gene_list(gene_name[dge == 1]),
-    DEG_GWAS = collapse_gene_list(gene_name[dge == 1 & gwas == 1])
-  ), by = .(split, context)]
+  if (include_signal_count) {
+    obs <- dt[, .(
+      n_independent_signals = .N,
+      n_eGenes = data.table::uniqueN(gene_id),
+      n_SCZD_GWAS = sum(SCZD_GWAS == 1),
+      n_DEG = data.table::uniqueN(gene_id[DEG == 1]),
+      n_DEG_SCZD_GWAS = sum(DEG == 1 & SCZD_GWAS == 1),
+      SCZD_GWAS_genes = collapse_gene_list(gene_name[SCZD_GWAS == 1]),
+      DEG_genes = collapse_gene_list(gene_name[DEG == 1]),
+      DEG_SCZD_GWAS_genes = collapse_gene_list(gene_name[DEG == 1 & SCZD_GWAS == 1])
+    ), by = .(split, context)]
+  } else {
+    obs <- dt[, .(
+      n_eGenes = data.table::uniqueN(gene_id),
+      n_SCZD_GWAS = data.table::uniqueN(gene_id[SCZD_GWAS == 1]),
+      n_DEG = data.table::uniqueN(gene_id[DEG == 1]),
+      n_DEG_SCZD_GWAS = data.table::uniqueN(gene_id[DEG == 1 & SCZD_GWAS == 1]),
+      SCZD_GWAS_genes = collapse_gene_list(gene_name[SCZD_GWAS == 1]),
+      DEG_genes = collapse_gene_list(gene_name[DEG == 1]),
+      DEG_SCZD_GWAS_genes = collapse_gene_list(gene_name[DEG == 1 & SCZD_GWAS == 1])
+    ), by = .(split, context)]
+  }
 
   out <- merge(
-    complete_summary_grid(context_order = context_order, split_order = split_order),
+    summary_template(
+      context_order = context_order,
+      split_order = split_order,
+      include_signal_count = include_signal_count
+    )[, .(split, context)],
     obs,
     by = c("split", "context"),
     all.x = TRUE
   )
+  count_cols <- c("n_eGenes", "n_SCZD_GWAS", "n_DEG", "n_DEG_SCZD_GWAS")
+  if (include_signal_count) count_cols <- c("n_independent_signals", count_cols)
   fill_summary_missing(
     out,
-    count_cols = c("n_eGenes", "n_GWAS", "n_GWAS_1e6", "n_DEG", "n_DEG_GWAS"),
-    text_cols = c("GWAS", "DEGS", "DEG_GWAS")
+    count_cols = count_cols,
+    text_cols = c("SCZD_GWAS_genes", "DEG_genes", "DEG_SCZD_GWAS_genes")
   )[order(match(split, split_order), match(context, context_order))]
 }
 
 summarize_independent_signals <- function(dt, context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
                                           split_order = DEG_SPLITS) {
-  require_data_table()
-  if (nrow(dt) == 0) {
-    return(summarize_tagged_eqtls(dt, context_order = context_order, split_order = split_order))
-  }
-
-  obs <- dt[, .(
-    n_eGenes = .N,
-    n_GWAS = sum(gwas == 1),
-    n_GWAS_1e6 = sum(gwas_1e6 == 1),
-    n_DEG = data.table::uniqueN(gene_id[dge == 1]),
-    n_DEG_GWAS = sum(dge == 1 & gwas == 1),
-    GWAS = collapse_gene_list(gene_name[gwas == 1]),
-    DEGS = collapse_gene_list(gene_name[dge == 1]),
-    DEG_GWAS = collapse_gene_list(gene_name[dge == 1 & gwas == 1])
-  ), by = .(split, context)]
-
-  out <- merge(
-    complete_summary_grid(context_order = context_order, split_order = split_order),
-    obs,
-    by = c("split", "context"),
-    all.x = TRUE
+  summarize_tagged_eqtls(
+    dt,
+    context_order = context_order,
+    split_order = split_order,
+    signal_count = TRUE
   )
-  fill_summary_missing(
-    out,
-    count_cols = c("n_eGenes", "n_GWAS", "n_GWAS_1e6", "n_DEG", "n_DEG_GWAS"),
-    text_cols = c("GWAS", "DEGS", "DEG_GWAS")
-  )[order(match(split, split_order), match(context, context_order))]
 }
 
 summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
@@ -1267,8 +1288,7 @@ summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
   totals <- eqtl_dt[, .(
     n_eQTL_records = .N,
     n_eGenes = if (signal_count) .N else data.table::uniqueN(phenotype_id),
-    n_GWAS = if (signal_count) sum(gwas == 1) else data.table::uniqueN(phenotype_id[gwas == 1]),
-    n_GWAS_1e6 = if (signal_count) sum(gwas_1e6 == 1) else data.table::uniqueN(phenotype_id[gwas_1e6 == 1])
+    n_SCZD_GWAS = if (signal_count) sum(SCZD_GWAS == 1) else data.table::uniqueN(phenotype_id[SCZD_GWAS == 1])
   ), by = .(dataset_id, context, split)]
 
   overlap_dt <- merge(
@@ -1281,10 +1301,10 @@ summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
 
   overlaps <- overlap_dt[, .(
     n_eGene_DEG_overlap = data.table::uniqueN(gene_id),
-    n_DEG_GWAS = if (signal_count) sum(gwas == 1) else data.table::uniqueN(gene_id[gwas == 1]),
+    n_DEG_SCZD_GWAS = if (signal_count) sum(SCZD_GWAS == 1) else data.table::uniqueN(gene_id[SCZD_GWAS == 1]),
     eGene_DEG_overlap_gene_ids = collapse_gene_list(gene_id),
     eGene_DEG_overlap_gene_names = collapse_gene_list(deg_gene_name),
-    DEG_GWAS = collapse_gene_list(deg_gene_name[gwas == 1])
+    DEG_SCZD_GWAS_genes = collapse_gene_list(deg_gene_name[SCZD_GWAS == 1])
   ), by = .(dataset_id, context, split, deg_view, deg_sex)]
 
   out <- merge(template, totals, by = c("dataset_id", "context", "split"), all.x = TRUE)
@@ -1298,10 +1318,10 @@ summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
   fill_summary_missing(
     out,
     count_cols = c(
-      "n_eQTL_records", "n_eGenes", "n_GWAS", "n_GWAS_1e6",
-      "n_eGene_DEG_overlap", "n_DEG_GWAS"
+      "n_eQTL_records", "n_eGenes", "n_SCZD_GWAS",
+      "n_eGene_DEG_overlap", "n_DEG_SCZD_GWAS"
     ),
-    text_cols = c("eGene_DEG_overlap_gene_ids", "eGene_DEG_overlap_gene_names", "DEG_GWAS")
+    text_cols = c("eGene_DEG_overlap_gene_ids", "eGene_DEG_overlap_gene_names", "DEG_SCZD_GWAS_genes")
   )
 
   view_order <- c(
@@ -1394,20 +1414,34 @@ summarize_dataset_overlap <- function(dataset_id, context, split, file_info, deg
   )
 }
 
-summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set, gwas1e6_set,
-                                    repo_root,
+manifest_qc_table <- function(tqtl_in_dir) {
+  require_data_table()
+  manifest_file <- file.path(tqtl_in_dir, "prep_manifest.csv")
+  if (!file.exists(manifest_file)) stop("Missing tensorQTL manifest: ", manifest_file)
+  manifest <- data.table::fread(manifest_file)
+  keep_cols <- intersect(
+    c(
+      "dataset_id", "seurat_label", "cluster_col", "analysis_label", "split",
+      "covariate_model", "n_samples", "n_genes_bed", "n_genes_pca",
+      "n_expr_pcs"
+    ),
+    names(manifest)
+  )
+  manifest[, keep_cols, with = FALSE]
+}
+
+summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
+                                    repo_root, include_deg_views = FALSE,
                                     context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
                                     split_order = DEG_SPLITS) {
   require_data_table()
+  manifest_qc <- manifest_qc_table(config$tqtl_in_dir)
   manifest <- load_eqtl_manifest(
     tqtl_in_dir = config$tqtl_in_dir,
     context_order = context_order,
     split_order = split_order
   )
-  if (!all(manifest$dataset_id %in% names(degs$by_dataset_id))) {
-    missing_ids <- setdiff(manifest$dataset_id, names(degs$by_dataset_id))
-    stop("Missing DEG context sets for dataset IDs: ", paste(missing_ids, collapse = ", "))
-  }
+  deg_global <- data.table::as.data.table(degs$global)
 
   summary_rows <- lapply(seq_len(nrow(manifest)), function(i) {
     row <- manifest[i]
@@ -1417,34 +1451,28 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set, gwas1e6_set,
 
     map_cis_info <- read_map_cis(dataset_id, tqtl_out_dir = config$tqtl_out_dir, repo_root = repo_root)
     indep_info <- read_map_independent(dataset_id, tqtl_out_dir = config$tqtl_out_dir, repo_root = repo_root)
-    deg_dt <- data.table::as.data.table(degs$by_dataset_id[[dataset_id]])
 
     list(
-      counts = summarize_dataset_counts(dataset_id, context, split, indep_info),
-      overlap = summarize_dataset_overlap(dataset_id, context, split, indep_info, deg_dt),
       map_cis = if (identical(map_cis_info$status, "ok")) {
-        tag_eqtl_results(map_cis_info$dt, dataset_id, context, split, deg_dt, g2sym, gwas_set, gwas1e6_set)
+        tag_eqtl_results(map_cis_info$dt, dataset_id, context, split, deg_global, g2sym, gwas_set)
       } else {
         NULL
       },
       independent = if (identical(indep_info$status, "ok")) {
-        tag_eqtl_results(indep_info$dt, dataset_id, context, split, deg_dt, g2sym, gwas_set, gwas1e6_set)
+        tag_eqtl_results(indep_info$dt, dataset_id, context, split, deg_global, g2sym, gwas_set)
       } else {
         NULL
       }
     )
   })
 
-  counts_dt <- data.table::rbindlist(lapply(summary_rows, `[[`, "counts"), use.names = TRUE)
-  overlap_dt <- data.table::rbindlist(lapply(summary_rows, `[[`, "overlap"), use.names = TRUE)
   map_cis_all <- data.table::rbindlist(lapply(summary_rows, `[[`, "map_cis"), use.names = TRUE, fill = TRUE)
   indep_all <- data.table::rbindlist(lapply(summary_rows, `[[`, "independent"), use.names = TRUE, fill = TRUE)
 
-  counts_dt <- counts_dt[order(match(split, split_order), match(context, context_order))]
-  overlap_dt <- overlap_dt[order(match(split, split_order), match(context, context_order))]
+  map_cis_significant <- map_cis_all[qval < 0.05]
 
   map_cis_summary <- summarize_tagged_eqtls(
-    map_cis_all[qval < 0.05],
+    map_cis_significant,
     context_order = context_order,
     split_order = split_order
   )
@@ -1452,55 +1480,45 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set, gwas1e6_set,
   parent_q <- map_cis_all[, .(phenotype_id, dataset_id, qval_parent = qval)]
   indep_f <- merge(indep_all, parent_q, by = c("phenotype_id", "dataset_id"), all = FALSE)
   indep_f <- indep_f[qval_parent < 0.05 & pval_perm < 0.05]
+  indep_f <- order_annotated_eqtl_cols(indep_f)
   map_independent_summary <- summarize_independent_signals(
     indep_f,
     context_order = context_order,
     split_order = split_order
   )
 
-  map_cis_deg_view_summary <- summarize_eqtl_deg_views(
-    map_cis_all[qval < 0.05],
-    manifest = manifest,
-    degs = degs,
-    context_order = context_order,
-    split_order = split_order
-  )
-  map_independent_deg_view_summary <- summarize_eqtl_deg_views(
-    indep_f,
-    manifest = manifest,
-    degs = degs,
-    context_order = context_order,
-    split_order = split_order,
-    signal_count = TRUE
-  )
-  map_independent_deg_view_overlap <- summarize_eqtl_deg_views(
-    indep_all,
-    manifest = manifest,
-    degs = degs,
-    context_order = context_order,
-    split_order = split_order
-  )
-
-  split_to_suffix <- c(all = "all", male = "male", female = "female")
-  counts_tables <- lapply(names(split_to_suffix), function(split_name) counts_dt[split == split_name])
-  names(counts_tables) <- names(split_to_suffix)
-  overlap_tables <- lapply(names(split_to_suffix), function(split_name) overlap_dt[split == split_name])
-  names(overlap_tables) <- names(split_to_suffix)
+  deg_view_tables <- NULL
+  if (isTRUE(include_deg_views)) {
+    deg_view_tables <- list(
+      map_cis_deg_view_summary = summarize_eqtl_deg_views(
+        map_cis_significant,
+        manifest = manifest,
+        degs = degs,
+        context_order = context_order,
+        split_order = split_order
+      ),
+      map_independent_deg_view_summary = summarize_eqtl_deg_views(
+        indep_f,
+        manifest = manifest,
+        degs = degs,
+        context_order = context_order,
+        split_order = split_order,
+        signal_count = TRUE
+      )
+    )
+  }
 
   list(
     analysis = config$analysis,
+    manifest_qc = manifest_qc,
     manifest = manifest,
-    counts_dt = counts_dt,
-    overlap_dt = overlap_dt,
     map_cis_all = map_cis_all,
     indep_all = indep_all,
     indep_f = indep_f,
+    map_cis_significant = map_cis_significant,
+    map_independent_significant = indep_f,
     map_cis_summary = map_cis_summary,
     map_independent_summary = map_independent_summary,
-    map_cis_deg_view_summary = map_cis_deg_view_summary,
-    map_independent_deg_view_summary = map_independent_deg_view_summary,
-    map_independent_deg_view_overlap = map_independent_deg_view_overlap,
-    counts_tables = counts_tables,
-    overlap_tables = overlap_tables
+    deg_view_tables = deg_view_tables
   )
 }
