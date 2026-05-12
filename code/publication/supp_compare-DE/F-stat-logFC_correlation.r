@@ -58,13 +58,14 @@ la.f = merge(sm.la[both.genes,c("gene_id","gene_name","F_sm","adj.P.Val_sm")],
 
 la.f.corr = round(cor(la.f$F_sm, la.f$F_se), 4)
 p1 <- ggplot(la.f, aes(x=F_sm, y=F_se))+
-  rasterize(geom_point(size=.3), dpi=300)+
+  rasterize(geom_point(size=.1), dpi=300)+
   geom_vline(aes(xintercept=min(filter(la.f, adj.P.Val_sm<.05)$F_sm)), lty=2, color="red")+
   geom_hline(aes(yintercept=min(filter(la.f, adj.P.Val_se<.05)$F_se)), lty=2, color="red")+
   coord_cartesian(ylim=c(0,25), xlim=c(0,25))+
-  labs(title=paste0("Layer-adjusted F-stat\n(rho= ", la.f.corr, ")"), 
+  labs(title=paste0("rho= ", la.f.corr), 
        x="PRECAST domains", y="Seurat labels")+
-  theme_bw()+theme(panel.grid.minor=element_blank(), aspect.ratio=1)
+  theme_bw()+theme(panel.grid.minor=element_blank(), aspect.ratio=1,
+	text=element_text(size=8))
 
 
 df1 <- do.call(rbind, lapply(comparisons2, function(x) {
@@ -78,15 +79,17 @@ facet_labels = distinct(df1, sex.group, rho)
 facet_labels = paste(facet_labels$sex.group, "rho=", round(facet_labels$rho,2))
 names(facet_labels) = names(comparisons2)
 p2 <- ggplot(df1, aes(x=logFC_sm, y=logFC_se))+
-  rasterize(geom_point(size=.3), dpi=300)+
-  facet_wrap(vars(sex.group), ncol=3, labeller=as_labeller(facet_labels))+
+  rasterize(geom_point(size=.1), dpi=300)+
+  facet_wrap(vars(sex.group), ncol=6, labeller=as_labeller(facet_labels))+
   ylim(-3,3)+xlim(-3,3)+
   labs(x="logFC PRECAST domains", y="logFC Seurat labels")+
   theme_bw()+theme(panel.grid.minor=element_blank(), text=element_text(size=8),
                    aspect.ratio=1,
                    strip.background = element_rect(fill="transparent", color=NA))
 
-
+pdf(file="plots/publication/supp_compare-DE/F-stat-logFC_layer-adjusted_correlation.pdf", width=6.5, height=2.5)
+grid.arrange(p1, p2, layout_matrix=matrix(c(1,2,2,2,2,2,2), ncol=7))
+dev.off()
 
 
 ## L-R
@@ -131,13 +134,14 @@ lr.f = merge(sm.lr[both.genes,c("gene_id","gene_name","F_sm","adj.P.Val_sm")],
 
 lr.f.corr = round(cor(lr.f$F_sm, lr.f$F_se), 4)
 p3 <- ggplot(lr.f, aes(x=F_sm, y=F_se))+
-  rasterize(geom_point(size=.3), dpi=300)+
+  rasterize(geom_point(size=.1), dpi=300)+
   geom_vline(aes(xintercept=min(filter(lr.f, adj.P.Val_sm<.05)$F_sm)), lty=2, color="red")+
   geom_hline(aes(yintercept=min(filter(lr.f, adj.P.Val_se<.05)$F_se)), lty=2, color="red")+
   coord_cartesian(ylim=c(0,5.5), xlim=c(0,5.5))+
-  labs(title=paste0("Layer-restricted F-stat\n(rho= ", lr.f.corr, ")"), 
+  labs(title=paste0("rho= ", lr.f.corr), 
        x="PRECAST domains", y="Seurat labels")+
-  theme_bw()+theme(panel.grid.minor=element_blank(), aspect.ratio=1)
+  theme_bw()+theme(panel.grid.minor=element_blank(), aspect.ratio=1,
+	text=element_text(size=8))
 
 
 # logFC
@@ -167,22 +171,18 @@ p4 <- ggplot(df2, aes(x=PRECAST, y=clusters, fill=pearson_r))+
   scale_fill_gradientn("Pearson\nrho", 
                        colors=colorRampPalette(RColorBrewer::brewer.pal(n=7, "RdBu")[7:1])(20),
                        limits=c(0, 1))+
-  facet_wrap(vars(sex.group), ncol=3)+
+  facet_wrap(vars(sex.group), ncol=6)+
   labs(x="logFC PRECAST domains", y="logFC Seurat labels",
        title="Layer-restricted logFC correlations")+
   theme_minimal()+theme(aspect.ratio=1, panel.grid = element_blank(),
                           text=element_text(size=8), plot.title=element_text(hjust=.5),
-                          #axis.title.x=element_blank(), axis.title.y=element_blank(),
+                           #axis.title.x=element_blank(), axis.title.y=element_blank(),
                           axis.ticks = element_line(color="grey50", linewidth=.3), axis.text.y=element_text(color="black"),
                           )
 
-
-lay_mat= rbind(c(1,2,2), c(1,2,2))
-
-pdf(file="plots/publication/Figure3/seurat-label_compare-annotation_DE-results.pdf", height=4, width=6)
-grid.arrange(p1, p2, layout_matrix=lay_mat)
-grid.arrange(p3, p4+theme(legend.position="none"), layout_matrix=lay_mat)
-p4 #for legend
+pdf(file="plots/publication/supp_compare-DE/F-stat-logFC_layer-restricted_correlation.pdf", width=6.5, height=2.5)
+grid.arrange(p3, p4+theme(legend.position="none"), layout_matrix=matrix(c(1,2,2,2,2,2,2), ncol=7))
+grid.arrange(p3, p4, layout_matrix=matrix(c(1,2,2,2,2,2,2), ncol=7))
 dev.off()
 
 
