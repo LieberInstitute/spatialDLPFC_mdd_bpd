@@ -121,7 +121,7 @@ for(y in c("FOSB","JUNB","FOS","JUN")) {
 
 
 # dlPFC marker genes
-spot.genes = c("NPAS4","FOSB","JUNB","EGR4","INHBA","EGR1","DUSP1")
+spot.genes = c("NPAS4","FOSB","JUNB","EGR4","INHBA","EGR1","DUSP1","BDNF","NR4A3")
 for(i in spot.genes) {
   spe[[i]] = logcounts(spe)[rowData(spe)$gene_name==i,]
 }
