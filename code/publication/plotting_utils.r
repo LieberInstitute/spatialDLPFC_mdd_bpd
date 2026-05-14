@@ -15,7 +15,7 @@ load("processed-data/06_pseudobulk/spe_n119_pseudo-dotplot_sample-id.Rdata")
 
 # pre-reqs for mean ratio bar plot
 load("processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-dotplot_azimuth-super-broad.Rdata")
-col.pal = c("Vasc"=cpList$low.res.light[["Micro.Vasc"]],
+sn.col.pal = c("Vasc"=cpList$low.res.light[["Micro.Vasc"]],
             "Micro"=cpList$low.res.light[["L3"]],
             cpList$low.res.light[c("Astro","Oligo")],
             "InhN"=cpList$low.res.light[["Inhb"]],
@@ -54,7 +54,7 @@ getConsensus <- function(module_genes, sig.df) {
 }
 
 
-getDotplot <- function(ordered_genes, de.df) {
+getDotplot <- function(ordered_genes, de.df, color_scale_limits=c(-2.5,2.5)) {
 	dot.df = filter(de.df, gene_name %in% ordered_genes) %>% mutate(source=factor(source, levels=c("sm","se"))) 
 	dot.df$is_sig = dot.df$adj.P.Val2<.05
 	dot.df$gene_name = factor(dot.df$gene_name, levels=rev(ordered_genes))
@@ -73,7 +73,7 @@ getDotplot <- function(ordered_genes, de.df) {
 	  scale_size_identity("adj. p")+ 
 	  scale_color_manual(values=c("FALSE"="grey", "TRUE"="black"))+
 	  scale_fill_gradientn("logFC",colors=RColorBrewer::brewer.pal(n=5,"RdBu")[5:1],
-	                       limits=c(-2.5,2.5))+
+	                       limits=color_scale_limits)+
 	  facet_grid(cols=vars(sex.group), #rows=vars(gene_group), 
 	             scales="free_y", space="free_y")+
 	  guides(fill=guide_colorbar(theme=theme(legend.key.height=unit(12,"pt"), legend.key.width=unit(36,"pt"))))+
@@ -129,7 +129,7 @@ getMeanRatioBar <- function(ordered_genes, sce_summ) {
 
 	p1.2 = ggplot(bar.df, aes(y=gene_name, x=mean.expr, fill=cellType))+
 	  geom_bar(stat="identity", position="fill")+
-	  scale_fill_manual(values=col.pal)+scale_y_discrete(position="right")+
+	  scale_fill_manual(values=sn.col.pal)+scale_y_discrete(position="right")+
 	  labs(title=" ", x="mean\nexpr")+
 	  theme_minimal()+theme(axis.text.x=element_blank(), axis.text.y=element_blank(),
 	                        axis.title.y=element_blank(),
