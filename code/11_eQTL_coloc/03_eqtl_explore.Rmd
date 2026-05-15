@@ -13,6 +13,7 @@ here::i_am('.git/HEAD')
 
 repo_root <- here()
 ref_dir <- here("processed-data", "ref")
+plots_dir <- here("plots", "11_eQTL_coloc")
 WRITE_DEG_VIEW_TABLES <- FALSE
 
 source(here("code", "11_eQTL_coloc", "utils.R"), chdir = FALSE)
@@ -180,26 +181,40 @@ broad_eqtl_count_barchart <- function(mapsum, view_summary, deg_view, title, yti
   if (!is.finite(max_count) || max_count <= 0) {
     max_count <- 1
   }
-  dt[, y_count := n_eGenes + max_count * 0.025]
-  dt[, y_overlap := n_eGenes + max_count * 0.100]
+  dt[, `:=`(
+    y_deg = n_eGenes + max_count * 0.030,
+    y_count = n_eGenes + max_count * 0.065
+  )]
+  y_max <- max(dt$y_count, na.rm = TRUE) * 1.03
 
   ## keep split colors stable across Seurat and custom-cluster plots
-  split_colors <- c(all = "#4D4D4D", male = "#2B6CB0", female = "#C05621")
+  split_colors <- c(all = "#707070", male = "#2B6CB0", female = "#C05621")
   split_colors <- split_colors[intersect(names(split_colors), split_order)]
-  dodge <- position_dodge(width = 0.82)
+  dodge <- position_dodge(width = 0.78)
 
   ggplot(dt, aes(x = context, y = n_eGenes, fill = split)) +
     geom_col(position = dodge, width = 0.72, color = "grey30", linewidth = 0.2) +
     geom_text(
       aes(y = y_count, label = n_eGenes),
-      position = dodge, vjust = 0, fontface = "bold", size = 4.0
+      position = dodge,
+      hjust = 0.5,
+      vjust = 0.5,
+      fontface = "bold",
+      size = 2.7,
+      color = "black"
     ) +
     geom_text(
-      aes(y = y_overlap, label = lab_overlap),
-      position = dodge, vjust = 0, size = 3.4, color = "black"
+      aes(y = y_deg, label = lab_overlap),
+      position = dodge,
+      hjust = 0.5,
+      vjust = 0.5,
+      fontface = "bold",
+      size = 2.7,
+      color = "black"
     ) +
     scale_fill_manual(values = split_colors, drop = FALSE) +
-    scale_y_continuous(expand = expansion(mult = c(0, 0.38))) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0))) +
+    coord_cartesian(ylim = c(0, y_max), clip = "off") +
     labs(x = NULL, y = ytitle, fill = "Split", title = title) +
     theme_bw(base_size = 12) +
     theme(
@@ -209,6 +224,90 @@ broad_eqtl_count_barchart <- function(mapsum, view_summary, deg_view, title, yti
       legend.position = "top",
       strip.background = element_rect(fill = "grey95", color = "grey80")
     )
+}
+
+split_count_barchart <- function(mapsum, title, ytitle, context_order,
+                                 split_order, count_col = "n_eGenes") {
+  required_cols <- c("context", "split", "n_DEG", count_col)
+  missing_cols <- setdiff(required_cols, names(mapsum))
+  if (length(missing_cols) > 0) {
+    stop("Missing split-count plot columns: ", paste(missing_cols, collapse = ", "))
+  }
+
+  dt <- copy(mapsum)
+  dt[, count_value := get(count_col)]
+  dt[, context := factor(context, levels = context_order)]
+  dt[, split := factor(split, levels = split_order)]
+  dt <- dt[!is.na(context) & !is.na(split)]
+  max_count <- max(dt$count_value, na.rm = TRUE)
+  if (!is.finite(max_count) || max_count <= 0) {
+    max_count <- 1
+  }
+  dt[, `:=`(
+    deg_label = sprintf("DEG: %s", n_DEG),
+    y_deg = count_value + max_count * 0.030,
+    y_count = count_value + max_count * 0.065
+  )]
+  y_max <- max(dt$y_count, na.rm = TRUE) * 1.03
+
+  ## use split colors consistently across output series.
+  split_colors <- c(all = "#707070", male = "#2B6CB0", female = "#C05621")
+  split_colors <- split_colors[intersect(names(split_colors), split_order)]
+  multi_split <- length(split_order) > 1
+  dodge <- position_dodge(width = if (multi_split) 0.78 else 0.65)
+  bar_width <- if (multi_split) 0.72 else 0.58
+
+  ggplot(dt, aes(x = context, y = count_value, fill = split)) +
+    geom_col(
+      position = dodge,
+      width = bar_width,
+      color = "grey30",
+      linewidth = 0.2
+    ) +
+    geom_text(
+      aes(y = y_count, label = count_value),
+      position = dodge,
+      hjust = 0.5,
+      vjust = 0.5,
+      fontface = "bold",
+      size = 2.7
+    ) +
+    geom_text(
+      aes(y = y_deg, label = deg_label),
+      position = dodge,
+      hjust = 0.5,
+      vjust = 0.5,
+      fontface = "bold",
+      size = 2.7
+    ) +
+    scale_fill_manual(values = split_colors, drop = FALSE) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0))) +
+    coord_cartesian(ylim = c(0, y_max), clip = "off") +
+    labs(x = NULL, y = ytitle, fill = "Split", title = title) +
+    theme_bw(base_size = 15) +
+    theme(
+      panel.grid.minor = element_blank(),
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+      axis.text.y = element_text(size = 12),
+      axis.title.y = element_text(size = 14),
+      axis.ticks.x = element_blank(),
+      legend.position = "top",
+      legend.text = element_text(size = 12),
+      legend.title = element_text(size = 13),
+      plot.margin = margin(8, 16, 8, 8)
+    )
+}
+
+save_svg_plot <- function(plot, filename, width = 10, height = 6) {
+  dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
+  ggsave(
+    filename = file.path(plots_dir, filename),
+    plot = plot,
+    device = "svg",
+    width = width,
+    height = height,
+    units = "in"
+  )
 }
 
 table_path <- function(config, filename) {
@@ -259,6 +358,46 @@ lapply(analysis_results, function(x) list(
   cis_rows = nrow(x$map_cis_significant),
   independent_rows = nrow(x$map_independent_significant)
 ))
+```
+
+```{r save-plots}
+saved_plots <- unlist(lapply(names(analysis_results), function(analysis_name) {
+  result <- analysis_results[[analysis_name]]
+  config <- analysis_configs[[analysis_name]]
+  plot_prefix <- gsub("_", "-", analysis_name)
+  plot_width <- if (length(config$split_order) > 1) 15 else 10
+
+  cis_plot <- split_count_barchart(
+    result$map_cis_summary,
+    title = paste("Lead cis-eQTL eGenes:", analysis_name),
+    ytitle = "eGenes discovered (lead cis-eQTLs, q < 0.05)",
+    context_order = config$context_order,
+    split_order = config$split_order,
+    count_col = "n_eGenes"
+  )
+  cis_file <- paste0(plot_prefix, "_lead-cis-eqtl-egene-counts.svg")
+  save_svg_plot(cis_plot, cis_file, width = plot_width, height = 6.5)
+
+  independent_count_col <- if ("n_independent_signals" %in% names(result$map_independent_summary)) {
+    "n_independent_signals"
+  } else {
+    "n_eGenes"
+  }
+  independent_plot <- split_count_barchart(
+    result$map_independent_summary,
+    title = paste("Independent cis-eQTL signals:", analysis_name),
+    ytitle = "Independent cis-eQTL signals",
+    context_order = config$context_order,
+    split_order = config$split_order,
+    count_col = independent_count_col
+  )
+  independent_file <- paste0(plot_prefix, "_independent-cis-eqtl-signal-counts.svg")
+  save_svg_plot(independent_plot, independent_file, width = plot_width, height = 6.5)
+
+  file.path(plots_dir, c(cis_file, independent_file))
+}))
+
+saved_plots
 ```
 
 ```{r write-tables}
