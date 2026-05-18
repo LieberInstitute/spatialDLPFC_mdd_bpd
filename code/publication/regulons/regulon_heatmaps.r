@@ -22,6 +22,12 @@ phm1 = pheatmap(aucell_corr,
 	clustering.method="ward.D2", angle_col=90,
 	main="AUCell correlations")
 
+
+phm1.1 = pheatmap(aucell_corr[paste0(reg_subset, "(+)"),reg_subset],
+        color = colorRampPalette(col.pal)(100), breaks = seq(-1, 1, length.out=101),
+        clustering.method="ward.D2", angle_col=90,
+        main="AUCell correlations")
+
 # now actual AUCell values
 aucell = read.csv("processed-data/10_SCENIC/spe-n109_13162-no-lowUMI_regulons-top20_AUCell.csv", row.names=1)
 replace_names = 1:(grep("seurat_label", colnames(aucell))-1)
@@ -116,6 +122,7 @@ phm4 = pheatmap(t(avg.mtx2[,reg_subset]), cluster_rows=F, cluster_cols=F, border
 
 pdf(file="plots/publication/regulons/regulon_heatmaps.pdf", width=5, height=5)
 plot(phm1[[4]])
+plot(phm1.1[[4]])
 plot(phm2[[4]])
 plot(phm3[[4]])
 plot(phm4[[4]])
