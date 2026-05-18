@@ -33,7 +33,7 @@ col.pal_color = c("NTC False"="grey50", "MDD False"="grey50", "BPD False"="grey5
 
 
 # functions
-getConsensus <- function(module_genes, sig.df) {
+getConsensus <- function(module_genes, sig.df, return_DF=FALSE) {
 	con.df = filter(sig.df, gene_name %in% module_genes)
 	con.df$x_labels = factor(con.df$cluster_source, levels=all_clusters,
                          labels=c("L-A","L-A","M.V","Ast","L1",
@@ -48,9 +48,12 @@ getConsensus <- function(module_genes, sig.df) {
                                          1,
                                          2,2,2,2,2,2))))
 	consensus_genes = group_by(con.df, gene_name, sex.group, dir, x_labels, max_consensus) %>%
-	  tally(name="n_consensus") %>% filter(n_consensus==max_consensus) %>%
-	  pull(gene_name) %>% unique()
-	return(consensus_genes)
+	  tally(name="n_consensus") %>% filter(n_consensus==max_consensus) 
+	if(return_DF) {
+		return(consensus_genes)
+	} else {
+		return(unique(consensus_genes$gene_name))
+	}
 }
 
 
