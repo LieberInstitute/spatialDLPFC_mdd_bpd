@@ -55,11 +55,19 @@ if (file.exists(custom_manifest) && length(custom_outputs) > 0) {
 granges <- load_gene_ranges(repo_root = repo_root)
 g2sym <- setNames(granges$gene_name, granges$gene_id)
 sym2ensg <- setNames(granges$gene_id, granges$gene_name)
+gene_region_flags <- build_gene_region_flags(granges)
 
 degs_by_mode <- list(standard = load_DEGs(repo_root = repo_root, mode = "standard"))
 
 ## use the local cached query, but keep only standard-significant variants downstream.
-scz_gwas <- loadGWAS("SCZD", 1e-6, repo_root = repo_root)
+scz_gwas <- tryCatch(
+  loadGWAS("SCZD", 1e-6, repo_root = repo_root),
+  error = function(e) {
+    legacy_cache <- file.path(ref_dir, "SCZ_GWAS_flt_1e-6_R.8.tab.gz")
+    if (!file.exists(legacy_cache)) stop(e)
+    data.table::fread(legacy_cache)
+  }
+)
 missing_gwas_cols <- setdiff(c("variant_id", "p"), names(scz_gwas))
 if (length(missing_gwas_cols) > 0) {
   stop("Missing required SCZ GWAS columns: ", paste(missing_gwas_cols, collapse = ", "))
@@ -221,6 +229,8 @@ write_analysis_tables <- function(result, config, write_deg_view_tables = FALSE)
   fwrite(result$manifest_qc, table_path(config, "manifest_qc.csv"))
   fwrite(result$map_cis_summary, table_path(config, "map_cis_summary.csv"))
   fwrite(result$map_independent_summary, table_path(config, "map_independent_summary.csv"))
+  fwrite(result$map_cis_region_sensitivity_summary, table_path(config, "map_cis_region_sensitivity_summary.csv"))
+  fwrite(result$map_independent_region_sensitivity_summary, table_path(config, "map_independent_region_sensitivity_summary.csv"))
   fwrite(result$map_cis_significant, table_path(config, "map_cis_significant.csv.gz"))
   fwrite(result$map_independent_significant, table_path(config, "map_independent_significant.csv.gz"))
 
@@ -249,6 +259,7 @@ analysis_results <- lapply(names(analysis_configs), function(analysis_name) {
     gwas_set = gwas_set,
     repo_root = repo_root,
     include_deg_views = WRITE_DEG_VIEW_TABLES,
+    gene_region_flags = gene_region_flags,
     context_order = config$context_order,
     split_order = config$split_order
   )

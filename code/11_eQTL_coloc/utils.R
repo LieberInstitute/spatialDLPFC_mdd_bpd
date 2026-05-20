@@ -52,6 +52,10 @@ AUTHOR_UNION_REL_PATH <- file.path(
 
 GENE_RANGES_REL_PATH <- file.path("processed-data", "ref", "granges.qs2")
 
+MHC_CHR <- "chr6"
+MHC_START <- 25000000L
+MHC_END <- 35000000L
+
 GWAS_BCF_FILES <- c(
   BPD = file.path("GWAS-BPD", "bip2024_eur_no23andMe.hg38.bcf"),
   MDD = file.path("GWAS-MDD", "pgc-mdd2025_no23andMe_eur_v3-49-24-11.hg38.bcf"),
@@ -1135,14 +1139,52 @@ collapse_gene_list <- function(x) {
   if (length(x) == 0) "" else paste(x, collapse = ", ")
 }
 
+build_gene_region_flags <- function(granges,
+                                    mhc_chr = MHC_CHR,
+                                    mhc_start = MHC_START,
+                                    mhc_end = MHC_END) {
+  require_data_table()
+  gene_name <- as.character(S4Vectors::mcols(granges)$gene_name)
+  out <- data.table::data.table(
+    gene_id = names(granges),
+    is_hla_gene = grepl("^HLA-", gene_name),
+    is_mhc_gene = as.character(GenomicRanges::seqnames(granges)) == mhc_chr &
+      GenomicRanges::end(granges) >= mhc_start &
+      GenomicRanges::start(granges) <= mhc_end
+  )
+  out[is.na(is_hla_gene), is_hla_gene := FALSE]
+  out[is.na(is_mhc_gene), is_mhc_gene := FALSE]
+  out[!duplicated(gene_id)]
+}
+
+variant_in_mhc <- function(variant_id,
+                           mhc_chr = MHC_CHR,
+                           mhc_start = MHC_START,
+                           mhc_end = MHC_END) {
+  variant_chr <- sub(":.*$", "", variant_id)
+  variant_pos <- suppressWarnings(as.integer(sub("^[^:]+:([0-9]+):.*$", "\\1", variant_id)))
+  !is.na(variant_pos) & variant_chr == mhc_chr & variant_pos >= mhc_start & variant_pos <= mhc_end
+}
+
 tag_eqtl_results <- function(dt, dataset_id, context, split, deg_dt,
-                             g2sym, gwas_set) {
+                             g2sym, gwas_set, gene_region_flags = NULL) {
   require_data_table()
   out <- data.table::copy(dt)
   if ("V1" %in% names(out) && identical(out$V1, seq_len(nrow(out)) - 1L)) {
     out[, V1 := NULL]
   }
   deg_gene_ids <- unique(data.table::as.data.table(deg_dt)$gene_id)
+  if (is.null(gene_region_flags)) {
+    region_flags <- data.table::data.table(
+      gene_id = unique(out$phenotype_id),
+      is_hla_gene = FALSE,
+      is_mhc_gene = FALSE
+    )
+  } else {
+    region_flags <- data.table::as.data.table(gene_region_flags)[
+      , .(gene_id, is_hla_gene, is_mhc_gene)
+    ]
+  }
 
   ## add project annotations while preserving tensorQTL-native columns.
   out[, `:=`(
@@ -1154,14 +1196,30 @@ tag_eqtl_results <- function(dt, dataset_id, context, split, deg_dt,
     DEG = as.integer(phenotype_id %in% deg_gene_ids),
     SCZD_GWAS = as.integer(variant_id %in% gwas_set)
   )]
+  out <- merge(out, region_flags, by = "gene_id", all.x = TRUE, sort = FALSE)
+  out[is.na(is_hla_gene), is_hla_gene := FALSE]
+  out[is.na(is_mhc_gene), is_mhc_gene := FALSE]
+  out[, `:=`(
+    lead_variant_mhc = variant_in_mhc(variant_id),
+    exclude_hla = is_hla_gene,
+    exclude_mhc = is_mhc_gene | variant_in_mhc(variant_id)
+  )]
 
-  front_cols <- c("dataset_id", "context", "split", "gene_id", "gene_name", "DEG", "SCZD_GWAS")
+  front_cols <- c(
+    "dataset_id", "context", "split", "gene_id", "gene_name",
+    "DEG", "SCZD_GWAS", "is_hla_gene", "is_mhc_gene",
+    "lead_variant_mhc", "exclude_hla", "exclude_mhc"
+  )
   data.table::setcolorder(out, c(front_cols, setdiff(names(out), front_cols)))
   out[]
 }
 
 order_annotated_eqtl_cols <- function(dt) {
-  front_cols <- c("dataset_id", "context", "split", "gene_id", "gene_name", "DEG", "SCZD_GWAS")
+  front_cols <- c(
+    "dataset_id", "context", "split", "gene_id", "gene_name",
+    "DEG", "SCZD_GWAS", "is_hla_gene", "is_mhc_gene",
+    "lead_variant_mhc", "exclude_hla", "exclude_mhc"
+  )
   data.table::setcolorder(dt, c(front_cols, setdiff(names(dt), front_cols)))
   dt[]
 }
@@ -1259,6 +1317,87 @@ summarize_independent_signals <- function(dt, context_order = names(SEURAT_CONTE
     split_order = split_order,
     signal_count = TRUE
   )
+}
+
+add_region_counts <- function(summary_dt, source_dt, signal_count = FALSE) {
+  require_data_table()
+  out <- data.table::copy(summary_dt)
+  if (nrow(source_dt) == 0) {
+    out[, `:=`(
+      n_HLA_eGenes = 0L,
+      n_MHC_eGenes = 0L,
+      n_HLA_DEG = 0L,
+      n_MHC_DEG = 0L,
+      n_lead_variant_MHC = 0L,
+      HLA_genes = "",
+      HLA_DEG_genes = "",
+      MHC_genes = "",
+      MHC_DEG_genes = ""
+    )]
+    return(out[])
+  }
+
+  if (isTRUE(signal_count)) {
+    obs <- source_dt[, .(
+      n_HLA_eGenes = data.table::uniqueN(gene_id[is_hla_gene == TRUE]),
+      n_MHC_eGenes = data.table::uniqueN(gene_id[is_mhc_gene == TRUE]),
+      n_HLA_DEG = sum(is_hla_gene == TRUE & DEG == 1),
+      n_MHC_DEG = sum(is_mhc_gene == TRUE & DEG == 1),
+      n_lead_variant_MHC = sum(lead_variant_mhc == TRUE),
+      HLA_genes = collapse_gene_list(gene_name[is_hla_gene == TRUE]),
+      HLA_DEG_genes = collapse_gene_list(gene_name[is_hla_gene == TRUE & DEG == 1]),
+      MHC_genes = collapse_gene_list(gene_name[is_mhc_gene == TRUE]),
+      MHC_DEG_genes = collapse_gene_list(gene_name[is_mhc_gene == TRUE & DEG == 1])
+    ), by = .(split, context)]
+  } else {
+    obs <- source_dt[, .(
+      n_HLA_eGenes = data.table::uniqueN(gene_id[is_hla_gene == TRUE]),
+      n_MHC_eGenes = data.table::uniqueN(gene_id[is_mhc_gene == TRUE]),
+      n_HLA_DEG = data.table::uniqueN(gene_id[is_hla_gene == TRUE & DEG == 1]),
+      n_MHC_DEG = data.table::uniqueN(gene_id[is_mhc_gene == TRUE & DEG == 1]),
+      n_lead_variant_MHC = data.table::uniqueN(gene_id[lead_variant_mhc == TRUE]),
+      HLA_genes = collapse_gene_list(gene_name[is_hla_gene == TRUE]),
+      HLA_DEG_genes = collapse_gene_list(gene_name[is_hla_gene == TRUE & DEG == 1]),
+      MHC_genes = collapse_gene_list(gene_name[is_mhc_gene == TRUE]),
+      MHC_DEG_genes = collapse_gene_list(gene_name[is_mhc_gene == TRUE & DEG == 1])
+    ), by = .(split, context)]
+  }
+
+  out <- merge(out, obs, by = c("split", "context"), all.x = TRUE, sort = FALSE)
+  fill_summary_missing(
+    out,
+    count_cols = c("n_HLA_eGenes", "n_MHC_eGenes", "n_HLA_DEG", "n_MHC_DEG", "n_lead_variant_MHC"),
+    text_cols = c("HLA_genes", "HLA_DEG_genes", "MHC_genes", "MHC_DEG_genes")
+  )
+}
+
+summarize_region_sensitivity <- function(dt,
+                                         context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                                         split_order = DEG_SPLITS,
+                                         signal_count = FALSE) {
+  require_data_table()
+  filter_specs <- list(
+    all = rep(TRUE, nrow(dt)),
+    exclude_hla = !dt$exclude_hla,
+    exclude_mhc = !dt$exclude_mhc
+  )
+
+  out <- lapply(names(filter_specs), function(filter_name) {
+    filtered <- dt[filter_specs[[filter_name]]]
+    summary_dt <- summarize_tagged_eqtls(
+      filtered,
+      context_order = context_order,
+      split_order = split_order,
+      signal_count = signal_count
+    )
+    summary_dt <- add_region_counts(summary_dt, filtered, signal_count = signal_count)
+    summary_dt[, region_filter := filter_name]
+    summary_dt
+  })
+
+  result <- data.table::rbindlist(out, use.names = TRUE, fill = TRUE)
+  data.table::setcolorder(result, c("region_filter", setdiff(names(result), "region_filter")))
+  result[order(match(region_filter, names(filter_specs)), match(split, split_order), match(context, context_order))]
 }
 
 summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
@@ -1432,6 +1571,7 @@ manifest_qc_table <- function(tqtl_in_dir) {
 
 summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
                                     repo_root, include_deg_views = FALSE,
+                                    gene_region_flags = NULL,
                                     context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
                                     split_order = DEG_SPLITS) {
   require_data_table()
@@ -1454,12 +1594,18 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
 
     list(
       map_cis = if (identical(map_cis_info$status, "ok")) {
-        tag_eqtl_results(map_cis_info$dt, dataset_id, context, split, deg_global, g2sym, gwas_set)
+        tag_eqtl_results(
+          map_cis_info$dt, dataset_id, context, split, deg_global,
+          g2sym, gwas_set, gene_region_flags = gene_region_flags
+        )
       } else {
         NULL
       },
       independent = if (identical(indep_info$status, "ok")) {
-        tag_eqtl_results(indep_info$dt, dataset_id, context, split, deg_global, g2sym, gwas_set)
+        tag_eqtl_results(
+          indep_info$dt, dataset_id, context, split, deg_global,
+          g2sym, gwas_set, gene_region_flags = gene_region_flags
+        )
       } else {
         NULL
       }
@@ -1476,6 +1622,11 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
     context_order = context_order,
     split_order = split_order
   )
+  map_cis_region_sensitivity_summary <- summarize_region_sensitivity(
+    map_cis_significant,
+    context_order = context_order,
+    split_order = split_order
+  )
 
   parent_q <- map_cis_all[, .(phenotype_id, dataset_id, qval_parent = qval)]
   indep_f <- merge(indep_all, parent_q, by = c("phenotype_id", "dataset_id"), all = FALSE)
@@ -1485,6 +1636,12 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
     indep_f,
     context_order = context_order,
     split_order = split_order
+  )
+  map_independent_region_sensitivity_summary <- summarize_region_sensitivity(
+    indep_f,
+    context_order = context_order,
+    split_order = split_order,
+    signal_count = TRUE
   )
 
   deg_view_tables <- NULL
@@ -1519,6 +1676,8 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
     map_independent_significant = indep_f,
     map_cis_summary = map_cis_summary,
     map_independent_summary = map_independent_summary,
+    map_cis_region_sensitivity_summary = map_cis_region_sensitivity_summary,
+    map_independent_region_sensitivity_summary = map_independent_region_sensitivity_summary,
     deg_view_tables = deg_view_tables
   )
 }

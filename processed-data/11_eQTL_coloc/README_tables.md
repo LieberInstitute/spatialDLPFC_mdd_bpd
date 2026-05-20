@@ -64,9 +64,25 @@ The table preserves tensorQTL-native columns and adds project annotations:
 - `dataset_id`, `context`, `split`
 - `DEG`: 1 if `gene_id` is in Jacqui's PRECAST+Seurat DEG union, otherwise 0.
 - `SCZD_GWAS`: 1 if `variant_id` is SCZD GWAS-significant at the standard threshold, otherwise 0.
+- `is_hla_gene`: TRUE when `gene_name` matches `^HLA-`.
+- `is_mhc_gene`: TRUE when the gene overlaps hg38 `chr6:25000000-35000000`.
+- `lead_variant_mhc`: TRUE when the lead variant is in hg38 `chr6:25000000-35000000`.
+- `exclude_hla`: TRUE for HLA genes.
+- `exclude_mhc`: TRUE when `is_mhc_gene` or `lead_variant_mhc` is TRUE.
 
 For tensorQTL-native columns such as `num_var`, `beta_shape1`, `pval_perm`, `qval`, and `pval_nominal_threshold`, see:
 https://github.com/broadinstitute/tensorqtl/blob/master/docs/outputs.md
+
+### `map_cis_region_sensitivity_summary.csv`
+
+Context/split summary of lead cis-eQTL eGenes under HLA/MHC sensitivity filters.
+
+Columns:
+
+- `region_filter`: `all`, `exclude_hla`, or `exclude_mhc`.
+- Existing summary columns from `map_cis_summary.csv`.
+- `n_HLA_eGenes`, `n_MHC_eGenes`, `n_HLA_DEG`, `n_MHC_DEG`, `n_lead_variant_MHC`.
+- `HLA_genes`, `HLA_DEG_genes`, `MHC_genes`, `MHC_DEG_genes`.
 
 ### `map_independent_significant.csv.gz`
 
@@ -78,11 +94,29 @@ The table preserves tensorQTL-native columns and adds project annotations:
 - `qval_parent`: parent `map_cis` q-value for the eGene.
 - `DEG`: 1 if `gene_id` is in Jacqui's PRECAST+Seurat DEG union, otherwise 0.
 - `SCZD_GWAS`: 1 if `variant_id` is SCZD GWAS-significant at the standard threshold, otherwise 0.
+- `is_hla_gene`: TRUE when `gene_name` matches `^HLA-`.
+- `is_mhc_gene`: TRUE when the gene overlaps hg38 `chr6:25000000-35000000`.
+- `lead_variant_mhc`: TRUE when the independent-signal variant is in hg38 `chr6:25000000-35000000`.
+- `exclude_hla`: TRUE for HLA genes.
+- `exclude_mhc`: TRUE when `is_mhc_gene` or `lead_variant_mhc` is TRUE.
 
 Rows are retained when `qval_parent < 0.05` and `pval_perm < 0.05`.
 
 For tensorQTL-native columns such as `num_var`, `beta_shape1`, `pval_perm`, and `rank`, see:
 https://github.com/broadinstitute/tensorqtl/blob/master/docs/outputs.md
+
+### `map_independent_region_sensitivity_summary.csv`
+
+Context/split summary of independent cis-eQTL signals under HLA/MHC sensitivity filters.
+
+Columns:
+
+- `region_filter`: `all`, `exclude_hla`, or `exclude_mhc`.
+- Existing summary columns from `map_independent_summary.csv`.
+- `n_HLA_eGenes`, `n_MHC_eGenes`, `n_HLA_DEG`, `n_MHC_DEG`, `n_lead_variant_MHC`.
+- `HLA_genes`, `HLA_DEG_genes`, `MHC_genes`, `MHC_DEG_genes`.
+
+HLA/MHC sensitivity summaries are intended for interpretation and reporting. HLA/MHC colocalization results should be treated as exploratory unless a dedicated HLA-aware analysis is performed, because this region has unusual polymorphism, gene density, and linkage disequilibrium.
 
 ## Optional DEG-View Tables
 
