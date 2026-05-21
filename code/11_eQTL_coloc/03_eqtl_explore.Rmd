@@ -59,14 +59,21 @@ sym2ensg <- setNames(granges$gene_id, granges$gene_name)
 
 degs_by_mode <- list(standard = load_DEGs(repo_root = repo_root, mode = "standard"))
 
-## use the local cached query, but keep only standard-significant variants downstream.
-scz_gwas <- loadGWAS("SCZD", 1e-6, repo_root = repo_root)
-missing_gwas_cols <- setdiff(c("variant_id", "p"), names(scz_gwas))
-if (length(missing_gwas_cols) > 0) {
-  stop("Missing required SCZ GWAS columns: ", paste(missing_gwas_cols, collapse = ", "))
-}
+plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05")
+gwas_matched <- lapply(DEFAULT_GWAS_OVERLAP_DISORDERS, function(dis) {
+  ## query broadly, then keep genome-wide significant genotype-matched variants.
+  gwas <- loadGWAS(dis, 1e-6, repo_root = repo_root, si_min = 0.8)
+  matched <- matchGwasGeno(gwas, plink2_prefix = plink2_prefix)
+  missing_gwas_cols <- setdiff(c("variant_id", "p"), names(matched))
+  if (length(missing_gwas_cols) > 0) {
+    stop("Missing required ", dis, " GWAS columns: ", paste(missing_gwas_cols, collapse = ", "))
+  }
+  matched
+})
+names(gwas_matched) <- DEFAULT_GWAS_OVERLAP_DISORDERS
 
-gwas_set <- unique(scz_gwas[p < 5e-8 & !is.na(variant_id), variant_id])
+gwas_sets <- lapply(gwas_matched, function(dt) unique(dt[p < 5e-8 & !is.na(variant_id), variant_id]))
+vapply(gwas_sets, length, integer(1))
 
 analysis_manifests <- lapply(
   analysis_configs,
@@ -87,7 +94,14 @@ eqtl_barchart <- function(mapsum, indep = FALSE, analysis_label = NULL,
   dt <- copy(mapsum)
   dt[, context := factor(context, levels = context_order)]
   dt[, split := factor(split, levels = split_order)]
-  dt[, lab_above := sprintf("SCZD GWAS: %d\nDEG: %d\nDEG+SCZD: %d", n_SCZD_GWAS, n_DEG, n_DEG_SCZD_GWAS)]
+  if (all(gwas_count_cols(DEFAULT_GWAS_OVERLAP_DISORDERS) %in% names(dt))) {
+    dt[, lab_above := sprintf(
+      "SCZD: %d\nMDD: %d\nBPD: %d\nDEG: %d",
+      n_SCZD_GWAS, n_MDD_GWAS, n_BPD_GWAS, n_DEG
+    )]
+  } else {
+    dt[, lab_above := sprintf("SCZD GWAS: %d\nDEG: %d\nDEG+SCZD: %d", n_SCZD_GWAS, n_DEG, n_DEG_SCZD_GWAS)]
+  }
   dt[, y_top := fifelse(n_eGenes > 0, n_eGenes, 0)]
 
   ytitle <- if (indep) {
@@ -320,8 +334,11 @@ write_analysis_tables <- function(result, config, write_deg_view_tables = FALSE)
   fwrite(result$manifest_qc, table_path(config, "manifest_qc.csv"))
   fwrite(result$map_cis_summary, table_path(config, "map_cis_summary.csv"))
   fwrite(result$map_independent_summary, table_path(config, "map_independent_summary.csv"))
+  fwrite(result$map_significant_summary, table_path(config, "map_significant_summary.csv"))
   fwrite(result$map_cis_significant, table_path(config, "map_cis_significant.csv.gz"))
   fwrite(result$map_independent_significant, table_path(config, "map_independent_significant.csv.gz"))
+  fwrite(result$map_significant_unified, table_path(config, "map_significant_unified.csv.gz"))
+  fwrite(result$map_significant_pairs, table_path(config, "map_significant_pairs.csv.gz"))
 
   if (isTRUE(write_deg_view_tables) && !is.null(result$deg_view_tables)) {
     fwrite(
@@ -345,7 +362,7 @@ analysis_results <- lapply(names(analysis_configs), function(analysis_name) {
     config = config,
     degs = degs_by_mode[[config$deg_mode]],
     g2sym = g2sym,
-    gwas_set = gwas_set,
+    gwas_sets = gwas_sets,
     repo_root = repo_root,
     include_deg_views = WRITE_DEG_VIEW_TABLES,
     context_order = config$context_order,

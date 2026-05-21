@@ -12,7 +12,7 @@ Base project path on JHPCE (use ssh `jh` to reach the host with this path)
 
 `/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/`
 
-The team decided to pivot the downstream analyses—including the eQTL and Gene Regulatory Network (GRN) models—to use the Seurat label transfer annotations rather than the original spatial domains.
+The team decided to pivot the downstream analyses, including the eQTL and Gene Regulatory Network (GRN) models, to use the Seurat label transfer annotations rather than the original spatial domains.
 Here is the current summary of the exact data locations and variables required for Geo's tensorQTL and colocalization runs:
 
 1. Revised Pseudobulk Expression Object (primary input expression data):
@@ -51,6 +51,6 @@ This keeps PRECAST/domain DEG support global, while localization to current eQTL
 Use `gene_id` as the primary overlap key against tensorQTL phenotype IDs, with `gene_name` retained for reporting and validation.
 
 4. GWAS Summary Statistics (for Colocalization)
-Not yet stored/linked in the project directory; check with Shizhong for the proper GWAS data to use.
-Details: The team has confirmed they will use European-ancestry-only summary statistics for MDD and Bipolar disorder for the colocalization steps
- They will also evaluate a newer multivariate/cross-disorder psychiatric GWAS from the Psychiatric Genomics Consortium (PGC)
+GWAS reference files are staged under `processed-data/ref/GWAS`.
+Details: the current eQTL/GWAS overlap and planned colocalization steps use European-ancestry BPD, MDD, and SCZD `.hg38.bcf` files with matching `.bcf.csi` indexes and paper-derived GWAS gene-list TSVs.
+Future analyses may also evaluate a newer multivariate/cross-disorder psychiatric GWAS from the Psychiatric Genomics Consortium (PGC).

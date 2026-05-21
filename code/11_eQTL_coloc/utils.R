@@ -53,9 +53,41 @@ AUTHOR_UNION_REL_PATH <- file.path(
 GENE_RANGES_REL_PATH <- file.path("processed-data", "ref", "granges.qs2")
 
 GWAS_BCF_FILES <- c(
-  BPD = file.path("GWAS-BPD", "bip2024_eur_no23andMe.hg38.bcf"),
-  MDD = file.path("GWAS-MDD", "pgc-mdd2025_no23andMe_eur_v3-49-24-11.hg38.bcf"),
-  SCZD = file.path("GWAS-SCZD", "PGC3_SCZ_wave3.european.autosome.public.v3.hg38.bcf")
+  BPD = file.path("BPD", "bip2024_eur_no23andMe.hg38.bcf"),
+  MDD = file.path("MDD", "pgc-mdd2025_no23andMe_eur_v3-49-24-11.hg38.bcf"),
+  SCZD = file.path("SCZD", "PGC3_SCZ_wave3.european.autosome.public.v3.hg38.bcf")
+)
+
+DEFAULT_GWAS_OVERLAP_DISORDERS <- c("SCZD", "MDD", "BPD")
+
+GWAS_GENE_LIST_FILES <- list(
+  BPD = list(
+    broad = file.path("BPD", "bpd2024_gene_lists.tsv"),
+    prio = file.path("BPD", "bpd2024_prioritized_credible_genes.tsv")
+  ),
+  MDD = list(
+    broad = file.path("MDD", "mdd2025_gene_lists.tsv"),
+    prio = file.path("MDD", "mdd2025_drugtargetor_magma_qBH_le_0_05_genes.tsv")
+  ),
+  SCZD = list(
+    broad = file.path("SCZD", "sczd2022_gene_lists.tsv"),
+    prio = file.path("SCZD", "sczd2022_prioritized_genes.tsv")
+  )
+)
+
+GWAS_STANDARD_GENE_LIST_FILES <- list(
+  BPD = list(
+    broad = file.path("BPD", "GWAS_BPD_gene_list.tsv"),
+    prio = file.path("BPD", "GWAS_BPD_prio_gene_list.tsv")
+  ),
+  MDD = list(
+    broad = file.path("MDD", "GWAS_MDD_gene_list.tsv"),
+    prio = file.path("MDD", "GWAS_MDD_prio_gene_list.tsv")
+  ),
+  SCZD = list(
+    broad = file.path("SCZD", "GWAS_SCZD_gene_list.tsv"),
+    prio = file.path("SCZD", "GWAS_SCZD_prio_gene_list.tsv")
+  )
 )
 
 DEFAULT_GENE_RANGES_SOURCE_RELS <- c(
@@ -148,7 +180,7 @@ gwas_si_tag <- function(si_min) {
 
 gwas_genotype_dir <- function(repo_root = NULL, genotype_dir = NULL) {
   if (!is.null(genotype_dir)) return(normalizePath(genotype_dir, mustWork = TRUE))
-  file.path(resolve_repo_root(repo_root), "processed-data", "00_genotypes")
+  file.path(resolve_repo_root(repo_root), "processed-data", "ref", "GWAS")
 }
 
 gwas_bcf_path <- function(dis, repo_root = NULL, genotype_dir = NULL) {
@@ -164,6 +196,112 @@ gwas_cache_file <- function(dis, pval, repo_root = NULL, genotype_dir = NULL, si
     gwas_genotype_dir(repo_root, genotype_dir),
     sprintf("GWAS-%s_flt_p%s_SI%s.hg38.tab.gz", dis, gwas_pval_tag(pval), gwas_si_tag(si_min))
   )
+}
+
+gwas_gene_list_role <- function(use_prio = FALSE) {
+  if (isTRUE(use_prio)) "prio" else "broad"
+}
+
+gwas_gene_list_rel <- function(dis, use_prio = FALSE, standardized = TRUE) {
+  dis <- gwas_check_disorder(dis)
+  role <- gwas_gene_list_role(use_prio)
+  rels <- if (isTRUE(standardized)) GWAS_STANDARD_GENE_LIST_FILES else GWAS_GENE_LIST_FILES
+  rel <- rels[[dis]][[role]]
+  if (is.null(rel) || !nzchar(rel)) stop("Missing GWAS gene-list path for ", dis, " role ", role)
+  rel
+}
+
+gwas_gene_list_path <- function(dis, use_prio = FALSE, repo_root = NULL,
+                                genotype_dir = NULL, standardized = TRUE) {
+  file.path(
+    gwas_genotype_dir(repo_root = repo_root, genotype_dir = genotype_dir),
+    gwas_gene_list_rel(dis, use_prio = use_prio, standardized = standardized)
+  )
+}
+
+gwas_collapse_values <- function(x) {
+  x <- sort(unique(as.character(x[!is.na(x) & nzchar(as.character(x))])))
+  if (length(x) == 0) "" else paste(x, collapse = ";")
+}
+
+standardize_gwas_gene_list <- function(dt, dis, use_prio = FALSE) {
+  dis <- gwas_check_disorder(dis)
+  if (!"gene_symbol" %in% names(dt)) stop("Missing gene_symbol column for ", dis, " GWAS gene list")
+  dt <- data.table::as.data.table(dt)
+  dt <- dt[!is.na(gene_symbol) & nzchar(gene_symbol)]
+  if (nrow(dt) == 0) {
+    return(data.table::data.table(
+      disorder = character(),
+      gene_symbol = character(),
+      list_role = character(),
+      source_list_names = character(),
+      primary_list = character(),
+      evidence_types = character(),
+      source_files = character(),
+      n_source_rows = integer()
+    ))
+  }
+
+  role <- if (isTRUE(use_prio)) "prio" else "broad"
+  out <- dt[, .(
+    disorder = dis,
+    list_role = role,
+    source_list_names = if ("list_name" %in% names(.SD)) gwas_collapse_values(list_name) else "",
+    primary_list = if ("primary_list" %in% names(.SD) && any(primary_list == "yes", na.rm = TRUE)) "yes" else "no",
+    evidence_types = if ("evidence_type" %in% names(.SD)) gwas_collapse_values(evidence_type) else "",
+    source_files = if ("source_file" %in% names(.SD)) gwas_collapse_values(source_file) else "",
+    n_source_rows = .N
+  ), by = .(gene_symbol)]
+  data.table::setcolorder(
+    out,
+    c("disorder", "gene_symbol", "list_role", "source_list_names", "primary_list",
+      "evidence_types", "source_files", "n_source_rows")
+  )
+  out[order(gene_symbol)]
+}
+
+write_standard_gwas_gene_lists <- function(repo_root = NULL, genotype_dir = NULL,
+                                           disorders = DEFAULT_GWAS_OVERLAP_DISORDERS) {
+  out <- list()
+  for (dis in disorders) {
+    dis <- gwas_check_disorder(dis)
+    for (use_prio in c(FALSE, TRUE)) {
+      src <- gwas_gene_list_path(dis, use_prio = use_prio, repo_root = repo_root,
+                                 genotype_dir = genotype_dir, standardized = FALSE)
+      dest <- gwas_gene_list_path(dis, use_prio = use_prio, repo_root = repo_root,
+                                  genotype_dir = genotype_dir, standardized = TRUE)
+      if (!file.exists(src)) stop("Missing source GWAS gene list: ", src)
+      dt <- data.table::fread(src)
+      std <- standardize_gwas_gene_list(dt, dis = dis, use_prio = use_prio)
+      dir.create(dirname(dest), recursive = TRUE, showWarnings = FALSE)
+      data.table::fwrite(std, dest, sep = "\t", quote = FALSE)
+      out[[paste(dis, gwas_gene_list_role(use_prio), sep = "_")]] <- dest
+    }
+  }
+  unlist(out, use.names = TRUE)
+}
+
+loadGWASGeneList <- function(dis, use_prio = FALSE, repo_root = NULL,
+                             genotype_dir = NULL, prefer_standard = TRUE) {
+  dis <- gwas_check_disorder(dis)
+  std_path <- gwas_gene_list_path(dis, use_prio = use_prio, repo_root = repo_root,
+                                  genotype_dir = genotype_dir, standardized = TRUE)
+  if (isTRUE(prefer_standard) && file.exists(std_path)) {
+    dt <- data.table::fread(std_path)
+  } else {
+    src_path <- gwas_gene_list_path(dis, use_prio = use_prio, repo_root = repo_root,
+                                    genotype_dir = genotype_dir, standardized = FALSE)
+    if (!file.exists(src_path)) stop("Missing source GWAS gene list: ", src_path)
+    dt <- standardize_gwas_gene_list(data.table::fread(src_path), dis = dis, use_prio = use_prio)
+  }
+
+  req <- c("disorder", "gene_symbol", "list_role", "source_list_names", "primary_list",
+           "evidence_types", "source_files", "n_source_rows")
+  missing_cols <- setdiff(req, names(dt))
+  if (length(missing_cols) > 0) {
+    stop("Missing standardized GWAS gene-list columns: ", paste(missing_cols, collapse = ", "))
+  }
+  dt[!is.na(gene_symbol) & nzchar(gene_symbol)]
 }
 
 normalize_gwas_query_table <- function(dt, dis, pval, cache_file = NULL, si_min = 0.8) {
@@ -1135,9 +1273,118 @@ collapse_gene_list <- function(x) {
   if (length(x) == 0) "" else paste(x, collapse = ", ")
 }
 
-tag_eqtl_results <- function(dt, dataset_id, context, split, deg_dt,
-                             g2sym, gwas_set) {
+normalize_gwas_sets <- function(gwas_sets) {
+  if (is.null(gwas_sets)) stop("gwas_sets is required")
+  if (!is.list(gwas_sets)) gwas_sets <- list(SCZD = gwas_sets)
+  if (is.null(names(gwas_sets)) || any(!nzchar(names(gwas_sets)))) {
+    stop("gwas_sets must be named by disorder")
+  }
+
+  disorders <- vapply(names(gwas_sets), gwas_check_disorder, character(1))
+  names(gwas_sets) <- disorders
+  lapply(gwas_sets, function(x) unique(as.character(x[!is.na(x) & nzchar(x)])))
+}
+
+getGWASovl <- function(x, dis, gene_col = "gene_name", variant_col = "variant_id",
+                       allow_gene_match = TRUE, use_prio = FALSE,
+                       gwas_sets = NULL, repo_root = NULL) {
+  ## mixed GWASg overlap: variant match OR exact GWAS gene-list match.
+  ## variant match means variant_id is in the harmonized significant GWAS set.
+  ## gene match means gene_name is in the selected broad GWAS gene list.
+  ## set allow_gene_match = FALSE for variant-only GWAS compatibility.
   require_data_table()
+  dis <- gwas_check_disorder(dis)
+
+  if (is.data.frame(x)) {
+    if (!gene_col %in% names(x)) stop("Missing gene column: ", gene_col)
+    gene_name <- as.character(x[[gene_col]])
+    variant_id <- if (variant_col %in% names(x)) as.character(x[[variant_col]]) else rep(NA_character_, length(gene_name))
+  } else if (is.atomic(x)) {
+    gene_name <- as.character(x)
+    variant_id <- rep(NA_character_, length(gene_name))
+  } else {
+    stop("x must be a data.frame or an atomic vector of gene names")
+  }
+
+  dt <- data.table::data.table(gene_name = gene_name, variant_id = variant_id)
+  gene_list <- loadGWASGeneList(dis, use_prio = use_prio, repo_root = repo_root)
+  gene_set <- unique(gene_list$gene_symbol)
+  dt[, gene_match := isTRUE(allow_gene_match) & !is.na(gene_name) & nzchar(gene_name) & gene_name %in% gene_set]
+
+  variant_set <- character()
+  if (!is.null(gwas_sets)) {
+    if (is.list(gwas_sets)) {
+      gwas_sets <- normalize_gwas_sets(gwas_sets)
+      variant_set <- gwas_sets[[dis]]
+    } else {
+      variant_set <- unique(as.character(gwas_sets[!is.na(gwas_sets) & nzchar(gwas_sets)]))
+    }
+  }
+  dt[, variant_match := !is.na(variant_id) & nzchar(variant_id) & variant_id %in% variant_set]
+  dt[, match_type := data.table::fifelse(
+    gene_match & variant_match,
+    "gene_and_variant",
+    data.table::fifelse(gene_match, "gene", "variant")
+  )]
+  dt[variant_match == FALSE | is.na(variant_match), variant_id := NA_character_]
+
+  out <- dt[gene_match | variant_match]
+  data.table::setcolorder(out, c("gene_name", "variant_id", "gene_match", "variant_match", "match_type"))
+  out[]
+}
+
+gwas_flag_cols <- function(disorders) paste0(disorders, "_GWAS")
+gwasg_flag_cols <- function(disorders) paste0(disorders, "_GWASg")
+gwasg_variant_flag_cols <- function(disorders) paste0(gwasg_flag_cols(disorders), "_variant")
+gwasg_gene_match_cols <- function(disorders) paste0(gwasg_flag_cols(disorders), "_gene")
+gwas_count_cols <- function(disorders) paste0("n_", gwas_flag_cols(disorders))
+gwasg_count_cols <- function(disorders) paste0("n_", gwasg_flag_cols(disorders))
+deg_gwas_count_cols <- function(disorders) paste0("n_DEG_", gwas_flag_cols(disorders))
+deg_gwasg_count_cols <- function(disorders) paste0("n_DEG_", gwasg_flag_cols(disorders))
+gwas_gene_cols <- function(disorders) paste0(gwas_flag_cols(disorders), "_genes")
+gwasg_gene_cols <- function(disorders) paste0(gwasg_flag_cols(disorders), "_genes")
+deg_gwas_gene_cols <- function(disorders) paste0("DEG_", gwas_flag_cols(disorders), "_genes")
+deg_gwasg_gene_cols <- function(disorders) paste0("DEG_", gwasg_flag_cols(disorders), "_genes")
+
+order_summary_cols <- function(dt, gwas_disorders, include_signal_count = FALSE) {
+  front_cols <- c(
+    "split", "context",
+    if (include_signal_count) "n_independent_signals",
+    "n_eGenes",
+    gwas_count_cols(gwas_disorders), gwasg_count_cols(gwas_disorders),
+    "n_DEG",
+    deg_gwas_count_cols(gwas_disorders), deg_gwasg_count_cols(gwas_disorders),
+    gwas_gene_cols(gwas_disorders), gwasg_gene_cols(gwas_disorders),
+    "DEG_genes",
+    deg_gwas_gene_cols(gwas_disorders), deg_gwasg_gene_cols(gwas_disorders)
+  )
+  data.table::setcolorder(dt, c(intersect(front_cols, names(dt)), setdiff(names(dt), front_cols)))
+  dt[]
+}
+
+order_deg_view_summary_cols <- function(dt, gwas_disorders) {
+  front_cols <- c(
+    "dataset_id", "context", "split", "deg_view", "deg_sex",
+    "n_DEG_reference", "n_eQTL_records", "n_eGenes",
+    gwas_count_cols(gwas_disorders), gwasg_count_cols(gwas_disorders),
+    "n_eGene_DEG_overlap",
+    deg_gwas_count_cols(gwas_disorders), deg_gwasg_count_cols(gwas_disorders),
+    "eGene_DEG_overlap_gene_ids", "eGene_DEG_overlap_gene_names",
+    deg_gwas_gene_cols(gwas_disorders), deg_gwasg_gene_cols(gwas_disorders)
+  )
+  data.table::setcolorder(dt, c(intersect(front_cols, names(dt)), setdiff(names(dt), front_cols)))
+  dt[]
+}
+
+gwas_disorders_from_eqtl <- function(dt) {
+  disorders <- sub("_GWAS$", "", grep("^[A-Z0-9]+_GWAS$", names(dt), value = TRUE))
+  disorders[disorders %in% names(GWAS_BCF_FILES)]
+}
+
+tag_eqtl_results <- function(dt, dataset_id, context, split, deg_dt,
+                             g2sym, gwas_sets, repo_root = NULL) {
+  require_data_table()
+  gwas_sets <- normalize_gwas_sets(gwas_sets)
   out <- data.table::copy(dt)
   if ("V1" %in% names(out) && identical(out$V1, seq_len(nrow(out)) - 1L)) {
     out[, V1 := NULL]
@@ -1151,19 +1398,121 @@ tag_eqtl_results <- function(dt, dataset_id, context, split, deg_dt,
     split = split,
     gene_id = phenotype_id,
     gene_name = g2sym[phenotype_id],
-    DEG = as.integer(phenotype_id %in% deg_gene_ids),
-    SCZD_GWAS = as.integer(variant_id %in% gwas_set)
+    DEG = as.integer(phenotype_id %in% deg_gene_ids)
   )]
+  for (dis in names(gwas_sets)) {
+    flag_col <- paste0(dis, "_GWAS")
+    gwasg_col <- paste0(dis, "_GWASg")
+    gwasg_variant_col <- paste0(gwasg_col, "_variant")
+    gwasg_gene_col <- paste0(gwasg_col, "_gene")
 
-  front_cols <- c("dataset_id", "context", "split", "gene_id", "gene_name", "DEG", "SCZD_GWAS")
+    out[, (flag_col) := as.integer(variant_id %in% gwas_sets[[dis]])]
+    ovl <- getGWASovl(
+      out[, .(gene_name, variant_id)],
+      dis = dis,
+      gwas_sets = gwas_sets,
+      repo_root = repo_root
+    )
+    out[, (gwasg_variant_col) := get(flag_col)]
+    out[, (gwasg_gene_col) := as.integer(!is.na(gene_name) & gene_name %in% ovl[gene_match == TRUE, unique(gene_name)])]
+    out[, (gwasg_col) := as.integer(get(gwasg_variant_col) == 1 | get(gwasg_gene_col) == 1)]
+  }
+
+  front_cols <- c(
+    "dataset_id", "context", "split", "gene_id", "gene_name", "DEG",
+    gwas_flag_cols(names(gwas_sets)),
+    gwasg_flag_cols(names(gwas_sets)),
+    gwasg_variant_flag_cols(names(gwas_sets)),
+    gwasg_gene_match_cols(names(gwas_sets))
+  )
   data.table::setcolorder(out, c(front_cols, setdiff(names(out), front_cols)))
   out[]
 }
 
 order_annotated_eqtl_cols <- function(dt) {
-  front_cols <- c("dataset_id", "context", "split", "gene_id", "gene_name", "DEG", "SCZD_GWAS")
+  gwas_disorders <- gwas_disorders_from_eqtl(dt)
+  front_cols <- c(
+    "dataset_id", "context", "split", "gene_id", "gene_name", "DEG",
+    gwas_flag_cols(gwas_disorders),
+    gwasg_flag_cols(gwas_disorders),
+    gwasg_variant_flag_cols(gwas_disorders),
+    gwasg_gene_match_cols(gwas_disorders)
+  )
   data.table::setcolorder(dt, c(front_cols, setdiff(names(dt), front_cols)))
   dt[]
+}
+
+unify_significant_eqtls <- function(map_cis_significant, map_independent_significant) {
+  require_data_table()
+  pair_key <- c("dataset_id", "context", "split", "gene_id", "gene_name", "variant_id")
+  cis <- data.table::copy(data.table::as.data.table(map_cis_significant))
+  independent <- data.table::copy(data.table::as.data.table(map_independent_significant))
+
+  missing_cis <- setdiff(pair_key, names(cis))
+  if (length(missing_cis) > 0) {
+    stop("Missing cis key columns: ", paste(missing_cis, collapse = ", "))
+  }
+  missing_independent <- setdiff(pair_key, names(independent))
+  if (length(missing_independent) > 0) {
+    stop("Missing independent key columns: ", paste(missing_independent, collapse = ", "))
+  }
+
+  ## keep source rows separate because shared pairs can have different statistics.
+  cis[, result_source := "cis"]
+  independent[, result_source := "independent"]
+  out <- data.table::rbindlist(list(cis, independent), use.names = TRUE, fill = TRUE)
+  if (nrow(out) == 0) {
+    out[, pair_provenance := character()]
+    return(out[])
+  }
+
+  pair_sources <- out[, .(
+    has_cis = any(result_source == "cis"),
+    has_independent = any(result_source == "independent")
+  ), by = pair_key]
+  pair_sources[, pair_provenance := data.table::fcase(
+    has_cis & has_independent, "cis_and_independent",
+    has_cis, "cis_only",
+    has_independent, "independent_only"
+  )]
+
+  out[pair_sources[, c(pair_key, "pair_provenance"), with = FALSE],
+      pair_provenance := i.pair_provenance,
+      on = pair_key]
+  front_cols <- c("result_source", "pair_provenance", pair_key)
+  data.table::setcolorder(out, c(front_cols, setdiff(names(out), front_cols)))
+  out[]
+}
+
+collapse_significant_eqtl_pairs <- function(map_significant_unified) {
+  require_data_table()
+  pair_key <- c("dataset_id", "context", "split", "gene_id", "gene_name", "variant_id")
+  dt <- data.table::copy(data.table::as.data.table(map_significant_unified))
+
+  missing_cols <- setdiff(c("result_source", pair_key), names(dt))
+  if (length(missing_cols) > 0) {
+    stop("Missing unified eQTL columns: ", paste(missing_cols, collapse = ", "))
+  }
+  bad_sources <- setdiff(unique(dt$result_source), c("cis", "independent"))
+  if (length(bad_sources) > 0) {
+    stop("Unexpected result_source values: ", paste(bad_sources, collapse = ", "))
+  }
+  source_key <- c("result_source", pair_key)
+  if (anyDuplicated(dt[, source_key, with = FALSE]) > 0) {
+    stop("Duplicate source-specific eQTL pair rows found")
+  }
+
+  ## keep independent rows for shared pairs; keep cis rows only for cis-only pairs.
+  dt[, source_priority := data.table::fifelse(result_source == "independent", 1L, 2L)]
+  data.table::setorderv(dt, c(pair_key, "source_priority"))
+  out <- dt[, .SD[1], by = pair_key]
+  out[, source := data.table::fifelse(result_source == "independent", "indep", "cis")]
+  drop_cols <- intersect(c("result_source", "pair_provenance", "source_priority"), names(out))
+  out[, (drop_cols) := NULL]
+
+  front_cols <- c("source", pair_key)
+  data.table::setcolorder(out, c(front_cols, setdiff(names(out), front_cols)))
+  out[]
 }
 
 complete_summary_grid <- function(context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
@@ -1180,32 +1529,42 @@ fill_summary_missing <- function(out, count_cols, text_cols) {
 
 summary_template <- function(context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
                              split_order = DEG_SPLITS,
-                             include_signal_count = FALSE) {
+                             include_signal_count = FALSE,
+                             gwas_disorders = "SCZD") {
   require_data_table()
   out <- complete_summary_grid(context_order = context_order, split_order = split_order)
   if (isTRUE(include_signal_count)) out[, n_independent_signals := 0L]
-  out[, `:=`(
-    n_eGenes = 0L,
-    n_SCZD_GWAS = 0L,
-    n_DEG = 0L,
-    n_DEG_SCZD_GWAS = 0L,
-    SCZD_GWAS_genes = "",
-    DEG_genes = "",
-    DEG_SCZD_GWAS_genes = ""
-  )]
+  out[, n_eGenes := 0L]
+  for (col in c(
+    gwas_count_cols(gwas_disorders), gwasg_count_cols(gwas_disorders),
+    deg_gwas_count_cols(gwas_disorders), deg_gwasg_count_cols(gwas_disorders)
+  )) {
+    out[, (col) := 0L]
+  }
+  out[, n_DEG := 0L]
+  for (col in c(
+    gwas_gene_cols(gwas_disorders), gwasg_gene_cols(gwas_disorders),
+    deg_gwas_gene_cols(gwas_disorders), deg_gwasg_gene_cols(gwas_disorders)
+  )) {
+    out[, (col) := ""]
+  }
+  out[, DEG_genes := ""]
   out[]
 }
 
 summarize_tagged_eqtls <- function(dt, context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
                                    split_order = DEG_SPLITS,
-                                   signal_count = FALSE) {
+                                   signal_count = FALSE,
+                                   gwas_disorders = gwas_disorders_from_eqtl(dt)) {
   require_data_table()
   include_signal_count <- isTRUE(signal_count)
+  if (length(gwas_disorders) == 0) gwas_disorders <- "SCZD"
   if (nrow(dt) == 0) {
     return(summary_template(
       context_order = context_order,
       split_order = split_order,
-      include_signal_count = include_signal_count
+      include_signal_count = include_signal_count,
+      gwas_disorders = gwas_disorders
     ))
   }
 
@@ -1213,59 +1572,146 @@ summarize_tagged_eqtls <- function(dt, context_order = names(SEURAT_CONTEXT_TO_D
     obs <- dt[, .(
       n_independent_signals = .N,
       n_eGenes = data.table::uniqueN(gene_id),
-      n_SCZD_GWAS = sum(SCZD_GWAS == 1),
       n_DEG = data.table::uniqueN(gene_id[DEG == 1]),
-      n_DEG_SCZD_GWAS = sum(DEG == 1 & SCZD_GWAS == 1),
-      SCZD_GWAS_genes = collapse_gene_list(gene_name[SCZD_GWAS == 1]),
-      DEG_genes = collapse_gene_list(gene_name[DEG == 1]),
-      DEG_SCZD_GWAS_genes = collapse_gene_list(gene_name[DEG == 1 & SCZD_GWAS == 1])
+      DEG_genes = collapse_gene_list(gene_name[DEG == 1])
     ), by = .(split, context)]
+    for (dis in gwas_disorders) {
+      flag_col <- paste0(dis, "_GWAS")
+      gwasg_col <- paste0(dis, "_GWASg")
+      obs[, paste0("n_", flag_col) := dt[obs, data.table::uniqueN(gene_id[get(flag_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0("n_", gwasg_col) := dt[obs, data.table::uniqueN(gene_id[get(gwasg_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0("n_DEG_", flag_col) := dt[obs, data.table::uniqueN(gene_id[DEG == 1 & get(flag_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0("n_DEG_", gwasg_col) := dt[obs, data.table::uniqueN(gene_id[DEG == 1 & get(gwasg_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0(flag_col, "_genes") := dt[obs, collapse_gene_list(gene_name[get(flag_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0(gwasg_col, "_genes") := dt[obs, collapse_gene_list(gene_name[get(gwasg_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0("DEG_", flag_col, "_genes") := dt[obs, collapse_gene_list(gene_name[DEG == 1 & get(flag_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0("DEG_", gwasg_col, "_genes") := dt[obs, collapse_gene_list(gene_name[DEG == 1 & get(gwasg_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+    }
   } else {
     obs <- dt[, .(
       n_eGenes = data.table::uniqueN(gene_id),
-      n_SCZD_GWAS = data.table::uniqueN(gene_id[SCZD_GWAS == 1]),
       n_DEG = data.table::uniqueN(gene_id[DEG == 1]),
-      n_DEG_SCZD_GWAS = data.table::uniqueN(gene_id[DEG == 1 & SCZD_GWAS == 1]),
-      SCZD_GWAS_genes = collapse_gene_list(gene_name[SCZD_GWAS == 1]),
-      DEG_genes = collapse_gene_list(gene_name[DEG == 1]),
-      DEG_SCZD_GWAS_genes = collapse_gene_list(gene_name[DEG == 1 & SCZD_GWAS == 1])
+      DEG_genes = collapse_gene_list(gene_name[DEG == 1])
     ), by = .(split, context)]
+    for (dis in gwas_disorders) {
+      flag_col <- paste0(dis, "_GWAS")
+      gwasg_col <- paste0(dis, "_GWASg")
+      obs[, paste0("n_", flag_col) := dt[obs, data.table::uniqueN(gene_id[get(flag_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0("n_", gwasg_col) := dt[obs, data.table::uniqueN(gene_id[get(gwasg_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0("n_DEG_", flag_col) := dt[obs, data.table::uniqueN(gene_id[DEG == 1 & get(flag_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0("n_DEG_", gwasg_col) := dt[obs, data.table::uniqueN(gene_id[DEG == 1 & get(gwasg_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0(flag_col, "_genes") := dt[obs, collapse_gene_list(gene_name[get(flag_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0(gwasg_col, "_genes") := dt[obs, collapse_gene_list(gene_name[get(gwasg_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0("DEG_", flag_col, "_genes") := dt[obs, collapse_gene_list(gene_name[DEG == 1 & get(flag_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+      obs[, paste0("DEG_", gwasg_col, "_genes") := dt[obs, collapse_gene_list(gene_name[DEG == 1 & get(gwasg_col) == 1]),
+        by = .EACHI, on = .(split, context)]$V1]
+    }
   }
 
   out <- merge(
     summary_template(
       context_order = context_order,
       split_order = split_order,
-      include_signal_count = include_signal_count
+      include_signal_count = include_signal_count,
+      gwas_disorders = gwas_disorders
     )[, .(split, context)],
     obs,
     by = c("split", "context"),
     all.x = TRUE
   )
-  count_cols <- c("n_eGenes", "n_SCZD_GWAS", "n_DEG", "n_DEG_SCZD_GWAS")
+  count_cols <- c(
+    "n_eGenes", gwas_count_cols(gwas_disorders), gwasg_count_cols(gwas_disorders),
+    "n_DEG", deg_gwas_count_cols(gwas_disorders), deg_gwasg_count_cols(gwas_disorders)
+  )
   if (include_signal_count) count_cols <- c("n_independent_signals", count_cols)
   fill_summary_missing(
     out,
     count_cols = count_cols,
-    text_cols = c("SCZD_GWAS_genes", "DEG_genes", "DEG_SCZD_GWAS_genes")
-  )[order(match(split, split_order), match(context, context_order))]
+    text_cols = c(
+      gwas_gene_cols(gwas_disorders), gwasg_gene_cols(gwas_disorders),
+      "DEG_genes", deg_gwas_gene_cols(gwas_disorders), deg_gwasg_gene_cols(gwas_disorders)
+    )
+  )
+  out <- order_summary_cols(
+    out[order(match(split, split_order), match(context, context_order))],
+    gwas_disorders = gwas_disorders,
+    include_signal_count = include_signal_count
+  )
+  out
 }
 
 summarize_independent_signals <- function(dt, context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
-                                          split_order = DEG_SPLITS) {
+                                          split_order = DEG_SPLITS,
+                                          gwas_disorders = gwas_disorders_from_eqtl(dt)) {
   summarize_tagged_eqtls(
     dt,
     context_order = context_order,
     split_order = split_order,
-    signal_count = TRUE
+    signal_count = TRUE,
+    gwas_disorders = gwas_disorders
   )
+}
+
+summarize_significant_pairs <- function(dt, context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                                        split_order = DEG_SPLITS,
+                                        gwas_disorders = gwas_disorders_from_eqtl(dt)) {
+  require_data_table()
+  if (!"source" %in% names(dt)) stop("Missing source column in significant pair table")
+  if (length(gwas_disorders) == 0) gwas_disorders <- "SCZD"
+
+  out <- summarize_tagged_eqtls(
+    dt,
+    context_order = context_order,
+    split_order = split_order,
+    signal_count = FALSE,
+    gwas_disorders = gwas_disorders
+  )
+  if (nrow(dt) > 0) {
+    pair_counts <- dt[, .(
+      n_significant_pairs = .N,
+      n_cis_pairs = sum(source == "cis"),
+      n_indep_pairs = sum(source == "indep")
+    ), by = .(split, context)]
+  } else {
+    pair_counts <- data.table::data.table(
+      split = character(),
+      context = character(),
+      n_significant_pairs = integer(),
+      n_cis_pairs = integer(),
+      n_indep_pairs = integer()
+    )
+  }
+  out <- merge(out, pair_counts, by = c("split", "context"), all.x = TRUE)
+  for (col in c("n_significant_pairs", "n_cis_pairs", "n_indep_pairs")) {
+    data.table::set(out, which(is.na(out[[col]])), col, 0L)
+  }
+  front_cols <- c("split", "context", "n_significant_pairs", "n_cis_pairs", "n_indep_pairs")
+  data.table::setcolorder(out, c(front_cols, setdiff(names(out), front_cols)))
+  out[order(match(split, split_order), match(context, context_order))]
 }
 
 summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
                                      context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
                                      split_order = DEG_SPLITS,
-                                     signal_count = FALSE) {
+                                     signal_count = FALSE,
+                                     gwas_disorders = gwas_disorders_from_eqtl(eqtl_dt)) {
   require_data_table()
+  if (length(gwas_disorders) == 0) gwas_disorders <- "SCZD"
   view_dt <- data.table::as.data.table(degs$views$long)
   view_dt <- view_dt[, .(
     deg_view, context, split, deg_sex, gene_id,
@@ -1287,9 +1733,18 @@ summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
 
   totals <- eqtl_dt[, .(
     n_eQTL_records = .N,
-    n_eGenes = if (signal_count) .N else data.table::uniqueN(phenotype_id),
-    n_SCZD_GWAS = if (signal_count) sum(SCZD_GWAS == 1) else data.table::uniqueN(phenotype_id[SCZD_GWAS == 1])
+    n_eGenes = data.table::uniqueN(phenotype_id)
   ), by = .(dataset_id, context, split)]
+  for (dis in gwas_disorders) {
+    flag_col <- paste0(dis, "_GWAS")
+    gwasg_col <- paste0(dis, "_GWASg")
+    out_col <- paste0("n_", flag_col)
+    gwasg_out_col <- paste0("n_", gwasg_col)
+    totals[, (out_col) := eqtl_dt[totals, data.table::uniqueN(phenotype_id[get(flag_col) == 1]),
+      by = .EACHI, on = .(dataset_id, context, split)]$V1]
+    totals[, (gwasg_out_col) := eqtl_dt[totals, data.table::uniqueN(phenotype_id[get(gwasg_col) == 1]),
+      by = .EACHI, on = .(dataset_id, context, split)]$V1]
+  }
 
   overlap_dt <- merge(
     eqtl_dt,
@@ -1301,11 +1756,25 @@ summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
 
   overlaps <- overlap_dt[, .(
     n_eGene_DEG_overlap = data.table::uniqueN(gene_id),
-    n_DEG_SCZD_GWAS = if (signal_count) sum(SCZD_GWAS == 1) else data.table::uniqueN(gene_id[SCZD_GWAS == 1]),
     eGene_DEG_overlap_gene_ids = collapse_gene_list(gene_id),
-    eGene_DEG_overlap_gene_names = collapse_gene_list(deg_gene_name),
-    DEG_SCZD_GWAS_genes = collapse_gene_list(deg_gene_name[SCZD_GWAS == 1])
+    eGene_DEG_overlap_gene_names = collapse_gene_list(deg_gene_name)
   ), by = .(dataset_id, context, split, deg_view, deg_sex)]
+  for (dis in gwas_disorders) {
+    flag_col <- paste0(dis, "_GWAS")
+    gwasg_col <- paste0(dis, "_GWASg")
+    count_col <- paste0("n_DEG_", flag_col)
+    gwasg_count_col <- paste0("n_DEG_", gwasg_col)
+    genes_col <- paste0("DEG_", flag_col, "_genes")
+    gwasg_genes_col <- paste0("DEG_", gwasg_col, "_genes")
+    overlaps[, (count_col) := overlap_dt[overlaps, data.table::uniqueN(gene_id[get(flag_col) == 1]),
+      by = .EACHI, on = .(dataset_id, context, split, deg_view, deg_sex)]$V1]
+    overlaps[, (gwasg_count_col) := overlap_dt[overlaps, data.table::uniqueN(gene_id[get(gwasg_col) == 1]),
+      by = .EACHI, on = .(dataset_id, context, split, deg_view, deg_sex)]$V1]
+    overlaps[, (genes_col) := overlap_dt[overlaps, collapse_gene_list(deg_gene_name[get(flag_col) == 1]),
+      by = .EACHI, on = .(dataset_id, context, split, deg_view, deg_sex)]$V1]
+    overlaps[, (gwasg_genes_col) := overlap_dt[overlaps, collapse_gene_list(deg_gene_name[get(gwasg_col) == 1]),
+      by = .EACHI, on = .(dataset_id, context, split, deg_view, deg_sex)]$V1]
+  }
 
   out <- merge(template, totals, by = c("dataset_id", "context", "split"), all.x = TRUE)
   out <- merge(
@@ -1318,10 +1787,15 @@ summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
   fill_summary_missing(
     out,
     count_cols = c(
-      "n_eQTL_records", "n_eGenes", "n_SCZD_GWAS",
-      "n_eGene_DEG_overlap", "n_DEG_SCZD_GWAS"
+      "n_eQTL_records", "n_eGenes",
+      gwas_count_cols(gwas_disorders), gwasg_count_cols(gwas_disorders),
+      "n_eGene_DEG_overlap",
+      deg_gwas_count_cols(gwas_disorders), deg_gwasg_count_cols(gwas_disorders)
     ),
-    text_cols = c("eGene_DEG_overlap_gene_ids", "eGene_DEG_overlap_gene_names", "DEG_SCZD_GWAS_genes")
+    text_cols = c(
+      "eGene_DEG_overlap_gene_ids", "eGene_DEG_overlap_gene_names",
+      deg_gwas_gene_cols(gwas_disorders), deg_gwasg_gene_cols(gwas_disorders)
+    )
   )
 
   view_order <- c(
@@ -1331,12 +1805,13 @@ summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
     "sex_specific",
     "context_and_sex_specific"
   )
-  out[order(
+  out <- out[order(
     match(split, split_order),
     match(context, context_order),
     match(deg_view, view_order),
     deg_sex
   )]
+  order_deg_view_summary_cols(out, gwas_disorders = gwas_disorders)
 }
 
 summarize_dataset_counts <- function(dataset_id, context, split, file_info) {
@@ -1430,11 +1905,13 @@ manifest_qc_table <- function(tqtl_in_dir) {
   manifest[, keep_cols, with = FALSE]
 }
 
-summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
+summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_sets,
                                     repo_root, include_deg_views = FALSE,
                                     context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
                                     split_order = DEG_SPLITS) {
   require_data_table()
+  gwas_sets <- normalize_gwas_sets(gwas_sets)
+  gwas_disorders <- names(gwas_sets)
   manifest_qc <- manifest_qc_table(config$tqtl_in_dir)
   manifest <- load_eqtl_manifest(
     tqtl_in_dir = config$tqtl_in_dir,
@@ -1454,12 +1931,12 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
 
     list(
       map_cis = if (identical(map_cis_info$status, "ok")) {
-        tag_eqtl_results(map_cis_info$dt, dataset_id, context, split, deg_global, g2sym, gwas_set)
+        tag_eqtl_results(map_cis_info$dt, dataset_id, context, split, deg_global, g2sym, gwas_sets, repo_root = repo_root)
       } else {
         NULL
       },
       independent = if (identical(indep_info$status, "ok")) {
-        tag_eqtl_results(indep_info$dt, dataset_id, context, split, deg_global, g2sym, gwas_set)
+        tag_eqtl_results(indep_info$dt, dataset_id, context, split, deg_global, g2sym, gwas_sets, repo_root = repo_root)
       } else {
         NULL
       }
@@ -1474,7 +1951,8 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
   map_cis_summary <- summarize_tagged_eqtls(
     map_cis_significant,
     context_order = context_order,
-    split_order = split_order
+    split_order = split_order,
+    gwas_disorders = gwas_disorders
   )
 
   parent_q <- map_cis_all[, .(phenotype_id, dataset_id, qval_parent = qval)]
@@ -1484,7 +1962,16 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
   map_independent_summary <- summarize_independent_signals(
     indep_f,
     context_order = context_order,
-    split_order = split_order
+    split_order = split_order,
+    gwas_disorders = gwas_disorders
+  )
+  map_significant_unified <- unify_significant_eqtls(map_cis_significant, indep_f)
+  map_significant_pairs <- collapse_significant_eqtl_pairs(map_significant_unified)
+  map_significant_summary <- summarize_significant_pairs(
+    map_significant_pairs,
+    context_order = context_order,
+    split_order = split_order,
+    gwas_disorders = gwas_disorders
   )
 
   deg_view_tables <- NULL
@@ -1495,7 +1982,8 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
         manifest = manifest,
         degs = degs,
         context_order = context_order,
-        split_order = split_order
+        split_order = split_order,
+        gwas_disorders = gwas_disorders
       ),
       map_independent_deg_view_summary = summarize_eqtl_deg_views(
         indep_f,
@@ -1503,7 +1991,8 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
         degs = degs,
         context_order = context_order,
         split_order = split_order,
-        signal_count = TRUE
+        signal_count = TRUE,
+        gwas_disorders = gwas_disorders
       )
     )
   }
@@ -1517,8 +2006,11 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_set,
     indep_f = indep_f,
     map_cis_significant = map_cis_significant,
     map_independent_significant = indep_f,
+    map_significant_unified = map_significant_unified,
+    map_significant_pairs = map_significant_pairs,
     map_cis_summary = map_cis_summary,
     map_independent_summary = map_independent_summary,
+    map_significant_summary = map_significant_summary,
     deg_view_tables = deg_view_tables
   )
 }

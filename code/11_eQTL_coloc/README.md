@@ -55,6 +55,7 @@ Canonical local input/output locations for this folder:
 * `processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata`
 * `processed-data/00_genotypes/plink2/merged_maf05.{pgen,psam,pvar}`
 * `processed-data/00_genotypes/plink2/merged_maf05_pca.eigenvec` (generated locally)
+* `processed-data/ref/GWAS/{BPD,MDD,SCZD}` for GWAS BCFs, indexes, and gene-list references
 * `processed-data/11_eQTL_coloc/seurat/tqtl_in` (Seurat tensorQTL inputs)
 * `processed-data/11_eQTL_coloc/seurat/tqtl_out` (Seurat tensorQTL outputs)
 * `processed-data/11_eQTL_coloc/custom_cluster/tqtl_in` (custom-cluster tensorQTL inputs)
