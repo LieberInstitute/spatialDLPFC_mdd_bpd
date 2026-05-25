@@ -91,7 +91,7 @@ getDotplot <- function(ordered_genes, de.df, color_scale_limits=c(-2.5,2.5)) {
 getDetectedBoxplot <- function(ordered_genes, spe_summ) {
 	gids = rownames(spe_summ)[rowData(spe_summ)$gene_name %in% ordered_genes]
 	names(gids) = rowData(spe_summ)[gids,"gene_name"]
-	stopifnot(length(plot.genes)==length(gids))
+	stopifnot(length(ordered_genes)==length(gids))
 
 	df1 = as.data.frame(assay(spe_summ, "logcounts.prop.detected")[gids,])
 	df2 = tidyr::pivot_longer(tibble::rownames_to_column(df1, var="gene_id"), all_of(colnames(df1)), names_to="sample", values_to="prop.spots.detected") %>%
