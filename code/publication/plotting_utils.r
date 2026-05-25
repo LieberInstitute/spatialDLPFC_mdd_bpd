@@ -118,8 +118,7 @@ getMeanRatioBar <- function(ordered_genes, sce_summ) {
 
 	bar.df = tidyr::pivot_longer(df2, all_of(levels(colData(sce_summ)$azimuth_super.broad)), 
                              names_to="cellType", values_to="mean.expr") %>%
-	  left_join(as.data.frame(rowData(sce_summ)[gids,c("gene_id","gene_name")])) %>%
-	  mutate(cellType=factor(cellType, levels=c("Vasc","Astro","Oligo","Micro","InhN","ExcN")))
+	  left_join(as.data.frame(rowData(sce_summ)[gids,c("gene_id","gene_name")]))
 
 	if(length(ordered_genes)!=length(gids)) {
 		add.genes = setdiff(ordered_genes, names(gids))
@@ -128,6 +127,7 @@ getMeanRatioBar <- function(ordered_genes, sce_summ) {
 		}
 	}
 
+	bar.df$cellType = factor(bar.df$cellType, levels=c("Vasc","Astro","Oligo","Micro","InhN","ExcN"))
 	bar.df$gene_name = factor(bar.df$gene_name, levels=rev(ordered_genes))
 
 	p1.2 = ggplot(bar.df, aes(y=gene_name, x=mean.expr, fill=cellType))+
