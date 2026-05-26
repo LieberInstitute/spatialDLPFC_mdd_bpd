@@ -40,14 +40,15 @@ spe = spe[,spe$smoothed_domain!="low.UMI"]
 dim(spe) #28965 513200
 
 #extract coldata for GEO
-metadata = distinct(as.data.frame(colData(spe))[,c("sample_id","MBv_sample","condition","sex")])
+metadata = distinct(as.data.frame(colData(spe))[,c("sample_id","MBv_sample","brnum","condition","sex")])
 rownames(metadata) <- NULL
-metadata$title = paste(metadata$MBv_sample, gsub("BPD","BD", metadata$condition), metadata$sex, sep="_")
+metadata$title = paste(metadata$MBv_sample, gsub("BPD","BD", metadata$condition), metadata$sex, metadata$brnum, sep="_")
 metadata$condition <- NULL
 metadata$sex <- NULL
 
 write.csv(metadata, "processed-data/publication/GEO_samples_title.csv")
 
+stop("Early stopping to update csv file only")
 #subset to example samples
 example.samples = c("342-A1", "332-A1", "279-A1", "327-C1", #NTC F
                     "382-D1", "023-D1", "334-A1", "309-C1", #MDD F
