@@ -1,0 +1,270 @@
+---
+title: "Seurat nominal eQTL gathering"
+## output: html_notebook
+---
+
+```{r setup}
+suppressPackageStartupMessages({
+  library(data.table)
+  library(here)
+})
+here::i_am(".git/HEAD")
+
+repo_root <- here()
+code_dir <- here("code", "11_eQTL_coloc")
+source(file.path(code_dir, "utils.R"), chdir = FALSE)
+
+tqtl_in_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_in")
+tqtl_out_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_out")
+tables_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tables")
+plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05")
+
+context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
+split_order <- "all"
+gwas_disorders <- DEFAULT_GWAS_OVERLAP_DISORDERS
+nominal_fdr_threshold <- 0.05
+
+dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
+```
+
+```{r helpers}
+assert_packages <- function(pkgs) {
+  missing_pkgs <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
+  if (length(missing_pkgs) > 0) {
+    stop("Missing required R package(s): ", paste(missing_pkgs, collapse = ", "))
+  }
+}
+
+nominal_parquet_files <- function(dataset_id, tqtl_out_dir) {
+  pattern <- paste0("^", gsub("\\.", "\\\\.", dataset_id), "\\.gene\\.cis_qtl_pairs\\.chr.*\\.parquet$")
+  list.files(tqtl_out_dir, pattern = pattern, full.names = TRUE)
+}
+
+p001_nominal_file <- function(dataset_id, tqtl_out_dir) {
+  file.path(tqtl_out_dir, paste0(dataset_id, ".gene.eqtl-nominal_p001.tab.gz"))
+}
+
+read_nominal_dataset <- function(manifest_row, tqtl_out_dir, fdr_threshold = 0.05) {
+  dataset_id <- manifest_row$dataset_id[[1]]
+  context <- manifest_row$context[[1]]
+  split <- manifest_row$split[[1]]
+  files <- nominal_parquet_files(dataset_id, tqtl_out_dir)
+  if (length(files) == 0) {
+    stop("No nominal parquet files found for dataset_id: ", dataset_id)
+  }
+
+  ## compute BH FDR across all nominal rows for this dataset.
+  dt <- rbindlist(
+    lapply(files, function(path) as.data.table(arrow::read_parquet(path))),
+    use.names = TRUE,
+    fill = TRUE
+  )
+  req <- c(
+    "phenotype_id", "variant_id", "start_distance", "af", "ma_samples",
+    "ma_count", "pval_nominal", "slope", "slope_se"
+  )
+  missing_cols <- setdiff(req, names(dt))
+  if (length(missing_cols) > 0) {
+    stop("Missing nominal columns for ", dataset_id, ": ", paste(missing_cols, collapse = ", "))
+  }
+
+  dt[, `:=`(
+    phenotype_id = as.character(phenotype_id),
+    variant_id = as.character(variant_id),
+    fdr = p.adjust(pval_nominal, method = "fdr")
+  )]
+  p001 <- dt[pval_nominal <= 0.001]
+  fwrite(p001, p001_nominal_file(dataset_id, tqtl_out_dir), sep = "\t", quote = FALSE)
+  sig <- dt[fdr < fdr_threshold]
+
+  qc <- data.table(
+    dataset_id = dataset_id,
+    context = context,
+    split = split,
+    status = "ok",
+    n_parquet_files = length(files),
+    n_nominal_rows_tested = nrow(dt),
+    n_p001_rows = nrow(p001),
+    n_BH05_rows = nrow(sig),
+    n_BH05_genes = uniqueN(sig$phenotype_id)
+  )
+
+  list(sig = sig, qc = qc)
+}
+
+add_nominal_pair_counts <- function(summary_dt, nominal_dt) {
+  pair_counts <- nominal_dt[, .(
+    n_nominal_pairs = uniqueN(paste(gene_id, variant_id, sep = "\r"))
+  ), by = .(split, context)]
+  out <- merge(summary_dt, pair_counts, by = c("split", "context"), all.x = TRUE)
+  out[is.na(n_nominal_pairs), n_nominal_pairs := 0L]
+  front_cols <- c("split", "context", "n_nominal_pairs")
+  setcolorder(out, c(front_cols, setdiff(names(out), front_cols)))
+  out[order(match(split, split_order), match(context, context_order))]
+}
+
+write_nominal_xlsx <- function(nominal_dt, summary_dt, qc_dt, out_file) {
+  excel_max_rows <- 1048576L
+  data_max_rows <- excel_max_rows - 1L
+
+  wb <- openxlsx::createWorkbook()
+  openxlsx::addWorksheet(wb, "nominal_BH05")
+  openxlsx::addWorksheet(wb, "summary")
+  openxlsx::addWorksheet(wb, "qc")
+
+  ## Excel cannot store more than 1,048,576 rows including the header.
+  if (nrow(nominal_dt) > data_max_rows) {
+    nominal_sheet <- head(nominal_dt, data_max_rows)
+    qc_dt <- copy(qc_dt)
+    qc_dt[, xlsx_nominal_BH05_note := paste0(
+      "nominal_BH05 sheet truncated to ", data_max_rows,
+      " rows; complete table is nominal_BH05.csv.gz"
+    )]
+  } else {
+    nominal_sheet <- nominal_dt
+  }
+
+  openxlsx::writeDataTable(wb, "nominal_BH05", nominal_sheet)
+  openxlsx::writeDataTable(wb, "summary", summary_dt)
+  openxlsx::writeDataTable(wb, "qc", qc_dt)
+  openxlsx::freezePane(wb, "nominal_BH05", firstRow = TRUE)
+  openxlsx::freezePane(wb, "summary", firstRow = TRUE)
+  openxlsx::freezePane(wb, "qc", firstRow = TRUE)
+  openxlsx::saveWorkbook(wb, out_file, overwrite = TRUE)
+}
+
+validate_nominal_outputs <- function(nominal_dt, summary_dt, qc_dt, manifest) {
+  expected_dataset_ids <- manifest$dataset_id
+  missing_dataset_ids <- setdiff(expected_dataset_ids, unique(qc_dt$dataset_id))
+  if (length(missing_dataset_ids) > 0) {
+    stop("Missing nominal QC rows for dataset_id: ", paste(missing_dataset_ids, collapse = ", "))
+  }
+  unexpected_dataset_ids <- grep("_[fm]$", unique(nominal_dt$dataset_id), value = TRUE)
+  if (length(unexpected_dataset_ids) > 0) {
+    stop("Unexpected sex-split dataset_id in nominal output: ", paste(unexpected_dataset_ids, collapse = ", "))
+  }
+  if (nrow(nominal_dt) > 0 && any(nominal_dt$fdr >= nominal_fdr_threshold | is.na(nominal_dt$fdr))) {
+    stop("Nominal output contains rows with missing or non-significant fdr.")
+  }
+
+  expected_gwas_cols <- c(
+    gwas_flag_cols(gwas_disorders),
+    gwasg_flag_cols(gwas_disorders),
+    gwasg_variant_flag_cols(gwas_disorders),
+    gwasg_gene_match_cols(gwas_disorders)
+  )
+  missing_gwas_cols <- setdiff(expected_gwas_cols, names(nominal_dt))
+  if (length(missing_gwas_cols) > 0) {
+    stop("Missing nominal GWAS columns: ", paste(missing_gwas_cols, collapse = ", "))
+  }
+
+  observed_counts <- nominal_dt[, .(n_eGenes_check = uniqueN(gene_id)), by = .(split, context)]
+  check_dt <- merge(summary_dt, observed_counts, by = c("split", "context"), all.x = TRUE)
+  check_dt[is.na(n_eGenes_check), n_eGenes_check := 0L]
+  if (check_dt[n_eGenes != n_eGenes_check, .N] > 0) {
+    stop("Summary n_eGenes does not match nominal_BH05 unique gene counts.")
+  }
+
+  invisible(TRUE)
+}
+```
+
+```{r load-shared-inputs}
+assert_packages(c("arrow", "openxlsx"))
+
+granges <- load_gene_ranges(repo_root = repo_root)
+g2sym <- setNames(granges$gene_name, granges$gene_id)
+
+degs <- load_DEGs(repo_root = repo_root, mode = "standard")
+deg_global <- as.data.table(degs$global)
+
+manifest <- load_eqtl_manifest(
+  tqtl_in_dir = tqtl_in_dir,
+  context_order = context_order,
+  split_order = split_order
+)
+
+gwas_matched <- lapply(gwas_disorders, function(dis) {
+  gwas <- loadGWAS(dis, 1e-6, repo_root = repo_root, si_min = 0.8)
+  matched <- matchGwasGeno(gwas, plink2_prefix = plink2_prefix)
+  missing_cols <- setdiff(c("variant_id", "p"), names(matched))
+  if (length(missing_cols) > 0) {
+    stop("Missing required ", dis, " GWAS columns: ", paste(missing_cols, collapse = ", "))
+  }
+  matched
+})
+names(gwas_matched) <- gwas_disorders
+gwas_sets <- lapply(gwas_matched, function(dt) unique(dt[p < 5e-8 & !is.na(variant_id), variant_id]))
+```
+
+```{r gather-nominal}
+nominal_parts <- lapply(seq_len(nrow(manifest)), function(i) {
+  row <- manifest[i]
+  message(Sys.time(), " | reading nominal parquet for ", row$dataset_id)
+  res <- read_nominal_dataset(
+    manifest_row = row,
+    tqtl_out_dir = tqtl_out_dir,
+    fdr_threshold = nominal_fdr_threshold
+  )
+
+  annotated <- tag_eqtl_results(
+    res$sig,
+    dataset_id = row$dataset_id[[1]],
+    context = row$context[[1]],
+    split = row$split[[1]],
+    deg_dt = deg_global,
+    g2sym = g2sym,
+    gwas_sets = gwas_sets,
+    repo_root = repo_root
+  )
+  list(nominal = annotated, qc = res$qc)
+})
+
+nominal_BH05 <- rbindlist(lapply(nominal_parts, `[[`, "nominal"), use.names = TRUE, fill = TRUE)
+nominal_qc <- rbindlist(lapply(nominal_parts, `[[`, "qc"), use.names = TRUE, fill = TRUE)
+
+front_cols <- c(
+  "dataset_id", "context", "split", "gene_id", "gene_name", "DEG",
+  gwas_flag_cols(gwas_disorders),
+  gwasg_flag_cols(gwas_disorders),
+  gwasg_variant_flag_cols(gwas_disorders),
+  gwasg_gene_match_cols(gwas_disorders),
+  "phenotype_id", "variant_id", "start_distance", "af", "ma_samples",
+  "ma_count", "pval_nominal", "fdr", "slope", "slope_se"
+)
+setcolorder(nominal_BH05, c(intersect(front_cols, names(nominal_BH05)), setdiff(names(nominal_BH05), front_cols)))
+nominal_BH05[, context_order_rank := match(context, context_order)]
+setorder(nominal_BH05, context_order_rank, gene_id, fdr, pval_nominal)
+nominal_BH05[, context_order_rank := NULL]
+
+nominal_summary <- summarize_tagged_eqtls(
+  nominal_BH05,
+  context_order = context_order,
+  split_order = split_order,
+  gwas_disorders = gwas_disorders
+)
+nominal_summary <- add_nominal_pair_counts(nominal_summary, nominal_BH05)
+
+validate_nominal_outputs(nominal_BH05, nominal_summary, nominal_qc, manifest)
+```
+
+```{r write-outputs}
+out_nominal <- file.path(tables_dir, "nominal_BH05.csv.gz")
+out_summary <- file.path(tables_dir, "nominal_BH05_summary.csv")
+out_qc <- file.path(tables_dir, "nominal_BH05_qc.csv")
+out_xlsx <- file.path(tables_dir, "nominal_BH05.xlsx")
+
+fwrite(nominal_BH05, out_nominal)
+fwrite(nominal_summary, out_summary)
+fwrite(nominal_qc, out_qc)
+write_nominal_xlsx(nominal_BH05, nominal_summary, nominal_qc, out_xlsx)
+
+list(
+  nominal = out_nominal,
+  summary = out_summary,
+  qc = out_qc,
+  xlsx = out_xlsx,
+  nominal_rows = nrow(nominal_BH05),
+  nominal_genes = uniqueN(nominal_BH05$gene_id)
+)
+```
