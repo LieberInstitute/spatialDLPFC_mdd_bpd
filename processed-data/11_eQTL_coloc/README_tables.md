@@ -70,8 +70,11 @@ Context/split summary of `map_significant_pairs.csv.gz`, the simplified one-row-
 Columns:
 
 - `n_significant_pairs`: number of retained unique gene-variant pairs.
-- `n_cis_pairs`: number of retained pairs whose statistics come only from `map_cis`.
-- `n_indep_pairs`: number of retained pairs whose statistics come from `map_independent`.
+- `n_cis_supported_pairs`: number of retained pairs present in `map_cis_significant.csv.gz`.
+- `n_indep_supported_pairs`: number of retained pairs present in `map_independent_significant.csv.gz`.
+- `n_shared_pairs`: number of retained pairs present in both source tables.
+- `n_cis_only_pairs`: number of retained pairs present only in `map_cis_significant.csv.gz`.
+- `n_indep_only_pairs`: number of retained pairs present only in `map_independent_significant.csv.gz`.
 - `n_eGenes`: number of eGenes represented by retained pairs.
 - DEG, GWAS, and GWASg count/gene-list columns use the same unique-eGene definitions as the cis and independent summaries.
 
@@ -131,8 +134,14 @@ Simplified one-row-per-pair table derived from `map_significant_unified.csv.gz`.
 
 Rows are unique by `dataset_id`, `context`, `split`, `gene_id`, `gene_name`, and `variant_id`. The `source` column identifies which source row supplied the retained tensorQTL statistics:
 
-- `indep`: the pair was present in `map_independent_significant.csv.gz`; this is also used for shared cis+independent pairs.
-- `cis`: the pair was present only in `map_cis_significant.csv.gz`.
+- `cis`: the pair was present in `map_cis_significant.csv.gz`; this is also used for shared cis+independent pairs.
+- `indep`: the pair was present only in `map_independent_significant.csv.gz`.
+
+Support/provenance columns:
+
+- `pair_provenance`: `cis_only`, `independent_only`, or `cis_and_independent`.
+- `cis_supported`: `TRUE` if the pair was present in `map_cis_significant.csv.gz`.
+- `indep_supported`: `TRUE` if the pair was present in `map_independent_significant.csv.gz`.
 
 The table keeps the selected source row's tensorQTL statistic column names unchanged. It intentionally does not preserve duplicate source-specific statistics for shared pairs; use `map_significant_unified.csv.gz` for that audit trail.
 

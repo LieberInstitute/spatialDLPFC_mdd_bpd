@@ -14,15 +14,20 @@ here::i_am('.git/HEAD')
 repo_root <- here()
 ref_dir <- here("processed-data", "ref")
 plots_dir <- here("plots", "11_eQTL_coloc")
+
+RUN_SEURAT <- TRUE
+RUN_CUSTOM_CLUSTER <- FALSE
+INCLUDE_SEX_SPLITS <- FALSE
 WRITE_DEG_VIEW_TABLES <- FALSE
 
 source(here("code", "11_eQTL_coloc", "utils.R"), chdir = FALSE)
 
 context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
-split_order <- c("all", "male", "female")
+split_order <- if (isTRUE(INCLUDE_SEX_SPLITS)) c("all", "male", "female") else c("all")
 
-analysis_configs <- list(
-  seurat = list(
+analysis_configs <- list()
+if (isTRUE(RUN_SEURAT)) {
+  analysis_configs$seurat <- list(
     analysis = "seurat",
     tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_in"),
     tqtl_out_dir = here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_out"),
@@ -31,24 +36,29 @@ analysis_configs <- list(
     context_order = context_order,
     split_order = split_order
   )
-)
-custom_config <- list(
-  analysis = "custom_cluster",
-  tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster", "tqtl_in"),
-  tqtl_out_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster", "tqtl_out"),
-  tables_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster", "tables"),
-  deg_mode = "standard",
-  context_order = names(CUSTOM_CONTEXT_TO_DATASET_ID),
-  split_order = "all"
-)
-custom_manifest <- file.path(custom_config$tqtl_in_dir, "prep_manifest.csv")
-custom_outputs <- list.files(
-  custom_config$tqtl_out_dir,
-  pattern = "\\.gene\\.map_cis\\.tab\\.gz$",
-  full.names = TRUE
-)
-if (file.exists(custom_manifest) && length(custom_outputs) > 0) {
-  analysis_configs$custom_cluster <- custom_config
+}
+if (isTRUE(RUN_CUSTOM_CLUSTER)) {
+  custom_config <- list(
+    analysis = "custom_cluster",
+    tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster", "tqtl_in"),
+    tqtl_out_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster", "tqtl_out"),
+    tables_dir = here("processed-data", "11_eQTL_coloc", "custom_cluster", "tables"),
+    deg_mode = "standard",
+    context_order = names(CUSTOM_CONTEXT_TO_DATASET_ID),
+    split_order = c("all")
+  )
+  custom_manifest <- file.path(custom_config$tqtl_in_dir, "prep_manifest.csv")
+  custom_outputs <- list.files(
+    custom_config$tqtl_out_dir,
+    pattern = "\\.gene\\.map_cis\\.tab\\.gz$",
+    full.names = TRUE
+  )
+  if (file.exists(custom_manifest) && length(custom_outputs) > 0) {
+    analysis_configs$custom_cluster <- custom_config
+  }
+}
+if (length(analysis_configs) == 0) {
+  stop("No eQTL analyses selected or available.")
 }
 ```
 

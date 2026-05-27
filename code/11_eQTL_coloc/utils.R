@@ -1202,16 +1202,22 @@ load_eqtl_manifest <- function(tqtl_in_dir, context_order = names(SEURAT_CONTEXT
     data.table::fifelse(split == "female", "female", "all")
   )]
 
+  valid_splits <- c("all", "male", "female")
+  unexpected_split <- setdiff(unique(manifest$split), valid_splits)
+  if (length(unexpected_split) > 0) {
+    stop("Unexpected manifest split(s): ", paste(unexpected_split, collapse = ", "))
+  }
+  manifest <- manifest[split %in% split_order]
+  if (nrow(manifest) == 0) {
+    stop("No prepared manifest rows match split_order: ", paste(split_order, collapse = ", "))
+  }
+
   if (anyDuplicated(manifest$dataset_id)) {
     stop("Duplicate dataset_id values in manifest: ", manifest_file)
   }
   unexpected_context <- setdiff(unique(manifest$context), context_order)
   if (length(unexpected_context) > 0) {
     stop("Unexpected manifest context(s): ", paste(unexpected_context, collapse = ", "))
-  }
-  unexpected_split <- setdiff(unique(manifest$split), split_order)
-  if (length(unexpected_split) > 0) {
-    stop("Unexpected manifest split(s): ", paste(unexpected_split, collapse = ", "))
   }
 
   manifest[order(match(split, split_order), match(context, context_order))]
@@ -1502,15 +1508,30 @@ collapse_significant_eqtl_pairs <- function(map_significant_unified) {
     stop("Duplicate source-specific eQTL pair rows found")
   }
 
-  ## keep independent rows for shared pairs; keep cis rows only for cis-only pairs.
-  dt[, source_priority := data.table::fifelse(result_source == "independent", 1L, 2L)]
+  pair_sources <- dt[, .(
+    cis_supported = any(result_source == "cis"),
+    indep_supported = any(result_source == "independent")
+  ), by = pair_key]
+  pair_sources[, pair_provenance := data.table::fcase(
+    cis_supported & indep_supported, "cis_and_independent",
+    cis_supported, "cis_only",
+    indep_supported, "independent_only"
+  )]
+
+  ## keep canonical cis rows for shared pairs; keep independent-only rows.
+  dt[, source_priority := data.table::fifelse(result_source == "cis", 1L, 2L)]
   data.table::setorderv(dt, c(pair_key, "source_priority"))
   out <- dt[, .SD[1], by = pair_key]
   out[, source := data.table::fifelse(result_source == "independent", "indep", "cis")]
-  drop_cols <- intersect(c("result_source", "pair_provenance", "source_priority"), names(out))
+  out[pair_sources, `:=`(
+    pair_provenance = i.pair_provenance,
+    cis_supported = i.cis_supported,
+    indep_supported = i.indep_supported
+  ), on = pair_key]
+  drop_cols <- intersect(c("result_source", "source_priority"), names(out))
   out[, (drop_cols) := NULL]
 
-  front_cols <- c("source", pair_key)
+  front_cols <- c("source", "pair_provenance", "cis_supported", "indep_supported", pair_key)
   data.table::setcolorder(out, c(front_cols, setdiff(names(out), front_cols)))
   out[]
 }
@@ -1672,6 +1693,11 @@ summarize_significant_pairs <- function(dt, context_order = names(SEURAT_CONTEXT
                                         gwas_disorders = gwas_disorders_from_eqtl(dt)) {
   require_data_table()
   if (!"source" %in% names(dt)) stop("Missing source column in significant pair table")
+  req <- c("pair_provenance", "cis_supported", "indep_supported")
+  missing_cols <- setdiff(req, names(dt))
+  if (length(missing_cols) > 0) {
+    stop("Missing significant pair support columns: ", paste(missing_cols, collapse = ", "))
+  }
   if (length(gwas_disorders) == 0) gwas_disorders <- "SCZD"
 
   out <- summarize_tagged_eqtls(
@@ -1684,23 +1710,33 @@ summarize_significant_pairs <- function(dt, context_order = names(SEURAT_CONTEXT
   if (nrow(dt) > 0) {
     pair_counts <- dt[, .(
       n_significant_pairs = .N,
-      n_cis_pairs = sum(source == "cis"),
-      n_indep_pairs = sum(source == "indep")
+      n_cis_supported_pairs = sum(cis_supported),
+      n_indep_supported_pairs = sum(indep_supported),
+      n_shared_pairs = sum(pair_provenance == "cis_and_independent"),
+      n_cis_only_pairs = sum(pair_provenance == "cis_only"),
+      n_indep_only_pairs = sum(pair_provenance == "independent_only")
     ), by = .(split, context)]
   } else {
     pair_counts <- data.table::data.table(
       split = character(),
       context = character(),
       n_significant_pairs = integer(),
-      n_cis_pairs = integer(),
-      n_indep_pairs = integer()
+      n_cis_supported_pairs = integer(),
+      n_indep_supported_pairs = integer(),
+      n_shared_pairs = integer(),
+      n_cis_only_pairs = integer(),
+      n_indep_only_pairs = integer()
     )
   }
   out <- merge(out, pair_counts, by = c("split", "context"), all.x = TRUE)
-  for (col in c("n_significant_pairs", "n_cis_pairs", "n_indep_pairs")) {
+  pair_count_cols <- c(
+    "n_significant_pairs", "n_cis_supported_pairs", "n_indep_supported_pairs",
+    "n_shared_pairs", "n_cis_only_pairs", "n_indep_only_pairs"
+  )
+  for (col in pair_count_cols) {
     data.table::set(out, which(is.na(out[[col]])), col, 0L)
   }
-  front_cols <- c("split", "context", "n_significant_pairs", "n_cis_pairs", "n_indep_pairs")
+  front_cols <- c("split", "context", pair_count_cols)
   data.table::setcolorder(out, c(front_cols, setdiff(names(out), front_cols)))
   out[order(match(split, split_order), match(context, context_order))]
 }
@@ -1889,7 +1925,7 @@ summarize_dataset_overlap <- function(dataset_id, context, split, file_info, deg
   )
 }
 
-manifest_qc_table <- function(tqtl_in_dir) {
+manifest_qc_table <- function(tqtl_in_dir, split_order = DEG_SPLITS) {
   require_data_table()
   manifest_file <- file.path(tqtl_in_dir, "prep_manifest.csv")
   if (!file.exists(manifest_file)) stop("Missing tensorQTL manifest: ", manifest_file)
@@ -1902,6 +1938,9 @@ manifest_qc_table <- function(tqtl_in_dir) {
     ),
     names(manifest)
   )
+  if ("split" %in% names(manifest)) {
+    manifest <- manifest[split %in% split_order]
+  }
   manifest[, keep_cols, with = FALSE]
 }
 
@@ -1912,7 +1951,7 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_sets,
   require_data_table()
   gwas_sets <- normalize_gwas_sets(gwas_sets)
   gwas_disorders <- names(gwas_sets)
-  manifest_qc <- manifest_qc_table(config$tqtl_in_dir)
+  manifest_qc <- manifest_qc_table(config$tqtl_in_dir, split_order = split_order)
   manifest <- load_eqtl_manifest(
     tqtl_in_dir = config$tqtl_in_dir,
     context_order = context_order,

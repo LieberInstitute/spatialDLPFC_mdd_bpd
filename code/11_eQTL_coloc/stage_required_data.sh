@@ -3,18 +3,24 @@ set -euo pipefail
 
 usage() {
   cat <<USAGE
-Usage: $(basename "$0") [--check-only]
+Usage: $(basename "$0") [--check-only] [--include-custom-cluster]
 
-Checks required tensorQTL inputs under local processed-data, including custom-cluster inputs.
+Checks required tensorQTL inputs under local processed-data.
 If --check-only is omitted, missing files are fetched from JHPCE via rsync over ssh alias 'jt'.
+By default, only Seurat all-donor workflow inputs are required.
 USAGE
 }
 
 check_only=0
+include_custom_cluster=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --check-only)
       check_only=1
+      shift
+      ;;
+    --include-custom-cluster)
+      include_custom_cluster=1
       shift
       ;;
     -h|--help)
@@ -48,14 +54,22 @@ jhpce_root=${jhpce_root%/}
 
 required_files=(
   "processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata"
-  "processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo_sample-custom-cluster_norm-filt.Rdata"
   "processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv"
   "processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv"
   "processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv"
   "processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv"
+  "processed-data/ref/granges.qs2"
+)
+
+custom_cluster_files=(
+  "processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo_sample-custom-cluster_norm-filt.Rdata"
   "processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_custom-cluster_dx-sex_degs-F-test-t-test.csv"
   "processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_custom-cluster_dx-sex_degs-F-test-t-test.csv"
 )
+
+if [[ ${include_custom_cluster} -eq 1 ]]; then
+  required_files+=("${custom_cluster_files[@]}")
+fi
 
 geno_required=(
   "processed-data/00_genotypes/plink2/merged_maf05.pgen"
@@ -68,6 +82,7 @@ fetched=0
 
 echo "Repo root: ${repo_root}"
 echo "Remote root: ${jhpce_root}"
+echo "Include custom cluster: ${include_custom_cluster}"
 
 for rel in "${required_files[@]}"; do
   local_path="${repo_root}/${rel}"
