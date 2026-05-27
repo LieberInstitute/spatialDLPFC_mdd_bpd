@@ -148,10 +148,8 @@ validate_nominal_outputs <- function(nominal_dt, summary_dt, qc_dt, manifest) {
   }
 
   expected_gwas_cols <- c(
-    gwas_flag_cols(gwas_disorders),
-    gwasg_flag_cols(gwas_disorders),
-    gwasg_variant_flag_cols(gwas_disorders),
-    gwasg_gene_match_cols(gwas_disorders)
+    gwas_flag_pair_cols(gwas_disorders),
+    gwasg_source_pair_cols(gwas_disorders)
   )
   missing_gwas_cols <- setdiff(expected_gwas_cols, names(nominal_dt))
   if (length(missing_gwas_cols) > 0) {
@@ -225,10 +223,8 @@ nominal_qc <- rbindlist(lapply(nominal_parts, `[[`, "qc"), use.names = TRUE, fil
 
 front_cols <- c(
   "dataset_id", "context", "split", "gene_id", "gene_name", "DEG",
-  gwas_flag_cols(gwas_disorders),
-  gwasg_flag_cols(gwas_disorders),
-  gwasg_variant_flag_cols(gwas_disorders),
-  gwasg_gene_match_cols(gwas_disorders),
+  gwas_flag_pair_cols(gwas_disorders),
+  gwasg_source_pair_cols(gwas_disorders),
   "phenotype_id", "variant_id", "start_distance", "af", "ma_samples",
   "ma_count", "pval_nominal", "fdr", "slope", "slope_se"
 )

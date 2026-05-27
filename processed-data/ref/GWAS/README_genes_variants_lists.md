@@ -38,13 +38,18 @@ Source GWAS summary Figshare: `https://doi.org/10.6084/m9.figshare.27061255`
 Source downstream results Figshare: `https://doi.org/10.6084/m9.figshare.27089614`
 
 Files:
+- `MDD/mdd2025_high_confidence_genes.tsv`: 296 rows from Cell supplementary `1-s2.0-S0092867424014156-mmc9.xlsx`, sheet `Table S8B High-confidence Genes`. This is the default MDD gene-overlap list.
 - `MDD/mdd2025_gene_lists.tsv`: 9896 rows combining fastBAT, Hi-C, and DrugTargetor/MAGMA gene lists.
 - `MDD/mdd2025_fastBAT_bonferroni_significant_genes.tsv`: 1568 genes from `Online Results (fastBAT).xlsx`, sheet `fastBAT Results`, where `Bonf signif = YES`.
 - `MDD/mdd2025_hic_significant_all_tissues_genes.tsv`: 1034 genes from `Online Results (hiC).xlsx`, sheet `HiC Gene Associations`, where `Significantinalltissues = YES`.
-- `MDD/mdd2025_drugtargetor_magma_qBH_le_0_05_genes.tsv`: 7294 genes from `Online Results (DrugTargetor).xlsx`, sheet `G GENE_results`, where `q_valueBH <= 0.05`. This is marked primary because it is the largest significant gene set.
+- `MDD/mdd2025_drugtargetor_magma_qBH_le_0_05_genes.tsv`: 7294 rows from `Online Results (DrugTargetor).xlsx`, sheet `G GENE_results`, where `q_valueBH <= 0.05`.
 - `MDD/mdd2025_variant_lists.tsv`: 31588 rows combining COJO independent signals and fine-mapped credible causal variants.
 - `MDD/mdd2025_cojo_independent_signals.tsv`: 1319 rows from `Online Results (COJO).xlsx`, sheets `COJO Multi-ancestry` and `COJO European ancestry`.
 - `MDD/mdd2025_finemap_credible_causal_variants.tsv`: 30269 rows from the Figshare fine-mapping credible-causal files for diverse and EUR analyses.
+
+MDD default gene-list extraction:
+- The default MDD gene-overlap list uses Cell Table S8B high-confidence genes.
+- Rows with blank `Gene` values were omitted from `mdd2025_high_confidence_genes.tsv`, leaving 296 rows and 295 unique gene symbols.
 
 23andMe caveat:
 - The local public MDD BCF is based on `pgc-mdd2025_no23andMe_eur_v3-49-24-11.tsv.gz`, so it excludes 23andMe.
@@ -76,6 +81,7 @@ Current extracted row counts:
 | `BPD/bpd2024_prioritized_credible_genes.tsv` | 116 |
 | `BPD/bpd2024_variant_lists.tsv` | 934 |
 | `BPD/bpd2024_finemapped_credible_variants.tsv` | 295 |
+| `MDD/mdd2025_high_confidence_genes.tsv` | 296 |
 | `MDD/mdd2025_gene_lists.tsv` | 9896 |
 | `MDD/mdd2025_fastBAT_bonferroni_significant_genes.tsv` | 1568 |
 | `MDD/mdd2025_hic_significant_all_tissues_genes.tsv` | 1034 |

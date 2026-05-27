@@ -66,8 +66,8 @@ GWAS_GENE_LIST_FILES <- list(
     prio = file.path("BPD", "bpd2024_prioritized_credible_genes.tsv")
   ),
   MDD = list(
-    broad = file.path("MDD", "mdd2025_gene_lists.tsv"),
-    prio = file.path("MDD", "mdd2025_drugtargetor_magma_qBH_le_0_05_genes.tsv")
+    broad = file.path("MDD", "mdd2025_high_confidence_genes.tsv"),
+    prio = file.path("MDD", "mdd2025_high_confidence_genes.tsv")
   ),
   SCZD = list(
     broad = file.path("SCZD", "sczd2022_gene_lists.tsv"),
@@ -1352,17 +1352,28 @@ gwasg_gene_cols <- function(disorders) paste0(gwasg_flag_cols(disorders), "_gene
 deg_gwas_gene_cols <- function(disorders) paste0("DEG_", gwas_flag_cols(disorders), "_genes")
 deg_gwasg_gene_cols <- function(disorders) paste0("DEG_", gwasg_flag_cols(disorders), "_genes")
 
+paired_gwas_cols <- function(disorders, left_fun, right_fun) {
+  as.vector(rbind(left_fun(disorders), right_fun(disorders)))
+}
+
+gwas_flag_pair_cols <- function(disorders) paired_gwas_cols(disorders, gwas_flag_cols, gwasg_flag_cols)
+gwasg_source_pair_cols <- function(disorders) paired_gwas_cols(disorders, gwasg_variant_flag_cols, gwasg_gene_match_cols)
+gwas_count_pair_cols <- function(disorders) paired_gwas_cols(disorders, gwas_count_cols, gwasg_count_cols)
+deg_gwas_count_pair_cols <- function(disorders) paired_gwas_cols(disorders, deg_gwas_count_cols, deg_gwasg_count_cols)
+gwas_gene_pair_cols <- function(disorders) paired_gwas_cols(disorders, gwas_gene_cols, gwasg_gene_cols)
+deg_gwas_gene_pair_cols <- function(disorders) paired_gwas_cols(disorders, deg_gwas_gene_cols, deg_gwasg_gene_cols)
+
 order_summary_cols <- function(dt, gwas_disorders, include_signal_count = FALSE) {
   front_cols <- c(
     "split", "context",
     if (include_signal_count) "n_independent_signals",
     "n_eGenes",
-    gwas_count_cols(gwas_disorders), gwasg_count_cols(gwas_disorders),
+    gwas_count_pair_cols(gwas_disorders),
     "n_DEG",
-    deg_gwas_count_cols(gwas_disorders), deg_gwasg_count_cols(gwas_disorders),
-    gwas_gene_cols(gwas_disorders), gwasg_gene_cols(gwas_disorders),
+    deg_gwas_count_pair_cols(gwas_disorders),
+    gwas_gene_pair_cols(gwas_disorders),
     "DEG_genes",
-    deg_gwas_gene_cols(gwas_disorders), deg_gwasg_gene_cols(gwas_disorders)
+    deg_gwas_gene_pair_cols(gwas_disorders)
   )
   data.table::setcolorder(dt, c(intersect(front_cols, names(dt)), setdiff(names(dt), front_cols)))
   dt[]
@@ -1372,11 +1383,11 @@ order_deg_view_summary_cols <- function(dt, gwas_disorders) {
   front_cols <- c(
     "dataset_id", "context", "split", "deg_view", "deg_sex",
     "n_DEG_reference", "n_eQTL_records", "n_eGenes",
-    gwas_count_cols(gwas_disorders), gwasg_count_cols(gwas_disorders),
+    gwas_count_pair_cols(gwas_disorders),
     "n_eGene_DEG_overlap",
-    deg_gwas_count_cols(gwas_disorders), deg_gwasg_count_cols(gwas_disorders),
+    deg_gwas_count_pair_cols(gwas_disorders),
     "eGene_DEG_overlap_gene_ids", "eGene_DEG_overlap_gene_names",
-    deg_gwas_gene_cols(gwas_disorders), deg_gwasg_gene_cols(gwas_disorders)
+    deg_gwas_gene_pair_cols(gwas_disorders)
   )
   data.table::setcolorder(dt, c(intersect(front_cols, names(dt)), setdiff(names(dt), front_cols)))
   dt[]
@@ -1426,10 +1437,8 @@ tag_eqtl_results <- function(dt, dataset_id, context, split, deg_dt,
 
   front_cols <- c(
     "dataset_id", "context", "split", "gene_id", "gene_name", "DEG",
-    gwas_flag_cols(names(gwas_sets)),
-    gwasg_flag_cols(names(gwas_sets)),
-    gwasg_variant_flag_cols(names(gwas_sets)),
-    gwasg_gene_match_cols(names(gwas_sets))
+    gwas_flag_pair_cols(names(gwas_sets)),
+    gwasg_source_pair_cols(names(gwas_sets))
   )
   data.table::setcolorder(out, c(front_cols, setdiff(names(out), front_cols)))
   out[]
@@ -1439,10 +1448,8 @@ order_annotated_eqtl_cols <- function(dt) {
   gwas_disorders <- gwas_disorders_from_eqtl(dt)
   front_cols <- c(
     "dataset_id", "context", "split", "gene_id", "gene_name", "DEG",
-    gwas_flag_cols(gwas_disorders),
-    gwasg_flag_cols(gwas_disorders),
-    gwasg_variant_flag_cols(gwas_disorders),
-    gwasg_gene_match_cols(gwas_disorders)
+    gwas_flag_pair_cols(gwas_disorders),
+    gwasg_source_pair_cols(gwas_disorders)
   )
   data.table::setcolorder(dt, c(front_cols, setdiff(names(dt), front_cols)))
   dt[]
@@ -1570,7 +1577,7 @@ summary_template <- function(context_order = names(SEURAT_CONTEXT_TO_DATASET_ID)
     out[, (col) := ""]
   }
   out[, DEG_genes := ""]
-  out[]
+  order_summary_cols(out, gwas_disorders = gwas_disorders, include_signal_count = include_signal_count)
 }
 
 summarize_tagged_eqtls <- function(dt, context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
