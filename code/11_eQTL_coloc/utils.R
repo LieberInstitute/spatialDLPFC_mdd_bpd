@@ -125,6 +125,10 @@ DEG_SEX_PREFIX <- c(female = "F", male = "M")
 
 DEG_TTEST_CONTRASTS <- c("NTC.MDD", "NTC.BPD", "MDD.BPD")
 
+DEG_DISORDER_CONTRASTS <- c(MDD = "NTC.MDD", BPD = "NTC.BPD")
+
+DEG_TTEST_SIG_LABELS <- c("padj<.0001", "padj<.01", "padj<.05")
+
 DEG_SPLITS <- c("all", "male", "female")
 
 get_repo_root <- function(script_dir, args) {
@@ -715,7 +719,41 @@ validate_author_union <- function(deg_global, author_union_genes) {
 
 ttest_sig_rows <- function(df, cols) {
   if (length(cols) == 0) return(rep(FALSE, nrow(df)))
-  rowSums(df[, cols, drop = FALSE] == "padj<.05", na.rm = TRUE) > 0
+  ## t-test summary files store adjusted p-value bins as strings.
+  sig_df <- as.data.frame(
+    lapply(df[, cols, drop = FALSE], function(x) x %in% DEG_TTEST_SIG_LABELS),
+    check.names = FALSE
+  )
+  rowSums(sig_df, na.rm = TRUE) > 0
+}
+
+disorder_ttest_cols <- function(df, contrast) {
+  contrast_regex <- gsub(".", "[.]", contrast, fixed = TRUE)
+  grep(paste0("(^|_)[FM]_", contrast_regex, "_ttest$"), names(df), value = TRUE)
+}
+
+build_disorder_related_degs <- function(deg_global, deg_tables,
+                                        disorder_contrasts = DEG_DISORDER_CONTRASTS) {
+  broad_gene_ids <- unique(deg_global$gene_id)
+  disorder_sets <- lapply(names(disorder_contrasts), function(disorder) {
+    contrast <- unname(disorder_contrasts[[disorder]])
+    out <- lapply(deg_tables, function(df) {
+      cols <- disorder_ttest_cols(df, contrast)
+      df[ttest_sig_rows(df, cols), c("gene_id", "gene_name"), drop = FALSE]
+    })
+    collapse_gene_table(do.call(rbind, out), label = paste0(disorder, "_related_DEGs"))
+  })
+  names(disorder_sets) <- names(disorder_contrasts)
+
+  missing_from_broad <- lapply(disorder_sets, function(df) setdiff(df$gene_id, broad_gene_ids))
+  list(
+    global = disorder_sets,
+    validation = list(
+      global_gene_id_counts = vapply(disorder_sets, nrow, integer(1)),
+      subset_of_broad = vapply(missing_from_broad, function(x) length(x) == 0L, logical(1)),
+      missing_from_broad = missing_from_broad
+    )
+  )
 }
 
 validate_deg_view_columns <- function(seurat_lr_df,
@@ -913,6 +951,7 @@ build_custom_cluster_deg_views <- function(custom_by_context, splits = c("all"))
 }
 
 load_standard_DEGs <- function(repo_root = NULL, verbose = TRUE,
+                      include_disorder_degs = TRUE,
                       host = JHPCE_HOST, remote_root = JHPCE_REPO_ROOT) {
   repo_root <- resolve_repo_root(repo_root)
 
@@ -974,6 +1013,14 @@ load_standard_DEGs <- function(repo_root = NULL, verbose = TRUE,
     deg_tables = deg_tables,
     contexts = names(SEURAT_CONTEXT_TO_DATASET_ID)
   )
+  disorder_related <- if (isTRUE(include_disorder_degs)) {
+    build_disorder_related_degs(
+      deg_global = deg_global,
+      deg_tables = deg_tables
+    )
+  } else {
+    list(global = list(), validation = list())
+  }
   author_union_genes <- read_author_union_list(author_union_file)
 
   ## author text list validates the reconstructed union; overlaps use tables above.
@@ -997,6 +1044,7 @@ load_standard_DEGs <- function(repo_root = NULL, verbose = TRUE,
       integer(1)
     ),
     deg_view_gene_counts = deg_views$counts,
+    disorder_related = disorder_related$validation,
     author_union = author_union_validation
   )
 
@@ -1013,6 +1061,12 @@ load_standard_DEGs <- function(repo_root = NULL, verbose = TRUE,
     }
     cat("Global union (gene_id):", deg_validation$global_gene_id_count, "\n")
     cat("Global union (gene_name):", deg_validation$global_gene_name_count, "\n")
+    if (length(disorder_related$global) > 0) {
+      cat("Disorder-related DEG sets (gene_id):\n")
+      for (dis in names(disorder_related$global)) {
+        cat(sprintf("  %s: %d\n", dis, nrow(disorder_related$global[[dis]])))
+      }
+    }
     cat("Author union match:", deg_validation$author_union$matches, "\n")
     cat("Per-context Seurat overlap set sizes (gene_name):\n")
     for (ctx in names(deg_validation$seurat_context_gene_name_counts)) {
@@ -1026,6 +1080,7 @@ load_standard_DEGs <- function(repo_root = NULL, verbose = TRUE,
     global = deg_global,
     by_seurat_context = deg_by_seurat_context,
     by_dataset_id = deg_by_dataset_id,
+    disorder_related = disorder_related,
     views = deg_views,
     validation = deg_validation,
     files = files
@@ -1136,6 +1191,7 @@ load_custom_cluster_DEGs <- function(repo_root = NULL, verbose = TRUE,
 }
 
 load_DEGs <- function(repo_root = NULL, mode = c("standard", "custom_cluster"), verbose = TRUE,
+                      include_disorder_degs = TRUE,
                       host = JHPCE_HOST, remote_root = JHPCE_REPO_ROOT) {
   mode <- match.arg(mode)
   if (identical(mode, "custom_cluster")) {
@@ -1150,6 +1206,7 @@ load_DEGs <- function(repo_root = NULL, mode = c("standard", "custom_cluster"), 
   load_standard_DEGs(
     repo_root = repo_root,
     verbose = verbose,
+    include_disorder_degs = include_disorder_degs,
     host = host,
     remote_root = remote_root
   )
@@ -1362,6 +1419,29 @@ gwas_count_pair_cols <- function(disorders) paired_gwas_cols(disorders, gwas_cou
 deg_gwas_count_pair_cols <- function(disorders) paired_gwas_cols(disorders, deg_gwas_count_cols, deg_gwasg_count_cols)
 gwas_gene_pair_cols <- function(disorders) paired_gwas_cols(disorders, gwas_gene_cols, gwasg_gene_cols)
 deg_gwas_gene_pair_cols <- function(disorders) paired_gwas_cols(disorders, deg_gwas_gene_cols, deg_gwasg_gene_cols)
+
+disorder_deg_sets <- function(disorder_related) {
+  if (is.null(disorder_related)) return(list())
+  if (!is.null(disorder_related$global)) return(disorder_related$global)
+  disorder_related
+}
+
+disorder_deg_count_cols <- function(disorders) paste0("n_", disorders, "_DEG")
+disorder_deg_gene_cols <- function(disorders) paste0(disorders, "_DEG_genes")
+disorder_deg_gwas_count_cols <- function(disorders) paste0("n_", disorders, "_DEG_", disorders, "_GWAS")
+disorder_deg_gwasg_count_cols <- function(disorders) paste0("n_", disorders, "_DEG_", disorders, "_GWASg")
+disorder_deg_gwas_gene_cols <- function(disorders) paste0(disorders, "_DEG_", disorders, "_GWAS_genes")
+disorder_deg_gwasg_gene_cols <- function(disorders) paste0(disorders, "_DEG_", disorders, "_GWASg_genes")
+disorder_deg_gwas_count_pair_cols <- function(disorders) paired_gwas_cols(
+  disorders,
+  disorder_deg_gwas_count_cols,
+  disorder_deg_gwasg_count_cols
+)
+disorder_deg_gwas_gene_pair_cols <- function(disorders) paired_gwas_cols(
+  disorders,
+  disorder_deg_gwas_gene_cols,
+  disorder_deg_gwasg_gene_cols
+)
 
 order_summary_cols <- function(dt, gwas_disorders, include_signal_count = FALSE) {
   front_cols <- c(
@@ -1695,8 +1775,73 @@ summarize_independent_signals <- function(dt, context_order = names(SEURAT_CONTE
   )
 }
 
+summarize_disorder_deg_overlaps <- function(dt, disorder_related,
+                                            context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                                            split_order = DEG_SPLITS,
+                                            gwas_disorders = gwas_disorders_from_eqtl(dt)) {
+  require_data_table()
+  sets <- disorder_deg_sets(disorder_related)
+  if (length(sets) == 0) {
+    return(complete_summary_grid(context_order = context_order, split_order = split_order))
+  }
+
+  out <- complete_summary_grid(context_order = context_order, split_order = split_order)
+  work <- data.table::copy(data.table::as.data.table(dt))
+  disorder_names <- names(sets)
+  paired_disorders <- intersect(disorder_names, gwas_disorders)
+
+  for (dis in disorder_names) {
+    flag_col <- paste0(dis, "_DEG")
+    count_col <- paste0("n_", flag_col)
+    genes_col <- paste0(flag_col, "_genes")
+    gene_ids <- unique(data.table::as.data.table(sets[[dis]])$gene_id)
+
+    ## keep disorder DEG flags internal to summary construction.
+    work[, (flag_col) := as.integer(gene_id %in% gene_ids)]
+    obs <- work[, .(
+      count = data.table::uniqueN(gene_id[get(flag_col) == 1]),
+      genes = collapse_gene_list(gene_name[get(flag_col) == 1])
+    ), by = .(split, context)]
+    data.table::setnames(obs, c("count", "genes"), c(count_col, genes_col))
+    out <- merge(out, obs, by = c("split", "context"), all.x = TRUE)
+
+    if (dis %in% paired_disorders) {
+      gwas_col <- paste0(dis, "_GWAS")
+      gwasg_col <- paste0(dis, "_GWASg")
+      gwas_count_col <- paste0("n_", flag_col, "_", gwas_col)
+      gwasg_count_col <- paste0("n_", flag_col, "_", gwasg_col)
+      gwas_genes_col <- paste0(flag_col, "_", gwas_col, "_genes")
+      gwasg_genes_col <- paste0(flag_col, "_", gwasg_col, "_genes")
+
+      obs_gwas <- work[, .(
+        gwas_count = data.table::uniqueN(gene_id[get(flag_col) == 1 & get(gwas_col) == 1]),
+        gwasg_count = data.table::uniqueN(gene_id[get(flag_col) == 1 & get(gwasg_col) == 1]),
+        gwas_genes = collapse_gene_list(gene_name[get(flag_col) == 1 & get(gwas_col) == 1]),
+        gwasg_genes = collapse_gene_list(gene_name[get(flag_col) == 1 & get(gwasg_col) == 1])
+      ), by = .(split, context)]
+      data.table::setnames(
+        obs_gwas,
+        c("gwas_count", "gwasg_count", "gwas_genes", "gwasg_genes"),
+        c(gwas_count_col, gwasg_count_col, gwas_genes_col, gwasg_genes_col)
+      )
+      out <- merge(out, obs_gwas, by = c("split", "context"), all.x = TRUE)
+    }
+  }
+
+  count_cols <- c(
+    disorder_deg_count_cols(disorder_names),
+    disorder_deg_gwas_count_pair_cols(paired_disorders)
+  )
+  text_cols <- c(
+    disorder_deg_gene_cols(disorder_names),
+    disorder_deg_gwas_gene_pair_cols(paired_disorders)
+  )
+  fill_summary_missing(out, count_cols = count_cols, text_cols = text_cols)
+}
+
 summarize_significant_pairs <- function(dt, context_order = names(SEURAT_CONTEXT_TO_DATASET_ID),
                                         split_order = DEG_SPLITS,
+                                        disorder_related = NULL,
                                         gwas_disorders = gwas_disorders_from_eqtl(dt)) {
   require_data_table()
   if (!"source" %in% names(dt)) stop("Missing source column in significant pair table")
@@ -1714,6 +1859,14 @@ summarize_significant_pairs <- function(dt, context_order = names(SEURAT_CONTEXT
     signal_count = FALSE,
     gwas_disorders = gwas_disorders
   )
+  disorder_summary <- summarize_disorder_deg_overlaps(
+    dt = dt,
+    disorder_related = disorder_related,
+    context_order = context_order,
+    split_order = split_order,
+    gwas_disorders = gwas_disorders
+  )
+  out <- merge(out, disorder_summary, by = c("split", "context"), all.x = TRUE)
   if (nrow(dt) > 0) {
     pair_counts <- dt[, .(
       n_significant_pairs = .N,
@@ -1743,7 +1896,19 @@ summarize_significant_pairs <- function(dt, context_order = names(SEURAT_CONTEXT
   for (col in pair_count_cols) {
     data.table::set(out, which(is.na(out[[col]])), col, 0L)
   }
-  front_cols <- c("split", "context", pair_count_cols)
+  disorder_names <- names(disorder_deg_sets(disorder_related))
+  paired_disorders <- intersect(disorder_names, gwas_disorders)
+  front_cols <- c(
+    "split", "context", pair_count_cols,
+    "n_eGenes", gwas_count_pair_cols(gwas_disorders),
+    "n_DEG", disorder_deg_count_cols(disorder_names),
+    deg_gwas_count_pair_cols(gwas_disorders),
+    disorder_deg_gwas_count_pair_cols(paired_disorders),
+    gwas_gene_pair_cols(gwas_disorders),
+    "DEG_genes", disorder_deg_gene_cols(disorder_names),
+    deg_gwas_gene_pair_cols(gwas_disorders),
+    disorder_deg_gwas_gene_pair_cols(paired_disorders)
+  )
   data.table::setcolorder(out, c(front_cols, setdiff(names(out), front_cols)))
   out[order(match(split, split_order), match(context, context_order))]
 }
@@ -2017,6 +2182,7 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_sets,
     map_significant_pairs,
     context_order = context_order,
     split_order = split_order,
+    disorder_related = degs$disorder_related,
     gwas_disorders = gwas_disorders
   )
 

@@ -1,0 +1,640 @@
+---
+title: "Seurat eQTL genotype boxplots"
+output: html_notebook
+---
+
+```{r setup}
+suppressPackageStartupMessages({
+  library(data.table)
+  library(ggplot2)
+  library(here)
+  library(pgenlibr)
+})
+
+here::i_am(".git/HEAD")
+
+repo_root <- here()
+code_dir <- here("code", "11_eQTL_coloc")
+source(file.path(code_dir, "utils.R"), chdir = FALSE)
+
+tqtl_in_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_in")
+tqtl_out_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_out")
+tables_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tables")
+plots_dir <- here("plots", "11_eQTL_coloc", "boxplots")
+plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05")
+
+context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
+disorders <- c("BPD", "MDD", "SCZD")
+
+dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
+```
+
+```{r helpers}
+assert_files <- function(paths) {
+  missing <- paths[!file.exists(paths)]
+  if (length(missing) > 0L) {
+    stop("Missing required file(s):\n", paste(missing, collapse = "\n"))
+  }
+  invisible(TRUE)
+}
+
+assert_cols <- function(dt, cols, label) {
+  missing <- setdiff(cols, names(dt))
+  if (length(missing) > 0L) {
+    stop("Missing columns in ", label, ": ", paste(missing, collapse = ", "))
+  }
+  invisible(TRUE)
+}
+
+safe_plot_slug <- function(x) {
+  gsub("[^A-Za-z0-9._-]+", "_", x)
+}
+
+save_example_svg <- function(plot, filename, width = 8, height = 5.5) {
+  out_file <- file.path(plots_dir, filename)
+  ggsave(out_file, plot, width = width, height = height, device = "svg")
+  out_file
+}
+
+read_pvar <- function(prefix) {
+  pvar_file <- paste0(prefix, ".pvar")
+  assert_files(pvar_file)
+  pvar <- fread(pvar_file, sep = "\t", skip = "#CHROM")
+  setnames(pvar, "#CHROM", "CHROM", skip_absent = TRUE)
+  assert_cols(pvar, c("CHROM", "POS", "ID", "REF", "ALT"), basename(pvar_file))
+  pvar[, var_idx := .I]
+  setkey(pvar, ID)
+  pvar[]
+}
+
+read_psam_samples <- function(prefix) {
+  psam_file <- paste0(prefix, ".psam")
+  assert_files(psam_file)
+  psam <- fread(psam_file, sep = "\t")
+  id_col <- if ("#IID" %in% names(psam)) "#IID" else if ("IID" %in% names(psam)) "IID" else NA_character_
+  if (is.na(id_col)) stop("Cannot find sample ID column in ", psam_file)
+  as.character(psam[[id_col]])
+}
+
+read_tensorqtl_covars <- function(covar_file) {
+  covars_raw <- fread(covar_file, sep = "\t")
+  assert_cols(covars_raw, "id", basename(covar_file))
+
+  covar_names <- as.character(covars_raw$id)
+  covar_samples <- setdiff(names(covars_raw), "id")
+  covar_mat <- t(as.matrix(covars_raw[, ..covar_samples]))
+  storage.mode(covar_mat) <- "numeric"
+  rownames(covar_mat) <- covar_samples
+  colnames(covar_mat) <- covar_names
+
+  ## keep the tensorQTL intercept and remove every other covariate from y.
+  if (!"(Intercept)" %in% colnames(covar_mat)) {
+    covar_mat <- cbind("(Intercept)" = 1, covar_mat)
+  }
+  covar_mat[, c("(Intercept)", setdiff(colnames(covar_mat), "(Intercept)")), drop = FALSE]
+}
+
+infer_dx <- function(covar_mat) {
+  dx <- rep("NTC", nrow(covar_mat))
+  names(dx) <- rownames(covar_mat)
+  if ("DXMDD" %in% colnames(covar_mat)) dx[covar_mat[, "DXMDD"] == 1] <- "MDD"
+  if ("DXBPD" %in% colnames(covar_mat)) dx[covar_mat[, "DXBPD"] == 1] <- "BPD"
+  factor(dx, levels = c("NTC", "MDD", "BPD"))
+}
+
+residualize_expression <- function(expr_mat, covar_mat) {
+  stopifnot(identical(colnames(expr_mat), rownames(covar_mat)))
+  x <- covar_mat
+  y <- t(expr_mat)
+
+  fit <- lm.fit(x = x, y = y)
+  coef <- fit$coefficients
+  if (is.null(dim(coef))) {
+    coef <- matrix(coef, ncol = 1L, dimnames = list(colnames(x), rownames(expr_mat)))
+  }
+  coef[is.na(coef)] <- 0
+  fit_resid <- fit$residuals
+  if (is.null(dim(fit_resid))) {
+    fit_resid <- matrix(fit_resid, ncol = 1L, dimnames = list(colnames(expr_mat), rownames(expr_mat)))
+  }
+
+  ## preserve the intercept column, matching jaffelab::cleaningY(..., P = 1).
+  intercept <- x[, "(Intercept)", drop = FALSE] %*% coef["(Intercept)", , drop = FALSE]
+  adjusted <- t(fit_resid + intercept)
+  rownames(adjusted) <- rownames(expr_mat)
+  colnames(adjusted) <- colnames(expr_mat)
+  adjusted
+}
+
+read_expr_bed <- function(expr_file, gene_ids = NULL) {
+  dt <- fread(expr_file)
+  assert_cols(dt, c("#Chr", "start", "end", "ID"), basename(expr_file))
+  if (!is.null(gene_ids)) {
+    dt <- dt[ID %chin% unique(as.character(gene_ids))]
+  }
+  if (nrow(dt) == 0L) stop("No requested genes found in ", expr_file)
+
+  sample_cols <- setdiff(names(dt), c("#Chr", "start", "end", "ID"))
+  mat <- as.matrix(dt[, ..sample_cols])
+  storage.mode(mat) <- "numeric"
+  rownames(mat) <- dt$ID
+  colnames(mat) <- sample_cols
+  mat
+}
+
+load_plot_context <- function(dataset_id, gene_ids = NULL) {
+  expr_file <- file.path(tqtl_in_dir, paste0(dataset_id, ".gene.expr.bed.gz"))
+  covar_file <- file.path(tqtl_in_dir, paste0(dataset_id, ".gene.covars.txt"))
+  assert_files(c(expr_file, covar_file))
+
+  expr <- read_expr_bed(expr_file, gene_ids = gene_ids)
+  covars <- read_tensorqtl_covars(covar_file)
+  common <- intersect(colnames(expr), rownames(covars))
+  if (length(common) == 0L) stop("No shared samples between expression and covariates for ", dataset_id)
+
+  ## use the BED sample order after dropping any unmatched covariate samples.
+  expr <- expr[, common, drop = FALSE]
+  covars <- covars[common, , drop = FALSE]
+  resid <- residualize_expression(expr, covars)
+
+  list(
+    dataset_id = dataset_id,
+    raw_expr = expr,
+    resid_expr = resid,
+    sample_info = data.table(sample_id = common, DX = infer_dx(covars)),
+    covariates = covars
+  )
+}
+```
+
+```{r genotype-and-gwas-cache}
+gwas_matched_files <- setNames(
+  file.path(
+    here("processed-data", "00_genotypes"),
+    sprintf("GWAS-%s_flt_p1e-6_SI0.8_merged_maf05_tqtl-matched.tab.gz", disorders)
+  ),
+  disorders
+)
+assert_files(unname(gwas_matched_files))
+
+rsid_cache_file <- file.path(tables_dir, "genotype_variant_rsids.csv.gz")
+
+build_rsid_cache <- function(files, out_file) {
+  parts <- lapply(names(files), function(dis) {
+    dt <- fread(files[[dis]], select = c("variant_id", "rsid"))
+    assert_cols(dt, c("variant_id", "rsid"), basename(files[[dis]]))
+    dt[, source_disorder := dis]
+    dt[!is.na(variant_id) & nzchar(variant_id) & !is.na(rsid) & nzchar(rsid)]
+  })
+  all_rsids <- rbindlist(parts, use.names = TRUE)
+  if (nrow(all_rsids) == 0L) stop("No rsIDs found in matched GWAS files.")
+
+  cache <- all_rsids[, .(
+    rsid = paste(sort(unique(rsid)), collapse = ";"),
+    rsid_sources = paste(sort(unique(source_disorder)), collapse = ";")
+  ), by = variant_id]
+  setorder(cache, variant_id)
+  fwrite(cache, out_file)
+  cache[]
+}
+
+if (!file.exists(rsid_cache_file)) {
+  rsid_lut <- build_rsid_cache(gwas_matched_files, rsid_cache_file)
+} else {
+  rsid_lut <- fread(rsid_cache_file)
+}
+if (nrow(rsid_lut) == 0L) stop("Empty rsID cache: ", rsid_cache_file)
+setkey(rsid_lut, variant_id)
+
+pvar <- read_pvar(plink2_prefix)
+psam_samples <- read_psam_samples(plink2_prefix)
+pgen_file <- paste0(plink2_prefix, ".pgen")
+assert_files(pgen_file)
+```
+
+```{r genotype-helpers}
+parse_variant_id <- function(variant_ids) {
+  ids <- data.table(variant_id = unique(as.character(variant_ids)))
+  ids <- ids[!is.na(variant_id) & nzchar(variant_id)]
+  ids[, c("id_chr", "id_pos", "id_REF", "id_ALT") := tstrsplit(
+    variant_id, ":", fixed = TRUE, keep = 1:4
+  )]
+  ids[]
+}
+
+build_orientation_lut <- function(variant_ids, pvar_dt = pvar) {
+  ids <- parse_variant_id(variant_ids)
+  lut <- pvar_dt[, .(variant_id = ID, pvar_REF = REF, pvar_ALT = ALT, var_idx)]
+  setkey(lut, variant_id)
+  ori <- lut[ids, on = "variant_id"]
+
+  ori[, orientation_status := fifelse(
+    is.na(pvar_REF) | is.na(pvar_ALT), "missing_pvar",
+    fifelse(
+      id_REF == pvar_REF & id_ALT == pvar_ALT, "aligned",
+      fifelse(id_REF == pvar_ALT & id_ALT == pvar_REF, "swapped", "mismatch")
+    )
+  )]
+  ori[, orientation_sign := fifelse(
+    orientation_status == "aligned", 1L,
+    fifelse(orientation_status == "swapped", -1L, NA_integer_)
+  )]
+  setkey(ori, variant_id)
+  ori[]
+}
+
+load_pgen_dosage <- function(variant_ids) {
+  vars <- pvar[J(unique(as.character(variant_ids))), nomatch = 0L]
+  missing <- setdiff(unique(as.character(variant_ids)), vars$ID)
+  if (length(missing) > 0L) {
+    stop("Variants missing from pvar/pgen: ", paste(missing, collapse = ", "))
+  }
+
+  setorder(vars, var_idx)
+  pgen <- NewPgen(pgen_file)
+  dosage <- ReadList(pgen, vars$var_idx, meanimpute = FALSE)
+  rm(pgen)
+  gc()
+
+  dosage <- as.matrix(dosage)
+  rownames(dosage) <- psam_samples
+  colnames(dosage) <- vars$ID
+  dosage[, unique(as.character(variant_ids)), drop = FALSE]
+}
+
+read_gwas_effect_lut <- function(disorder) {
+  disorder <- gwas_check_disorder(disorder)
+  dt <- fread(gwas_matched_files[[disorder]], select = c("variant_id", "A1", "A2", "beta", "p"))
+  assert_cols(dt, c("variant_id", "A1", "A2", "beta", "p"), basename(gwas_matched_files[[disorder]]))
+  dt[, disorder := disorder]
+  setkey(dt, variant_id)
+  dt[]
+}
+
+make_genotype_labels <- function(dosage_vec, allele0, allele1) {
+  geno_int <- round(dosage_vec)
+  labels <- rep(NA_character_, length(geno_int))
+  ok <- !is.na(geno_int) & geno_int %in% 0:2
+  if (is.na(allele0) || is.na(allele1) || !nzchar(allele0) || !nzchar(allele1)) {
+    labels[ok] <- as.character(geno_int[ok])
+    return(labels)
+  }
+  label_map <- c(paste0(allele0, allele0), paste0(allele0, allele1), paste0(allele1, allele1))
+  labels[ok] <- label_map[geno_int[ok] + 1L]
+  labels
+}
+
+format_variant_label <- function(variant_id) {
+  rsid <- rsid_lut[J(variant_id), rsid]
+  if (length(rsid) == 1L && !is.na(rsid) && nzchar(rsid)) {
+    sprintf("%s (%s)", variant_id, rsid)
+  } else {
+    variant_id
+  }
+}
+```
+
+```{r plot-function}
+plot_eQTL_boxplots <- function(dataset_id, eqtl_pairs, axis_mode = c("ref", "gwas_effect"),
+                               gwas_disorder = "MDD", use_raw = FALSE,
+                               title = "auto") {
+  axis_mode <- match.arg(axis_mode)
+  eqtl_pairs <- as.data.table(copy(eqtl_pairs))
+  assert_cols(eqtl_pairs, c("phenotype_id", "variant_id"), "eqtl_pairs")
+  if (!"gene_name" %in% names(eqtl_pairs)) eqtl_pairs[, gene_name := phenotype_id]
+  if (nrow(eqtl_pairs) == 0L) stop("No eQTL pairs supplied.")
+
+  ctx <- load_plot_context(dataset_id, gene_ids = eqtl_pairs$phenotype_id)
+  expr <- if (isTRUE(use_raw)) ctx$raw_expr else ctx$resid_expr
+  dosage <- load_pgen_dosage(eqtl_pairs$variant_id)
+
+  common_samples <- Reduce(intersect, list(colnames(expr), rownames(dosage), ctx$sample_info$sample_id))
+  if (length(common_samples) == 0L) stop("No shared samples for plotting ", dataset_id)
+  expr <- expr[, common_samples, drop = FALSE]
+  dosage <- dosage[common_samples, , drop = FALSE]
+  sample_info <- ctx$sample_info[match(common_samples, sample_id)]
+
+  missing_genes <- setdiff(eqtl_pairs$phenotype_id, rownames(expr))
+  if (length(missing_genes) > 0L) {
+    stop("Genes missing from expression BED for ", dataset_id, ": ", paste(missing_genes, collapse = ", "))
+  }
+
+  ori <- build_orientation_lut(eqtl_pairs$variant_id)
+  gwas_lut <- if (axis_mode == "gwas_effect") read_gwas_effect_lut(gwas_disorder) else NULL
+
+  plot_parts <- lapply(seq_len(nrow(eqtl_pairs)), function(i) {
+    gene_id <- eqtl_pairs$phenotype_id[i]
+    variant_id <- eqtl_pairs$variant_id[i]
+    gene_name <- eqtl_pairs$gene_name[i]
+
+    orow <- ori[J(variant_id)][1]
+    if (is.na(orow$orientation_status) || orow$orientation_status == "missing_pvar") {
+      stop("Missing pvar orientation for ", variant_id)
+    }
+
+    raw_dosage <- dosage[, variant_id]
+    orientation_mode <- "ref"
+    axis_status <- orow$orientation_status
+    allele0 <- orow$id_REF
+    allele1 <- orow$id_ALT
+    plot_dosage <- if (!is.na(orow$orientation_sign) && orow$orientation_sign == -1L) 2 - raw_dosage else raw_dosage
+
+    if (axis_mode == "gwas_effect") {
+      grow <- gwas_lut[J(variant_id)][1]
+      if (!is.na(grow$A1) && nzchar(grow$A1)) {
+        a1 <- toupper(grow$A1)
+        a2 <- toupper(grow$A2)
+        ref <- toupper(orow$pvar_REF)
+        alt <- toupper(orow$pvar_ALT)
+
+        if (a1 == alt) {
+          plot_dosage <- raw_dosage
+          allele0 <- a2
+          allele1 <- a1
+          orientation_mode <- paste0(gwas_disorder, "_A1_effect")
+          axis_status <- "gwas_A1_is_ALT"
+        } else if (a1 == ref) {
+          plot_dosage <- 2 - raw_dosage
+          allele0 <- a2
+          allele1 <- a1
+          orientation_mode <- paste0(gwas_disorder, "_A1_effect")
+          axis_status <- "gwas_A1_is_REF"
+        } else {
+          axis_status <- "gwas_allele_mismatch_ref_fallback"
+        }
+      } else {
+        axis_status <- "missing_gwas_ref_fallback"
+      }
+    }
+
+    genotype_labels <- make_genotype_labels(plot_dosage, allele0, allele1)
+    genotype_order <- unique(genotype_labels[order(plot_dosage)])
+    genotype_order <- genotype_order[!is.na(genotype_order)]
+
+    slope <- if ("slope" %in% names(eqtl_pairs)) eqtl_pairs$slope[i] else NA_real_
+    pval <- if ("pval_nominal" %in% names(eqtl_pairs)) eqtl_pairs$pval_nominal[i] else NA_real_
+    fdr <- if ("fdr" %in% names(eqtl_pairs)) eqtl_pairs$fdr[i] else NA_real_
+    perm <- if ("pval_perm" %in% names(eqtl_pairs)) eqtl_pairs$pval_perm[i] else NA_real_
+
+    data.table(
+      sample_id = common_samples,
+      expression = as.numeric(expr[gene_id, ]),
+      genotype = factor(genotype_labels, levels = genotype_order),
+      dosage = plot_dosage,
+      dosage_raw = raw_dosage,
+      DX = sample_info$DX,
+      dataset_id = dataset_id,
+      gene_id = gene_id,
+      gene_name = gene_name,
+      variant_id = variant_id,
+      facet = sprintf("%s\n%s", format_variant_label(variant_id), gene_name),
+      orientation_mode = orientation_mode,
+      axis_status = axis_status,
+      slope = slope,
+      pval_nominal = pval,
+      fdr = fdr,
+      pval_perm = perm
+    )
+  })
+
+  plot_dt <- rbindlist(plot_parts, use.names = TRUE)
+  annot <- plot_dt[, .(
+    slope = unique(slope)[1],
+    pval_nominal = unique(pval_nominal)[1],
+    fdr = unique(fdr)[1],
+    pval_perm = unique(pval_perm)[1]
+  ), by = facet]
+  annot[, label := fifelse(
+    !is.na(fdr),
+    sprintf("slope = %.3g\np = %.2e\nBH = %.2e", slope, pval_nominal, fdr),
+    sprintf("slope = %.3g\np = %.2e\nperm = %.2e", slope, pval_nominal, pval_perm)
+  )]
+
+  context_label <- manifest[manifest[["dataset_id"]] == dataset_id, context][1]
+  if (is.na(context_label)) context_label <- dataset_id
+  auto_title <- paste0(context_label, ": ", paste(unique(eqtl_pairs$gene_name), collapse = ", "))
+  title_to_use <- if (identical(title, "auto")) auto_title else title
+
+  x_label <- if (axis_mode == "gwas_effect") {
+    paste0("Genotype ordered by ", gwas_disorder, " GWAS A1 effect allele")
+  } else {
+    "Genotype ordered by genome reference allele"
+  }
+
+  p <- ggplot(plot_dt, aes(x = genotype, y = expression)) +
+    geom_boxplot(outlier.shape = NA, alpha = 0.55, linewidth = 0.45, color = "gray45", fill = "gray90") +
+    geom_jitter(aes(color = DX), width = 0.18, height = 0, size = 2, alpha = 0.85) +
+    geom_text(
+      data = annot,
+      aes(x = Inf, y = -Inf, label = label),
+      hjust = 1.05, vjust = -0.2, size = 3, inherit.aes = FALSE
+    ) +
+    facet_wrap(~ facet, scales = "free") +
+    scale_color_manual(values = c(NTC = "#377eb8", MDD = "#e41a1c", BPD = "#4daf4a"), drop = FALSE) +
+    scale_y_continuous(expand = expansion(mult = c(0.18, 0.08))) +
+    labs(
+      title = title_to_use,
+      x = x_label,
+      y = if (isTRUE(use_raw)) "Expression (tensorQTL BED)" else "Residualized expression",
+      color = "Dx"
+    ) +
+    theme_bw() +
+    theme(
+      legend.position = "bottom",
+      strip.text = element_text(size = 9),
+      plot.title = element_text(size = 12)
+    )
+
+  list(plot = p, data = plot_dt)
+}
+```
+
+```{r load-manifest-and-select-examples}
+manifest <- load_eqtl_manifest(
+  tqtl_in_dir = tqtl_in_dir,
+  context_order = context_order,
+  split_order = "all"
+)
+
+sig_file <- file.path(tables_dir, "map_significant_unified.csv.gz")
+if (!file.exists(sig_file)) {
+  sig_file <- file.path(tables_dir, "map_independent_significant.csv.gz")
+}
+nominal_file <- file.path(tables_dir, "nominal_BH05.csv.gz")
+assert_files(c(sig_file, nominal_file))
+
+sig <- fread(sig_file)
+nominal <- fread(nominal_file)
+assert_cols(sig, c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "DEG", "MDD_GWAS", "MDD_GWASg", "pval_nominal"), basename(sig_file))
+assert_cols(nominal, c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "DEG", "MDD_GWAS", "MDD_GWASg", "fdr", "pval_nominal"), basename(nominal_file))
+
+degs <- load_DEGs(repo_root = repo_root, mode = "standard", verbose = FALSE)
+mdd_deg_ids <- unique(as.data.table(degs$disorder_related$global$MDD)$gene_id)
+bpd_deg_ids <- unique(as.data.table(degs$disorder_related$global$BPD)$gene_id)
+
+## use disorder-related DEG lists for disorder-targeted examples.
+sig[, `:=`(
+  MDD_DEG = as.integer(gene_id %in% mdd_deg_ids),
+  BPD_DEG = as.integer(gene_id %in% bpd_deg_ids)
+)]
+nominal[, `:=`(
+  MDD_DEG = as.integer(gene_id %in% mdd_deg_ids),
+  BPD_DEG = as.integer(gene_id %in% bpd_deg_ids)
+)]
+
+sig_candidates <- sig[split == "all" & MDD_DEG == 1L & MDD_GWASg == 1L]
+sig_deg_basis <- "MDD_DEG"
+if (nrow(sig_candidates) == 0L) {
+  sig_candidates <- sig[split == "all" & DEG == 1L & MDD_GWASg == 1L]
+  sig_deg_basis <- "broad_DEG"
+}
+if (nrow(sig_candidates) == 0L) {
+  sig_candidates <- sig[split == "all" & MDD_DEG == 1L]
+  sig_deg_basis <- "MDD_DEG_no_MDD_GWASg"
+}
+if (nrow(sig_candidates) == 0L) {
+  sig_candidates <- sig[split == "all" & DEG == 1L]
+  sig_deg_basis <- "broad_DEG_no_MDD_GWASg"
+}
+if (nrow(sig_candidates) == 0L) {
+  sig_candidates <- sig[split == "all"]
+  sig_deg_basis <- "none"
+}
+if (nrow(sig_candidates) == 0L) stop("No significant examples found.")
+sig_candidates[, example_priority := fifelse(MDD_GWAS == 1L, 1L, fifelse(MDD_GWASg_variant == 1L, 2L, 3L))]
+setorder(sig_candidates, example_priority, pval_nominal)
+sig_examples <- head(sig_candidates[, .SD[1], by = gene_id], 3L)
+sig_examples[, example_type := "mdd_significant"]
+sig_examples[, example_deg_basis := sig_deg_basis]
+
+sig_keys <- unique(sig[split == "all", .(dataset_id, gene_id, variant_id)])
+nominal_l23 <- nominal[split == "all" & dataset_id == "l2-3"]
+nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
+nominal_only <- nominal_only[MDD_DEG == 1L & MDD_GWASg == 1L]
+nominal_deg_basis <- "MDD_DEG"
+if (nrow(nominal_only) == 0L) {
+  nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
+  nominal_only <- nominal_only[DEG == 1L & MDD_GWASg == 1L]
+  nominal_deg_basis <- "broad_DEG"
+}
+if (nrow(nominal_only) == 0L) {
+  nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
+  nominal_only <- nominal_only[MDD_DEG == 1L]
+  nominal_deg_basis <- "MDD_DEG_no_MDD_GWASg"
+}
+if (nrow(nominal_only) == 0L) {
+  nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
+  nominal_only <- nominal_only[DEG == 1L]
+  nominal_deg_basis <- "broad_DEG_no_MDD_GWASg"
+}
+if (nrow(nominal_only) == 0L) {
+  nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
+  nominal_deg_basis <- "none"
+}
+if (nrow(nominal_only) == 0L) stop("No L2.3 nominal-only examples found.")
+setorder(nominal_only, fdr, pval_nominal)
+nominal_examples <- head(nominal_only[, .SD[1], by = gene_id], 2L)
+nominal_examples[, example_type := "l2-3_nominal_only"]
+nominal_examples[, example_deg_basis := nominal_deg_basis]
+
+example_cols <- unique(c(
+  "example_type", "example_deg_basis", "dataset_id", "context", "split", "gene_id", "gene_name",
+  "phenotype_id", "variant_id", "DEG", "MDD_DEG", "BPD_DEG", "MDD_GWAS", "MDD_GWASg",
+  "MDD_GWASg_variant", "MDD_GWASg_gene", "pval_nominal", "fdr",
+  "pval_perm", "qval", "qval_parent", "slope", "slope_se"
+))
+examples <- rbindlist(
+  list(sig_examples[, intersect(example_cols, names(sig_examples)), with = FALSE],
+       nominal_examples[, intersect(example_cols, names(nominal_examples)), with = FALSE]),
+  use.names = TRUE,
+  fill = TRUE
+)
+setcolorder(examples, c(intersect(example_cols, names(examples)), setdiff(names(examples), example_cols)))
+
+examples_file <- file.path(tables_dir, "eqtl_boxplot_examples.csv")
+fwrite(examples, examples_file)
+examples
+```
+
+```{r validate-examples}
+if (nrow(examples) == 0L) stop("No examples selected.")
+if (!file.exists(rsid_cache_file) || nrow(fread(rsid_cache_file, nrows = 1)) == 0L) {
+  stop("rsID cache was not created or is empty.")
+}
+
+missing_pvar <- setdiff(examples$variant_id, pvar$ID)
+if (length(missing_pvar) > 0L) {
+  stop("Example variants missing from pvar: ", paste(missing_pvar, collapse = ", "))
+}
+
+for (ds in unique(examples$dataset_id)) {
+  expr_file <- file.path(tqtl_in_dir, paste0(ds, ".gene.expr.bed.gz"))
+  dt <- fread(expr_file, select = "ID")
+  missing_genes <- setdiff(examples[dataset_id == ds, phenotype_id], dt$ID)
+  if (length(missing_genes) > 0L) {
+    stop("Example genes missing from expression BED for ", ds, ": ", paste(missing_genes, collapse = ", "))
+  }
+}
+
+message("Wrote examples: ", examples_file)
+```
+
+```{r plot-significant-examples, fig.width=8, fig.height=5.5}
+sig_plot_examples <- examples[example_type == "mdd_significant"]
+saved_sig_svgs <- character()
+for (ds in unique(sig_plot_examples$dataset_id)) {
+  pairs <- sig_plot_examples[dataset_id == ds]
+  pobj <- plot_eQTL_boxplots(ds, pairs, axis_mode = "ref")
+  print(pobj$plot)
+  saved_sig_svgs <- c(
+    saved_sig_svgs,
+    save_example_svg(
+      pobj$plot,
+      paste0("eqtl_boxplot_significant_", safe_plot_slug(ds), ".svg")
+    )
+  )
+}
+saved_sig_svgs
+```
+
+```{r plot-nominal-only-examples, fig.width=8, fig.height=5.5}
+nominal_plot_examples <- examples[example_type == "l2-3_nominal_only"]
+pobj_nominal <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "ref")
+print(pobj_nominal$plot)
+saved_nominal_svg <- save_example_svg(
+  pobj_nominal$plot,
+  "eqtl_boxplot_nominal_l2-3.svg"
+)
+saved_nominal_svg
+```
+
+```{r check-gwas-effect-axis, include=FALSE}
+## exercise the optional GWAS effect-allele orientation without printing another plot.
+gwas_axis_check <- plot_eQTL_boxplots(
+  "l2-3",
+  nominal_plot_examples[1],
+  axis_mode = "gwas_effect",
+  gwas_disorder = "MDD"
+)
+stopifnot(nrow(gwas_axis_check$data) > 0L)
+```
+
+```{r gwas-effect-axis-examples, eval=FALSE}
+## order the x axis by MDD GWAS A1 effect allele instead of genome REF/ALT.
+pobj_mdd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "MDD")
+print(pobj_mdd$plot)
+
+## switch the GWAS effect-allele context to BPD or SCZD.
+pobj_bpd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "BPD")
+pobj_sczd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "SCZD")
+
+## plot a gene-variant pair in another Seurat cluster.
+astro_pair <- examples[dataset_id == "astro"][1]
+pobj_astro <- plot_eQTL_boxplots("astro", astro_pair, axis_mode = "ref")
+print(pobj_astro$plot)
+
+## optional raster/vector saves after inspection.
+## ggsave(file.path(tables_dir, "example_eqtl_boxplot.png"), pobj_mdd$plot, width = 8, height = 5.5, dpi = 300)
+## ggsave(file.path(tables_dir, "example_eqtl_boxplot.svg"), pobj_mdd$plot, width = 8, height = 5.5)
+```

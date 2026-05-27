@@ -17,13 +17,12 @@ plots_dir <- here("plots", "11_eQTL_coloc")
 
 RUN_SEURAT <- TRUE
 RUN_CUSTOM_CLUSTER <- FALSE
-INCLUDE_SEX_SPLITS <- FALSE
 WRITE_DEG_VIEW_TABLES <- FALSE
 
 source(here("code", "11_eQTL_coloc", "utils.R"), chdir = FALSE)
 
 context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
-split_order <- if (isTRUE(INCLUDE_SEX_SPLITS)) c("all", "male", "female") else c("all")
+split_order <- "all"
 
 analysis_configs <- list()
 if (isTRUE(RUN_SEURAT)) {

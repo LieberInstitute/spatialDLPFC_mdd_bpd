@@ -6,10 +6,14 @@ Default scope:
 
 - input annotation: Seurat label-transfer clusters
 - samples: all 119 donors together
+- split group: `all` only
 - tensorQTL series: `seurat`
 - DEG support: `broad_interaction`
 
-Additional models, custom clusters, PRECAST details, sex-stratified eQTLs, and other DEG views are documented in `README_extra_models.md`.
+By default, eQTL and colocalization analyses produce tables only for the
+all-donor `all` group using Seurat clusters. Additional models, custom clusters,
+PRECAST details, sex-stratified eQTLs, and other DEG views are documented in
+`README_extra_models.md`.
 
 ## Inputs and Outputs
 
@@ -37,6 +41,20 @@ Default Seurat clusters:
 - `L6`
 - `Micro.Vasc` (`uvasc` in dataset IDs)
 - `Oligo`
+
+## Workflow Scripts
+
+Major workflow files:
+
+- `stage_required_data.sh`: stage required local inputs.
+- `00_get_SNP_PCs.sh`: compute genotype PCs.
+- `01_prep_inputs.R`: prepare all-donor Seurat tensorQTL inputs.
+- `02_run_tensorQTL.sh`: run tensorQTL for prepared datasets.
+- `02a_tensorQTL_cis.py`: tensorQTL cis wrapper called by the run script.
+- `03_eqtl_explore.Rmd`: build primary cis, independent, and significant-pair eQTL summary tables.
+- `03a_nominal_eQTLs.Rmd`: gather nominal all-donor Seurat eQTLs.
+- `03b_eQTL_boxplots.Rmd`: select example eQTL pairs and render genotype boxplots.
+- `utils.R`: shared DEG, GWAS, tensorQTL, summary, and plotting helpers.
 
 ## Prepare Inputs
 
@@ -107,9 +125,12 @@ The wrapper reads `prep_manifest.csv` when present and defaults to `--splits all
 ```r
 RUN_SEURAT <- TRUE
 RUN_CUSTOM_CLUSTER <- FALSE
-INCLUDE_SEX_SPLITS <- FALSE
 WRITE_DEG_VIEW_TABLES <- FALSE
 ```
+
+The `03*.Rmd` notebooks in this folder process only the `all` group by default.
+Nominal tables should also contain only `split == "all"` unless sex-stratified
+analysis is explicitly re-enabled in a separate workflow.
 
 Default outputs are written under:
 
@@ -129,6 +150,16 @@ Definition:
 - Take the union across PRECAST L-A, PRECAST L-R, Seurat L-A, and Seurat L-R.
 - Match eQTL eGenes by `gene_id`.
 - Do not context-match or sex-match.
+
+Disorder-related DEG columns in `map_significant_summary.csv` use the same
+F-test-filtered source rows, then require a same-disorder post-hoc t-test flag:
+
+- MDD-related: `F_NTC.MDD_ttest` or `M_NTC.MDD_ttest` is significant.
+- BPD-related: `F_NTC.BPD_ttest` or `M_NTC.BPD_ttest` is significant.
+
+These columns are disorder-related, not formal disorder-specific-only calls.
+The broad DEG columns remain the four-file F-test union. See
+`README_DEGs_by_disorder.md` for the statistical rationale.
 
 DEG source files:
 
