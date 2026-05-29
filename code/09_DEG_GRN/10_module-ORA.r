@@ -9,10 +9,13 @@ set.seed(123)
 
 refined.modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules-subset-refined.csv")
 
-mod_subset = c("A2M","IFITM3","CD74","HSPA1A","MT1X","SNHG14","GLUL",
-               "CAMK2N1","GAD1","GRIN1","PRKAR1A","UQCRH",
-               "APLP1","FTL","PLP1",
-		"missing")
+mod_subset = c("EEF1A1",#"EIF1",
+        "PLP1","CD74","COX4I1","GLUL","IFITM3","GRIN1",
+        "SNHG14","CAMK2N1","GAD1","A2M","PRKAR1A", #"UQCRH",
+        #"ADAMTS1",
+	"HSPA1A","MT1M",#"JUNB",
+        "GFAP",
+	"missing")
 names(mod_subset) = mod_subset
 
 # DEGs missing from modules
@@ -28,7 +31,6 @@ if(file.exists("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_modules-DEG-s
 	ora_modules = readRDS("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_modules-DEG-subset-refined_ORA-GO-results.rda")
 	cat("\nLoaded saved ORA GO results from: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_modules-DEG-subset-refined_ORA-GO-results.rda\n")
 } else {
-
 	ora_modules = lapply(mod_subset, function(x) {
 	  set.seed(123)
 	  if(x=="missing") {
@@ -46,6 +48,8 @@ if(file.exists("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_modules-DEG-s
 	cat("\nSaved ORA GO results to: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_modules-DEG-subset-refined_ORA-GO-results.rda\n")
 }
 
+stop("Early stopping to pick terms")
+
 # plot GO summary
 # how consistent is the GO phenotype with the DEGs in the module
 resList = lapply(names(ora_modules), function(x) {
@@ -62,7 +66,7 @@ names(resList) <- names(ora_modules)
 
 totalList = lapply(names(ora_modules), function(x) {
   if(x=="missing") {
-    return(66)
+    return(length(missing.degs))
   } else {
     return(nrow(filter(refined.modules, TF==x))+1)
   }

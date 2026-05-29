@@ -19,10 +19,11 @@ modules2 = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with
 # read in full DEG corr mtx for all DEG module plotting
 input.mtx = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_DEG-modules_target-pearson-correlation.csv", row.names=1)
 
-# pick out top predictor DEG network subset
-mod_subset = c("COX4I1","UQCRH","PRKAR1A","CAMK2N1","GRIN1","GAD1",
-               "SNHG14","GLUL","A2M","ADAMTS1","IFITM3","CD74",
-               "FTL","APLP1","PLP1","HSPA1A","MT1X")
+# pick out top predictor DEG network subset (top predictor network must have >6 components)
+mod_subset = c("EEF1A1","EIF1","PLP1","CD74","COX4I1","GLUL","IFITM3","GRIN1",
+	"SNHG14","CAMK2N1","GAD1","A2M","PRKAR1A","UQCRH","ADAMTS1","HSPA1A","MT1M","JUNB",
+	"GFAP")
+
 cat("\nNumber of INITIAL top predictor DEG network modules to highlight:", length(mod_subset), "\n")
 
 each_module = unique(modules2$TF)
@@ -67,8 +68,9 @@ input.mtx[matrixStats::rowMaxs(input.mtx, na.rm=T)>.2,
           matrixStats::colMaxs(input.mtx, na.rm=T)>.2]
 # keep UQCRH
 cat("\nTwo top predictor networks represent highly correlated target gene modules...")
-cat("\nRemove COX4I1 and keep UQCRH...\n")
-exclude = c("COX4I1")
+cat("\nRemove UQCRH and keep COX4I1...\n")
+cat("\nRemove EIF1 and keep EE1F1A...\n")
+exclude = c("UQCRH","EIF1")
 mod_subset = setdiff(mod_subset, exclude)
 
 cat("\nNumber of FINAL top predictor DEG network modules to highlight:", length(mod_subset), "\n")
@@ -130,58 +132,12 @@ p1 <- ggplot(sm.df, aes(x=clusters, y=gene_name_f))+
 
 
 
-
-# plot igraph of top predictor DEG modules to highlight
-
-plotModuleNetwork <- function(source_DF, filter_set="none", edge_color="grey", vertex_color="lightgoldenrod1") {
-  e.df = select(ungroup(tmp), from=TF, to=target, weight=importance)
-  if(length(filter_set)>1) {
-    e.df = filter(e.df, from %in% filter_set)
-  }
-  n.df = data.frame("node"=union(e.df$from, e.df$to),
-                    "is_TF"= union(e.df$from, e.df$to) %in% e.df$from)
-  
-  g <- graph_from_data_frame(e.df, directed=T, vertices=n.df)
-  E(g)$weight = e.df$weight
-  E(g)$arrow.size = 0
-  E(g)$color = edge_color
-  
-  V(g)$size = ifelse(n.df$is_TF, 5, 1)
-  V(g)$label = ifelse(n.df$is_TF, n.df$node, "")
-  V(g)$label.color = "black"
-  V(g)$color = vertex_color
-  
-  V(g)$label.family="sans"
-  V(g)$frame.width=0
-  V(g)$frame.color=NA
-  
-  set.seed(123)
-  lay1= layout_with_fr(g, weights=E(g)$weight)
-  
-  return(list("igraph"=g, "layout"=lay1))
-}
-
-## all
-filterSets = list("none", 
-                  c("UQCRH","CAMK2N1","PRKAR1A","GRIN1","GAD1"),
-                  c("GLUL","A2M","ADAMTS1","IFITM3","MT1X","CD74"),
-                  c("APLP1","FTL","PLP1","SNHG14","HSPA1A"))
-names(filterSets) <- c("all","neuron","bbb","other")
-
-plotList <- lapply(filterSets, function(x) plotModuleNetwork(tmp, filter_set=x))
-
-saveRDS(plotList, "processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_top-predictor-DEG-modules.rda")
-cat("\nSaved list of igraphs and layouts for top predictor DEG modules to: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_top-predictor-DEG-modules.rda\n")
-
-pdf(file="plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_top-predictor-DEG-modules.pdf", width=8, height=8)
+pdf(file="plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_top-predictor-subset_heatmap-dotplot.pdf", width=8, height=8)
 plot(phm[[4]])
 plot(phm1[[4]])
 p1 #dotplot of expression
-for(i in 1:length(plotList)) {
-  plot(plotList[[i]]$igraph, layout=plotList[[i]]$layout, main=names(plotList)[[i]])
-}
 dev.off()
-cat("\nSaved all plots to: plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_top-predictor-DEG-modules.pdf\n")
+cat("\nSaved all plots to: plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_top-predictor-subset_heatmap-dotplot.pdf\n")
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time())

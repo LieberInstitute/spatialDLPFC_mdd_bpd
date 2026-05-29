@@ -1,7 +1,6 @@
 #!/bin/bash
-
 #SBATCH --mem=5G
-#SBATCH --job-name=plot_aucell_DE-input-13162_modules-DEG-subset-refined_fixed-thold-05_swap-modules
+#SBATCH --job-name=plot_aucell_DE-input-13162_modules-DEG-subset-refined_fixed-thold-05_rev-modules
 #SBATCH -o code/09_DEG_GRN/logs/%x_%j.log
 
 echo "**** Job starts ****"

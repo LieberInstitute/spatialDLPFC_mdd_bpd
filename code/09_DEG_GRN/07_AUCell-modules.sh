@@ -1,7 +1,6 @@
 #!/bin/bash
-
 #SBATCH --mem=100G
-#SBATCH --job-name=aucell_DE-input-13162_modules-DEG-subset-refined_fixed-thold-05_seurat-label_swap-modules
+#SBATCH --job-name=aucell_DE-input-13162_modules-DEG-subset-refined_fixed-thold-05_seurat-label_rev-modules
 #SBATCH -o code/09_DEG_GRN/logs/%x_%j_%a.log
 #SBATCH --ntasks=10
 #SBATCH --array=1-8

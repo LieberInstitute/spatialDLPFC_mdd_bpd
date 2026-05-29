@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=500
-#SBATCH --job-name=refine_top-subset-modules_full_DE-input-13162_no-lowUMI_swap-modules
+#SBATCH --job-name=refine-modules_full_DE-input-13162_no-lowUMI_rev-modules
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_DEG_GRN/logs/%x_%j.log
 
 echo "**** Job starts ****"
