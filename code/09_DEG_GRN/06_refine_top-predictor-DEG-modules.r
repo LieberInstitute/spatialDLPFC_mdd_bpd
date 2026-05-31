@@ -13,11 +13,12 @@ set.seed(123)
 modules2 = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules.csv")
 
 #pick out top predictor DEG network subset
-mod_subset = c("EEF1A1",#"EIF1",
-	"PLP1","CD74","COX4I1","GLUL","IFITM3","GRIN1",
-        "SNHG14","CAMK2N1","GAD1","A2M","PRKAR1A", #"UQCRH",
-	"ADAMTS1","HSPA1A","MT1M","JUNB",
-        "GFAP")
+mod_subset = c("SNHG14","PRKAR1A","COX4I1","EEF1A1",
+  "PLP1",
+  "GFAP","GLUL","HSPA1A","MT1M",
+        "JUNB","ADAMTS1",
+  "IFITM3","CD74","A2M",
+  "GRIN1","CAMK2N1","GAD1")
 
 modules3 = filter(modules2, TF %in% mod_subset)
 

@@ -12,8 +12,11 @@ set.seed(123)
 # load in GRN adjacency output for correlations
 lg.mask = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr.csv")
 
+modules = filter(lg.mask, importance>1, rho>.2) %>%
+  group_by(regulation, TF) %>% add_tally(name="module_size") %>%
+  filter(module_size>=19)
+
 # load in module sets
-modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_interaction-modules.csv")
 modules2 = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules.csv")
 
 # read in full DEG corr mtx for all DEG module plotting
@@ -90,8 +93,16 @@ cat("\nNumber of DEGs present in the", length(unique(modules2$TF)), "DEG modules
 cat("\nNumber of DEGs present in the", length(mod_subset), "top predictor DEG modules:", length(intersect(mbv.degs, tmp$target)),"\n\n")
 
 
-# plot heatmap of expression for top predictor DEG modules
-#load in sce for heatmap and dotplots
+# plot dotplot of expression for top predictor DEG modules
+## revise mod_subset order
+mod_subset = c("SNHG14","PRKAR1A","COX4I1","EEF1A1",
+  "PLP1",
+  "GFAP","GLUL","HSPA1A","MT1M",
+	"JUNB","ADAMTS1",
+  "IFITM3","CD74","A2M",
+  "GRIN1","CAMK2N1","GAD1")
+
+##load in spe for dotplot
 load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI-dotplot_dx-sex-seurat-pc30.Rdata")
 cond_sex = c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M")
 spe_summ$seurat_label = factor(spe_summ$seurat_qual.genes_pc30.kweight50, levels=c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"),
@@ -101,7 +112,7 @@ spe_summ$sample_id = factor(paste(spe_summ$condition, spe_summ$sex, spe_summ$seu
                             levels=as.character(outer(cond_sex, seurat_levels, paste)))
 colnames(spe_summ) <- spe_summ$sample_id
 
-#load in dotplotDF function and format dataframe for dotplot
+##load in dotplotDF function and format dataframe for dotplot
 source("code/06_pseudobulk/custom_functions.r")
 
 sm.df = dotplotDF(spe_summ, mod_subset, swap_rownames="gene_name",
