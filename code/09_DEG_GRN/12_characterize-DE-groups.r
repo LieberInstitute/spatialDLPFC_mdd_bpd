@@ -8,9 +8,14 @@ set.seed(123)
 
 refined.modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules-subset-refined.csv")
 
-mod_subset = c("A2M","IFITM3","CD74","HSPA1A","MT1X","SNHG14","GLUL",
-               "CAMK2N1","GAD1","GRIN1","PRKAR1A","UQCRH",
-               "APLP1","FTL","PLP1")
+#mod_subset = c("A2M","IFITM3","CD74","HSPA1A","MT1X","SNHG14","GLUL",
+#               "CAMK2N1","GAD1","GRIN1","PRKAR1A","UQCRH",
+#               "APLP1","FTL","PLP1")
+mod_subset = c("SNHG14","PRKAR1A","COX4I1","EEF1A1",
+  "PLP1",
+  "GFAP","GLUL","HSPA1A","MT1M",
+  "IFITM3","CD74","A2M",
+  "GRIN1","CAMK2N1","GAD1")
 names(mod_subset) = mod_subset
 mod_subset = as.list(mod_subset)
 

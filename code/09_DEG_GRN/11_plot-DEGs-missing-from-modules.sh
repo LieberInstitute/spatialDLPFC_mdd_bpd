@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=plot-missing-DEGs_DE-input-13162_no-lowUMI_DEG-subset-refined
+#SBATCH --job-name=plot-missing-DEGs_DE-input-13162_no-lowUMI_DEG-subset-refined_rev-modules
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/09_DEG_GRN/logs/%x_%j.log
 
 echo "**** Job starts ****"
