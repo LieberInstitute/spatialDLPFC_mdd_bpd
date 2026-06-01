@@ -73,8 +73,11 @@ for(i in spot.genes) {
   
 spe_sub = spe[,spe$sample_id=="V13B23-308_D1"]
 
-mod_subset = c("A2M","IFITM3","CD74","HSPA1A","MT1X","SNHG14","GLUL",
-               "CAMK2N1","GAD1","GRIN1","PRKAR1A","UQCRH","APLP1","FTL","PLP1")
+mod_subset = c("SNHG14","PRKAR1A","COX4I1","EEF1A1",
+  "PLP1",
+  "GFAP","GLUL","HSPA1A","MT1M",
+  "IFITM3","CD74","A2M",
+  "GRIN1","CAMK2N1","GAD1")
 
 cpList <- readRDS("plots/colorPalettes.rds")
 
@@ -90,10 +93,36 @@ plist1 <- lapply(mod_subset, function(x) {
 })
 
 
-ggsave(file="plots/publication/Figure3/module_NTC-M_spot-plots.pdf",
+ggsave(file="plots/publication/modules/example-sample_module-AUCell_spot-plots.pdf",
        arrangeGrob(grobs=plist1, layout_matrix=rbind(1:5,6:10,11:15), top=NULL),
        height=5.5, width=9)
 
+
+# now plot expression
+for(i in mod_subset) {
+	spe[[i]] = logcounts(spe)[rowData(spe)$gene_name==i,]
+}
+
+spe_sub = spe[,spe$sample_id=="V13B23-308_D1"]
+
+plist2 <- lapply(mod_subset, function(x) {
+	max.val = max(colData(spe)[[x]])
+	max.valr = round(max.val,1)
+	if(max.valr<max.val) max.valr=max.valr+.1
+
+  p = make_escheR(spe_sub) |> add_ground(var="smoothed_k9_1663",
+                                         stroke=.3, point_size = .5) |>
+    add_fill(var=x, point_size = .5)
+  p2 <- p+scale_color_manual(values=c(cpList$smoothed.light, "drop"="grey"), guide="none")+
+    scale_fill_gradient(limits=c(0,max.valr), low="white",high="black", guide="none")+
+    labs(subtitle=x)+
+    theme(plot.subtitle=element_text(size=9))
+  return(rasterize(p2, dpi=200))
+})
+
+ggsave(file="plots/publication/modules/example-sample_module-expr_spot-plots.pdf",
+       arrangeGrob(grobs=plist2, layout_matrix=rbind(1:5,6:10,11:15), top=NULL),
+       height=5.5, width=9)
 
 ## Reproducibility information
 print("Reproducibility information:")

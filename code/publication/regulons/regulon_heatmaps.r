@@ -39,8 +39,14 @@ colnames(aucell_modules) = gsub("Regulon\\.for\\.", "mod_", colnames(aucell_modu
 aucell_modules2 = aucell_modules[rownames(aucell),]
 
 cor.mtx = cor(aucell_modules2[,grep("mod_", colnames(aucell_modules))], aucell[,reg_subset])
-mod_subset = c("A2M","IFITM3","CD74","HSPA1A","MT1X","SNHG14","GLUL",
-               "CAMK2N1","GAD1","GRIN1","PRKAR1A","UQCRH","APLP1","FTL","PLP1")
+#mod_subset = c("A2M","IFITM3","CD74","HSPA1A","MT1X","SNHG14","GLUL",
+#               "CAMK2N1","GAD1","GRIN1","PRKAR1A","UQCRH","APLP1","FTL","PLP1")
+mod_subset = c("SNHG14","PRKAR1A","COX4I1","EEF1A1",
+  "PLP1",
+  "GFAP","GLUL","HSPA1A","MT1M",
+  "IFITM3","CD74","A2M",
+  "GRIN1","CAMK2N1","GAD1")
+
 rownames(cor.mtx) = gsub("mod_","", rownames(cor.mtx))
 
 ## now make secondary matrix describing the overlap of genes to label with values
@@ -65,7 +71,8 @@ rownames(m2) = df2$regulon
 m3 = m2
 m3[m3==0] = ""
 
-phm2 = pheatmap(t(cor.mtx[mod_subset,reg_subset]), cluster_row=F, cluster_col=F,
+phm2 = pheatmap(t(cor.mtx[mod_subset,reg_subset]), #cluster_row=F, 
+	cluster_col=F,
          color = colorRampPalette(col.pal)(100), breaks = seq(-1, 1, length.out=101),
 	 display_numbers=m3[reg_subset,mod_subset], number_col="black",
          angle_col=90, main= "AUCell correlation (DEG modules vs regulons)")
