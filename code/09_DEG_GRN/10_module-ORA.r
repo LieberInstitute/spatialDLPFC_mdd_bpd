@@ -51,12 +51,12 @@ if(file.exists("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_modules-DEG-s
 #stop("Early stopping to pick terms")
 
 select.terms = list("A2M"=c("GO:0150104","GO:0003018","GO:2001214"), #A2M
-                 "IFITM3"=c("GO:0071356","GO:0002526","GO:0019955"), #IFITM3
+                 "IFITM3"=c("GO:0062023","GO:0002526","GO:0019955"), #IFITM3
                  "CD74"=c("GO:0098883","GO:0001774","GO:0001818"), #CD74
-                 "HSPA1A"=c("GO:2001233","GO:0048545","GO:0034599"), #HSPA1A "GO:1900745",
+                 "HSPA1A"=c("GO:0048545","GO:0034599","GO:0034612"), #HSPA1A
                  "MT1M"=c("GO:0010038","GO:0098754","GO:0045089"), #MT1M
                  "SNHG14"=c("GO:0001217","GO:0042393","GO:0141108"), #SNHG14
-                 "GLUL"=c("GO:0051384","GO:0036293","GO:0070374"), #GLUL "GO:0071385"
+                 "GLUL"=c("GO:0036293","GO:0070374","GO:0051384"), #GLUL
                  "GAD1"=c("GO:0098982","GO:0033555","GO:0001664"), #GAD1
                  "CAMK2N1"=c("GO:0008331"), #CAMK2N1
                  "GRIN1"=c("GO:0048167","GO:0042752","GO:0014069"), #GRIN1
@@ -67,7 +67,7 @@ select.terms = list("A2M"=c("GO:0150104","GO:0003018","GO:2001214"), #A2M
                  "GFAP"=c("GO:0072331","GO:0010506","GO:1904018"), #GFAP
                  "PLP1"=c("GO:0008366","GO:0043209"), #PLP1
                  # DEGs missing from modules
-                 "missing"=c("GO:0005179","GO:0004725","GO:0005833","GO:0062023","GO:0101002")
+                 "missing"=c("GO:0005179","GO:0033549","GO:0005833","GO:0101002")
 )
 
 mod_subset = c("SNHG14","PRKAR1A","COX4I1","EEF1A1",
@@ -88,7 +88,7 @@ facet_y = do.call(c, lapply(mod_subset,
                                   return(x)
                                 } else {
                                   if(x=="missing") {
-                                    return(rep(x,5))
+                                    return(rep(x,4))
                                   } else {
                                     return(rep(x,3))
                                   }
