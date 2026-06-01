@@ -87,10 +87,10 @@ tmp = filter(modules2, TF %in% mod_subset)
 source("code/09_DEG_GRN/load_DEGs.r")
 mbv.degs = unique(do.call(rbind, sigList)$gene_name)
 
-cat("\nNumber of DEGs present in GRN output:", length(intersect(mbv.degs, lg.mask$target)),"\n")
-cat("\nNumber of DEGs present in the", length(unique(modules$TF)), "interaction modules:", length(intersect(mbv.degs, modules$target)),"\n")
-cat("\nNumber of DEGs present in the", length(unique(modules2$TF)), "DEG modules:", length(intersect(mbv.degs, modules2$target)),"\n")
-cat("\nNumber of DEGs present in the", length(mod_subset), "top predictor DEG modules:", length(intersect(mbv.degs, tmp$target)),"\n\n")
+cat("\nNumber of DEGs present in GRN output:", length(intersect(mbv.degs, c(lg.mask$target, lg.mask$TF))),"\n")
+cat("\nNumber of DEGs present in the", length(unique(modules$TF)), "interaction modules:", length(intersect(mbv.degs, c(modules$target, modules$TF))),"\n")
+cat("\nNumber of DEGs present in the", length(unique(modules2$TF)), "DEG modules:", length(intersect(mbv.degs, c(modules2$target, modules2$TF))),"\n")
+cat("\nNumber of DEGs present in the", length(mod_subset), "top predictor DEG modules:", length(intersect(mbv.degs, c(tmp$target, tmp$TF))),"\n\n")
 
 
 # plot dotplot of expression for top predictor DEG modules

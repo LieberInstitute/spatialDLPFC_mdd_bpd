@@ -40,20 +40,19 @@ order1 = mutate(bar.df, is_nrn = cellType %in% c("InhN","ExcN")) %>% group_by(ge
 # modify order by putting HB modules and ADAMTS1 module at end, followed by ones not present in snRNAseq dataset
 #HB module
 order2 = order1[c(grep("HB",order1), setdiff(1:length(order1), grep("HB",order1)))]
-#ADAMTS1
-adj = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr.csv")
-c1 <- filter(adj, TF=="ADAMTS1", target %in% order1, importance>1)$target
-order3 = c(c1, setdiff(order2, c1))
-order3 = c(rev(c("TM4SF1","MGP","C11orf96","CRISPLD2","COL4A1","LMOD1","ADAMTS9")), setdiff(order2, c1))
-#visual improvement on order
-order4 = order3[c(1:12,14:15,16,13,17:53,55,56,58,57,60,59,54,61,62)]
+##ADAMTS1
+#adj = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr.csv")
+#c1 <- filter(adj, TF=="ADAMTS1", target %in% order1, importance>1)$target
+#order3 = c(c1, setdiff(order2, c1))
+#order3 = c(rev(c("TM4SF1","MGP","C11orf96","CRISPLD2","COL4A1","LMOD1","ADAMTS9")), setdiff(order2, c1))
+##visual improvement on order
+#order4 = order3[c(1:12,14:15,16,13,17:53,55,56,58,57,60,59,54,61,62)]
 
-#order3 = order2[c(c(4,10,13,15,16,17,29), setdiff(1:length(order2), c(4,10,13,15,16,17,29)))]
-#order3[11:18] = c("ACY3","ITGAX","P2RY12","CHI3L2","GBP1","CD44","APLNR","SERTAD1")
+order3 = c(setdiff(order3, c("SST","CORT","CRH","VGF")), c("VGF","CORT","SST","CRH"))
 
-order4 = c(setdiff(missing.degs, order4), order4)
+order4 = c(setdiff(missing.degs, order3), order3)
 
-bar.df$gene_name = factor(bar.df$gene_name, levels=order4)
+bar.df$gene_name = factor(bar.df$gene_name, levels=order3)
 
 col.pal = c("Vasc"=cpList$low.res.light[["Micro.Vasc"]],
             "Micro"=cpList$low.res.light[["L3"]],

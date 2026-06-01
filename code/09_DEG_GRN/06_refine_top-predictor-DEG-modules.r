@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 # load in module sets
-modules2 = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules.csv")
+deg.modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules.csv")
 
 #pick out top predictor DEG network subset
 mod_subset = c("SNHG14","PRKAR1A","COX4I1","EEF1A1",
@@ -20,13 +20,13 @@ mod_subset = c("SNHG14","PRKAR1A","COX4I1","EEF1A1",
   "IFITM3","CD74","A2M",
   "GRIN1","CAMK2N1","GAD1")
 
-modules3 = filter(modules2, TF %in% mod_subset)
+deg.subset = filter(deg.modules, TF %in% mod_subset)
 
 cat("\nPlot unrefined modules in top predictor DEG modules to highlight...\n")
 plist = lapply(mod_subset, function(x) {
-  df1 = filter(modules3, TF==x) %>% arrange(desc(importance)) %>%
+  df1 = filter(deg.subset, TF==x) %>% arrange(desc(importance)) %>%
     select(TF, target, importance) %>% mutate(is_original=T)
-  df2 = filter(modules3, target %in% df1$target) %>% select(TF, target, importance)
+  df2 = filter(deg.subset, target %in% df1$target) %>% select(TF, target, importance)
 
   df2 = mutate(df2, x_lab= factor(target, levels=df1$target)) %>%
     left_join(df1, by=c("TF","target","importance")) %>%
@@ -40,108 +40,133 @@ plist = lapply(mod_subset, function(x) {
 #refine subset of DEG modules
 cat("\nRefine top predictor DEG modules to reduce the amount of overlap of non-important target genes...\n")
 
+## define custom functions
+refineTargets <- function(seed_df) {
+  ### isolate out the least important module
+  not.min = filter(seed_df, is_min_imp==F)
+  ### the rest
+  is.min = filter(seed_df, is_min_imp==T)
+  
+  ### if for any of the modules the importance is >1.5x the least important module, keep
+  tmp3 = left_join(select(not.min, TF, target, importance, rank_imp),
+                   select(is.min, TF, target, importance),
+                   by="target", suffix=c("_not.min","_is.min")) %>%
+    mutate(rel_imp=importance_not.min/importance_is.min)
+  
+  notpass = filter(tmp3, rel_imp<1.5)
+  ## if the most important relationship didn't pass, keep all module-target relationships for that target
+  keep.all = filter(seed_df, target %in% filter(notpass, rank_imp==1)$target) %>% 
+    select(TF, target, importance)
+  
+  
+  yespass = filter(tmp3, rel_imp>1.5)
+  #### sanity check
+  #nrow(filter(yespass, target %in% keep.all$target)) #0, good
+  
+  ## if only 1 relationship passed, keep and remove from future
+  keep.1 = group_by(yespass, target) %>% add_tally() %>% filter(n==1)
+  #### sanity check that all relationships in this bucket are the most importance module-target pair
+  #nrow(filter(keep.1, rank_imp!=1)) #0, good
+  
+  keep.complete = bind_rows(keep.all, select(keep.1, TF=TF_not.min, target, importance=importance_not.min))
+  remaining.multi = filter(yespass, !target %in% keep.1$target) %>%
+    group_by(target) %>% add_tally() %>% filter(n>1)
+  
+  return(list("keep"=keep.complete, "evaluate"=filter(not.min, target %in% remaining.multi$target)))
+}
+
+
 ## isolate genes that are unique to 1 module
-unique.targets = group_by(modules3, target) %>% add_tally(name="n_mods") %>% filter(n_mods==1) %>%
+unique.targets = group_by(deg.subset, target) %>% add_tally(name="n_mods") %>% filter(n_mods==1) %>%
   select(TF, target, importance)
 
 ## isolate genes that are present in >1 module
-multi.targets = group_by(modules3, target) %>% add_tally(name="n_mods") %>% filter(n_mods>1) %>%
-	group_by(target) %>% mutate(rank_imp=rank(-importance), is_min_imp=rank_imp==n_mods)
+multi.targets = group_by(deg.subset, target) %>% add_tally(name="n_mods") %>% filter(n_mods>1) %>%
+  group_by(target) %>% mutate(rank_imp=rank(-importance), is_min_imp=rank_imp==n_mods)
 
-## create first filter by isolating genes where the most important module is >1.5x more important than the second most important module
-top.targets = filter(multi.targets, rank_imp==1)
-second.targets = filter(multi.targets, rank_imp==2)
+## set unique as seed for keeping refined module-target pairs
+refined.targets <- unique.targets
+## while there are multi targets that have unequal importance between different module-target pairs, run refineTargets function
+while(nrow(multi.targets)>0) {
+  cat("\nDim refined.targets:", nrow(refined.targets))
+  outList <- refineTargets(seed_df= multi.targets)
+  refined.targets <- bind_rows(refined.targets, outList$keep)
+  multi.targets <- group_by(outList$evaluate, target) %>% mutate(n_mods=n(), rank_imp=rank(-importance), is_min_imp=rank_imp==n_mods) 
+}
 
-tmp = left_join(select(top.targets, TF, target, importance),
-                select(second.targets, TF, target, importance, is_min_imp),
-                 by=c("target"), suffix=c("_max","_min")) %>%
-  mutate(rel_imp=importance_max/importance_min)
-
-### if true, keep top only
-keep.top = filter(tmp, rel_imp>1.5) %>% select(TF=TF_max, target, importance=importance_max)
-
-### if not true AND there are only two modules for the gene, keep both
-keep.both = bind_rows(filter(tmp, rel_imp<=1.5, is_min_imp==T) %>% select(TF=TF_max, target, importance=importance_max),
-                     filter(tmp, rel_imp<=1.5, is_min_imp==T) %>% select(TF=TF_min, target, importance=importance_min))
-
-## start dframe with refined module-targets
-keep.complete = bind_rows(unique.targets, keep.top, keep.both)
-
-## reduce the dframe with targets in >1 module to exclude elements we decided to keep 
-multi.targets2 = filter(multi.targets, !target %in% union(keep.top$target, keep.both$target))
-
-## create second filter by isolating genes where the most important module is >1.5x more important than the third most important module
-top.targets = filter(multi.targets, rank_imp==1)
-third.targets = filter(multi.targets2, rank_imp==3)
-
-tmp1 = left_join(select(top.targets, TF, target, importance),
-                select(third.targets, TF, target, importance, is_min_imp),
-                by=c("target"), suffix=c("_max","_min")) %>%
-  mutate(rel_imp=importance_max/importance_min)
-
-### where the gene is present in only 3 modules and the most important is <1.5x more important than the least important, keep as target in all modules
-keep.all = filter(multi.targets2, target %in% filter(tmp1, rel_imp<=1.5, is_min_imp==T)$target) %>% 
-  select(TF, target, importance)
-
-### where the most important module is >1.5x more important than the third most important module, keep the most important module
-keep.top1 = filter(tmp1, rel_imp>1.5) %>% select(TF=TF_max, target, importance=importance_max)
-#### in these cases, check to see if the second most important module is also >1.5x more important than the third most important module
-tmp2 = left_join(select(third.targets, TF, target, importance, is_min_imp), 
-          select(second.targets, TF, target, importance), by="target", suffix=c("_min","_max")) %>%
-  mutate(rel_imp=importance_max/importance_min) %>%
-  filter(target %in% keep.top1$target)
-#### if second is also >1.5x, keep the second most important module
-keep.top2 = filter(tmp2, rel_imp>1.5) %>% select(TF=TF_max, target, importance=importance_max)
-
-## add kept decisions to all kept elements
-keep.complete = bind_rows(keep.complete, keep.all, keep.top1, keep.top2)
-
-#setdiff(multi.targets2$target, keep.complete$target)
-#just a couple more to go that have rel_imp<1.5 and aren't yet min_imp
-
-## there are a few targets remaining with 4-5 modules for each target, and we have already established that top 1-2 aren't greater than 3rd place
-remaining.targets = filter(tmp1, rel_imp<1.5, is_min_imp==F)$target
-
-### isolate out the least important module
-not.min = filter(multi.targets2, target %in% remaining.targets, is_min_imp==F)
-### the rest
-is.min = filter(multi.targets2, target %in% remaining.targets, is_min_imp==T)
-
-### if for any of the modules the importance is >1.5x the least important module, keep
-tmp3 = left_join(select(not.min, TF, target, importance, rank_imp),
-          select(is.min, TF, target, importance),
-          by="target", suffix=c("_not.min","_is.min")) %>%
-  mutate(rel_imp=importance_not.min/importance_is.min)
-
-keep.any = filter(tmp3, rel_imp>1.5)
-
-### if none are, keep all
-keep.all = filter(multi.targets2, target %in% setdiff(remaining.targets, keep.any$target)) %>%
-  select(TF, target, importance)
-
-## final additions to refined set
-keep.complete = bind_rows(keep.complete, select(keep.any, TF=TF_not.min, target, importance=importance_not.min),
-          keep.all)
-
-## remove any genes corresponding to our module subset from all other modules
-### do this because weight is unfair, the weight/importance should always be highest for self but can't reflect that so just removing from other modules
-refined.modules = filter(keep.complete, !target %in% mod_subset)
-
-(mod.size = group_by(refined.modules, TF) %>% tally(name="n_targets") %>%
-  arrange(n_targets))
-
-too.small = filter(mod.size, n_targets<10)
-refined.modules2 = filter(refined.modules, !TF %in% too.small$TF) %>%
-  group_by(target) %>% add_tally(name="n_mods")
-
-write.csv(left_join(refined.modules2[,1:3], modules2[,1:5], by=c("TF","target","importance")),
-          "processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules-subset-refined.csv", row.names=F)
-cat("\nSaved refined top predictor DEG modules adj. file to: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules-subset-refined.csv\n")
-
+## filter out module genes from targets (unfair because strongest importance should be its own module but Inf weight not evaluatable)
+refined.targets <- filter(refined.targets, !target %in% mod_subset)
 
 # plot refined modules
 cat("\nPlot refined modules in top predictor DEG modules to highlight...\n")
 plist2 = lapply(mod_subset, function(x) {
+  df1 = filter(refined.targets, TF==x) %>% arrange(desc(importance)) %>%
+    mutate(is_original=T)
+  df2 = filter(refined.targets, target %in% df1$target)
+
+  df2 = mutate(df2, x_lab= factor(target, levels=df1$target)) %>%
+    left_join(df1, by=c("TF","target","importance")) %>%
+    mutate(is_original= ifelse(is.na(is_original), "F", "T"))
+  ggplot(df2, aes(x=x_lab, y=importance, color=is_original))+
+    geom_point(size=.5)+scale_color_manual(values=c("F"="red","T"="black"))+
+    scale_y_continuous(limits=c(0,max(df2$importance)))+labs(title=x, y="importance", x="module target genes")+
+    theme_minimal()+theme(axis.text.x=element_blank(), legend.position="none")
+})
+
+## number of DEGs represented
+source("code/09_DEG_GRN/load_DEGs.r")
+mbv.degs = unique(sig.df$gene_name)
+cat("\nNumber of DEGs present in the", length(mod_subset), "refined, un-filtered modules:", length(intersect(mbv.degs, c(refined.targets$target, refined.targets$TF))),"\n")
+
+## evaluate module size, minimum size =10 
+(mod.size = group_by(refined.targets, TF) %>% tally(name="n_targets") %>%
+  arrange(n_targets))
+too.small = filter(mod.size, n_targets<10)
+
+if(nrow(too.small)>0) {
+	cat("\n\nRemove modules with <10 DEG targets:", unique(too.small$TF),"\n")
+	(mod_subset = setdiff(mod_subset, unique(too.small$TF)))
+	
+	cat("\n\nRe-run refining to distribute these targets to other modules (if link present)...\n")
+	deg.subset = filter(deg.modules, TF %in% mod_subset)
+	
+	## isolate genes that are unique to 1 module
+	unique.targets = group_by(deg.subset, target) %>% add_tally(name="n_mods") %>% filter(n_mods==1) %>%
+	  select(TF, target, importance)
+
+	## isolate genes that are present in >1 module
+	multi.targets = group_by(deg.subset, target) %>% add_tally(name="n_mods") %>% filter(n_mods>1) %>%
+	  group_by(target) %>% mutate(rank_imp=rank(-importance), is_min_imp=rank_imp==n_mods)
+
+	## set unique as seed for keeping refined module-target pairs
+	refined.targets <- unique.targets
+	## while there are multi targets that have unequal importance between different module-target pairs, run refineTargets function
+	while(nrow(multi.targets)>0) {
+	  cat("\nDim refined.targets:", nrow(refined.targets))
+	  outList <- refineTargets(seed_df= multi.targets)
+	  refined.targets <- bind_rows(refined.targets, outList$keep)
+	  multi.targets <- group_by(outList$evaluate, target) %>% mutate(n_mods=n(), rank_imp=rank(-importance), is_min_imp=rank_imp==n_mods)
+	}
+
+	## filter out module genes from targets (unfair because strongest importance should be its own module but Inf weight not evaluatable)
+	refined.targets <- filter(refined.targets, !target %in% mod_subset)
+
+	## number of DEGs represented
+	cat("\nNumber of DEGs present in the", length(mod_subset), "refined, filtered modules:", length(intersect(mbv.degs, c(refined.targets$target, refined.targets$TF))),"\n")
+
+	## look at new module sizes
+	(mod.size = group_by(refined.targets, TF) %>% tally(name="n_targets") %>%
+	  arrange(n_targets))
+}
+
+refined.modules <- left_join(refined.targets, deg.subset[,1:5], by=c("TF","target","importance"))
+write.csv(refined.modules,
+          "processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules-subset-refined.csv", row.names=F)
+cat("\nSaved refined top predictor DEG modules adj. file to: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules-subset-refined.csv\n")
+
+# plot refined modules
+cat("\nPlot refined modules in top predictor DEG modules to highlight...\n")
+plist3 = lapply(mod_subset, function(x) {
   df1 = filter(refined.modules, TF==x) %>% arrange(desc(importance)) %>%
     mutate(is_original=T)
   df2 = filter(refined.modules, target %in% df1$target)
@@ -157,7 +182,7 @@ plist2 = lapply(mod_subset, function(x) {
 
 # make refined igraph
 cat("\nPlot refined modules igraph...\n")
-e.df = select(ungroup(refined.modules2), from=TF, to=target, weight=importance)
+e.df = select(ungroup(refined.modules), from=TF, to=target, weight=importance)
 n.df = data.frame("node"=union(e.df$from, e.df$to),
         "is_TF"= union(e.df$from, e.df$to) %in% e.df$from)
 
@@ -186,6 +211,7 @@ pdf(file="plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_refining-DEG-modules.pdf",
     width=7, height=9)
 do.call(grid.arrange, c(plist, ncol=3, top="Before refining..."))
 do.call(grid.arrange, c(plist2, ncol=3, top="After refining..."))
+do.call(grid.arrange, c(plist3, ncol=3, top="After refining and filtering..."))
 plot(g, layout=lay1, main="Refined DEG modules")
 dev.off()
 

@@ -40,9 +40,14 @@ cat("\nNumber of DEGs represented in interaction modules:", length(intersect(mbv
 #cat("\nSaved adjacency output filtered to modules to: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_interaction-modules.csv\n")
 
 # while we're at it, filter to only DEG targets and DEG modules must have at least 10 DEGs
+cat("\nDEG module criteria:  importance > 1, rho > 0.2, at least 19 genes meeting these critera (20 including self), at least 10 DEGs in module\n")
 deg.modules = filter(modules, target %in% mbv.degs) %>% 
   group_by(TF) %>% add_tally(name="n_DEGs") %>%
   filter(n_DEGs>=10)
+
+cat("\nNumber of DEG modules:", length(unique(deg.modules$TF)))
+cat("\nNumber of DEGs represented in DEG modules:", length(intersect(mbv.degs, deg.modules$target)), "\n")
+
 write.csv(deg.modules, "processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules.csv", row.names=F)
 cat("\nSaved adjacency output filtered to modules (with at least 10 DEGs) to: processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules.csv\n\n")
 

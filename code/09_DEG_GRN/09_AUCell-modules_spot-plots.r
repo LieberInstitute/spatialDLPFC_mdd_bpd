@@ -40,8 +40,8 @@ aucell = aucell[rownames(colData(spe)),]
 m1 = as.matrix(aucell[,1:(grep("seurat_label", colnames(aucell))-1)])
 
 
-plot_expr = TRUE
-#plot_expr = FALSE
+#plot_expr = TRUE
+plot_expr = FALSE
 
 if(!plot_expr) {
 #scale aucell
