@@ -48,7 +48,7 @@ order2 = order1[c(grep("HB",order1), setdiff(1:length(order1), grep("HB",order1)
 ##visual improvement on order
 #order4 = order3[c(1:12,14:15,16,13,17:53,55,56,58,57,60,59,54,61,62)]
 
-order3 = c(setdiff(order3, c("SST","CORT","CRH","VGF")), c("VGF","CORT","SST","CRH"))
+order3 = c(setdiff(order2, c("SST","CORT","CRH","VGF")), c("VGF","CORT","SST","CRH"))
 
 order4 = c(setdiff(missing.degs, order3), order3)
 
