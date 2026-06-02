@@ -121,8 +121,28 @@ p2 <- ggplot(plot.df, aes(y=Description2, x=module, size=Count, color=log2(FoldE
   theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.5),
                    strip.text.y=element_text(angle=0))
 
-ggsave(file="plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_subset-refined-modules_ORA-GO-dotplot.pdf",
-	p2, width=7, height=10)
+plot.df$facet_rows = factor(plot.df$facet_rows, levels=names(mod_subset),
+                       labels=c("multi","multi","multi","multi",
+                                "Oligo",
+                                "Astro","Astro",
+                                "Vasc","Vasc","Vasc","Micro","Vasc",
+                                "ExcN","ExcN","InhN",
+                                "missing"))
+plot.df$facet_rows = factor(as.character(plot.df$facet_rows), levels=c("multi","Oligo","Astro","Vasc","Micro","ExcN","InhN","missing"))
+
+p3 <- ggplot(plot.df, aes(y=Description2, x=module, size=Count, color=log2(FoldEnrichment)))+
+  geom_count()+
+  scale_color_gradient("log2\nFold\nEnrich.", low="white", high="black", limits=c(0,8))+
+  scale_size("# DEGs", range=c(2,6), breaks=c(3,9,15,21))+
+  facet_grid(rows=vars(facet_rows), scales="free_y", space="free_y")+
+  labs(y="")+
+  theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.5),
+                   strip.text.y=element_text(angle=0))
+
+pdf(file="plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_subset-refined-modules_ORA-GO-dotplot.pdf", width=7, height=10)
+p2
+p3
+dev.off()
 cat("\nSaved representative term dotplot to: plots/09_DEG_GRN/spe-n119_13162-no-lowUMI_subset-refined-modules_ORA-GO-dotplot.pdf\n")
 
 
