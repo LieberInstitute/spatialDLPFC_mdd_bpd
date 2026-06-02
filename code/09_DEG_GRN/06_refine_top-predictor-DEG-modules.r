@@ -177,7 +177,7 @@ plist3 = lapply(mod_subset, function(x) {
   ggplot(df2, aes(x=x_lab, y=importance, color=is_original))+
     geom_point(size=.5)+scale_color_manual(values=c("F"="red","T"="black"))+
     scale_y_continuous(limits=c(0,max(df2$importance)))+labs(title=x, y="importance", x="module target genes")+
-    theme_minimal()+theme(axis.text.x=element_blank(), legend.position="none")
+    theme_minimal()+theme(axis.text.x=element_blank(), legend.position="none", panel.grid.minor=element_blank(), panel.grid.major.x=element_blank())
 })
 
 # make refined igraph
