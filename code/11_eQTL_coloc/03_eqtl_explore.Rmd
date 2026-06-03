@@ -11,6 +11,11 @@ suppressPackageStartupMessages({
 })
 here::i_am('.git/HEAD')
 
+## TODO: replace the plot rsID cache with a stable genotype-wide dbSNP
+## annotation table once the correct source genotype BCF/VCF is staged.
+## The current PLINK2 pvar IDs are normalized chr:pos:REF:ALT IDs and do
+## not preserve dbSNP IDs for all genotype variants.
+
 repo_root <- here()
 ref_dir <- here("processed-data", "ref")
 plots_dir <- here("plots", "11_eQTL_coloc")

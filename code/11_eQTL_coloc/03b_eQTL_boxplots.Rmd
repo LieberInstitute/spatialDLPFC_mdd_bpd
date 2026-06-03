@@ -25,6 +25,10 @@ plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05"
 
 context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
 disorders <- c("BPD", "MDD", "SCZD")
+plot_disorders <- c("MDD", "BPD")
+publication_pdf_width <- 3.5
+publication_pdf_height <- 5
+dx_palette <- c(NTC = "#7F7F7F", MDD = "#FB8861", BPD = "#9260B2")
 
 dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
@@ -51,9 +55,89 @@ safe_plot_slug <- function(x) {
   gsub("[^A-Za-z0-9._-]+", "_", x)
 }
 
-save_example_svg <- function(plot, filename, width = 8, height = 5.5) {
+save_eQTL_boxplot_pdf <- function(plot, filename,
+                                  width = publication_pdf_width,
+                                  height = publication_pdf_height) {
   out_file <- file.path(plots_dir, filename)
-  ggsave(out_file, plot, width = width, height = height, device = "svg")
+  grDevices::pdf(out_file, width = width, height = height, onefile = TRUE)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  print(plot)
+  out_file
+}
+
+eQTL_boxplot_title <- function(eqtl_row, disorder = NULL) {
+  row <- as.data.table(eqtl_row)[1]
+  if (!is.null(disorder) && nzchar(disorder)) {
+    return(paste0(disorder, " ", row$context, ": ", row$gene_name))
+  }
+  rsid <- if ("rsid" %in% names(row)) row$rsid else NA_character_
+  variant_label <- if (!is.na(rsid) && nzchar(rsid)) {
+    rsid
+  } else {
+    row$variant_id
+  }
+  paste0(row$context, ": ", row$gene_name, " ", variant_label)
+}
+
+pdf_page_count <- function(pdf_file) {
+  if (!nzchar(Sys.which("gs"))) return(NA_integer_)
+  page_count_ps <- tempfile("eqtl_pdf_page_count_", fileext = ".ps")
+  on.exit(unlink(page_count_ps), add = TRUE)
+  writeLines(
+    paste0("(", normalizePath(pdf_file), ") (r) file runpdfbegin pdfpagecount = quit"),
+    page_count_ps
+  )
+  page_count <- system2(
+    "gs",
+    c("-q", "-dNOSAFER", "-dNODISPLAY", page_count_ps),
+    stdout = TRUE
+  )
+  as.integer(page_count[length(page_count)])
+}
+
+save_eQTL_boxplots <- function(eqtl_dt, dataset_id, out_file, disorder = NULL,
+                               axis_mode = "ref", plot_style = "publication",
+                               width = publication_pdf_width,
+                               height = publication_pdf_height) {
+  plot_style <- match.arg(plot_style, c("publication", "current"))
+  dt <- as.data.table(copy(eqtl_dt))
+  assert_cols(
+    dt,
+    c("dataset_id", "context", "gene_id", "gene_name", "phenotype_id", "variant_id", "pval_nominal"),
+    "eqtl_dt"
+  )
+  dataset_value <- dataset_id
+  dt <- dt[dt$dataset_id == dataset_value]
+  if (!is.null(disorder)) {
+    assert_cols(dt, "disorder", "eqtl_dt")
+    disorder_value <- disorder
+    dt <- dt[dt$disorder == disorder_value]
+  }
+  if (nrow(dt) == 0L) stop("No eQTL rows for ", dataset_id)
+
+  if (!"rsid" %in% names(dt)) {
+    dt[, rsid := rsid_lut[J(dt$variant_id), rsid]]
+  }
+  dt[is.na(rsid), rsid := ""]
+
+  setorder(dt, gene_name, gene_id, pval_nominal, variant_id)
+  dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
+  grDevices::pdf(out_file, width = width, height = height, onefile = TRUE)
+  on.exit(grDevices::dev.off(), add = TRUE)
+
+  ## render one gene-variant pair per page.
+  for (i in seq_len(nrow(dt))) {
+    row <- dt[i]
+    pobj <- plot_eQTL_boxplots(
+      dataset_id,
+      row,
+      axis_mode = axis_mode,
+      gwas_disorder = if (!is.null(disorder)) disorder else "MDD",
+      title = eQTL_boxplot_title(row, disorder = disorder),
+      plot_style = plot_style
+    )
+    print(pobj$plot)
+  }
   out_file
 }
 
@@ -199,6 +283,104 @@ build_rsid_cache <- function(files, out_file) {
   cache[]
 }
 
+collapse_semicolon_values <- function(x) {
+  x <- as.character(x[!is.na(x) & nzchar(as.character(x))])
+  vals <- unlist(strsplit(x, ";", fixed = TRUE), use.names = FALSE)
+  vals <- sort(unique(vals[!is.na(vals) & nzchar(vals)]))
+  if (length(vals) == 0L) "" else paste(vals, collapse = ";")
+}
+
+query_bcf_rsids <- function(variant_ids, disorder) {
+  if (!nzchar(Sys.which("bcftools"))) {
+    warning("bcftools not found; rsID lookup will use existing cache only.")
+    return(data.table(variant_id = character(), rsid = character(), rsid_sources = character()))
+  }
+
+  ids <- parse_variant_id(variant_ids)
+  ids <- ids[!is.na(id_chr) & !is.na(id_pos) & !is.na(id_REF) & !is.na(id_ALT)]
+  if (nrow(ids) == 0L) {
+    return(data.table(variant_id = character(), rsid = character(), rsid_sources = character()))
+  }
+  ids[, `:=`(id_pos = as.integer(id_pos), id_REF = toupper(id_REF), id_ALT = toupper(id_ALT))]
+
+  region_file <- tempfile("eqtl_rsid_regions_", fileext = ".bed")
+  err_file <- tempfile("eqtl_rsid_bcf_err_")
+  on.exit(unlink(c(region_file, err_file)), add = TRUE)
+  regions <- unique(ids[, .(id_chr, start0 = id_pos - 1L, end1 = id_pos)])
+  fwrite(regions, region_file, sep = "\t", col.names = FALSE)
+
+  bcf_file <- gwas_bcf_path(disorder, repo_root = repo_root)
+  query_out <- system2(
+    "bcftools",
+    c("query", "-R", region_file, "-f", shQuote("%CHROM\\t%POS\\t%ID\\t%REF\\t%ALT\\n"), bcf_file),
+    stdout = TRUE,
+    stderr = err_file
+  )
+  status <- attr(query_out, "status")
+  if (!is.null(status) && status != 0L) {
+    warning("bcftools rsID query failed for ", disorder, ": ", paste(readLines(err_file, warn = FALSE), collapse = " "))
+    return(data.table(variant_id = character(), rsid = character(), rsid_sources = character()))
+  }
+  if (length(query_out) == 0L) {
+    return(data.table(variant_id = character(), rsid = character(), rsid_sources = character()))
+  }
+
+  q <- fread(
+    text = paste(query_out, collapse = "\n"),
+    col.names = c("id_chr", "id_pos", "rsid", "id_REF", "gwas_ALT")
+  )
+  q <- q[!is.na(rsid) & nzchar(rsid) & rsid != "."]
+  if (nrow(q) == 0L) {
+    return(data.table(variant_id = character(), rsid = character(), rsid_sources = character()))
+  }
+
+  q[, `:=`(id_pos = as.integer(id_pos), id_REF = toupper(id_REF), gwas_ALT = toupper(gwas_ALT))]
+  q[, query_row := .I]
+  q_expanded <- q[, .(
+    id_ALT = unlist(strsplit(gwas_ALT, ",", fixed = TRUE), use.names = FALSE)
+  ), by = .(query_row, id_chr, id_pos, id_REF, rsid)]
+  q_expanded[, variant_id := paste(id_chr, id_pos, id_REF, id_ALT, sep = ":")]
+  out <- q_expanded[ids, on = "variant_id", nomatch = 0L]
+  if (nrow(out) == 0L) {
+    return(data.table(variant_id = character(), rsid = character(), rsid_sources = character()))
+  }
+  out[, .(
+    rsid = collapse_semicolon_values(rsid),
+    rsid_sources = disorder
+  ), by = variant_id]
+}
+
+extend_rsid_cache <- function(variant_ids, disorders = plot_disorders, out_file = rsid_cache_file) {
+  variant_ids <- unique(as.character(variant_ids[!is.na(variant_ids) & nzchar(as.character(variant_ids))]))
+  if (length(variant_ids) == 0L) return(rsid_lut)
+
+  existing <- if (file.exists(out_file)) fread(out_file) else {
+    data.table(variant_id = character(), rsid = character(), rsid_sources = character())
+  }
+  assert_cols(existing, c("variant_id", "rsid", "rsid_sources"), basename(out_file))
+
+  cached_ids <- existing[!is.na(rsid) & nzchar(rsid), unique(variant_id)]
+  missing_ids <- setdiff(variant_ids, cached_ids)
+  if (length(missing_ids) > 0L) {
+    queried <- rbindlist(
+      lapply(disorders, function(dis) query_bcf_rsids(missing_ids, disorder = dis)),
+      use.names = TRUE,
+      fill = TRUE
+    )
+    existing <- rbindlist(list(existing, queried), use.names = TRUE, fill = TRUE)
+  }
+
+  cache <- existing[!is.na(variant_id) & nzchar(variant_id) & !is.na(rsid) & nzchar(rsid), .(
+    rsid = collapse_semicolon_values(rsid),
+    rsid_sources = collapse_semicolon_values(rsid_sources)
+  ), by = variant_id]
+  setorder(cache, variant_id)
+  fwrite(cache, out_file)
+  setkey(cache, variant_id)
+  rsid_lut <<- cache
+  cache[]
+}
+
 if (!file.exists(rsid_cache_file)) {
   rsid_lut <- build_rsid_cache(gwas_matched_files, rsid_cache_file)
 } else {
@@ -286,9 +468,10 @@ make_genotype_labels <- function(dosage_vec, allele0, allele1) {
 }
 
 format_variant_label <- function(variant_id) {
-  rsid <- rsid_lut[J(variant_id), rsid]
+  rsid <- rsid_lut$rsid[match(variant_id, rsid_lut$variant_id)]
   if (length(rsid) == 1L && !is.na(rsid) && nzchar(rsid)) {
-    sprintf("%s (%s)", variant_id, rsid)
+    ## keep dbSNP IDs visible on narrow publication PDF pages.
+    sprintf("%s\n%s", rsid, variant_id)
   } else {
     variant_id
   }
@@ -298,8 +481,10 @@ format_variant_label <- function(variant_id) {
 ```{r plot-function}
 plot_eQTL_boxplots <- function(dataset_id, eqtl_pairs, axis_mode = c("ref", "gwas_effect"),
                                gwas_disorder = "MDD", use_raw = FALSE,
-                               title = "auto") {
+                               title = "auto",
+                               plot_style = c("publication", "current")) {
   axis_mode <- match.arg(axis_mode)
+  plot_style <- match.arg(plot_style)
   eqtl_pairs <- as.data.table(copy(eqtl_pairs))
   assert_cols(eqtl_pairs, c("phenotype_id", "variant_id"), "eqtl_pairs")
   if (!"gene_name" %in% names(eqtl_pairs)) eqtl_pairs[, gene_name := phenotype_id]
@@ -415,36 +600,48 @@ plot_eQTL_boxplots <- function(dataset_id, eqtl_pairs, axis_mode = c("ref", "gwa
   if (is.na(context_label)) context_label <- dataset_id
   auto_title <- paste0(context_label, ": ", paste(unique(eqtl_pairs$gene_name), collapse = ", "))
   title_to_use <- if (identical(title, "auto")) auto_title else title
-
-  x_label <- if (axis_mode == "gwas_effect") {
-    paste0("Genotype ordered by ", gwas_disorder, " GWAS A1 effect allele")
-  } else {
-    "Genotype ordered by genome reference allele"
+  x_label <- if (plot_style == "publication") "Genotype" else ""
+  if (axis_mode == "gwas_effect") {
+    x_label <- paste0("Genotype ordered by ", gwas_disorder, " GWAS A1 effect allele")
+  }
+  y_label <- if (isTRUE(use_raw)) "Expression (tensorQTL BED)" else "Residualized expression"
+  box_alpha <- if (plot_style == "publication") 0.5 else 0.55
+  box_linewidth <- if (plot_style == "publication") 0.5 else 0.45
+  box_color <- if (plot_style == "publication") "gray70" else "gray45"
+  jitter_width <- if (plot_style == "publication") 0.2 else 0.18
+  jitter_alpha <- if (plot_style == "publication") 0.8 else 0.85
+  annot_hjust <- if (plot_style == "publication") 1.1 else 1.05
+  y_expand <- if (plot_style == "publication") c(0.16, 0.05) else c(0.18, 0.08)
+  if (plot_style == "publication" && !isTRUE(use_raw)) {
+    y_label <- "Residualized Expression"
   }
 
   p <- ggplot(plot_dt, aes(x = genotype, y = expression)) +
-    geom_boxplot(outlier.shape = NA, alpha = 0.55, linewidth = 0.45, color = "gray45", fill = "gray90") +
-    geom_jitter(aes(color = DX), width = 0.18, height = 0, size = 2, alpha = 0.85) +
+    geom_boxplot(outlier.shape = NA, alpha = box_alpha, linewidth = box_linewidth, color = box_color, fill = "gray90") +
+    geom_jitter(aes(color = DX), width = jitter_width, height = 0, size = 2, alpha = jitter_alpha) +
     geom_text(
       data = annot,
       aes(x = Inf, y = -Inf, label = label),
-      hjust = 1.05, vjust = -0.2, size = 3, inherit.aes = FALSE
+      hjust = annot_hjust, vjust = -0.2, size = 3, inherit.aes = FALSE
     ) +
     facet_wrap(~ facet, scales = "free") +
-    scale_color_manual(values = c(NTC = "#377eb8", MDD = "#e41a1c", BPD = "#4daf4a"), drop = FALSE) +
-    scale_y_continuous(expand = expansion(mult = c(0.18, 0.08))) +
+    scale_color_manual(values = dx_palette, drop = FALSE) +
+    scale_x_discrete(drop = TRUE) +
+    scale_y_continuous(expand = expansion(mult = y_expand)) +
     labs(
       title = title_to_use,
       x = x_label,
-      y = if (isTRUE(use_raw)) "Expression (tensorQTL BED)" else "Residualized expression",
+      y = y_label,
       color = "Dx"
     ) +
     theme_bw() +
     theme(
       legend.position = "bottom",
-      strip.text = element_text(size = 9),
-      plot.title = element_text(size = 12)
+      strip.text = element_text(size = 9)
     )
+  if (plot_style == "current") {
+    p <- p + theme(plot.title = element_text(size = 12))
+  }
 
   list(plot = p, data = plot_dt)
 }
@@ -552,6 +749,19 @@ examples <- rbindlist(
 )
 setcolorder(examples, c(intersect(example_cols, names(examples)), setdiff(names(examples), example_cols)))
 
+## attach dbSNP IDs for plotted examples before writing metadata.
+extend_rsid_cache(examples$variant_id, disorders = disorders)
+examples[, `:=`(
+  rsid = rsid_lut[J(examples$variant_id), rsid],
+  rsid_sources = rsid_lut[J(examples$variant_id), rsid_sources]
+)]
+examples[is.na(rsid), rsid := ""]
+examples[is.na(rsid_sources), rsid_sources := ""]
+missing_example_rsids <- examples[!nzchar(rsid), unique(variant_id)]
+if (length(missing_example_rsids) > 0L) {
+  stop("Missing rsIDs for example variants: ", paste(missing_example_rsids, collapse = ", "))
+}
+
 examples_file <- file.path(tables_dir, "eqtl_boxplot_examples.csv")
 fwrite(examples, examples_file)
 examples
@@ -580,33 +790,163 @@ for (ds in unique(examples$dataset_id)) {
 message("Wrote examples: ", examples_file)
 ```
 
-```{r plot-significant-examples, fig.width=8, fig.height=5.5}
+```{r prepare-deg-plot-pairs}
+sig_deg_pairs <- copy(sig[split == "all" & DEG == 1L])
+if (nrow(sig_deg_pairs) == 0L) stop("No significant broad DEG eQTL pairs found.")
+
+sig_deg_pairs[, context_order_rank := match(context, context_order)]
+setorder(sig_deg_pairs, context_order_rank, gene_name, gene_id, pval_nominal, variant_id)
+sig_deg_pairs <- sig_deg_pairs[, .SD[1], by = .(dataset_id, gene_id, variant_id)]
+sig_deg_pairs[, context_order_rank := match(context, context_order)]
+setorder(sig_deg_pairs, context_order_rank, gene_name, gene_id, pval_nominal, variant_id)
+
+sig_plot_degs <- rbindlist(lapply(plot_disorders, function(dis) {
+  dt <- copy(sig_deg_pairs)
+  dt[, `:=`(
+    disorder = dis,
+    example_type = "broad_deg_significant",
+    example_deg_basis = "broad_DEG"
+  )]
+  dt
+}), use.names = TRUE, fill = TRUE)
+setcolorder(sig_plot_degs, c(
+  "disorder", "example_type", "example_deg_basis",
+  setdiff(names(sig_plot_degs), c("disorder", "example_type", "example_deg_basis"))
+))
+
+## expand rsID coverage for the variants that will be plotted.
+extend_rsid_cache(sig_plot_degs$variant_id, disorders = plot_disorders)
+sig_plot_degs[, `:=`(
+  rsid = rsid_lut[J(sig_plot_degs$variant_id), rsid],
+  rsid_sources = rsid_lut[J(sig_plot_degs$variant_id), rsid_sources]
+)]
+sig_plot_degs[is.na(rsid), rsid := ""]
+sig_plot_degs[is.na(rsid_sources), rsid_sources := ""]
+
+core_plot_cols <- c("dataset_id", "gene_id", "phenotype_id", "variant_id")
+for (col in core_plot_cols) {
+  bad <- is.na(sig_plot_degs[[col]]) | !nzchar(as.character(sig_plot_degs[[col]]))
+  if (any(bad)) stop("Missing ", col, " in sig_plot_degs.")
+}
+
+expected_sig_plot_degs_rows <- length(plot_disorders) *
+  sig_deg_pairs[, uniqueN(paste(dataset_id, gene_id, variant_id, sep = "\r"))]
+if (nrow(sig_plot_degs) != expected_sig_plot_degs_rows) {
+  stop("Unexpected sig_plot_degs row count: ", nrow(sig_plot_degs), " != ", expected_sig_plot_degs_rows)
+}
+if (nrow(sig_plot_degs) != 526L) {
+  stop("Current sig_plot_degs row count is not 526: ", nrow(sig_plot_degs))
+}
+
+missing_deg_pvar <- setdiff(sig_plot_degs$variant_id, pvar$ID)
+if (length(missing_deg_pvar) > 0L) {
+  stop("DEG plot variants missing from pvar: ", paste(missing_deg_pvar, collapse = ", "))
+}
+
+for (ds in unique(sig_plot_degs$dataset_id)) {
+  expr_file <- file.path(tqtl_in_dir, paste0(ds, ".gene.expr.bed.gz"))
+  dt <- fread(expr_file, select = "ID")
+  missing_genes <- setdiff(sig_plot_degs[dataset_id == ds, phenotype_id], dt$ID)
+  if (length(missing_genes) > 0L) {
+    stop("DEG plot genes missing from expression BED for ", ds, ": ", paste(missing_genes, collapse = ", "))
+  }
+}
+
+sig_plot_deg_counts <- sig_plot_degs[, .(
+  n_deg_egenes = uniqueN(gene_id),
+  n_eqtl_pairs = uniqueN(paste(gene_id, variant_id, sep = "\r")),
+  n_variants = uniqueN(variant_id),
+  n_pairs_with_rsid = uniqueN(paste(gene_id, variant_id, sep = "\r")[nzchar(rsid)])
+), by = .(disorder, context, dataset_id)]
+sig_plot_deg_counts[, context_order_rank := match(context, context_order)]
+setorder(sig_plot_deg_counts, disorder, context_order_rank)
+sig_plot_deg_counts[, context_order_rank := NULL]
+
+sig_plot_degs_file <- file.path(tables_dir, "eqtl_boxplot_deg_pairs.csv")
+fwrite(sig_plot_degs, sig_plot_degs_file)
+message("Wrote DEG plot pair metadata: ", sig_plot_degs_file)
+sig_plot_deg_counts
+```
+
+```{r plot-significant-examples, fig.width=3.5, fig.height=5}
 sig_plot_examples <- examples[example_type == "mdd_significant"]
-saved_sig_svgs <- character()
+saved_sig_pdfs <- character()
 for (ds in unique(sig_plot_examples$dataset_id)) {
   pairs <- sig_plot_examples[dataset_id == ds]
-  pobj <- plot_eQTL_boxplots(ds, pairs, axis_mode = "ref")
+  pobj <- plot_eQTL_boxplots(ds, pairs, axis_mode = "ref", plot_style = "publication")
   print(pobj$plot)
-  saved_sig_svgs <- c(
-    saved_sig_svgs,
-    save_example_svg(
-      pobj$plot,
-      paste0("eqtl_boxplot_significant_", safe_plot_slug(ds), ".svg")
+  saved_sig_pdfs <- c(
+    saved_sig_pdfs,
+    save_eQTL_boxplots(
+      pairs,
+      dataset_id = ds,
+      out_file = file.path(
+        plots_dir,
+        paste0("eqtl_boxplot_significant_", safe_plot_slug(ds), ".pdf")
+      ),
+      axis_mode = "ref",
+      plot_style = "publication"
     )
   )
 }
-saved_sig_svgs
+saved_sig_pdfs
 ```
 
-```{r plot-nominal-only-examples, fig.width=8, fig.height=5.5}
+```{r plot-nominal-only-examples, fig.width=3.5, fig.height=5}
 nominal_plot_examples <- examples[example_type == "l2-3_nominal_only"]
-pobj_nominal <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "ref")
+pobj_nominal <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "ref", plot_style = "publication")
 print(pobj_nominal$plot)
-saved_nominal_svg <- save_example_svg(
-  pobj_nominal$plot,
-  "eqtl_boxplot_nominal_l2-3.svg"
+saved_nominal_pdf <- save_eQTL_boxplots(
+  nominal_plot_examples,
+  dataset_id = "l2-3",
+  out_file = file.path(plots_dir, "eqtl_boxplot_nominal_l2-3.pdf"),
+  axis_mode = "ref",
+  plot_style = "publication"
 )
-saved_nominal_svg
+saved_nominal_pdf
+```
+
+```{r check-example-pdf-pages, include=FALSE}
+expected_example_pages <- c(
+  "eqtl_boxplot_significant_l2-3.pdf" = 2L,
+  "eqtl_boxplot_significant_oligo.pdf" = 1L,
+  "eqtl_boxplot_nominal_l2-3.pdf" = 2L
+)
+for (pdf_name in names(expected_example_pages)) {
+  pdf_file <- file.path(plots_dir, pdf_name)
+  stopifnot(file.exists(pdf_file), file.info(pdf_file)$size > 0L)
+  n_pages <- pdf_page_count(pdf_file)
+  if (!is.na(n_pages)) stopifnot(n_pages == expected_example_pages[[pdf_name]])
+}
+```
+
+```{r test-deg-pdf-save, include=FALSE}
+test_deg_pdf <- file.path(plots_dir, "eqtl_boxplot_degs_MDD_uvasc.pdf")
+saved_test_deg_pdf <- save_eQTL_boxplots(
+  sig_plot_degs,
+  disorder = "MDD",
+  dataset_id = "uvasc",
+  out_file = test_deg_pdf,
+  axis_mode = "ref"
+)
+stopifnot(file.exists(saved_test_deg_pdf), file.info(saved_test_deg_pdf)$size > 0L)
+
+test_deg_pages <- pdf_page_count(saved_test_deg_pdf)
+if (!is.na(test_deg_pages)) stopifnot(test_deg_pages == 5L)
+if (nzchar(Sys.which("gs"))) {
+  preview_png <- tempfile("eqtl_boxplot_degs_MDD_uvasc_", fileext = ".png")
+  gs_status <- system2(
+    "gs",
+    c(
+      "-q", "-dSAFER", "-dBATCH", "-dNOPAUSE", "-sDEVICE=png16m",
+      "-dFirstPage=1", "-dLastPage=1", "-r144",
+      paste0("-sOutputFile=", preview_png),
+      saved_test_deg_pdf
+    )
+  )
+  stopifnot(gs_status == 0L, file.exists(preview_png), file.info(preview_png)$size > 0L)
+  unlink(preview_png)
+}
 ```
 
 ```{r check-gwas-effect-axis, include=FALSE}
@@ -636,5 +976,5 @@ print(pobj_astro$plot)
 
 ## optional raster/vector saves after inspection.
 ## ggsave(file.path(tables_dir, "example_eqtl_boxplot.png"), pobj_mdd$plot, width = 8, height = 5.5, dpi = 300)
-## ggsave(file.path(tables_dir, "example_eqtl_boxplot.svg"), pobj_mdd$plot, width = 8, height = 5.5)
+## ggsave(file.path(tables_dir, "example_eqtl_boxplot.pdf"), pobj_mdd$plot, width = 8, height = 5.5)
 ```
