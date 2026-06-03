@@ -5,25 +5,18 @@ suppressPackageStartupMessages({
 })
 set.seed(123)
 
+
 # no regulons smaller than 10
-reg_subset = c("KLF4","JUNB","CEBPD","FOSL2","FOS","JUN",
-	"SOX2","SOX9",
-	"THRA","ETS2",
-	"DLX1","ARX","LHX6",
-	"TFEB","SOX8","SOX10","NFIA","SREBF1")
+regulons <- read.csv("processed-data/10_SCENIC/spe-n109_13162-no-lowUMI_logcounts_regulons-top20_merged.csv", row.names=1)
+reg_subset = filter(regulons, set_size>=10)$TF
 
 aucell_corr = read.csv("processed-data/10_SCENIC/spe-n109_13162-no-lowUMI_regulons-top20_AUCell-all-spots-correlation.csv", row.names=1)
 colnames(aucell_corr) = substr(colnames(aucell_corr), start=0, stop=nchar(colnames(aucell_corr))-3)
 
 col.pal = rev(RColorBrewer::brewer.pal("RdBu", n=8))
 col.pal = c(col.pal[1:4], "white", col.pal[5:8])
-phm1 = pheatmap(aucell_corr,
-	color = colorRampPalette(col.pal)(100), breaks = seq(-1, 1, length.out=101),
-	clustering.method="ward.D2", angle_col=90,
-	main="AUCell correlations")
 
-
-phm1.1 = pheatmap(aucell_corr[paste0(reg_subset, "(+)"),reg_subset],
+phm1 = pheatmap(aucell_corr[paste0(reg_subset, "(+)"),reg_subset],
         color = colorRampPalette(col.pal)(100), breaks = seq(-1, 1, length.out=101),
         clustering.method="ward.D2", angle_col=90,
         main="AUCell correlations")
@@ -50,7 +43,6 @@ mod_subset = c("SNHG14","PRKAR1A","COX4I1","EEF1A1",
 rownames(cor.mtx) = gsub("mod_","", rownames(cor.mtx))
 
 ## now make secondary matrix describing the overlap of genes to label with values
-regulons <- read.csv("processed-data/10_SCENIC/spe-n109_13162-no-lowUMI_logcounts_regulons-top20_merged.csv", row.names=1)
 regList = strsplit(regulons$set_str, "/")
 names(regList) = regulons$TF
 #regList = regList[reg_subset]
@@ -72,7 +64,7 @@ m3 = m2
 m3[m3==0] = ""
 
 phm2 = pheatmap(t(cor.mtx[mod_subset,reg_subset]), #cluster_row=F, 
-	cluster_col=F,
+	clustering_method="ward.D2", treeheight_row=20, treeheight_col=20,
          color = colorRampPalette(col.pal)(100), breaks = seq(-1, 1, length.out=101),
 	 display_numbers=m3[reg_subset,mod_subset], number_col="black",
          angle_col=90, main= "AUCell correlation (DEG modules vs regulons)")
@@ -98,7 +90,8 @@ cpList <- readRDS("plots/colorPalettes.rds")
 annot_colors = list("cluster"=cpList$transfer.bright[c(1:4,8,5:7)])
 names(annot_colors$cluster) = seurat_levels
 
-phm3 = pheatmap(t(avg.mtx[,reg_subset]), cluster_rows=F, cluster_cols=F, border_color=NA,
+phm3 = pheatmap(t(avg.mtx), cluster_rows=T, cluster_cols=F, border_color=NA,
+	clustering_method="ward.D2", treeheight_row=20,
          color = colorRampPalette(RColorBrewer::brewer.pal(n = 7, name ="Greys"))(100),
          annotation_col=col_annot, annotation_colors=annot_colors,
          annotation_legend=F, annotation_names_row=F, annotation_names_col=F,
@@ -119,7 +112,8 @@ rownames(avg.mtx2) = avg.df2$clus_groups
 col_annot2 = data.frame("cluster"=unlist(lapply(strsplit(as.character(avg.df2$clus_groups), split = " "), function(x) x[[3]])), row.names = avg.df2$clus_groups)
 annot_colors = list("cluster"=cpList$smoothed.bright)
 
-phm4 = pheatmap(t(avg.mtx2[,reg_subset]), cluster_rows=F, cluster_cols=F, border_color=NA,
+phm4 = pheatmap(t(avg.mtx2), cluster_rows=T, cluster_cols=F, border_color=NA,
+	clustering_method="ward.D2", treeheight_row=20,
          color = colorRampPalette(RColorBrewer::brewer.pal(n = 7, name ="Greys"))(100),
          annotation_col=col_annot2, annotation_colors=annot_colors,
          annotation_legend=F, annotation_names_row=F, annotation_names_col=F,
@@ -129,7 +123,6 @@ phm4 = pheatmap(t(avg.mtx2[,reg_subset]), cluster_rows=F, cluster_cols=F, border
 
 pdf(file="plots/publication/regulons/regulon_heatmaps.pdf", width=5, height=5)
 plot(phm1[[4]])
-plot(phm1.1[[4]])
 plot(phm2[[4]])
 plot(phm3[[4]])
 plot(phm4[[4]])
