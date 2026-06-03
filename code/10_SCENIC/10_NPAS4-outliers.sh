@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=3G
-#SBATCH --job-name=plot_spatial-AUCell_119_DE-input-13162_no-lowUMI_top20_NPAS4-outliers
+#SBATCH --mem=5G
+#SBATCH --job-name=plot_NPAS4-outliers
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/10_SCENIC/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -16,6 +16,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/4.4.x
 module list
+
 Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/10_SCENIC/10_NPAS4-outliers.r
 
 echo "**** Job ends ****"
