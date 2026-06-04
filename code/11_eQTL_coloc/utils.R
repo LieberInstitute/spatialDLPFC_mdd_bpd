@@ -440,6 +440,149 @@ read_plink2_pvar <- function(plink2_prefix) {
   )]
 }
 
+genotype_rsid_vcf_path <- function(repo_root = NULL) {
+  file.path(
+    resolve_repo_root(repo_root),
+    "processed-data", "00_genotypes", "merged_R.8_MAF.01.RSann.vcf.gz"
+  )
+}
+
+genotype_variant_info_cache_file <- function(plink2_prefix) {
+  paste0(plink2_prefix, "_variant_info.csv.gz")
+}
+
+read_plink2_variant_table <- function(plink2_prefix) {
+  pvar_file <- paste0(plink2_prefix, ".pvar")
+  if (!file.exists(pvar_file)) stop("Missing PLINK2 pvar file: ", pvar_file)
+  pvar <- data.table::fread(pvar_file, skip = "#CHROM")
+  if ("#CHROM" %in% names(pvar)) data.table::setnames(pvar, "#CHROM", "CHROM")
+  req <- c("CHROM", "POS", "ID", "REF", "ALT")
+  missing_cols <- setdiff(req, names(pvar))
+  if (length(missing_cols) > 0) {
+    stop("Missing required pvar columns: ", paste(missing_cols, collapse = ", "))
+  }
+
+  out <- pvar[, .(
+    variant_id = as.character(ID),
+    CHROM = as.character(CHROM),
+    POS = as.integer(POS),
+    REF = as.character(REF),
+    ALT = as.character(ALT),
+    var_idx = .I
+  )]
+  if (anyDuplicated(out$variant_id)) stop("Duplicate pvar variant IDs in ", pvar_file)
+  out
+}
+
+query_genotype_vcf_rsids <- function(pvar_info, rsid_vcf, bcftools = "bcftools") {
+  if (!nzchar(Sys.which(bcftools))) stop("Missing bcftools executable: ", bcftools)
+  if (!file.exists(rsid_vcf)) stop("Missing genotype rsID VCF: ", rsid_vcf)
+
+  region_file <- tempfile("genotype-rsid-regions-", fileext = ".bed")
+  query_file <- tempfile("genotype-rsid-query-", fileext = ".tsv")
+  err_file <- tempfile("genotype-rsid-query-err-", fileext = ".log")
+  on.exit(unlink(c(region_file, query_file, err_file)), add = TRUE)
+
+  ## query only pvar positions; exact REF/ALT matching happens after query.
+  regions <- unique(pvar_info[, .(CHROM, start0 = POS - 1L, end1 = POS)])
+  data.table::fwrite(regions, region_file, sep = "\t", col.names = FALSE)
+
+  status <- system2(
+    bcftools,
+    args = c(
+      "query",
+      "-R", shQuote(region_file),
+      "-f", shQuote("%CHROM\\t%POS\\t%ID\\t%REF\\t%ALT\\t%INFO/RS\\n"),
+      shQuote(rsid_vcf)
+    ),
+    stdout = query_file,
+    stderr = err_file
+  )
+  if (!identical(status, 0L)) {
+    err <- if (file.exists(err_file)) readLines(err_file, warn = FALSE) else character()
+    stop(
+      "bcftools rsID query failed for genotype VCF: ", rsid_vcf,
+      if (length(err) > 0) paste0("\n", paste(err, collapse = "\n")) else ""
+    )
+  }
+
+  if (!file.exists(query_file) || file.info(query_file)$size == 0) {
+    return(data.table::data.table(
+      variant_id = character(),
+      rs_numeric = character(),
+      rsid = character(),
+      rsid_source = character()
+    ))
+  }
+
+  q <- data.table::fread(
+    query_file,
+    header = FALSE,
+    col.names = c("CHROM", "POS", "vcf_id", "REF", "ALT", "RS")
+  )
+  q[, `:=`(
+    variant_id = paste(CHROM, POS, REF, ALT, sep = ":"),
+    rs_numeric = data.table::fifelse(is.na(RS) | RS == "." | RS == "", "", as.character(RS))
+  )]
+  q[, rsid := data.table::fifelse(nzchar(rs_numeric), paste0("rs", rs_numeric), "")]
+  q[, rsid_source := data.table::fifelse(nzchar(rsid), "genotype_vcf_INFO_RS", "")]
+  q[!is.na(variant_id) & nzchar(variant_id), .(
+    rs_numeric = rs_numeric[match(TRUE, nzchar(rs_numeric), nomatch = 1L)],
+    rsid = rsid[match(TRUE, nzchar(rsid), nomatch = 1L)],
+    rsid_source = rsid_source[match(TRUE, nzchar(rsid), nomatch = 1L)]
+  ), by = variant_id]
+}
+
+build_genotype_variant_info_cache <- function(plink2_prefix,
+                                              rsid_vcf = genotype_rsid_vcf_path(),
+                                              out_file = genotype_variant_info_cache_file(plink2_prefix),
+                                              bcftools = "bcftools") {
+  pvar_info <- read_plink2_variant_table(plink2_prefix)
+  rsids <- query_genotype_vcf_rsids(pvar_info, rsid_vcf = rsid_vcf, bcftools = bcftools)
+  data.table::setkey(rsids, variant_id)
+  out <- rsids[pvar_info, on = "variant_id"]
+  out[is.na(rsid), `:=`(rsid = "", rs_numeric = "", rsid_source = "")]
+  out <- out[, .(variant_id, CHROM, POS, REF, ALT, var_idx, rsid, rs_numeric, rsid_source)]
+  data.table::setorder(out, var_idx)
+
+  dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
+  data.table::fwrite(out, out_file)
+  out
+}
+
+load_genotype_variant_info <- function(plink2_prefix,
+                                       rsid_vcf = genotype_rsid_vcf_path(),
+                                       cache_file = genotype_variant_info_cache_file(plink2_prefix),
+                                       use_cache = TRUE,
+                                       bcftools = "bcftools") {
+  if (isTRUE(use_cache) && file.exists(cache_file)) {
+    out <- data.table::fread(cache_file)
+  } else {
+    out <- build_genotype_variant_info_cache(
+      plink2_prefix = plink2_prefix,
+      rsid_vcf = rsid_vcf,
+      out_file = cache_file,
+      bcftools = bcftools
+    )
+  }
+
+  req <- c("variant_id", "CHROM", "POS", "REF", "ALT", "var_idx", "rsid", "rs_numeric", "rsid_source")
+  missing_cols <- setdiff(req, names(out))
+  if (length(missing_cols) > 0) {
+    stop("Missing genotype variant cache columns: ", paste(missing_cols, collapse = ", "))
+  }
+  if (anyDuplicated(out$variant_id)) stop("Duplicate variant IDs in genotype variant cache: ", cache_file)
+  out[, `:=`(
+    rsid = as.character(rsid),
+    rs_numeric = as.character(rs_numeric),
+    rsid_source = as.character(rsid_source)
+  )]
+  out[is.na(rsid), rsid := ""]
+  out[is.na(rs_numeric), rs_numeric := ""]
+  out[is.na(rsid_source), rsid_source := ""]
+  out
+}
+
 matchGwasGeno <- function(gwas, plink2_prefix, use_cache = TRUE) {
   cache_file <- gwas_tqtl_cache_file(gwas, plink2_prefix)
   if (use_cache && file.exists(cache_file)) {

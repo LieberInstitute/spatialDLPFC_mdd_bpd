@@ -67,16 +67,16 @@ save_eQTL_boxplot_pdf <- function(plot, filename,
 
 eQTL_boxplot_title <- function(eqtl_row, disorder = NULL) {
   row <- as.data.table(eqtl_row)[1]
-  if (!is.null(disorder) && nzchar(disorder)) {
-    return(paste0(disorder, " ", row$context, ": ", row$gene_name))
-  }
   rsid <- if ("rsid" %in% names(row)) row$rsid else NA_character_
   variant_label <- if (!is.na(rsid) && nzchar(rsid)) {
-    rsid
+    paste(row$variant_id, rsid)
   } else {
     row$variant_id
   }
-  paste0(row$context, ": ", row$gene_name, " ", variant_label)
+  if (!is.null(disorder) && nzchar(disorder)) {
+    return(paste0(disorder, " ", row$context, ": ", row$gene_name, "\n", variant_label))
+  }
+  paste0(row$context, ": ", row$gene_name, "\n", variant_label)
 }
 
 pdf_page_count <- function(pdf_file) {
@@ -116,7 +116,7 @@ save_eQTL_boxplots <- function(eqtl_dt, dataset_id, out_file, disorder = NULL,
   if (nrow(dt) == 0L) stop("No eQTL rows for ", dataset_id)
 
   if (!"rsid" %in% names(dt)) {
-    dt[, rsid := rsid_lut[J(dt$variant_id), rsid]]
+    dt[, rsid := rsid_lut$rsid[match(variant_id, rsid_lut$variant_id)]]
   }
   dt[is.na(rsid), rsid := ""]
 
@@ -262,134 +262,20 @@ gwas_matched_files <- setNames(
 )
 assert_files(unname(gwas_matched_files))
 
-rsid_cache_file <- file.path(tables_dir, "genotype_variant_rsids.csv.gz")
-
-build_rsid_cache <- function(files, out_file) {
-  parts <- lapply(names(files), function(dis) {
-    dt <- fread(files[[dis]], select = c("variant_id", "rsid"))
-    assert_cols(dt, c("variant_id", "rsid"), basename(files[[dis]]))
-    dt[, source_disorder := dis]
-    dt[!is.na(variant_id) & nzchar(variant_id) & !is.na(rsid) & nzchar(rsid)]
-  })
-  all_rsids <- rbindlist(parts, use.names = TRUE)
-  if (nrow(all_rsids) == 0L) stop("No rsIDs found in matched GWAS files.")
-
-  cache <- all_rsids[, .(
-    rsid = paste(sort(unique(rsid)), collapse = ";"),
-    rsid_sources = paste(sort(unique(source_disorder)), collapse = ";")
-  ), by = variant_id]
-  setorder(cache, variant_id)
-  fwrite(cache, out_file)
-  cache[]
+pvar <- read_pvar(plink2_prefix)
+variant_info_cache_file <- genotype_variant_info_cache_file(plink2_prefix)
+variant_info <- load_genotype_variant_info(
+  plink2_prefix = plink2_prefix,
+  rsid_vcf = genotype_rsid_vcf_path(repo_root),
+  cache_file = variant_info_cache_file,
+  use_cache = TRUE
+)
+if (nrow(variant_info) != nrow(pvar)) {
+  stop("Genotype variant cache row count does not match pvar row count.")
 }
-
-collapse_semicolon_values <- function(x) {
-  x <- as.character(x[!is.na(x) & nzchar(as.character(x))])
-  vals <- unlist(strsplit(x, ";", fixed = TRUE), use.names = FALSE)
-  vals <- sort(unique(vals[!is.na(vals) & nzchar(vals)]))
-  if (length(vals) == 0L) "" else paste(vals, collapse = ";")
-}
-
-query_bcf_rsids <- function(variant_ids, disorder) {
-  if (!nzchar(Sys.which("bcftools"))) {
-    warning("bcftools not found; rsID lookup will use existing cache only.")
-    return(data.table(variant_id = character(), rsid = character(), rsid_sources = character()))
-  }
-
-  ids <- parse_variant_id(variant_ids)
-  ids <- ids[!is.na(id_chr) & !is.na(id_pos) & !is.na(id_REF) & !is.na(id_ALT)]
-  if (nrow(ids) == 0L) {
-    return(data.table(variant_id = character(), rsid = character(), rsid_sources = character()))
-  }
-  ids[, `:=`(id_pos = as.integer(id_pos), id_REF = toupper(id_REF), id_ALT = toupper(id_ALT))]
-
-  region_file <- tempfile("eqtl_rsid_regions_", fileext = ".bed")
-  err_file <- tempfile("eqtl_rsid_bcf_err_")
-  on.exit(unlink(c(region_file, err_file)), add = TRUE)
-  regions <- unique(ids[, .(id_chr, start0 = id_pos - 1L, end1 = id_pos)])
-  fwrite(regions, region_file, sep = "\t", col.names = FALSE)
-
-  bcf_file <- gwas_bcf_path(disorder, repo_root = repo_root)
-  query_out <- system2(
-    "bcftools",
-    c("query", "-R", region_file, "-f", shQuote("%CHROM\\t%POS\\t%ID\\t%REF\\t%ALT\\n"), bcf_file),
-    stdout = TRUE,
-    stderr = err_file
-  )
-  status <- attr(query_out, "status")
-  if (!is.null(status) && status != 0L) {
-    warning("bcftools rsID query failed for ", disorder, ": ", paste(readLines(err_file, warn = FALSE), collapse = " "))
-    return(data.table(variant_id = character(), rsid = character(), rsid_sources = character()))
-  }
-  if (length(query_out) == 0L) {
-    return(data.table(variant_id = character(), rsid = character(), rsid_sources = character()))
-  }
-
-  q <- fread(
-    text = paste(query_out, collapse = "\n"),
-    col.names = c("id_chr", "id_pos", "rsid", "id_REF", "gwas_ALT")
-  )
-  q <- q[!is.na(rsid) & nzchar(rsid) & rsid != "."]
-  if (nrow(q) == 0L) {
-    return(data.table(variant_id = character(), rsid = character(), rsid_sources = character()))
-  }
-
-  q[, `:=`(id_pos = as.integer(id_pos), id_REF = toupper(id_REF), gwas_ALT = toupper(gwas_ALT))]
-  q[, query_row := .I]
-  q_expanded <- q[, .(
-    id_ALT = unlist(strsplit(gwas_ALT, ",", fixed = TRUE), use.names = FALSE)
-  ), by = .(query_row, id_chr, id_pos, id_REF, rsid)]
-  q_expanded[, variant_id := paste(id_chr, id_pos, id_REF, id_ALT, sep = ":")]
-  out <- q_expanded[ids, on = "variant_id", nomatch = 0L]
-  if (nrow(out) == 0L) {
-    return(data.table(variant_id = character(), rsid = character(), rsid_sources = character()))
-  }
-  out[, .(
-    rsid = collapse_semicolon_values(rsid),
-    rsid_sources = disorder
-  ), by = variant_id]
-}
-
-extend_rsid_cache <- function(variant_ids, disorders = plot_disorders, out_file = rsid_cache_file) {
-  variant_ids <- unique(as.character(variant_ids[!is.na(variant_ids) & nzchar(as.character(variant_ids))]))
-  if (length(variant_ids) == 0L) return(rsid_lut)
-
-  existing <- if (file.exists(out_file)) fread(out_file) else {
-    data.table(variant_id = character(), rsid = character(), rsid_sources = character())
-  }
-  assert_cols(existing, c("variant_id", "rsid", "rsid_sources"), basename(out_file))
-
-  cached_ids <- existing[!is.na(rsid) & nzchar(rsid), unique(variant_id)]
-  missing_ids <- setdiff(variant_ids, cached_ids)
-  if (length(missing_ids) > 0L) {
-    queried <- rbindlist(
-      lapply(disorders, function(dis) query_bcf_rsids(missing_ids, disorder = dis)),
-      use.names = TRUE,
-      fill = TRUE
-    )
-    existing <- rbindlist(list(existing, queried), use.names = TRUE, fill = TRUE)
-  }
-
-  cache <- existing[!is.na(variant_id) & nzchar(variant_id) & !is.na(rsid) & nzchar(rsid), .(
-    rsid = collapse_semicolon_values(rsid),
-    rsid_sources = collapse_semicolon_values(rsid_sources)
-  ), by = variant_id]
-  setorder(cache, variant_id)
-  fwrite(cache, out_file)
-  setkey(cache, variant_id)
-  rsid_lut <<- cache
-  cache[]
-}
-
-if (!file.exists(rsid_cache_file)) {
-  rsid_lut <- build_rsid_cache(gwas_matched_files, rsid_cache_file)
-} else {
-  rsid_lut <- fread(rsid_cache_file)
-}
-if (nrow(rsid_lut) == 0L) stop("Empty rsID cache: ", rsid_cache_file)
+rsid_lut <- variant_info[, .(variant_id, rsid, rsid_source)]
 setkey(rsid_lut, variant_id)
 
-pvar <- read_pvar(plink2_prefix)
 psam_samples <- read_psam_samples(plink2_prefix)
 pgen_file <- paste0(plink2_prefix, ".pgen")
 assert_files(pgen_file)
@@ -637,11 +523,9 @@ plot_eQTL_boxplots <- function(dataset_id, eqtl_pairs, axis_mode = c("ref", "gwa
     theme_bw() +
     theme(
       legend.position = "bottom",
+      plot.title = element_text(size = if (plot_style == "publication") 10 else 12, lineheight = 1.05),
       strip.text = element_text(size = 9)
     )
-  if (plot_style == "current") {
-    p <- p + theme(plot.title = element_text(size = 12))
-  }
 
   list(plot = p, data = plot_dt)
 }
@@ -749,17 +633,33 @@ examples <- rbindlist(
 )
 setcolorder(examples, c(intersect(example_cols, names(examples)), setdiff(names(examples), example_cols)))
 
-## attach dbSNP IDs for plotted examples before writing metadata.
-extend_rsid_cache(examples$variant_id, disorders = disorders)
+## attach dbSNP IDs from the genotype-wide variant cache.
 examples[, `:=`(
-  rsid = rsid_lut[J(examples$variant_id), rsid],
-  rsid_sources = rsid_lut[J(examples$variant_id), rsid_sources]
+  rsid = rsid_lut$rsid[match(variant_id, rsid_lut$variant_id)],
+  rsid_source = rsid_lut$rsid_source[match(variant_id, rsid_lut$variant_id)]
 )]
 examples[is.na(rsid), rsid := ""]
-examples[is.na(rsid_sources), rsid_sources := ""]
+examples[is.na(rsid_source), rsid_source := ""]
 missing_example_rsids <- examples[!nzchar(rsid), unique(variant_id)]
 if (length(missing_example_rsids) > 0L) {
   stop("Missing rsIDs for example variants: ", paste(missing_example_rsids, collapse = ", "))
+}
+
+expected_example_rsids <- c(
+  "chr9:133345514:A:G" = "rs2129965621",
+  "chr8:27240919:C:T" = "rs1562330",
+  "chr4:1209477:T:C" = "rs1250105",
+  "chr2:232708988:G:C" = "rs35395584",
+  "chr1:9292645:C:G" = "rs114709597"
+)
+observed_example_rsids <- setNames(examples$rsid, examples$variant_id)
+expected_ids <- names(expected_example_rsids)
+bad_example_rsids <- expected_ids[
+  is.na(observed_example_rsids[expected_ids]) |
+    observed_example_rsids[expected_ids] != expected_example_rsids
+]
+if (length(bad_example_rsids) > 0L) {
+  stop("Unexpected genotype VCF rsIDs for examples: ", paste(bad_example_rsids, collapse = ", "))
 }
 
 examples_file <- file.path(tables_dir, "eqtl_boxplot_examples.csv")
@@ -769,8 +669,8 @@ examples
 
 ```{r validate-examples}
 if (nrow(examples) == 0L) stop("No examples selected.")
-if (!file.exists(rsid_cache_file) || nrow(fread(rsid_cache_file, nrows = 1)) == 0L) {
-  stop("rsID cache was not created or is empty.")
+if (!file.exists(variant_info_cache_file) || nrow(fread(variant_info_cache_file, nrows = 1)) == 0L) {
+  stop("Genotype variant cache was not created or is empty.")
 }
 
 missing_pvar <- setdiff(examples$variant_id, pvar$ID)
@@ -814,14 +714,13 @@ setcolorder(sig_plot_degs, c(
   setdiff(names(sig_plot_degs), c("disorder", "example_type", "example_deg_basis"))
 ))
 
-## expand rsID coverage for the variants that will be plotted.
-extend_rsid_cache(sig_plot_degs$variant_id, disorders = plot_disorders)
+## attach dbSNP IDs from the genotype-wide variant cache.
 sig_plot_degs[, `:=`(
-  rsid = rsid_lut[J(sig_plot_degs$variant_id), rsid],
-  rsid_sources = rsid_lut[J(sig_plot_degs$variant_id), rsid_sources]
+  rsid = rsid_lut$rsid[match(variant_id, rsid_lut$variant_id)],
+  rsid_source = rsid_lut$rsid_source[match(variant_id, rsid_lut$variant_id)]
 )]
 sig_plot_degs[is.na(rsid), rsid := ""]
-sig_plot_degs[is.na(rsid_sources), rsid_sources := ""]
+sig_plot_degs[is.na(rsid_source), rsid_source := ""]
 
 core_plot_cols <- c("dataset_id", "gene_id", "phenotype_id", "variant_id")
 for (col in core_plot_cols) {
