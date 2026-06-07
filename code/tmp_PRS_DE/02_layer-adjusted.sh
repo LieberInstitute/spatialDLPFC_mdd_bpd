@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=5G
-#SBATCH --job-name=layer-adjusted-smoothed_PRS-sexM_pc3-age-nspots_lmFit-voom_revised-pb-filters_revised-gene-input
+#SBATCH --job-name=layer-adjusted-seurat-no-lowUMI_PRS-sexM_pc3-age-nspots_lmFit-voom_revised-pb-filters_revised-gene-input
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/tmp_PRS_DE/logs/%x_%j_%a.log
 #SBATCH --array=1-3
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=plot_format_layer-adjusted-smoothed
+#SBATCH --job-name=plot_format_layer-adjusted_no-lowUMI
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/tmp_PRS_DE/logs/%x_%j_%a.log
 #SBATCH --array=1-3
 

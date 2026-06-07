@@ -11,8 +11,9 @@ suppressPackageStartupMessages({
 
 set.seed(123)
 
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+#load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
 #load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
 dim(spe_pseudo)
 spe_pseudo$pc3 = reducedDim(spe_pseudo)[,"PC3"]
 
@@ -29,8 +30,8 @@ colData(spe_pseudo) <- new.cdata
 #revised genes, recalculated on filtered samples
 rowData(spe_pseudo)$high_expr_group_sample_id2 <- filterByExpr(spe_pseudo, group = spe_pseudo$sample_id)
 
-rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$smoothed_k9_1663)
-#rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$seurat_label)
+#rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$smoothed_k9_1663)
+rowData(spe_pseudo)$high_expr_group_cluster2 <- filterByExpr(spe_pseudo, group = spe_pseudo$seurat_label)
 
 spe_pseudo <- spe_pseudo[rowData(spe_pseudo)$high_expr_group_sample_id2==T & rowData(spe_pseudo)$high_expr_group_cluster2==T,]
 dim(spe_pseudo)
@@ -44,8 +45,8 @@ dge_pseudo = DGEList(counts(spe_pseudo))
 dge_pseudo <- calcNormFactors(dge_pseudo)
 
 #establish model
-cat("\nLayer-adjusted model\ndx model: ~ 0 + ", paste0("prs", args[[1]]), "*sexM + smoothed_k9_1663 + pc3 + age + nspots\n")
-#cat("\nLayer-adjusted model\ndx model: ~ 0 + ", paste0("prs", args[[1]]), "*sexM + seurat_label + pc3 + age + nspots\n")
+#cat("\nLayer-adjusted model\ndx model: ~ 0 + ", paste0("prs", args[[1]]), "*sexM + smoothed_k9_1663 + pc3 + age + nspots\n")
+cat("\nLayer-adjusted model\ndx model: ~ 0 + ", paste0("prs", args[[1]]), "*sexM + seurat_label + pc3 + age + nspots\n")
 
 spe_pseudo$age = scale(spe_pseudo$age)
 spe_pseudo$nspots = scale(spe_pseudo$nspots)
@@ -55,8 +56,8 @@ colnames(colData(spe_pseudo))[grep(args[[1]], colnames(colData(spe_pseudo)))] <-
 spe_pseudo$PRS = scale(spe_pseudo$PRS)
 dx_mod <- model.matrix(
   #~ 0 + PRS + smoothed_k9_1663 + sex + pc3 + age + nspots,
-  ~ 0 + PRS*sexM + smoothed_k9_1663 + pc3 + age + nspots,
-  #~ 0 + PRS*sexM + seurat_label + pc3 + age + nspots,
+  #~ 0 + PRS*sexM + smoothed_k9_1663 + pc3 + age + nspots,
+  ~ 0 + PRS*sexM + seurat_label + pc3 + age + nspots,
   colData(spe_pseudo)
 )
 colnames(dx_mod) <- gsub("PRS",paste0("prs",args[[1]]), colnames(dx_mod))
@@ -67,15 +68,20 @@ y = voom(dge_pseudo, dx_mod, plot=F)
 corfit <- duplicateCorrelation(y, block = colData(spe_pseudo)$sample_id)
 fit <- lmFit(y, block = colData(spe_pseudo)$sample_id, correlation = corfit$consensus)
 
-saveRDS(fit, paste0("processed-data/tmp_PRS_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_", paste0("prs", args[[1]]),
-	"-sexM_rev-gene-input_covars-pc3-age-nspots.rda"))
-cat("\nlmFit results/ object saved to:", paste0("processed-data/tmp_PRS_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_", paste0("prs", args[[1]]),
-	"-sexM_rev-gene-input_covars-pc3-age-nspots.rda"),"\n")
+#saveRDS(fit, paste0("processed-data/tmp_PRS_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_", paste0("prs", args[[1]]),
+#	"-sexM_rev-gene-input_covars-pc3-age-nspots.rda"))
+#cat("\nlmFit results/ object saved to:", paste0("processed-data/tmp_PRS_DE/lmFit-voom_layer-adjusted_smoothed-k9-1663_", paste0("prs", args[[1]]),
+#	"-sexM_rev-gene-input_covars-pc3-age-nspots.rda"),"\n")
 
 #saveRDS(fit, paste0("processed-data/tmp_PRS_DE/lmFit-voom_layer-adjusted_seurat-pc30_", paste0("prs", args[[1]]),
 #	"-sexM_rev-gene-input_covars-pc3-age-nspots.rda"))
 #cat("\nlmFit results/ object saved to:", paste0("processed-data/tmp_PRS_DE/lmFit-voom_layer-adjusted_seurat-pc30_", paste0("prs", args[[1]]),
 #	"-sexM_rev-gene-input_covars-pc3-age-nspots.rda),"\n")
+
+saveRDS(fit, paste0("processed-data/tmp_PRS_DE/lmFit-voom_layer-adjusted_seurat-pc30-no-lowUMI_", paste0("prs", args[[1]]),
+       "-sexM_rev-gene-input_covars-pc3-age-nspots.rda"))
+cat("\nlmFit results/ object saved to:", paste0("processed-data/tmp_PRS_DE/lmFit-voom_layer-adjusted_seurat-pc30-no-lowUMI_", paste0("prs", args[[1]]),
+       "-sexM_rev-gene-input_covars-pc3-age-nspots.rda),"\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()

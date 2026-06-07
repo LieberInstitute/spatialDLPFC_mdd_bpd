@@ -54,9 +54,13 @@ stopifnot(identical(spe_pseudo$total, new.cdata$total))
 colData(spe_pseudo) <- new.cdata
 
 plist = list(p1, p2)
-for (results_set in c("smoothed-k9-1663","seurat-pc30")) {
+
+#for (results_set in c("smoothed-k9-1663","seurat-pc30")) {
+for (results_set in c("smoothed-k9-1663","seurat-pc30-no-lowUMI")) {
 	# if needed, load in spe object with correct gene set gene names
 	if(results_set=="seurat-pc30") load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+	if(results_set=="seurat-pc30-no-lowUMI") load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-no-lowUMI_sample-seurat-pc30_norm-filt.Rdata")
+
 # load in PRS model results
 results <- readRDS(paste0("processed-data/tmp_PRS_DE/lmFit-voom_layer-adjusted_", 
                           results_set, 
@@ -110,11 +114,11 @@ cat("\nSaved moderated t test results dframe to:", paste0("processed-data/tmp_PR
 
 #plist <- list(p1, p2, phist, p3)
 lay_mat = rbind(c(1,2),c(3,3),c(4,4),c(5,5),c(6,6))
-ggsave(file=paste0("plots/tmp_PRS_DE/", x, "_model-summaries.pdf"),
+ggsave(file=paste0("plots/tmp_PRS_DE/", x, "_no-lowUMI_model-summaries.pdf"),
 	arrangeGrob(grobs=plist, layout_matrix=lay_mat, top=x),
 	width=6, height=10)
 
-cat("\n\nSaved plots to:", paste0("plots/tmp_PRS_DE/", x, "_model-summaries.pdf"),"\n\n")
+cat("\n\nSaved plots to:", paste0("plots/tmp_PRS_DE/", x, "_no-lowUMI_model-summaries.pdf"),"\n\n")
 
 
 cat("\n\nReproducibility information:\n")
