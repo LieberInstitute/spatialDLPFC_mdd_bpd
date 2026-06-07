@@ -56,7 +56,7 @@ colData(spe_pseudo) <- new.cdata
 plist = list(p1, p2)
 for (results_set in c("smoothed-k9-1663","seurat-pc30")) {
 	# if needed, load in spe object with correct gene set gene names
-	if(results_set=="seurat-pc30") load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
+	if(results_set=="seurat-pc30") load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
 # load in PRS model results
 results <- readRDS(paste0("processed-data/tmp_PRS_DE/lmFit-voom_layer-adjusted_", 
                           results_set, 
