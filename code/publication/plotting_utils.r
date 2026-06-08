@@ -16,7 +16,8 @@ load("processed-data/06_pseudobulk/spe_n119_pseudo-dotplot_sample-id.Rdata")
 # pre-reqs for mean ratio bar plot
 load("processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo-dotplot_azimuth-super-broad.Rdata")
 sn.col.pal = c("Vasc"=cpList$low.res.light[["Micro.Vasc"]],
-            "Micro"=cpList$low.res.light[["L3"]],
+#            "Micro"=cpList$low.res.light[["L3"]],
+	    "Micro"="#C28658",
             cpList$low.res.light[c("Astro","Oligo")],
             "InhN"=cpList$low.res.light[["Inhb"]],
             "ExcN"=cpList$low.res.light[["L2"]]
@@ -135,7 +136,7 @@ getMeanRatioBar <- function(ordered_genes, sce_summ) {
 	  scale_fill_manual(values=sn.col.pal)+scale_y_discrete(position="right")+
 	  labs(title=" ", x="mean\nexpr")+
 	  theme_minimal()+theme(axis.text.x=element_blank(), axis.text.y=element_blank(),
-	                        axis.title.y=element_blank(),
+	                        axis.title.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor=element_blank(),
 	                        legend.position="bottom", legend.title=element_blank(),
 	                        legend.key.size = unit(10,"pt"))
 	return(p1.2)

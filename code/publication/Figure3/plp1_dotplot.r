@@ -42,7 +42,7 @@ p3.3 <- ggplot(mutate(imp.df, y_lab=factor(y_lab, levels=rev(plot.genes))),
 
 ggsave("plots/publication/Figure3/PLP1_dotplot.pdf", 
        arrangeGrob(grobs=list(p3, p3.1, p3.2, p3.3), layout_matrix=matrix(c(1,1,1,1,1,2,3,4), ncol=8)),
-       height=4, width=6.5)
+       height=3.5, width=6.5)
 
 ## Reproducibility information
 print("Reproducibility information:")
