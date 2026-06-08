@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=3G
-#SBATCH --job-name=volcanoes_precast_mean-ratio-colored
+#SBATCH --mem=1G
+#SBATCH --job-name=volcanoes_seurat_mean-ratio-colored
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -17,8 +17,8 @@ echo "n Tasks: ${SLURM_NTASKS}"
 module load conda_R/4.4.x
 module list
 
-#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/volcano_plots/supp_seurat.r
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/volcano_plots/supp_precast.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/volcano_plots/supp_seurat.r
+#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/volcano_plots/supp_precast.r
 
 echo "**** Job ends ****"
 date

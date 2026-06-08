@@ -70,6 +70,25 @@ p1 <- ggplot(mutate(plot.df, cluster="L-A"), aes(x=logFC, y=-log10(adj.P.Val), c
                         panel.border=element_rect(fill=NA, color="grey"), axis.ticks=element_line(color="grey", linewidth=.3),
 	axis.title.x=element_blank(), plot.margin=margin(0,5.5,0,5.5,"pt"))
 
+
+# solo version for main figures
+plot.df2 = mutate(plot.df, sex.group=factor(coef, levels=comparisons))
+p1.vert <- ggplot(plot.df2, aes(x=logFC, y=-log10(adj.P.Val), color=cellType.target))+
+  geom_point(size=.1, shape=4)+
+  geom_point(data=filter(plot.df2, is_deg==T), size=.5)+
+#  scale_color_manual(values=c("grey","black"), guide="none")+
+  scale_color_manual(values=color.palette)+
+  facet_wrap(vars(sex.group), ncol=2)+
+  scale_y_continuous(limits=c(0,10), breaks=c(0,2,4,6,8,10))+
+  coord_cartesian(xlim=c(-3,3))+
+  theme_minimal()+theme(panel.grid.minor=element_blank(), panel.grid.major = element_line(linewidth=.3),
+                        aspect.ratio=1, legend.position="none",
+        text=element_text(size=6), strip.text.y.right=element_text(angle=0),
+                        panel.border=element_rect(fill=NA, color="grey"), axis.ticks=element_line(color="grey", linewidth=.3),
+        axis.title.x=element_blank())
+ggsave(file="plots/publication/volcano_plots/main_seurat.pdf", p1.vert,
+	height=3, width=2)
+
 plot.df2 = left_join(lrt, mratio.sn[,c("gene_name","MeanRatio","cellType.target")], by="gene_name")
 plot.df2[is.na(plot.df2$cellType.target),"cellType.target"] = "NS"
 plot.df2[!plot.df2$is_deg, "cellType.target"] = "NS"
