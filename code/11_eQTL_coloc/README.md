@@ -185,10 +185,13 @@ Per-disorder outputs are written under:
 processed-data/11_eQTL_coloc/seurat/coloc/<DIS>/coloc_<dataset_id>.qs2
 processed-data/11_eQTL_coloc/seurat/coloc/<DIS>/coloc_<dataset_id>.runmeta.tsv.gz
 processed-data/11_eQTL_coloc/seurat/coloc/<DIS>/coloc_<dataset_id>.sensitivity.tsv.gz
+processed-data/11_eQTL_coloc/seurat/coloc/<DIS>/coloc_<dataset_id>.complete
 ```
 
-Existing coloc result, metadata, and sensitivity files are skipped. To rerun a
-completed dataset, delete its existing coloc output files first.
+Completed datasets are skipped only when the result, metadata, sensitivity, and
+`.complete` marker all exist. If the marker is missing but the three primary
+files exist, the script validates them and writes the marker before skipping. To
+rerun a completed dataset, delete its existing coloc output files first.
 
 ## Summaries
 

@@ -2735,7 +2735,10 @@ run_coloc_sensitivity_one <- function(obj, rule, npoints = 100L) {
     {
       sens <- NULL
       invisible(utils::capture.output(
-        sens <- coloc::sensitivity(obj, rule = rule, doplot = FALSE, npoints = npoints)
+        withCallingHandlers(
+          sens <- coloc::sensitivity(obj, rule = rule, doplot = FALSE, npoints = npoints),
+          message = function(m) invokeRestart("muffleMessage")
+        )
       ))
       as.data.table(sens)
     },

@@ -137,6 +137,70 @@ sensitivity_path <- function(dis, dataset_id) {
   file.path(run_coloc_dir, dis, sprintf("coloc_%s.sensitivity.tsv.gz", dataset_id))
 }
 
+complete_path <- function(dis, dataset_id) {
+  file.path(run_coloc_dir, dis, sprintf("coloc_%s.complete", dataset_id))
+}
+
+validate_coloc_output_set <- function(out_path, runmeta_path, sens_path, dis, dataset_id) {
+  dis_value <- dis
+  dataset_id_value <- dataset_id
+  needed <- c(result = out_path, metadata = runmeta_path, sensitivity = sens_path)
+  missing <- needed[!file.exists(needed)]
+  if (length(missing) > 0L) {
+    stop("Missing coloc output file(s) for ", dis, "/", dataset_id, ": ", paste(names(missing), collapse = ", "))
+  }
+  bad_size <- needed[file.info(needed)$size <= 0]
+  if (length(bad_size) > 0L) {
+    stop("Empty coloc output file(s) for ", dis, "/", dataset_id, ": ", paste(names(bad_size), collapse = ", "))
+  }
+
+  meta <- fread(runmeta_path)
+  assert_cols(meta, c("disorder", "dataset_id", "n_genes_saved"), basename(runmeta_path))
+  if (nrow(meta) != 1L || !identical(as.character(meta$disorder[[1]]), dis) ||
+      !identical(as.character(meta$dataset_id[[1]]), dataset_id)) {
+    stop("Invalid coloc metadata for ", dis, "/", dataset_id)
+  }
+
+  res_list <- qs_read(out_path)
+  if (!is.list(res_list) || length(res_list) != as.integer(meta$n_genes_saved[[1]])) {
+    stop("Result object count does not match metadata for ", dis, "/", dataset_id)
+  }
+
+  sens <- fread(sens_path)
+  assert_cols(sens, c("disorder", "dataset_id", "gene_id"), basename(sens_path))
+  if (nrow(sens) > 0L && sens[disorder != dis_value | dataset_id != dataset_id_value, .N] > 0L) {
+    stop("Sensitivity rows do not match metadata for ", dis, "/", dataset_id)
+  }
+  TRUE
+}
+
+write_complete_marker <- function(marker_path, out_path, runmeta_path, sens_path, dis, dataset_id) {
+  validate_coloc_output_set(out_path, runmeta_path, sens_path, dis = dis, dataset_id = dataset_id)
+  marker_tmp <- paste0(marker_path, ".tmp")
+  writeLines(c(
+    paste0("timestamp\t", as.character(Sys.time())),
+    paste0("disorder\t", dis),
+    paste0("dataset_id\t", dataset_id),
+    paste0("result\t", out_path),
+    paste0("metadata\t", runmeta_path),
+    paste0("sensitivity\t", sens_path)
+  ), marker_tmp)
+  if (!file.rename(marker_tmp, marker_path)) {
+    stop("Failed to write complete marker: ", marker_path)
+  }
+}
+
+write_coloc_errors <- function(errors, err_path) {
+  if (nrow(errors) > 0L) {
+    fwrite(errors, err_path, sep = "\t", quote = FALSE, na = "NA")
+    return(invisible(NULL))
+  }
+  con <- gzfile(err_path, open = "wt")
+  on.exit(close(con), add = TRUE)
+  writeLines("disorder\tdataset_id\tgene_id\terror", con = con)
+  invisible(NULL)
+}
+
 run_sensitivity_table <- function(result_list, dis, row) {
   dis_value <- dis
   dataset_id_value <- row$dataset_id
@@ -222,10 +286,17 @@ run_coloc_dataset <- function(row, dis) {
   out_path <- result_path(dis, dataset_id)
   runmeta_path <- meta_path(dis, dataset_id)
   sens_path <- sensitivity_path(dis, dataset_id)
+  done_path <- complete_path(dis, dataset_id)
   dir.create(dirname(out_path), recursive = TRUE, showWarnings = FALSE)
 
-  if (file.exists(out_path) && file.exists(runmeta_path) && file.exists(sens_path)) {
-    message(Sys.time(), " | ", dis, " | ", dataset_id, " | outputs exist, skipping")
+  if (file.exists(done_path) && file.exists(out_path) && file.exists(runmeta_path) && file.exists(sens_path)) {
+    message(Sys.time(), " | ", dis, " | ", dataset_id, " | complete marker exists, skipping")
+    return(invisible(NULL))
+  }
+
+  if (!file.exists(done_path) && file.exists(out_path) && file.exists(runmeta_path) && file.exists(sens_path)) {
+    message(Sys.time(), " | ", dis, " | ", dataset_id, " | validating existing outputs before skip")
+    write_complete_marker(done_path, out_path, runmeta_path, sens_path, dis = dis, dataset_id = dataset_id)
     return(invisible(NULL))
   }
 
@@ -234,6 +305,7 @@ run_coloc_dataset <- function(row, dis) {
     res_list <- qs_read(out_path)
     sens <- run_sensitivity_table(res_list, dis = dis, row = row)
     fwrite(sens, sens_path, sep = "\t", quote = FALSE, na = "NA")
+    write_complete_marker(done_path, out_path, runmeta_path, sens_path, dis = dis, dataset_id = dataset_id)
     return(invisible(NULL))
   }
 
@@ -313,7 +385,7 @@ run_coloc_dataset <- function(row, dis) {
   fwrite(sens, sens_path, sep = "\t", quote = FALSE, na = "NA")
 
   err_path <- sub("\\.runmeta\\.tsv\\.gz$", ".errors.tsv.gz", runmeta_path)
-  fwrite(errors, err_path, sep = "\t", quote = FALSE, na = "NA")
+  write_coloc_errors(errors, err_path)
 
   meta <- data.table(
     timestamp = as.character(Sys.time()),
@@ -352,6 +424,7 @@ run_coloc_dataset <- function(row, dis) {
   if (!file.exists(out_path) || !file.exists(runmeta_path) || !file.exists(sens_path)) {
     stop("Missing coloc output after run for ", dis, "/", dataset_id)
   }
+  write_complete_marker(done_path, out_path, runmeta_path, sens_path, dis = dis, dataset_id = dataset_id)
   message(Sys.time(), " | ", dis, " | ", dataset_id, " | saved ", length(res_list), " coloc results")
   invisible(NULL)
 }
