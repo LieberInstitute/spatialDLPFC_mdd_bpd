@@ -55,7 +55,7 @@ disorders <- vapply(disorders, gwas_check_disorder, character(1))
 dataset_filter <- split_csv(arg_value("--datasets"), character())
 chromosomes <- split_csv(arg_value("--chromosomes"), NULL)
 dry_run <- arg_flag("--dry-run")
-n_cores <- as.integer(arg_value("--n-cores", "4"))
+n_cores <- as.integer(arg_value("--n-cores", "1"))
 if (is.na(n_cores) || n_cores < 1L) n_cores <- 1L
 
 tqtl_in_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_in")
@@ -195,6 +195,28 @@ run_sensitivity_table <- function(result_list, dis, row) {
   out[]
 }
 
+run_gene_workers <- function(genes, worker, dis, dataset_id) {
+  named_genes <- setNames(genes, genes)
+  if (n_cores <= 1L) return(lapply(named_genes, worker))
+
+  ## coloc result objects are large; forked collection can fail if a worker dies.
+  ## keep multicore optional and fall back to serial before writing any outputs.
+  message(Sys.time(), " | ", dis, " | ", dataset_id, " | using ", n_cores, " coloc workers")
+  bp <- BiocParallel::MulticoreParam(n_cores, stop.on.error = FALSE, progressbar = FALSE)
+  res <- tryCatch(
+    BiocParallel::bplapply(named_genes, worker, BPPARAM = bp),
+    error = function(e) {
+      message(
+        Sys.time(), " | ", dis, " | ", dataset_id,
+        " | multicore coloc failed; rerunning serial. Error: ", conditionMessage(e)
+      )
+      NULL
+    }
+  )
+  if (is.null(res) || length(res) != length(named_genes)) return(lapply(named_genes, worker))
+  res
+}
+
 run_coloc_dataset <- function(row, dis) {
   dataset_id <- row$dataset_id
   out_path <- result_path(dis, dataset_id)
@@ -267,12 +289,7 @@ run_coloc_dataset <- function(row, dis) {
     )
   }
 
-  if (n_cores > 1L) {
-    bp <- BiocParallel::MulticoreParam(n_cores, stop.on.error = FALSE, progressbar = FALSE)
-    res_list <- BiocParallel::bplapply(setNames(genes, genes), worker, BPPARAM = bp)
-  } else {
-    res_list <- lapply(setNames(genes, genes), worker)
-  }
+  res_list <- run_gene_workers(genes = genes, worker = worker, dis = dis, dataset_id = dataset_id)
 
   err_idx <- which(vapply(res_list, inherits, logical(1), "coloc_err"))
   errors <- if (length(err_idx) > 0L) {

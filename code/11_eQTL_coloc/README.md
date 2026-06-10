@@ -164,6 +164,7 @@ Optional filters:
 Rscript ./04_run_coloc.R --datasets astro,l2-3 --disorder MDD
 Rscript ./04_run_coloc.R --disorder BPD --chromosomes chr22
 Rscript ./04_run_coloc.R --dry-run --disorder BPD
+Rscript ./04_run_coloc.R --disorder MDD --n-cores 4
 ```
 
 Coloc defaults:
@@ -176,6 +177,7 @@ Coloc defaults:
 - minimum eQTL evidence: at least one finite `abs(slope / slope_se) >= 2`
 - GWAS filter: `SI >= 0.8`, no p-value cutoff
 - method: `coloc.abf` plus `coloc::sensitivity`, not SuSiE
+- parallelism: default `--n-cores 1`; multicore is optional and falls back to serial if forked collection fails
 
 Per-disorder outputs are written under:
 
