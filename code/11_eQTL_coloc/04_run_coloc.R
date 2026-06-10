@@ -74,6 +74,7 @@ disorders <- vapply(disorders, gwas_check_disorder, character(1))
 dataset_filter <- split_csv(arg_value("--datasets"), character())
 chromosomes <- split_csv(arg_value("--chromosomes"), NULL)
 dry_run <- arg_flag("--dry-run")
+write_full_qs2 <- arg_flag("--write-full-qs2")
 n_cores <- as.integer(arg_value("--n-cores", "4"))
 if (is.na(n_cores) || n_cores < 1L) n_cores <- 1L
 
@@ -156,14 +157,23 @@ sensitivity_path <- function(dis, dataset_id) {
   file.path(run_coloc_dir, dis, sprintf("coloc_%s.sensitivity.tsv.gz", dataset_id))
 }
 
+flat_path <- function(dis, dataset_id) {
+  file.path(run_coloc_dir, dis, sprintf("coloc_%s.flat.tsv.gz", dataset_id))
+}
+
+errors_path <- function(dis, dataset_id) {
+  file.path(run_coloc_dir, dis, sprintf("coloc_%s.errors.tsv.gz", dataset_id))
+}
+
 complete_path <- function(dis, dataset_id) {
   file.path(run_coloc_dir, dis, sprintf("coloc_%s.complete", dataset_id))
 }
 
-validate_coloc_output_set <- function(out_path, runmeta_path, sens_path, dis, dataset_id) {
+validate_coloc_output_set <- function(out_path, flat_path, runmeta_path, sens_path, err_path,
+                                      dis, dataset_id, require_qs2 = FALSE) {
   dis_value <- dis
   dataset_id_value <- dataset_id
-  needed <- c(result = out_path, metadata = runmeta_path, sensitivity = sens_path)
+  needed <- c(flat = flat_path, metadata = runmeta_path, sensitivity = sens_path, errors = err_path)
   missing <- needed[!file.exists(needed)]
   if (length(missing) > 0L) {
     stop("Missing coloc output file(s) for ", dis, "/", dataset_id, ": ", paste(names(missing), collapse = ", "))
@@ -177,12 +187,13 @@ validate_coloc_output_set <- function(out_path, runmeta_path, sens_path, dis, da
   assert_cols(meta, c("disorder", "dataset_id", "n_genes_saved"), basename(runmeta_path))
   if (nrow(meta) != 1L || !identical(as.character(meta$disorder[[1]]), dis) ||
       !identical(as.character(meta$dataset_id[[1]]), dataset_id)) {
-    stop("Invalid coloc metadata for ", dis, "/", dataset_id)
+      stop("Invalid coloc metadata for ", dis, "/", dataset_id)
   }
 
-  res_list <- qs_read(out_path)
-  if (!is.list(res_list) || length(res_list) != as.integer(meta$n_genes_saved[[1]])) {
-    stop("Result object count does not match metadata for ", dis, "/", dataset_id)
+  flat <- fread(flat_path)
+  assert_cols(flat, c("disorder", "dataset_id", "gene_id", "cat", "lead_snp"), basename(flat_path))
+  if (nrow(flat) > 0L && flat[disorder != dis_value | dataset_id != dataset_id_value, .N] > 0L) {
+    stop("Flat coloc rows do not match metadata for ", dis, "/", dataset_id)
   }
 
   sens <- fread(sens_path)
@@ -190,20 +201,39 @@ validate_coloc_output_set <- function(out_path, runmeta_path, sens_path, dis, da
   if (nrow(sens) > 0L && sens[disorder != dis_value | dataset_id != dataset_id_value, .N] > 0L) {
     stop("Sensitivity rows do not match metadata for ", dis, "/", dataset_id)
   }
+
+  if (isTRUE(require_qs2) || file.exists(out_path)) {
+    if (!file.exists(out_path) || file.info(out_path)$size <= 0) {
+      stop("Missing or empty full coloc QS2 for ", dis, "/", dataset_id, ": ", out_path)
+    }
+  }
   TRUE
 }
 
-write_complete_marker <- function(marker_path, out_path, runmeta_path, sens_path, dis, dataset_id) {
-  validate_coloc_output_set(out_path, runmeta_path, sens_path, dis = dis, dataset_id = dataset_id)
+write_complete_marker <- function(marker_path, out_path, flat_path, runmeta_path, sens_path, err_path,
+                                  dis, dataset_id, require_qs2 = FALSE) {
+  validate_coloc_output_set(
+    out_path = out_path,
+    flat_path = flat_path,
+    runmeta_path = runmeta_path,
+    sens_path = sens_path,
+    err_path = err_path,
+    dis = dis,
+    dataset_id = dataset_id,
+    require_qs2 = require_qs2
+  )
   marker_tmp <- paste0(marker_path, ".tmp")
-  writeLines(c(
+  marker_lines <- c(
     paste0("timestamp\t", as.character(Sys.time())),
     paste0("disorder\t", dis),
     paste0("dataset_id\t", dataset_id),
-    paste0("result\t", out_path),
+    paste0("flat\t", flat_path),
     paste0("metadata\t", runmeta_path),
-    paste0("sensitivity\t", sens_path)
-  ), marker_tmp)
+    paste0("sensitivity\t", sens_path),
+    paste0("errors\t", err_path)
+  )
+  if (file.exists(out_path)) marker_lines <- c(marker_lines, paste0("result\t", out_path))
+  writeLines(marker_lines, marker_tmp)
   if (!file.rename(marker_tmp, marker_path)) {
     stop("Failed to write complete marker: ", marker_path)
   }
@@ -341,30 +371,60 @@ run_coloc_dataset <- function(row, dis) {
   out_path <- result_path(dis, dataset_id)
   runmeta_path <- meta_path(dis, dataset_id)
   sens_path <- sensitivity_path(dis, dataset_id)
+  candidate_path <- flat_path(dis, dataset_id)
+  err_path <- errors_path(dis, dataset_id)
   done_path <- complete_path(dis, dataset_id)
-  dir.create(dirname(out_path), recursive = TRUE, showWarnings = FALSE)
+  dir.create(dirname(candidate_path), recursive = TRUE, showWarnings = FALSE)
 
-  if (file.exists(done_path) && file.exists(out_path) && file.exists(runmeta_path) && file.exists(sens_path)) {
+  if (file.exists(done_path) && file.exists(candidate_path) && file.exists(runmeta_path) &&
+      file.exists(sens_path) && file.exists(err_path) &&
+      (!isTRUE(write_full_qs2) || file.exists(out_path))) {
     message(Sys.time(), " | ", dis, " | ", dataset_id, " | complete marker exists, skipping")
     return(invisible(NULL))
   }
 
-  if (!file.exists(done_path) && file.exists(out_path) && file.exists(runmeta_path) && file.exists(sens_path)) {
+  if (!file.exists(done_path) && file.exists(candidate_path) && file.exists(runmeta_path) &&
+      file.exists(sens_path) && file.exists(err_path) &&
+      (!isTRUE(write_full_qs2) || file.exists(out_path))) {
     message(Sys.time(), " | ", dis, " | ", dataset_id, " | validating existing outputs before skip")
-    write_complete_marker(done_path, out_path, runmeta_path, sens_path, dis = dis, dataset_id = dataset_id)
+    write_complete_marker(
+      done_path, out_path, candidate_path, runmeta_path, sens_path, err_path,
+      dis = dis, dataset_id = dataset_id, require_qs2 = write_full_qs2
+    )
     return(invisible(NULL))
   }
 
-  if (file.exists(out_path) && file.exists(runmeta_path) && !file.exists(sens_path)) {
-    message(Sys.time(), " | ", dis, " | ", dataset_id, " | result exists; creating missing sensitivity table")
+  if (file.exists(out_path) && file.exists(runmeta_path) &&
+      (!file.exists(candidate_path) || !file.exists(sens_path) || !file.exists(err_path))) {
+    message(Sys.time(), " | ", dis, " | ", dataset_id, " | result exists; backfilling lean outputs")
     res_list <- qs_read(out_path)
-    sens <- run_sensitivity_table(res_list, dis = dis, row = row)
-    fwrite(sens, sens_path, sep = "\t", quote = FALSE, na = "NA")
-    write_complete_marker(done_path, out_path, runmeta_path, sens_path, dis = dis, dataset_id = dataset_id)
+    if (!file.exists(candidate_path)) {
+      candidates <- flatten_coloc_results(
+        res_list,
+        disorder = dis,
+        dataset_id = dataset_id,
+        context = row$context,
+        split = row$split,
+        candidate_only = TRUE
+      )
+      fwrite(candidates, candidate_path, sep = "\t", quote = FALSE, na = "NA")
+    }
+    if (!file.exists(sens_path)) {
+      sens <- run_sensitivity_table(res_list, dis = dis, row = row)
+      fwrite(sens, sens_path, sep = "\t", quote = FALSE, na = "NA")
+    }
+    if (!file.exists(err_path)) {
+      write_coloc_errors(data.table(disorder = character(), dataset_id = character(), gene_id = character(), error = character()), err_path)
+    }
+    write_complete_marker(
+      done_path, out_path, candidate_path, runmeta_path, sens_path, err_path,
+      dis = dis, dataset_id = dataset_id, require_qs2 = write_full_qs2
+    )
     return(invisible(NULL))
   }
 
-  if (file.exists(out_path) || file.exists(runmeta_path)) {
+  if (file.exists(out_path) || file.exists(runmeta_path) || file.exists(candidate_path) || file.exists(sens_path) ||
+      file.exists(err_path)) {
     stop("Partial coloc output exists for ", dis, "/", dataset_id, ". Delete result and metadata before rerun.")
   }
 
@@ -428,11 +488,19 @@ run_coloc_dataset <- function(row, dis) {
   n_null <- sum(null_idx)
   res_list <- res_list[!null_idx]
 
-  qs_save(res_list, out_path)
+  if (isTRUE(write_full_qs2)) qs_save(res_list, out_path)
+  candidates <- flatten_coloc_results(
+    res_list,
+    disorder = dis,
+    dataset_id = dataset_id,
+    context = row$context,
+    split = row$split,
+    candidate_only = TRUE
+  )
+  fwrite(candidates, candidate_path, sep = "\t", quote = FALSE, na = "NA")
   sens <- run_sensitivity_table(res_list, dis = dis, row = row)
   fwrite(sens, sens_path, sep = "\t", quote = FALSE, na = "NA")
 
-  err_path <- sub("\\.runmeta\\.tsv\\.gz$", ".errors.tsv.gz", runmeta_path)
   write_coloc_errors(errors, err_path)
 
   meta <- data.table(
@@ -445,7 +513,8 @@ run_coloc_dataset <- function(row, dis) {
     chromosomes = if (is.null(chromosomes)) "" else paste(chromosomes, collapse = ","),
     gwas_si_min = si_min,
     gwas_cache = gwas_cache,
-    out_path = out_path,
+    flat_path = candidate_path,
+    out_path = if (isTRUE(write_full_qs2)) out_path else "",
     sensitivity_path = sens_path,
     errors_path = err_path,
     n_eqtl_samples = row$n_samples,
@@ -459,6 +528,7 @@ run_coloc_dataset <- function(row, dis) {
     n_genes_error = nrow(errors),
     n_genes_null = n_null,
     n_genes_saved = length(res_list),
+    n_candidate_rows = nrow(candidates),
     min_snps = min_snps,
     min_abs_eqtl_z = min_abs_eqtl_z,
     priors_p1 = priors$p1,
@@ -474,11 +544,15 @@ run_coloc_dataset <- function(row, dis) {
   )
   fwrite(meta, runmeta_path, sep = "\t", quote = FALSE, na = "NA")
 
-  if (!file.exists(out_path) || !file.exists(runmeta_path) || !file.exists(sens_path)) {
+  if (!file.exists(candidate_path) || !file.exists(runmeta_path) || !file.exists(sens_path) || !file.exists(err_path) ||
+      (isTRUE(write_full_qs2) && !file.exists(out_path))) {
     stop("Missing coloc output after run for ", dis, "/", dataset_id)
   }
-  write_complete_marker(done_path, out_path, runmeta_path, sens_path, dis = dis, dataset_id = dataset_id)
-  message(Sys.time(), " | ", dis, " | ", dataset_id, " | saved ", length(res_list), " coloc results")
+  write_complete_marker(
+    done_path, out_path, candidate_path, runmeta_path, sens_path, err_path,
+    dis = dis, dataset_id = dataset_id, require_qs2 = write_full_qs2
+  )
+  message(Sys.time(), " | ", dis, " | ", dataset_id, " | saved ", nrow(candidates), " coloc candidate rows")
   invisible(NULL)
 }
 

@@ -564,10 +564,17 @@ load_genotype_variant_info <- function(plink2_prefix,
                                        rsid_vcf = genotype_rsid_vcf_path(),
                                        cache_file = genotype_variant_info_cache_file(plink2_prefix),
                                        use_cache = TRUE,
+                                       build_if_missing = TRUE,
                                        bcftools = "bcftools") {
   if (isTRUE(use_cache) && file.exists(cache_file)) {
     out <- data.table::fread(cache_file)
   } else {
+    if (!isTRUE(build_if_missing)) {
+      stop(
+        "Missing genotype variant cache: ", cache_file,
+        "\nBuild it in 03b_eQTL_boxplots.Rmd or copy it from the machine where it was built."
+      )
+    }
     out <- build_genotype_variant_info_cache(
       plink2_prefix = plink2_prefix,
       rsid_vcf = rsid_vcf,
@@ -3005,9 +3012,34 @@ summarize_coloc_sensitivity <- function(obj, rule = "H4 > 0.8", npoints = 100L,
 }
 
 flatten_coloc_results <- function(result_list, disorder, dataset_id, context,
-                                  split = "all", g2sym = NULL, cs_level = 0.95) {
+                                  split = "all", g2sym = NULL, cs_level = 0.95,
+                                  candidate_only = FALSE) {
   require_data_table()
-  if (length(result_list) == 0L) return(data.table::data.table())
+  empty_out <- function() data.table::data.table(
+    disorder = character(),
+    dataset_id = character(),
+    context = character(),
+    split = character(),
+    gene_id = character(),
+    gene_name = character(),
+    cat = character(),
+    nsnps = numeric(),
+    PP0 = numeric(),
+    PP1 = numeric(),
+    PP2 = numeric(),
+    PP3 = numeric(),
+    PP4 = numeric(),
+    PP34 = numeric(),
+    PP4_over_PP34 = numeric(),
+    lead_snp = character(),
+    lead_snp_PPH4 = numeric(),
+    lead_snp_PPsho = numeric(),
+    cs95_n_snp = integer(),
+    p1 = numeric(),
+    p2 = numeric(),
+    p12 = numeric()
+  )
+  if (length(result_list) == 0L) return(empty_out())
 
   disorder_value <- disorder
   dataset_id_value <- dataset_id
@@ -3018,7 +3050,7 @@ flatten_coloc_results <- function(result_list, disorder, dataset_id, context,
     obj <- result_list[[gene_id]]
     if (is.null(obj) || is.null(obj$summary) || is.null(obj$results)) return(NULL)
     sm <- as.list(obj$summary)
-    res <- as.data.table(obj$results)
+    res <- data.table::as.data.table(obj$results)
     if (!"SNP.PP.H4" %in% names(res)) return(NULL)
     data.table::setorderv(res, "SNP.PP.H4", -1L)
     res[, cum_h4 := cumsum(SNP.PP.H4)]
@@ -3055,7 +3087,10 @@ flatten_coloc_results <- function(result_list, disorder, dataset_id, context,
       p12 = as.numeric(obj$priors[["p12"]])
     )
   })
-  data.table::rbindlist(rows, use.names = TRUE, fill = TRUE)
+  out <- data.table::rbindlist(rows, use.names = TRUE, fill = TRUE)
+  if (is.null(out) || ncol(out) == 0L) return(empty_out())
+  if (isTRUE(candidate_only) && nrow(out) > 0L) out <- out[!is.na(cat)]
+  out[]
 }
 
 flatten_coloc_snps <- function(result_list, disorder, dataset_id, context, split = "all") {
@@ -3068,7 +3103,7 @@ flatten_coloc_snps <- function(result_list, disorder, dataset_id, context, split
     gene_id_value <- gene_id
     obj <- result_list[[gene_id]]
     if (is.null(obj) || is.null(obj$results)) return(NULL)
-    dt <- as.data.table(obj$results)
+    dt <- data.table::as.data.table(obj$results)
     dt[, `:=`(
       disorder = disorder_value,
       dataset_id = dataset_id_value,
