@@ -1,0 +1,313 @@
+---
+title: "Seurat coloc ABF exploration"
+## output: html_notebook
+---
+
+```{r setup}
+suppressPackageStartupMessages({
+  library(data.table)
+  library(ggplot2)
+  library(here)
+  library(qs2)
+  library(openxlsx)
+})
+
+here::i_am(".git/HEAD")
+
+repo_root <- here()
+code_dir <- here("code", "11_eQTL_coloc")
+source(file.path(code_dir, "utils.R"), chdir = FALSE)
+
+coloc_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "coloc")
+tables_dir <- file.path(coloc_dir, "tables")
+plots_dir <- here("plots", "11_eQTL_coloc", "coloc")
+plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05")
+
+disorders <- c("MDD", "BPD")
+context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
+dataset_order <- unname(SEURAT_CONTEXT_TO_DATASET_ID)
+gate_frac_min_cfg <- 0.5
+
+dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
+```
+
+```{r helpers}
+assert_file <- function(path) {
+  if (!file.exists(path)) stop("Missing required file: ", path)
+  invisible(TRUE)
+}
+
+coloc_result_path <- function(dis, dataset_id) {
+  file.path(coloc_dir, dis, sprintf("coloc_%s.qs2", dataset_id))
+}
+
+coloc_meta_path <- function(dis, dataset_id) {
+  file.path(coloc_dir, dis, sprintf("coloc_%s.runmeta.tsv.gz", dataset_id))
+}
+
+coloc_sensitivity_path <- function(dis, dataset_id) {
+  file.path(coloc_dir, dis, sprintf("coloc_%s.sensitivity.tsv.gz", dataset_id))
+}
+
+write_coloc_xlsx <- function(results, gated, summary_dt, qc_dt, out_file) {
+  wb <- openxlsx::createWorkbook()
+  openxlsx::addWorksheet(wb, "results")
+  openxlsx::addWorksheet(wb, "gated")
+  openxlsx::addWorksheet(wb, "summary")
+  openxlsx::addWorksheet(wb, "qc")
+  openxlsx::writeDataTable(wb, "results", results)
+  openxlsx::writeDataTable(wb, "gated", gated)
+  openxlsx::writeDataTable(wb, "summary", summary_dt)
+  openxlsx::writeDataTable(wb, "qc", qc_dt)
+  openxlsx::freezePane(wb, "results", firstRow = TRUE)
+  openxlsx::freezePane(wb, "gated", firstRow = TRUE)
+  openxlsx::freezePane(wb, "summary", firstRow = TRUE)
+  openxlsx::freezePane(wb, "qc", firstRow = TRUE)
+  openxlsx::saveWorkbook(wb, out_file, overwrite = TRUE)
+}
+```
+
+```{r load-inputs}
+granges <- load_gene_ranges(repo_root = repo_root)
+g2sym <- setNames(granges$gene_name, granges$gene_id)
+
+manifest <- load_eqtl_manifest(
+  tqtl_in_dir = here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_in"),
+  context_order = context_order,
+  split_order = "all"
+)
+manifest <- manifest[dataset_id %in% dataset_order]
+manifest[, context_order_rank := match(context, context_order)]
+setorder(manifest, context_order_rank)
+manifest[, context_order_rank := NULL]
+
+variant_info <- load_genotype_variant_info(plink2_prefix = plink2_prefix)
+variant_rsid <- variant_info[, .(lead_snp = variant_id, lead_rsid = rsid)]
+```
+
+```{r flatten-results}
+flat_parts <- list()
+snp_parts <- list()
+sens_parts <- list()
+qc_parts <- list()
+
+for (dis in disorders) {
+  for (i in seq_len(nrow(manifest))) {
+    row <- manifest[i]
+    f_res <- coloc_result_path(dis, row$dataset_id)
+    f_meta <- coloc_meta_path(dis, row$dataset_id)
+    f_sens <- coloc_sensitivity_path(dis, row$dataset_id)
+    assert_file(f_res)
+    assert_file(f_meta)
+    assert_file(f_sens)
+
+    res_list <- qs_read(f_res)
+    flat_parts[[paste(dis, row$dataset_id, sep = "_")]] <- flatten_coloc_results(
+      res_list,
+      disorder = dis,
+      dataset_id = row$dataset_id,
+      context = row$context,
+      split = row$split,
+      g2sym = g2sym
+    )
+    snp_parts[[paste(dis, row$dataset_id, sep = "_")]] <- flatten_coloc_snps(
+      res_list,
+      disorder = dis,
+      dataset_id = row$dataset_id,
+      context = row$context,
+      split = row$split
+    )
+    sens_parts[[paste(dis, row$dataset_id, sep = "_")]] <- fread(f_sens)
+    qc_parts[[paste(dis, row$dataset_id, sep = "_")]] <- fread(f_meta)
+  }
+}
+
+coloc_results <- rbindlist(flat_parts, use.names = TRUE, fill = TRUE)
+coloc_snps <- rbindlist(snp_parts, use.names = TRUE, fill = TRUE)
+coloc_sensitivity <- rbindlist(sens_parts, use.names = TRUE, fill = TRUE)
+coloc_qc <- rbindlist(qc_parts, use.names = TRUE, fill = TRUE)
+
+coloc_results[variant_rsid, lead_rsid := i.lead_rsid, on = "lead_snp"]
+coloc_results[is.na(lead_rsid), lead_rsid := ""]
+
+front_cols <- c(
+  "disorder", "dataset_id", "context", "split", "gene_id", "gene_name",
+  "cat", "lead_snp", "lead_rsid", "nsnps", "PP3", "PP4", "PP34", "PP4_over_PP34"
+)
+setcolorder(coloc_results, c(intersect(front_cols, names(coloc_results)), setdiff(names(coloc_results), front_cols)))
+coloc_results[, context_order_rank := match(context, context_order)]
+setorder(coloc_results, disorder, context_order_rank, gene_name, -PP4)
+coloc_results[, context_order_rank := NULL]
+```
+
+```{r sensitivity-gating}
+gate_cols <- c(
+  "disorder", "dataset_id", "context", "split", "gene_id",
+  "sensitivity_error", "npoints", "n_pass", "frac_pass",
+  "n_plausible", "n_plausible_pass", "frac_plausible_pass",
+  "min_pass_p12", "max_pass_p12", "rule"
+)
+assert_cols(coloc_sensitivity, gate_cols, "coloc sensitivity")
+
+gate_core <- coloc_sensitivity[, ..gate_cols]
+coloc_gated <- merge(
+  coloc_results,
+  gate_core,
+  by = c("disorder", "dataset_id", "context", "split", "gene_id"),
+  all.x = TRUE,
+  sort = FALSE
+)
+
+coloc_gated[, gate_pass := fifelse(
+    cat == "strong_coloc" &
+    is.na(sensitivity_error) &
+    !is.na(n_plausible) & n_plausible > 0L &
+    !is.na(frac_plausible_pass) & frac_plausible_pass >= gate_frac_min_cfg,
+  TRUE,
+  FALSE
+)]
+coloc_gated[is.na(cat) | cat != "strong_coloc", gate_pass := FALSE]
+coloc_gated[, gate_reason := fcase(
+  is.na(cat), "not_categorized",
+  cat != "strong_coloc", "not_strong_coloc",
+  !is.na(sensitivity_error), "fail_sensitivity_error",
+  is.na(n_plausible) | n_plausible <= 0L, "fail_no_plausible_points",
+  is.na(frac_plausible_pass) | frac_plausible_pass < gate_frac_min_cfg, "fail_sensitivity_grid",
+  default = "pass"
+)]
+coloc_gated[, cat_raw := cat]
+coloc_gated[, cat_gated := fifelse(gate_pass == TRUE, cat_raw, NA_character_)]
+coloc_gated[, gate_frac_min := gate_frac_min_cfg]
+
+gated_front <- c(
+  "disorder", "dataset_id", "context", "split", "gene_id", "gene_name",
+  "cat_raw", "cat_gated", "gate_pass", "gate_reason",
+  "lead_snp", "lead_rsid", "nsnps", "PP3", "PP4", "PP34", "PP4_over_PP34",
+  "frac_plausible_pass", "n_plausible", "n_plausible_pass"
+)
+setcolorder(coloc_gated, c(intersect(gated_front, names(coloc_gated)), setdiff(names(coloc_gated), gated_front)))
+coloc_gated[, context_order_rank := match(context, context_order)]
+setorder(coloc_gated, disorder, context_order_rank, -gate_pass, gene_name, -PP4)
+coloc_gated[, context_order_rank := NULL]
+```
+
+```{r summaries}
+summary_grid <- CJ(
+  disorder = disorders,
+  context = context_order,
+  cat_raw = c("strong_coloc", "likely_coloc", "distinct_causal", "follow_up"),
+  unique = TRUE
+)
+
+cat_summary <- coloc_gated[!is.na(cat_raw), .(
+  n_loci = .N,
+  n_genes = uniqueN(gene_id),
+  genes = collapse_gene_list(gene_name)
+), by = .(disorder, context, cat_raw)]
+cat_summary <- merge(summary_grid, cat_summary, by = c("disorder", "context", "cat_raw"), all.x = TRUE)
+cat_summary[is.na(n_loci), `:=`(n_loci = 0L, n_genes = 0L, genes = "")]
+
+strong_summary <- coloc_gated[, .(
+  n_tested = .N,
+  n_raw_strong = sum(cat_raw == "strong_coloc", na.rm = TRUE),
+  n_gated_strong = sum(cat_gated == "strong_coloc", na.rm = TRUE),
+  strong_genes = collapse_gene_list(gene_name[cat_gated == "strong_coloc"])
+), by = .(disorder, dataset_id, context)]
+strong_summary[, context := factor(context, levels = context_order)]
+setorder(strong_summary, disorder, context)
+strong_summary[, context := as.character(context)]
+```
+
+```{r write-tables}
+f_results <- file.path(tables_dir, "coloc_abf_results.tsv.gz")
+f_gated <- file.path(tables_dir, "coloc_abf_results_gated.tsv.gz")
+f_summary <- file.path(tables_dir, "coloc_abf_summary_by_domainCT.csv")
+f_cat_summary <- file.path(tables_dir, "coloc_abf_category_summary.csv")
+f_snp <- file.path(tables_dir, "coloc_abf_snp_pph4.tsv.gz")
+f_sens <- file.path(tables_dir, "coloc_abf_sensitivity.tsv.gz")
+f_qc <- file.path(tables_dir, "coloc_abf_qc.tsv.gz")
+f_xlsx <- file.path(tables_dir, "coloc_abf_results.xlsx")
+
+fwrite(coloc_results, f_results, sep = "\t", quote = FALSE, na = "NA")
+fwrite(coloc_gated, f_gated, sep = "\t", quote = FALSE, na = "NA")
+fwrite(strong_summary, f_summary)
+fwrite(cat_summary, f_cat_summary)
+fwrite(coloc_snps, f_snp, sep = "\t", quote = FALSE, na = "NA")
+fwrite(coloc_sensitivity, f_sens, sep = "\t", quote = FALSE, na = "NA")
+fwrite(coloc_qc, f_qc, sep = "\t", quote = FALSE, na = "NA")
+write_coloc_xlsx(coloc_results, coloc_gated, strong_summary, coloc_qc, f_xlsx)
+
+list(
+  results = f_results,
+  gated = f_gated,
+  summary = f_summary,
+  category_summary = f_cat_summary,
+  snp_pph4 = f_snp,
+  sensitivity = f_sens,
+  qc = f_qc,
+  xlsx = f_xlsx
+)
+```
+
+```{r plot-strong-counts, fig.width=8, fig.height=5}
+plot_dt <- copy(strong_summary)
+plot_dt[, context := factor(context, levels = context_order)]
+
+p_strong <- ggplot(plot_dt, aes(x = context, y = n_gated_strong, fill = disorder)) +
+  geom_col(position = position_dodge(width = 0.72), width = 0.64, color = "grey25", linewidth = 0.2) +
+  geom_text(
+    aes(label = n_gated_strong),
+    position = position_dodge(width = 0.72),
+    vjust = -0.25,
+    size = 3
+  ) +
+  scale_fill_manual(values = c(MDD = "#4C78A8", BPD = "#D07C40")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    x = NULL,
+    y = "Sensitivity-gated strong coloc loci",
+    fill = "Disorder",
+    title = "Strong coloc counts by Seurat domainCT"
+  ) +
+  theme_bw(base_size = 12) +
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.ticks.x = element_blank(),
+    legend.position = "top"
+  )
+
+print(p_strong)
+
+strong_plot_file <- file.path(plots_dir, "strong_coloc_counts_by_domainCT.svg")
+ggsave(strong_plot_file, p_strong, width = 8, height = 5, units = "in")
+strong_plot_file
+```
+
+```{r validation}
+check_counts <- coloc_gated[, .(
+  n_gated = sum(cat_gated == "strong_coloc", na.rm = TRUE)
+), by = .(disorder, dataset_id, context)]
+check_counts <- merge(
+  check_counts,
+  strong_summary[, .(disorder, dataset_id, context, n_gated_strong)],
+  by = c("disorder", "dataset_id", "context"),
+  all = TRUE
+)
+if (check_counts[is.na(n_gated) | is.na(n_gated_strong) | n_gated != n_gated_strong, .N] > 0L) {
+  stop("Strong coloc count mismatch between gated table and summary.")
+}
+if (coloc_gated[gate_pass == TRUE & cat_gated != "strong_coloc", .N] > 0L) {
+  stop("Gate pass/category mismatch detected.")
+}
+if (coloc_results[is.na(disorder) | is.na(dataset_id) | is.na(gene_id), .N] > 0L) {
+  stop("Missing coloc result keys detected.")
+}
+
+list(
+  n_results = nrow(coloc_results),
+  n_gated_strong = coloc_gated[cat_gated == "strong_coloc", .N],
+  n_snp_rows = nrow(coloc_snps)
+)
+```

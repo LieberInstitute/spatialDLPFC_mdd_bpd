@@ -2369,3 +2369,474 @@ summarize_eqtl_analysis <- function(config, degs, g2sym, gwas_sets,
     deg_view_tables = deg_view_tables
   )
 }
+
+assert_cols <- function(dt, cols, label = deparse(substitute(dt))) {
+  missing_cols <- setdiff(cols, names(dt))
+  if (length(missing_cols) > 0) {
+    stop("Missing required columns in ", label, ": ", paste(missing_cols, collapse = ", "))
+  }
+  invisible(TRUE)
+}
+
+first_non_missing <- function(x) {
+  y <- x[!is.na(x) & nzchar(as.character(x))]
+  if (length(y) == 0) return(NA_character_)
+  as.character(y[[1]])
+}
+
+coloc_nominal_parquet_files <- function(dataset_id, tqtl_out_dir) {
+  pattern <- paste0("^", gsub("\\.", "\\\\.", dataset_id), "\\.gene\\.cis_qtl_pairs\\.chr.*\\.parquet$")
+  sort(list.files(tqtl_out_dir, pattern = pattern, full.names = TRUE))
+}
+
+read_coloc_nominal_dataset <- function(dataset_id, tqtl_out_dir, cis_window = 1000000L,
+                                       chromosomes = NULL) {
+  if (!requireNamespace("arrow", quietly = TRUE)) stop("The arrow package is required")
+  require_data_table()
+
+  files <- coloc_nominal_parquet_files(dataset_id = dataset_id, tqtl_out_dir = tqtl_out_dir)
+  if (!is.null(chromosomes)) {
+    chr_pat <- paste0("\\.cis_qtl_pairs\\.(", paste(chromosomes, collapse = "|"), ")\\.parquet$")
+    files <- files[grepl(chr_pat, files)]
+  }
+  if (length(files) == 0L) stop("No nominal parquet files found for dataset_id: ", dataset_id)
+
+  cols <- c(
+    "phenotype_id", "variant_id", "start_distance", "af", "ma_samples",
+    "ma_count", "pval_nominal", "slope", "slope_se"
+  )
+  dt <- data.table::rbindlist(lapply(files, function(path) {
+    as.data.table(arrow::read_parquet(path, col_select = cols))
+  }), use.names = TRUE, fill = TRUE)
+  assert_cols(dt, cols, paste0(dataset_id, " nominal parquet"))
+  dt[, `:=`(
+    phenotype_id = as.character(phenotype_id),
+    variant_id = as.character(variant_id),
+    start_distance = as.integer(start_distance),
+    af = as.numeric(af),
+    pval_nominal = as.numeric(pval_nominal),
+    slope = as.numeric(slope),
+    slope_se = as.numeric(slope_se)
+  )]
+  dt <- dt[
+    !is.na(phenotype_id) & nzchar(phenotype_id) &
+      !is.na(variant_id) & nzchar(variant_id) &
+      abs(start_distance) <= cis_window
+  ]
+  dt[]
+}
+
+coloc_gwas_dataset_cache_file <- function(dis, dataset_id, coloc_dir, si_min = 0.8) {
+  dis <- gwas_check_disorder(dis)
+  file.path(
+    coloc_dir,
+    dis,
+    "cache",
+    sprintf("gwas_%s_nominal-variants_SI%s.tsv.gz", dataset_id, gwas_si_tag(si_min))
+  )
+}
+
+coloc_regions_from_variants <- function(variant_ids, plink2_prefix) {
+  require_data_table()
+  info <- read_plink2_variant_table(plink2_prefix)
+  out <- info[data.table::data.table(variant_id = unique(as.character(variant_ids))), on = "variant_id", nomatch = 0L]
+  out <- out[!is.na(CHROM) & !is.na(POS), .(CHROM, start0 = POS - 1L, end1 = POS, variant_id)]
+  data.table::setorder(out, CHROM, start0, end1, variant_id)
+  out[]
+}
+
+normalize_coloc_gwas_query_table <- function(dt, dis, si_min = 0.8) {
+  dis <- gwas_check_disorder(dis)
+  query_cols <- c("chr", "pos", "rsid", "a0", "a1", "beta", "beta_se", "lp", "N", "ns", "ncas", "impinfo")
+
+  if (nrow(dt) == 0L) {
+    dt <- data.table::as.data.table(stats::setNames(replicate(length(query_cols), logical(), simplify = FALSE), query_cols))
+  } else {
+    if (ncol(dt) != length(query_cols)) {
+      stop("Unexpected coloc GWAS query column count: ", ncol(dt), "; expected ", length(query_cols))
+    }
+    data.table::setnames(dt, query_cols)
+  }
+
+  dt[, `:=`(
+    chr = as.character(chr),
+    pos = as.integer(pos),
+    rsid = as.character(rsid),
+    a0 = as.character(a0),
+    a1 = as.character(a1),
+    beta = suppressWarnings(as.numeric(beta)),
+    beta_se = suppressWarnings(as.numeric(beta_se)),
+    lp = suppressWarnings(as.numeric(lp)),
+    N = suppressWarnings(as.numeric(N)),
+    ns = suppressWarnings(as.numeric(ns)),
+    ncas = suppressWarnings(as.numeric(ncas)),
+    impinfo = suppressWarnings(as.numeric(impinfo))
+  )]
+  dt[, p := 10^(-lp)]
+  dt[, variant_id := sprintf("%s:%s:%s:%s", chr, pos, a0, a1)]
+  dt <- dt[is.na(impinfo) | impinfo >= si_min]
+  data.table::setcolorder(dt, c(
+    "rsid", "chr", "pos", "a0", "a1", "beta", "beta_se", "N",
+    "ns", "ncas", "p", "impinfo", "lp", "variant_id"
+  ))
+  dt[]
+}
+
+extract_coloc_gwas_for_variants <- function(dis, variant_ids, plink2_prefix, out_file,
+                                            repo_root = NULL, genotype_dir = NULL,
+                                            si_min = 0.8, bcftools = "bcftools",
+                                            use_cache = TRUE) {
+  dis <- gwas_check_disorder(dis)
+  if (isTRUE(use_cache) && file.exists(out_file)) return(data.table::fread(out_file))
+  if (!nzchar(Sys.which(bcftools))) stop("Missing bcftools executable: ", bcftools)
+
+  regions <- coloc_regions_from_variants(variant_ids = variant_ids, plink2_prefix = plink2_prefix)
+  if (nrow(regions) == 0L) stop("No PLINK2 variants matched nominal variants for GWAS extraction.")
+
+  bcf_file <- gwas_bcf_path(dis, repo_root = repo_root, genotype_dir = genotype_dir)
+  region_file <- tempfile(pattern = "coloc-gwas-regions-", fileext = ".bed")
+  query_file <- tempfile(pattern = "coloc-gwas-query-", fileext = ".tab")
+  err_file <- tempfile(pattern = "coloc-gwas-query-err-", fileext = ".log")
+  on.exit(unlink(c(region_file, query_file, err_file)), add = TRUE)
+
+  ## query all nominal variant positions; do not impose a GWAS p-value cutoff.
+  data.table::fwrite(unique(regions[, .(CHROM, start0, end1)]), region_file, sep = "\t", col.names = FALSE)
+  status <- system2(
+    bcftools,
+    args = c(
+      "query",
+      "-R", shQuote(region_file),
+      "-f", shQuote("%CHROM\t%POS\t%ID\t%REF\t%ALT[\t%ES\t%SE\t%LP\t%NE\t%NS\t%NC\t%SI]\n"),
+      shQuote(bcf_file)
+    ),
+    stdout = query_file,
+    stderr = err_file
+  )
+  if (!identical(status, 0L)) {
+    err <- if (file.exists(err_file)) readLines(err_file, warn = FALSE) else character()
+    stop("bcftools dense GWAS query failed for ", dis, if (length(err)) paste0("\n", paste(err, collapse = "\n")) else "")
+  }
+
+  raw <- if (file.exists(query_file) && file.info(query_file)$size > 0) {
+    data.table::fread(query_file, header = FALSE)
+  } else {
+    data.table::data.table()
+  }
+  gwas <- normalize_coloc_gwas_query_table(raw, dis = dis, si_min = si_min)
+  matched <- match_coloc_gwas_geno(gwas, plink2_prefix = plink2_prefix)
+  keep_cols <- c("variant_id", "rsid", "A1", "A2", "beta", "beta_se", "N", "p", "ncas", "impinfo", "match_mode")
+  assert_cols(matched, keep_cols, paste0(dis, " dense matched GWAS"))
+  matched <- matched[variant_id %in% unique(as.character(variant_ids))]
+
+  dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
+  data.table::fwrite(matched, out_file, sep = "\t", quote = FALSE)
+  matched[]
+}
+
+match_coloc_gwas_geno <- function(gwas, plink2_prefix) {
+  require_data_table()
+  req <- c("rsid", "chr", "pos", "a0", "a1", "beta", "beta_se", "N", "p", "ncas", "impinfo")
+  assert_cols(gwas, req, "dense coloc GWAS")
+
+  pvar_info <- read_plink2_pvar(plink2_prefix)
+  gwas_dt <- data.table::copy(gwas)
+  gwas_dt[, gwas_row_id := .I]
+
+  exact <- merge(
+    gwas_dt,
+    pvar_info,
+    by.x = c("chr", "pos", "a0", "a1"),
+    by.y = c("chr", "pos", "pvar_ref", "pvar_alt"),
+    all = FALSE,
+    allow.cartesian = TRUE
+  )
+  if (nrow(exact) > 0L) {
+    exact[, `:=`(
+      variant_id = pvar_variant_id,
+      A1 = a1,
+      A2 = a0,
+      match_mode = "exact",
+      match_rank = 1L
+    )]
+  }
+
+  swapped <- merge(
+    gwas_dt,
+    pvar_info,
+    by.x = c("chr", "pos", "a0", "a1"),
+    by.y = c("chr", "pos", "pvar_alt", "pvar_ref"),
+    all = FALSE,
+    allow.cartesian = TRUE
+  )
+  if (nrow(swapped) > 0L) {
+    swapped[, `:=`(
+      beta = -beta,
+      variant_id = pvar_variant_id,
+      A1 = a0,
+      A2 = a1,
+      match_mode = "swapped",
+      match_rank = 2L
+    )]
+  }
+
+  out_cols <- c("variant_id", "rsid", "A1", "A2", "beta", "beta_se", "N", "p", "ncas", "impinfo", "match_mode")
+  out <- data.table::rbindlist(list(exact, swapped), use.names = TRUE, fill = TRUE)
+  if (nrow(out) == 0L) {
+    return(data.table::as.data.table(stats::setNames(replicate(length(out_cols), logical(), simplify = FALSE), out_cols)))
+  }
+
+  data.table::setorder(out, variant_id, match_rank, p)
+  out[!duplicated(variant_id), ..out_cols]
+}
+
+coloc_case_fraction <- function(gwas_dt) {
+  assert_cols(gwas_dt, c("N", "ncas"), "GWAS coloc table")
+  vals <- gwas_dt[is.finite(N) & N > 0 & is.finite(ncas) & ncas > 0, ncas / N]
+  vals <- vals[is.finite(vals) & vals > 0 & vals < 1]
+  if (length(vals) == 0L) stop("Cannot infer GWAS case fraction from N and ncas")
+  stats::median(vals, na.rm = TRUE)
+}
+
+coloc_assign_category_from_pp <- function(pp3, pp4) {
+  pp34 <- pp3 + pp4
+  ratio <- ifelse(!is.na(pp34) & pp34 > 0, pp4 / pp34, NA_real_)
+  data.table::fcase(
+    pp4 > 0.8, "strong_coloc",
+    pp34 > 0.8 & ratio >= 0.9, "likely_coloc",
+    pp34 > 0.8 & ratio < 0.5, "distinct_causal",
+    (pp34 > 0.8) | (ratio > 0.8), "follow_up",
+    default = NA_character_
+  )
+}
+
+build_coloc_join_table <- function(eqtl_dt, gwas_dt, plink2_prefix) {
+  require_data_table()
+  assert_cols(eqtl_dt, c("phenotype_id", "variant_id", "start_distance", "af", "pval_nominal", "slope", "slope_se"), "nominal eQTL")
+  assert_cols(gwas_dt, c("variant_id", "rsid", "beta", "beta_se", "N", "p", "ncas"), "matched GWAS")
+
+  pvar <- read_plink2_variant_table(plink2_prefix)[, .(variant_id, CHROM, POS, REF, ALT)]
+  e <- copy(eqtl_dt)
+  e[, `:=`(
+    snp = variant_id,
+    beta_eqtl = as.numeric(slope),
+    varbeta_eqtl = as.numeric(slope_se)^2,
+    p_eqtl = as.numeric(pval_nominal),
+    maf_eqtl = pmin(as.numeric(af), 1 - as.numeric(af))
+  )]
+  e <- merge(e, pvar, by = "variant_id", all.x = TRUE, sort = FALSE)
+
+  g <- copy(gwas_dt)
+  g[, `:=`(
+    snp = variant_id,
+    beta_gwas = as.numeric(beta),
+    varbeta_gwas = as.numeric(beta_se)^2,
+    p_gwas = as.numeric(p),
+    n_gwas = as.numeric(N),
+    ncas_gwas = as.numeric(ncas)
+  )]
+
+  out <- merge(
+    e[, .(
+      phenotype_id, snp, variant_id, pos = POS, start_distance,
+      beta_eqtl, varbeta_eqtl, p_eqtl, maf_eqtl,
+      ma_samples, ma_count, af
+    )],
+    g[, .(
+      snp, rsid, beta_gwas, varbeta_gwas, p_gwas,
+      n_gwas, ncas_gwas, impinfo, match_mode
+    )],
+    by = "snp",
+    all = FALSE,
+    sort = FALSE
+  )
+  out[!is.na(pos)]
+}
+
+run_coloc_abf_one_gene <- function(gene_id, coloc_dt, n_eqtl, s_gwas,
+                                   p1 = 1e-4, p2 = 1e-4, p12 = 1e-5,
+                                   min_snps = 10L, min_abs_eqtl_z = 2,
+                                   warn_minp = 1e-6) {
+  if (!requireNamespace("coloc", quietly = TRUE)) stop("The coloc package is required")
+  gene_id_value <- gene_id
+  d <- coloc_dt[phenotype_id == gene_id_value]
+  d <- d[
+    is.finite(beta_eqtl) & is.finite(varbeta_eqtl) & varbeta_eqtl > 0 &
+      is.finite(beta_gwas) & is.finite(varbeta_gwas) & varbeta_gwas > 0 &
+      is.finite(p_eqtl) & p_eqtl > 0 & p_eqtl <= 1 &
+      is.finite(p_gwas) & p_gwas > 0 & p_gwas <= 1 &
+      is.finite(maf_eqtl) & maf_eqtl > 0 & maf_eqtl < 1
+  ]
+  if (anyDuplicated(d$snp)) {
+    data.table::setorder(d, snp, p_eqtl, p_gwas)
+    d <- d[!duplicated(snp)]
+  }
+  if (nrow(d) < min_snps) return(NULL)
+
+  z_eqtl <- abs(d$beta_eqtl / sqrt(d$varbeta_eqtl))
+  if (!any(is.finite(z_eqtl) & z_eqtl >= min_abs_eqtl_z)) return(NULL)
+
+  eqtl <- list(
+    snp = d$snp,
+    position = d$pos,
+    beta = d$beta_eqtl,
+    varbeta = d$varbeta_eqtl,
+    pvalues = d$p_eqtl,
+    MAF = d$maf_eqtl,
+    N = n_eqtl,
+    type = "quant"
+  )
+  gwas <- list(
+    snp = d$snp,
+    position = d$pos,
+    beta = d$beta_gwas,
+    varbeta = d$varbeta_gwas,
+    pvalues = d$p_gwas,
+    N = stats::median(d$n_gwas, na.rm = TRUE),
+    type = "cc",
+    s = s_gwas
+  )
+
+  coloc::check_dataset(eqtl, warn.minp = warn_minp)
+  coloc::check_dataset(gwas, warn.minp = warn_minp)
+  res <- NULL
+  invisible(utils::capture.output(
+    res <- coloc::coloc.abf(dataset1 = eqtl, dataset2 = gwas, p1 = p1, p2 = p2, p12 = p12)
+  ))
+  res
+}
+
+run_coloc_abf_one_gene_safe <- function(gene_id, coloc_dt, n_eqtl, s_gwas, ...) {
+  tryCatch(
+    run_coloc_abf_one_gene(gene_id = gene_id, coloc_dt = coloc_dt, n_eqtl = n_eqtl, s_gwas = s_gwas, ...),
+    error = function(e) structure(list(.error = conditionMessage(e)), class = "coloc_err")
+  )
+}
+
+run_coloc_sensitivity_one <- function(obj, rule, npoints = 100L) {
+  if (!requireNamespace("coloc", quietly = TRUE)) stop("The coloc package is required")
+  tryCatch(
+    {
+      sens <- NULL
+      invisible(utils::capture.output(
+        sens <- coloc::sensitivity(obj, rule = rule, doplot = FALSE, npoints = npoints)
+      ))
+      as.data.table(sens)
+    },
+    error = function(e) data.table::data.table(error = conditionMessage(e))
+  )
+}
+
+summarize_coloc_sensitivity <- function(obj, rule = "H4 > 0.8", npoints = 100L,
+                                        p12_plausible_min = 5e-6,
+                                        p12_plausible_max = 5e-5) {
+  sens <- run_coloc_sensitivity_one(obj, rule = rule, npoints = npoints)
+  if ("error" %in% names(sens)) {
+    return(data.table::data.table(
+      sensitivity_error = sens$error[[1]],
+      npoints = NA_integer_,
+      n_pass = NA_integer_,
+      frac_pass = NA_real_,
+      n_plausible = NA_integer_,
+      n_plausible_pass = NA_integer_,
+      frac_plausible_pass = NA_real_,
+      min_pass_p12 = NA_real_,
+      max_pass_p12 = NA_real_,
+      rule = rule
+    ))
+  }
+  pass_p12 <- sens[pass == TRUE, p12]
+  plausible <- sens[p12 >= p12_plausible_min & p12 <= p12_plausible_max]
+  data.table::data.table(
+    sensitivity_error = NA_character_,
+    npoints = nrow(sens),
+    n_pass = sens[, sum(pass == TRUE, na.rm = TRUE)],
+    frac_pass = sens[, mean(pass == TRUE, na.rm = TRUE)],
+    n_plausible = nrow(plausible),
+    n_plausible_pass = plausible[, sum(pass == TRUE, na.rm = TRUE)],
+    frac_plausible_pass = if (nrow(plausible) > 0L) plausible[, mean(pass == TRUE, na.rm = TRUE)] else NA_real_,
+    min_pass_p12 = if (length(pass_p12)) min(pass_p12, na.rm = TRUE) else NA_real_,
+    max_pass_p12 = if (length(pass_p12)) max(pass_p12, na.rm = TRUE) else NA_real_,
+    rule = rule
+  )
+}
+
+flatten_coloc_results <- function(result_list, disorder, dataset_id, context,
+                                  split = "all", g2sym = NULL, cs_level = 0.95) {
+  require_data_table()
+  if (length(result_list) == 0L) return(data.table::data.table())
+
+  disorder_value <- disorder
+  dataset_id_value <- dataset_id
+  context_value <- context
+  split_value <- split
+  rows <- lapply(names(result_list), function(gene_id) {
+    gene_id_value <- gene_id
+    obj <- result_list[[gene_id]]
+    if (is.null(obj) || is.null(obj$summary) || is.null(obj$results)) return(NULL)
+    sm <- as.list(obj$summary)
+    res <- as.data.table(obj$results)
+    if (!"SNP.PP.H4" %in% names(res)) return(NULL)
+    data.table::setorderv(res, "SNP.PP.H4", -1L)
+    res[, cum_h4 := cumsum(SNP.PP.H4)]
+    cs_idx <- which(res$cum_h4 >= cs_level)[1L]
+    cs_n <- if (is.na(cs_idx)) nrow(res) else cs_idx
+    lead <- res[1]
+    pp3 <- as.numeric(sm[["PP.H3.abf"]])
+    pp4 <- as.numeric(sm[["PP.H4.abf"]])
+    pp34 <- pp3 + pp4
+    ratio <- if (!is.na(pp34) && pp34 > 0) pp4 / pp34 else NA_real_
+
+    data.table::data.table(
+      disorder = disorder_value,
+      dataset_id = dataset_id_value,
+      context = context_value,
+      split = split_value,
+      gene_id = gene_id_value,
+      gene_name = if (!is.null(g2sym)) unname(g2sym[[gene_id_value]]) else NA_character_,
+      cat = coloc_assign_category_from_pp(pp3, pp4),
+      nsnps = as.numeric(sm[["nsnps"]]),
+      PP0 = as.numeric(sm[["PP.H0.abf"]]),
+      PP1 = as.numeric(sm[["PP.H1.abf"]]),
+      PP2 = as.numeric(sm[["PP.H2.abf"]]),
+      PP3 = pp3,
+      PP4 = pp4,
+      PP34 = pp34,
+      PP4_over_PP34 = ratio,
+      lead_snp = as.character(lead[["snp"]]),
+      lead_snp_PPH4 = as.numeric(lead[["SNP.PP.H4"]]),
+      lead_snp_PPsho = pp4 * as.numeric(lead[["SNP.PP.H4"]]),
+      cs95_n_snp = as.integer(cs_n),
+      p1 = as.numeric(obj$priors[["p1"]]),
+      p2 = as.numeric(obj$priors[["p2"]]),
+      p12 = as.numeric(obj$priors[["p12"]])
+    )
+  })
+  data.table::rbindlist(rows, use.names = TRUE, fill = TRUE)
+}
+
+flatten_coloc_snps <- function(result_list, disorder, dataset_id, context, split = "all") {
+  require_data_table()
+  disorder_value <- disorder
+  dataset_id_value <- dataset_id
+  context_value <- context
+  split_value <- split
+  rows <- lapply(names(result_list), function(gene_id) {
+    gene_id_value <- gene_id
+    obj <- result_list[[gene_id]]
+    if (is.null(obj) || is.null(obj$results)) return(NULL)
+    dt <- as.data.table(obj$results)
+    dt[, `:=`(
+      disorder = disorder_value,
+      dataset_id = dataset_id_value,
+      context = context_value,
+      split = split_value,
+      gene_id = gene_id_value
+    )]
+    data.table::setcolorder(dt, c(
+      "disorder", "dataset_id", "context", "split", "gene_id",
+      setdiff(names(dt), c("disorder", "dataset_id", "context", "split", "gene_id"))
+    ))
+    dt
+  })
+  data.table::rbindlist(rows, use.names = TRUE, fill = TRUE)
+}
