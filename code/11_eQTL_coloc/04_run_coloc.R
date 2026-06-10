@@ -259,26 +259,60 @@ run_sensitivity_table <- function(result_list, dis, row) {
   out[]
 }
 
-run_gene_workers <- function(genes, worker, dis, dataset_id) {
+run_gene_workers <- function(genes, coloc_dt, n_eqtl, s_gwas, dis, dataset_id,
+                             chunk_size = 500L) {
   named_genes <- setNames(genes, genes)
-  if (n_cores <= 1L) return(lapply(named_genes, worker))
+  if (length(named_genes) == 0L) return(list())
 
-  ## coloc result objects are large; forked collection can fail if a worker dies.
-  ## keep multicore optional and fall back to serial before writing any outputs.
-  message(Sys.time(), " | ", dis, " | ", dataset_id, " | using ", n_cores, " coloc workers")
-  bp <- BiocParallel::MulticoreParam(n_cores, stop.on.error = FALSE, progressbar = FALSE)
-  res <- tryCatch(
-    BiocParallel::bplapply(named_genes, worker, BPPARAM = bp),
-    error = function(e) {
-      message(
-        Sys.time(), " | ", dis, " | ", dataset_id,
-        " | multicore coloc failed; rerunning serial. Error: ", conditionMessage(e)
-      )
-      NULL
+  chunk_size <- as.integer(chunk_size)
+  if (is.na(chunk_size) || chunk_size < 1L) chunk_size <- 500L
+  chunk_id <- ceiling(seq_along(named_genes) / chunk_size)
+  chunks <- split(named_genes, chunk_id)
+
+  bp <- if (n_cores > 1L) {
+    BiocParallel::MulticoreParam(n_cores, stop.on.error = FALSE, progressbar = FALSE)
+  } else {
+    BiocParallel::SerialParam(stop.on.error = FALSE, progressbar = FALSE)
+  }
+  message(Sys.time(), " | ", dis, " | ", dataset_id, " | using ", n_cores, " coloc workers in ", length(chunks), " chunks")
+
+  out <- vector("list", length(named_genes))
+  names(out) <- names(named_genes)
+  offset <- 0L
+  for (i in seq_along(chunks)) {
+    chunk <- chunks[[i]]
+    message(Sys.time(), " | ", dis, " | ", dataset_id, " | coloc chunk ", i, "/", length(chunks), " genes=", length(chunk))
+    res <- tryCatch(
+      BiocParallel::bplapply(
+        chunk,
+        run_coloc_abf_one_gene_safe,
+        coloc_dt = coloc_dt,
+        n_eqtl = n_eqtl,
+        s_gwas = s_gwas,
+        p1 = priors$p1,
+        p2 = priors$p2,
+        p12 = priors$p12,
+        min_snps = min_snps,
+        min_abs_eqtl_z = min_abs_eqtl_z,
+        BPPARAM = bp
+      ),
+      error = function(e) {
+        stop(
+          "BiocParallel coloc chunk failed for ", dis, "/", dataset_id,
+          " chunk ", i, "/", length(chunks), ": ", conditionMessage(e),
+          call. = FALSE
+        )
+      }
+    )
+    if (length(res) != length(chunk)) {
+      stop("BiocParallel returned wrong result count for ", dis, "/", dataset_id, " chunk ", i, call. = FALSE)
     }
-  )
-  if (is.null(res) || length(res) != length(named_genes)) return(lapply(named_genes, worker))
-  res
+    idx <- seq.int(offset + 1L, offset + length(chunk))
+    out[idx] <- res
+    names(out)[idx] <- names(chunk)
+    offset <- offset + length(chunk)
+  }
+  out
 }
 
 run_coloc_dataset <- function(row, dis) {
@@ -347,21 +381,14 @@ run_coloc_dataset <- function(row, dis) {
   genes <- genes[!is.na(genes) & nzchar(genes)]
   message(Sys.time(), " | ", dis, " | ", dataset_id, " | running coloc on ", length(genes), " gene loci")
 
-  worker <- function(gene_id) {
-    run_coloc_abf_one_gene_safe(
-      gene_id = gene_id,
-      coloc_dt = coloc_dt,
-      n_eqtl = row$n_samples,
-      s_gwas = s_gwas,
-      p1 = priors$p1,
-      p2 = priors$p2,
-      p12 = priors$p12,
-      min_snps = min_snps,
-      min_abs_eqtl_z = min_abs_eqtl_z
-    )
-  }
-
-  res_list <- run_gene_workers(genes = genes, worker = worker, dis = dis, dataset_id = dataset_id)
+  res_list <- run_gene_workers(
+    genes = genes,
+    coloc_dt = coloc_dt,
+    n_eqtl = row$n_samples,
+    s_gwas = s_gwas,
+    dis = dis,
+    dataset_id = dataset_id
+  )
 
   err_idx <- which(vapply(res_list, inherits, logical(1), "coloc_err"))
   errors <- if (length(err_idx) > 0L) {
