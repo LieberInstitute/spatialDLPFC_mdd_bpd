@@ -55,7 +55,7 @@ disorders <- vapply(disorders, gwas_check_disorder, character(1))
 dataset_filter <- split_csv(arg_value("--datasets"), character())
 chromosomes <- split_csv(arg_value("--chromosomes"), NULL)
 dry_run <- arg_flag("--dry-run")
-n_cores <- as.integer(arg_value("--n-cores", "1"))
+n_cores <- as.integer(arg_value("--n-cores", "4"))
 if (is.na(n_cores) || n_cores < 1L) n_cores <- 1L
 
 tqtl_in_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_in")
