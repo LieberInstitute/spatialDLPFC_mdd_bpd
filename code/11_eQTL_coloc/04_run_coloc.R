@@ -63,6 +63,9 @@ tqtl_out_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_out")
 coloc_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "coloc")
 plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05")
 
+## coloc GWAS slices are built on demand from the disorder-specific full BCF.
+## each slice is dense over nominal eQTL variant positions and cached per
+## disorder/domainCT. SI is the only GWAS row filter; no p-value filter is used.
 cis_window <- 1000000L
 si_min <- 0.8
 min_snps <- 10L
@@ -225,6 +228,9 @@ run_coloc_dataset <- function(row, dis) {
     chromosomes = chromosomes
   )
 
+  ## prepare or reuse the disorder-specific GWAS cache for this domainCT.
+  ## the queried regions are exactly the nominal eQTL variant positions that
+  ## also exist in the PLINK2 genotype table, not pre-filtered GWAS hits.
   gwas_cache <- coloc_gwas_dataset_cache_file(
     dis = dis,
     dataset_id = dataset_id,

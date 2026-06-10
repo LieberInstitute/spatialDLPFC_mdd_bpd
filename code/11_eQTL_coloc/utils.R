@@ -2436,6 +2436,9 @@ coloc_gwas_dataset_cache_file <- function(dis, dataset_id, coloc_dir, si_min = 0
   )
 }
 
+## convert nominal tensorQTL variant IDs into 1-bp BED regions.
+## the PLINK2 pvar is the source of chromosome and position truth so GWAS
+## queries use the same build and variant universe as tensorQTL.
 coloc_regions_from_variants <- function(variant_ids, plink2_prefix) {
   require_data_table()
   info <- read_plink2_variant_table(plink2_prefix)
@@ -2445,6 +2448,10 @@ coloc_regions_from_variants <- function(variant_ids, plink2_prefix) {
   out[]
 }
 
+## normalize raw bcftools output from the full GWAS BCF.
+## ES/SE/LP/NE/NS/NC/SI become beta, beta_se, p, N, ns, ncas, and impinfo.
+## this function applies the INFO score threshold only; coloc inputs must keep
+## dense regional summary statistics without a GWAS p-value cutoff.
 normalize_coloc_gwas_query_table <- function(dt, dis, si_min = 0.8) {
   dis <- gwas_check_disorder(dis)
   query_cols <- c("chr", "pos", "rsid", "a0", "a1", "beta", "beta_se", "lp", "N", "ns", "ncas", "impinfo")
@@ -2482,6 +2489,10 @@ normalize_coloc_gwas_query_table <- function(dt, dis, si_min = 0.8) {
   dt[]
 }
 
+## extract the dense GWAS slice needed for coloc for one disorder/domainCT.
+## the function queries the disorder-specific full BCF at nominal eQTL variant
+## positions, harmonizes alleles to PLINK2/tensorQTL IDs, flips beta for swapped
+## alleles, writes a per-domainCT cache, and returns only matched variants.
 extract_coloc_gwas_for_variants <- function(dis, variant_ids, plink2_prefix, out_file,
                                             repo_root = NULL, genotype_dir = NULL,
                                             si_min = 0.8, bcftools = "bcftools",
@@ -2533,6 +2544,9 @@ extract_coloc_gwas_for_variants <- function(dis, variant_ids, plink2_prefix, out
   matched[]
 }
 
+## align GWAS alleles to the PLINK2 pvar allele order used by tensorQTL.
+## exact matches keep beta as-is; swapped REF/ALT matches flip beta so GWAS
+## effects are on the same alternate allele encoded in the tensorQTL variant ID.
 match_coloc_gwas_geno <- function(gwas, plink2_prefix) {
   require_data_table()
   req <- c("rsid", "chr", "pos", "a0", "a1", "beta", "beta_se", "N", "p", "ncas", "impinfo")
@@ -2589,6 +2603,9 @@ match_coloc_gwas_geno <- function(gwas, plink2_prefix) {
   out[!duplicated(variant_id), ..out_cols]
 }
 
+## coloc case-control datasets need s, the case fraction.
+## use the median ncas / N across matched GWAS rows to tolerate small row-level
+## metadata variation in the source BCF.
 coloc_case_fraction <- function(gwas_dt) {
   assert_cols(gwas_dt, c("N", "ncas"), "GWAS coloc table")
   vals <- gwas_dt[is.finite(N) & N > 0 & is.finite(ncas) & ncas > 0, ncas / N]
