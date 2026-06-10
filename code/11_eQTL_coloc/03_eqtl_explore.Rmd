@@ -73,20 +73,22 @@ sym2ensg <- setNames(granges$gene_id, granges$gene_name)
 degs_by_mode <- list(standard = load_DEGs(repo_root = repo_root, mode = "standard"))
 
 plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05")
-gwas_matched <- lapply(DEFAULT_GWAS_OVERLAP_DISORDERS, function(dis) {
-  ## query broadly, then keep genome-wide significant genotype-matched variants.
-  gwas <- loadGWAS(dis, 1e-6, repo_root = repo_root, si_min = 0.8)
-  matched <- matchGwasGeno(gwas, plink2_prefix = plink2_prefix)
-  missing_gwas_cols <- setdiff(c("variant_id", "p"), names(matched))
-  if (length(missing_gwas_cols) > 0) {
-    stop("Missing required ", dis, " GWAS columns: ", paste(missing_gwas_cols, collapse = ", "))
-  }
-  matched
-})
-names(gwas_matched) <- DEFAULT_GWAS_OVERLAP_DISORDERS
 
-gwas_sets <- lapply(gwas_matched, function(dt) unique(dt[p < 5e-8 & !is.na(variant_id), variant_id]))
+## load matched caches broad enough for strict GWAS and MDD/BPD GWASx reuse.
+gwas_matched <- load_matched_gwas_by_disorder(
+  DEFAULT_GWAS_OVERLAP_DISORDERS,
+  plink2_prefix = plink2_prefix,
+  repo_root = repo_root,
+  si_min = GWAS_MATCH_SI_MIN
+)
+
+## strict GWAS columns keep genome-wide significance for all disorders.
+gwas_sets <- strict_gwas_sets_from_matched(gwas_matched, GWAS_STRICT_P_THRESHOLD)
 vapply(gwas_sets, length, integer(1))
+
+## GWASx columns are suggestive/exploratory MDD/BPD checks at p <= 1e-5.
+gwasx_matched <- gwasx_matched_from_gwas(gwas_matched, GWAS_EXPLORATORY_P_THRESHOLDS)
+vapply(gwasx_matched, nrow, integer(1))
 
 analysis_manifests <- lapply(
   analysis_configs,
@@ -352,6 +354,12 @@ write_analysis_tables <- function(result, config, write_deg_view_tables = FALSE)
   fwrite(result$map_independent_significant, table_path(config, "map_independent_significant.csv.gz"))
   fwrite(result$map_significant_unified, table_path(config, "map_significant_unified.csv.gz"))
   fwrite(result$map_significant_pairs, table_path(config, "map_significant_pairs.csv.gz"))
+  if (!is.null(result$map_significant_summary_GWASx)) {
+    ## GWASx audit tables expose the exploratory MDD/BPD exact-variant p values.
+    fwrite(result$map_significant_unified, table_path(config, "map_significant_unified_GWASx.csv.gz"))
+    fwrite(result$map_significant_pairs, table_path(config, "map_significant_pairs_GWASx.csv.gz"))
+    fwrite(result$map_significant_summary_GWASx, table_path(config, "map_significant_summary_GWASx.csv"))
+  }
 
   if (isTRUE(write_deg_view_tables) && !is.null(result$deg_view_tables)) {
     fwrite(
@@ -371,13 +379,21 @@ write_analysis_tables <- function(result, config, write_deg_view_tables = FALSE)
 ```{r summarize-analyses}
 analysis_results <- lapply(names(analysis_configs), function(analysis_name) {
   config <- analysis_configs[[analysis_name]]
-  summarize_eqtl_analysis(
+  result <- summarize_eqtl_analysis(
     config = config,
     degs = degs_by_mode[[config$deg_mode]],
     g2sym = g2sym,
     gwas_sets = gwas_sets,
     repo_root = repo_root,
     include_deg_views = WRITE_DEG_VIEW_TABLES,
+    context_order = config$context_order,
+    split_order = config$split_order
+  )
+  add_gwasx_to_eqtl_result(
+    result,
+    gwasx_stats = gwasx_matched,
+    degs = degs_by_mode[[config$deg_mode]],
+    repo_root = repo_root,
     context_order = config$context_order,
     split_order = config$split_order
   )

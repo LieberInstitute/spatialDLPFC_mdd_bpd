@@ -60,6 +60,16 @@ GWAS_BCF_FILES <- c(
 
 DEFAULT_GWAS_OVERLAP_DISORDERS <- c("SCZD", "MDD", "BPD")
 
+GWAS_STRICT_P_THRESHOLD <- 5e-8
+
+GWAS_MATCH_SI_MIN <- 0.8
+
+## GWASx is the suggestive/exploratory mood-disorder overlap threshold.
+## It is relaxed relative to strict genome-wide significance.
+GWAS_EXPLORATORY_P_THRESHOLDS <- c(MDD = 1e-5, BPD = 1e-5)
+
+DEFAULT_GWASX_DISORDERS <- names(GWAS_EXPLORATORY_P_THRESHOLDS)
+
 GWAS_GENE_LIST_FILES <- list(
   BPD = list(
     broad = file.path("BPD", "bpd2024_gene_lists.tsv"),
@@ -1619,6 +1629,219 @@ order_deg_view_summary_cols <- function(dt, gwas_disorders) {
 gwas_disorders_from_eqtl <- function(dt) {
   disorders <- sub("_GWAS$", "", grep("^[A-Z0-9]+_GWAS$", names(dt), value = TRUE))
   disorders[disorders %in% names(GWAS_BCF_FILES)]
+}
+
+gwasx_flag_cols <- function(disorders) paste0(disorders, "_GWASx")
+gwasxg_flag_cols <- function(disorders) paste0(disorders, "_GWASxg")
+gwasxg_variant_flag_cols <- function(disorders) paste0(gwasxg_flag_cols(disorders), "_variant")
+gwasxg_gene_match_cols <- function(disorders) paste0(gwasxg_flag_cols(disorders), "_gene")
+gwasx_p_cols <- function(disorders) paste0(disorders, "_GWASx_p")
+gwasx_beta_cols <- function(disorders) paste0(disorders, "_GWASx_beta")
+gwasx_beta_se_cols <- function(disorders) paste0(disorders, "_GWASx_beta_se")
+gwasx_flag_pair_cols <- function(disorders) paired_gwas_cols(disorders, gwasx_flag_cols, gwasxg_flag_cols)
+gwasxg_source_pair_cols <- function(disorders) paired_gwas_cols(disorders, gwasxg_variant_flag_cols, gwasxg_gene_match_cols)
+
+gwasx_disorders_from_eqtl <- function(dt) {
+  disorders <- sub("_GWASx$", "", grep("^[A-Z0-9]+_GWASx$", names(dt), value = TRUE))
+  disorders[disorders %in% names(GWAS_BCF_FILES)]
+}
+
+gwas_threshold_from_cache <- function(dis) {
+  dis <- gwas_check_disorder(dis)
+  if (dis %in% names(GWAS_EXPLORATORY_P_THRESHOLDS)) {
+    return(max(GWAS_STRICT_P_THRESHOLD, GWAS_EXPLORATORY_P_THRESHOLDS[[dis]]))
+  }
+  GWAS_STRICT_P_THRESHOLD
+}
+
+load_matched_gwas_by_disorder <- function(disorders = DEFAULT_GWAS_OVERLAP_DISORDERS,
+                                          plink2_prefix, repo_root = NULL,
+                                          si_min = GWAS_MATCH_SI_MIN) {
+  out <- lapply(disorders, function(dis) {
+    dis <- gwas_check_disorder(dis)
+    ## query broad enough for strict GWAS and any GWASx reuse.
+    gwas <- loadGWAS(dis, gwas_threshold_from_cache(dis), repo_root = repo_root, si_min = si_min)
+    matched <- matchGwasGeno(gwas, plink2_prefix = plink2_prefix)
+    missing_cols <- setdiff(c("variant_id", "p", "beta", "beta_se"), names(matched))
+    if (length(missing_cols) > 0) {
+      stop("Missing required ", dis, " matched GWAS columns: ", paste(missing_cols, collapse = ", "))
+    }
+    matched
+  })
+  names(out) <- vapply(disorders, gwas_check_disorder, character(1))
+  out
+}
+
+strict_gwas_sets_from_matched <- function(gwas_matched,
+                                          p_threshold = GWAS_STRICT_P_THRESHOLD) {
+  lapply(gwas_matched, function(dt) {
+    dt <- data.table::as.data.table(dt)
+    unique(dt[p <= p_threshold & !is.na(variant_id), as.character(variant_id)])
+  })
+}
+
+gwasx_matched_from_gwas <- function(gwas_matched,
+                                    thresholds = GWAS_EXPLORATORY_P_THRESHOLDS) {
+  out <- lapply(names(thresholds), function(dis) {
+    if (!dis %in% names(gwas_matched)) stop("Missing matched GWAS for GWASx disorder: ", dis)
+    dt <- data.table::copy(data.table::as.data.table(gwas_matched[[dis]]))
+    dt[p <= thresholds[[dis]] & !is.na(variant_id), .(
+      variant_id = as.character(variant_id),
+      p = as.numeric(p),
+      beta = as.numeric(beta),
+      beta_se = as.numeric(beta_se)
+    )]
+  })
+  names(out) <- names(thresholds)
+  out
+}
+
+append_disorder_deg_flags <- function(dt, disorder_related,
+                                      disorders = DEFAULT_GWASX_DISORDERS) {
+  out <- data.table::copy(data.table::as.data.table(dt))
+  sets <- disorder_deg_sets(disorder_related)
+  for (dis in intersect(disorders, names(sets))) {
+    flag_col <- paste0(dis, "_DEG")
+    gene_ids <- unique(data.table::as.data.table(sets[[dis]])$gene_id)
+    out[, (flag_col) := as.integer(gene_id %in% gene_ids)]
+  }
+  out[]
+}
+
+append_gwasx_stats <- function(dt, gwasx_stats) {
+  out <- data.table::copy(data.table::as.data.table(dt))
+  for (dis in names(gwasx_stats)) {
+    p_col <- paste0(dis, "_GWASx_p")
+    beta_col <- paste0(dis, "_GWASx_beta")
+    beta_se_col <- paste0(dis, "_GWASx_beta_se")
+    out[, (p_col) := NA_real_]
+    out[, (beta_col) := NA_real_]
+    out[, (beta_se_col) := NA_real_]
+
+    ## p/beta values are defined only for exact variant GWASx matches.
+    stats <- data.table::as.data.table(gwasx_stats[[dis]])[, .(
+      variant_id,
+      gwas_p = p,
+      gwas_beta = beta,
+      gwas_beta_se = beta_se
+    )]
+    out[stats, on = "variant_id", (c(p_col, beta_col, beta_se_col)) := list(
+      i.gwas_p,
+      i.gwas_beta,
+      i.gwas_beta_se
+    )]
+  }
+
+  order_gwasx_cols(out)
+}
+
+apply_gwasx_annotations <- function(dt, gwasx_stats, repo_root = NULL) {
+  out <- data.table::copy(data.table::as.data.table(dt))
+  gwasx_stats <- lapply(gwasx_stats, data.table::as.data.table)
+  gwasx_sets <- normalize_gwas_sets(lapply(gwasx_stats, function(x) unique(x$variant_id)))
+
+  for (dis in names(gwasx_sets)) {
+    flag_col <- paste0(dis, "_GWASx")
+    gwasxg_col <- paste0(dis, "_GWASxg")
+    gwasxg_variant_col <- paste0(gwasxg_col, "_variant")
+    gwasxg_gene_col <- paste0(gwasxg_col, "_gene")
+
+    out[, (flag_col) := as.integer(variant_id %in% gwasx_sets[[dis]])]
+    ovl <- getGWASovl(
+      out[, .(gene_name, variant_id)],
+      dis = dis,
+      gwas_sets = gwasx_sets,
+      repo_root = repo_root
+    )
+    ## GWASxg mirrors GWASg: exact variant match OR broad gene-list match.
+    out[, (gwasxg_variant_col) := get(flag_col)]
+    out[, (gwasxg_gene_col) := as.integer(!is.na(gene_name) & gene_name %in% ovl[gene_match == TRUE, unique(gene_name)])]
+    out[, (gwasxg_col) := as.integer(get(gwasxg_variant_col) == 1L | get(gwasxg_gene_col) == 1L)]
+  }
+
+  append_gwasx_stats(out, gwasx_stats)
+}
+
+order_gwasx_cols <- function(dt) {
+  strict_disorders <- gwas_disorders_from_eqtl(dt)
+  gwasx_disorders <- gwasx_disorders_from_eqtl(dt)
+  front_cols <- c(
+    "source", "result_source", "pair_provenance", "cis_supported", "indep_supported",
+    "dataset_id", "context", "split", "gene_id", "gene_name", "DEG",
+    paste0(gwasx_disorders, "_DEG"),
+    gwas_flag_pair_cols(strict_disorders),
+    gwasg_source_pair_cols(strict_disorders),
+    gwasx_flag_pair_cols(gwasx_disorders),
+    gwasxg_source_pair_cols(gwasx_disorders),
+    as.vector(rbind(
+      gwasx_p_cols(gwasx_disorders),
+      gwasx_beta_cols(gwasx_disorders),
+      gwasx_beta_se_cols(gwasx_disorders)
+    )),
+    "variant_id"
+  )
+  data.table::setcolorder(dt, c(intersect(front_cols, names(dt)), setdiff(names(dt), front_cols)))
+  dt[]
+}
+
+summarize_gwasx_significant_pairs <- function(dt, context_order, split_order,
+                                              disorder_related = NULL,
+                                              gwasx_disorders = gwasx_disorders_from_eqtl(dt)) {
+  tmp <- data.table::copy(data.table::as.data.table(dt))
+  for (dis in gwasx_disorders) {
+    canonical <- c(
+      paste0(dis, "_GWAS"),
+      paste0(dis, "_GWASg"),
+      paste0(dis, "_GWASg_variant"),
+      paste0(dis, "_GWASg_gene")
+    )
+    gwasx <- c(
+      paste0(dis, "_GWASx"),
+      paste0(dis, "_GWASxg"),
+      paste0(dis, "_GWASxg_variant"),
+      paste0(dis, "_GWASxg_gene")
+    )
+    tmp[, (intersect(canonical, names(tmp))) := NULL]
+    data.table::setnames(tmp, intersect(gwasx, names(tmp)), canonical[match(intersect(gwasx, names(tmp)), gwasx)])
+  }
+
+  out <- summarize_significant_pairs(
+    tmp,
+    context_order = context_order,
+    split_order = split_order,
+    disorder_related = disorder_related,
+    gwas_disorders = gwasx_disorders
+  )
+  for (dis in gwasx_disorders) {
+    tmp_token <- paste0("__", dis, "_XG_TMP__")
+    new_names <- gsub(paste0(dis, "_GWASg"), tmp_token, names(out), fixed = TRUE)
+    new_names <- gsub(paste0(dis, "_GWAS"), paste0(dis, "_GWASx"), new_names, fixed = TRUE)
+    new_names <- gsub(tmp_token, paste0(dis, "_GWASxg"), new_names, fixed = TRUE)
+    data.table::setnames(out, new_names)
+  }
+  out[]
+}
+
+add_gwasx_to_eqtl_result <- function(result, gwasx_stats, degs, repo_root,
+                                     context_order, split_order) {
+  for (nm in c("map_cis_significant", "map_independent_significant",
+               "map_significant_unified", "map_significant_pairs")) {
+    if (!is.null(result[[nm]])) {
+      result[[nm]] <- append_disorder_deg_flags(
+        apply_gwasx_annotations(result[[nm]], gwasx_stats, repo_root = repo_root),
+        degs$disorder_related,
+        disorders = names(gwasx_stats)
+      )
+    }
+  }
+  result$map_significant_summary_GWASx <- summarize_gwasx_significant_pairs(
+    result$map_significant_pairs,
+    context_order = context_order,
+    split_order = split_order,
+    disorder_related = degs$disorder_related,
+    gwasx_disorders = names(gwasx_stats)
+  )
+  result
 }
 
 tag_eqtl_results <- function(dt, dataset_id, context, split, deg_dt,
