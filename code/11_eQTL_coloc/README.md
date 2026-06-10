@@ -179,6 +179,11 @@ Coloc defaults:
 - method: `coloc.abf` plus `coloc::sensitivity`, not SuSiE
 - parallelism: default `--n-cores 4`; set explicitly with `--n-cores N`
 
+`--n-cores` sets the number of BiocParallel worker processes. It does not mean
+OpenMP, BLAS, Arrow, or data.table threads per worker. `04_run_coloc.R` caps
+those library threads to 1 before package loading so a run such as
+`--n-cores 12` means 12 coloc workers, not 12 workers times many BLAS threads.
+
 Per-disorder outputs are written under:
 
 ```text

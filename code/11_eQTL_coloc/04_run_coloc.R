@@ -1,18 +1,37 @@
 #!/usr/bin/env Rscript
 
 ## ---- setup ---------------------------------------------------------------
+## cap threaded libraries before loading packages or forking workers.
+coloc_thread_caps <- c(
+  OMP_NUM_THREADS = "1",
+  OPENBLAS_NUM_THREADS = "1",
+  MKL_NUM_THREADS = "1",
+  VECLIB_MAXIMUM_THREADS = "1",
+  NUMEXPR_NUM_THREADS = "1",
+  ARROW_NUM_THREADS = "1"
+)
+do.call(Sys.setenv, as.list(coloc_thread_caps))
+
 suppressPackageStartupMessages({
   library(data.table)
   library(here)
   library(qs2)
   library(BiocParallel)
 })
+data.table::setDTthreads(1)
 
 here::i_am(".git/HEAD")
 
 repo_root <- here()
 code_dir <- here("code", "11_eQTL_coloc")
 source(file.path(code_dir, "utils.R"), chdir = FALSE)
+
+soft_versions <- extSoftVersion()
+coloc_blas_path <- if ("BLAS" %in% names(soft_versions)) unname(soft_versions[["BLAS"]]) else NA_character_
+coloc_thread_env_summary <- function() {
+  env <- Sys.getenv(names(coloc_thread_caps), unset = "")
+  paste(sprintf("%s=%s", names(env), unname(env)), collapse = ";")
+}
 
 ## ---- config --------------------------------------------------------------
 args <- commandArgs(trailingOnly = TRUE)
@@ -283,6 +302,8 @@ run_gene_workers <- function(genes, coloc_dt, n_eqtl, s_gwas, dis, dataset_id,
     chunk <- chunks[[i]]
     message(Sys.time(), " | ", dis, " | ", dataset_id, " | coloc chunk ", i, "/", length(chunks), " genes=", length(chunk))
     res <- tryCatch(
+      ## use direct bplapply arguments, matching the prior project pattern.
+      ## do not replace with a closure that captures the large coloc_dt object.
       BiocParallel::bplapply(
         chunk,
         run_coloc_abf_one_gene_safe,
@@ -444,6 +465,11 @@ run_coloc_dataset <- function(row, dis) {
     priors_p2 = priors$p2,
     priors_p12 = priors$p12,
     case_fraction_s = s_gwas,
+    coloc_workers = n_cores,
+    coloc_worker_backend = if (n_cores > 1L) "BiocParallel::MulticoreParam" else "BiocParallel::SerialParam",
+    blas_path = coloc_blas_path,
+    thread_env = coloc_thread_env_summary(),
+    datatable_threads = data.table::getDTthreads(),
     elapsed_sec = as.numeric(difftime(Sys.time(), t0, units = "secs"))
   )
   fwrite(meta, runmeta_path, sep = "\t", quote = FALSE, na = "NA")
