@@ -17,6 +17,9 @@ source(file.path(code_dir, "utils.R"), chdir = FALSE)
 ## ---- config --------------------------------------------------------------
 args <- commandArgs(trailingOnly = TRUE)
 
+## set to "MDD" or "BPD" to restrict runs without CLI arguments.
+RUN_DISORDER <- NULL
+
 arg_value <- function(flag, default = NULL) {
   hit <- which(args == flag)
   if (length(hit) == 0L || hit[[1]] == length(args)) return(default)
@@ -30,7 +33,24 @@ split_csv <- function(x, default) {
   trimws(strsplit(x, ",", fixed = TRUE)[[1]])
 }
 
-disorders <- split_csv(arg_value("--disorders"), c("MDD", "BPD"))
+single_disorder_arg <- arg_value("--disorder")
+if (!is.null(single_disorder_arg)) {
+  single_disorder <- split_csv(single_disorder_arg, character())
+  if (length(single_disorder) != 1L || !nzchar(single_disorder[[1]])) {
+    stop("--disorder must specify exactly one disorder.")
+  }
+  if (!is.null(arg_value("--disorders"))) {
+    message("--disorder provided; ignoring --disorders.")
+  }
+  disorders <- single_disorder
+} else if (!is.null(RUN_DISORDER) && nzchar(RUN_DISORDER)) {
+  disorders <- split_csv(RUN_DISORDER, character())
+  if (length(disorders) != 1L || !nzchar(disorders[[1]])) {
+    stop("RUN_DISORDER must be NULL or exactly one disorder.")
+  }
+} else {
+  disorders <- split_csv(arg_value("--disorders"), c("MDD", "BPD"))
+}
 disorders <- vapply(disorders, gwas_check_disorder, character(1))
 dataset_filter <- split_csv(arg_value("--datasets"), character())
 chromosomes <- split_csv(arg_value("--chromosomes"), NULL)
