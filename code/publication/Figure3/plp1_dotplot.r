@@ -12,7 +12,7 @@ source("code/publication/plotting_utils.r")
 
 mod_gene="PLP1"
 plot.genes = c("PLP1","MAG","TF", "ENPP2", "CLDN11", "CNDP1", 
-               "SGK1", "SPP1", "LMNA", "NEAT1", "PGAM2", "AQP1")
+               "SGK1", "SPP1", "LMNA", "NEAT1", "PGAM2")
 
 o1 = filter(refined.modules, TF==mod_gene, target %in% plot.genes) %>% arrange(desc(importance))
 o2 = filter(refined.modules, TF==mod_gene) %>% slice_max(n=1, importance) %>%
