@@ -145,6 +145,38 @@ Support/provenance columns:
 
 The table keeps the selected source row's tensorQTL statistic column names unchanged. It intentionally does not preserve duplicate source-specific statistics for shared pairs; use `map_significant_unified.csv.gz` for that audit trail.
 
+### `nominal_BH05.csv.gz` and `nominal_BH05.xlsx`
+
+BH-adjusted significant nominal eQTL pairs from tensorQTL `map_nominal`, using `fdr < 0.05` within each dataset/context. The `.xlsx` workbook mirrors the nominal table plus summary and QC sheets for review.
+
+Columns:
+
+- `dataset_id`, `context`, `split`, `gene_id`, `gene_name`, `phenotype_id`, `variant_id`: dataset and pair identifiers.
+- `pval_nominal`, `fdr`, `slope`, `slope_se`, `start_distance`, `af`, `ma_samples`, `ma_count`: nominal eQTL statistics from tensorQTL.
+- `DEG`, `<DIS>_GWAS`, `<DIS>_GWASg`, and `<DIS>_GWASg_*`: same project annotations as the significant cis/independent tables.
+
+### `nominal_BH05_summary.csv`
+
+Context/split summary of `nominal_BH05.csv.gz`.
+
+Columns:
+
+- `n_nominal_pairs`: number of retained BH-significant nominal gene-variant pairs.
+- `n_eGenes`: number of eGenes represented by those pairs.
+- DEG, GWAS, and GWASg count/gene-list columns use the same unique-eGene definitions as the cis and independent summaries.
+
+### `nominal_BH05_qc.csv`
+
+QC inventory for nominal eQTL aggregation.
+
+Columns:
+
+- `n_parquet_files`: per-chromosome tensorQTL nominal parquet files read.
+- `n_nominal_rows_tested`: nominal pairs tested before filtering.
+- `n_p001_rows`: nominal pairs with `pval_nominal <= 0.001`.
+- `n_BH05_rows`: nominal pairs retained at `fdr < 0.05`.
+- `n_BH05_genes`: genes represented by retained nominal pairs.
+
 ## Optional DEG-View Tables
 
 The summary code has a disabled-by-default guard for DEG-view tables. These context/sex-localized breakdowns are not part of the default table set.
