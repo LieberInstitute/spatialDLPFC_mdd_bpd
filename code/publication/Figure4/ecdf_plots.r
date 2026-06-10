@@ -15,7 +15,8 @@ aucell$seurat_label= factor(aucell$seurat_label, levels=c("Micro.Vasc", "Astro",
 col.pal = cpList$transfer.bright[c(1:4,8,5:7)]
 names(col.pal) = seurat_levels
 
-mod_subset = c("GFAP","GLUL")
+#mod_subset = c("GFAP","GLUL")
+mod_subset = c("IFITM3","A2M","HSPA1A")
 
 aucell_long = tidyr::pivot_longer(aucell, all_of(mod_subset), names_to="module", values_to="AUCell") %>%
   mutate(module= factor(module, levels=mod_subset))
@@ -28,8 +29,8 @@ p1 <- ggplot(aucell_long, aes(x=AUCell, color=seurat_label))+#, lty=sex, group=s
   theme_minimal()+theme(text=element_text(size=6),
                         panel.grid.minor.x=element_blank())
 
-ggsave(file="plots/publication/Figure4/GLUL-GFAP_ecdf.pdf", p1, height=1.7, width=2.5)
-
+#ggsave(file="plots/publication/Figure4/GLUL-GFAP_ecdf.pdf", p1, height=1.7, width=2.5)
+ggsave(file="plots/publication/Figure4/IFITM3-A2M-HSPA1A_ecdf.pdf", p1, height=1.7, width=3.75)
 
 ## Reproducibility information
 print("Reproducibility information:")
