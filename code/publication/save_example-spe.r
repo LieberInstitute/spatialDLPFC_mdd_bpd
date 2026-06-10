@@ -23,20 +23,20 @@ colData(spe) <- colData(spe)[,c("sample_id","brnum","MBv_sample", #ID keys
 #load domains
 cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
 stopifnot(identical(rownames(colData(spe)), rownames(cdata)))
-spe$smoothed_domain = factor(cdata$smoothed_k9_1663_f, levels=c("L1","L2","L3/4","L5","L6","WM","low UMI","Vasc","GABA"),
+spe$domain_sp = factor(cdata$smoothed_k9_1663_f, levels=c("L1","L2","L3/4","L5","L6","WM","low UMI","Vasc","GABA"),
                               labels=c("L1","L2","L3.4","L5","L6","WM","low.UMI","dropped","dropped"))
 
 #add seurat labels
 res = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-MBv_qual-genes-kanchor-50-pc30_red-precast-kweight-50-low-res.csv", row.names=1)
 res = res[rownames(cdata),]
 stopifnot(identical(rownames(res), rownames(cdata)))
-spe$seurat_label = factor(res$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","Inhb","L5","L6","Oligo"),
+spe$domain_ct = factor(res$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","Inhb","L5","L6","Oligo"),
                             labels=c("Micro.Vasc","Astro","L2.3","L2.3","L4","Inhb","L5","L6","Oligo"))
 
 
 #remove low UMI cluster
 dim(spe) #28965 535248
-spe = spe[,spe$smoothed_domain!="low.UMI"]
+spe = spe[,spe$domain_sp!="low.UMI"]
 dim(spe) #28965 513200
 
 #extract coldata for GEO
@@ -48,7 +48,7 @@ metadata$sex <- NULL
 
 write.csv(metadata, "processed-data/publication/GEO_samples_title.csv")
 
-stop("Early stopping to update csv file only")
+#stop("Early stopping to update csv file only")
 #subset to example samples
 example.samples = c("342-A1", "332-A1", "279-A1", "327-C1", #NTC F
                     "382-D1", "023-D1", "334-A1", "309-C1", #MDD F
@@ -76,6 +76,8 @@ assays(tmp)$counts <- NULL
 regular_matrix_logcounts <- as.matrix(assays(tmp)[["logcounts"]])
 sparse_matrix_logcounts <- as(regular_matrix_logcounts, "dgCMatrix")
 assays(tmp)$logcounts <- sparse_matrix_logcounts
+
+print(head(colData(tmp)))
 
 saveRDS(tmp, "processed-data/publication/spe_n24_example-samples.rds")
 
