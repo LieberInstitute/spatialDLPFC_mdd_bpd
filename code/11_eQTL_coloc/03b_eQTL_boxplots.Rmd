@@ -22,6 +22,7 @@ tqtl_out_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_out")
 tables_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tables")
 plots_dir <- here("plots", "11_eQTL_coloc", "boxplots")
 plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05")
+full_deg_pdf_file <- file.path(plots_dir, "eqtl_boxplot_degs_broad_union.pdf")
 
 context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
 disorders <- c("BPD", "MDD", "SCZD")
@@ -90,6 +91,20 @@ pdf_page_count <- function(pdf_file) {
     stdout = TRUE
   )
   as.integer(page_count[length(page_count)])
+}
+
+pdf_page_text <- function(pdf_file, page) {
+  if (!nzchar(Sys.which("mutool"))) {
+    stop("mutool is required to validate PDF text.")
+  }
+  err_file <- tempfile("mutool_pdf_text_", fileext = ".err")
+  on.exit(unlink(err_file), add = TRUE)
+  system2(
+    "mutool",
+    c("draw", "-F", "txt", "-o", "-", pdf_file, as.character(page)),
+    stdout = TRUE,
+    stderr = err_file
+  )
 }
 
 save_eQTL_boxplots <- function(eqtl_dt, dataset_id = NULL, out_file,
@@ -362,9 +377,104 @@ make_genotype_labels <- function(dosage_vec, allele0, allele1) {
     labels[ok] <- as.character(geno_int[ok])
     return(labels)
   }
-  label_map <- c(paste0(allele0, allele0), paste0(allele0, allele1), paste0(allele1, allele1))
+  label_map <- c(
+    paste(allele0, allele0, sep = "/"),
+    paste(allele0, allele1, sep = "/"),
+    paste(allele1, allele1, sep = "/")
+  )
   labels[ok] <- label_map[geno_int[ok] + 1L]
   labels
+}
+
+expected_ref_genotype_labels <- function(variant_id, dosage_vec = NULL) {
+  parsed <- parse_variant_id(variant_id)
+  if (nrow(parsed) != 1L) stop("Expected one variant_id.")
+  labels <- c(
+    paste(parsed$id_REF, parsed$id_REF, sep = "/"),
+    paste(parsed$id_REF, parsed$id_ALT, sep = "/"),
+    paste(parsed$id_ALT, parsed$id_ALT, sep = "/")
+  )
+  if (is.null(dosage_vec)) return(labels)
+
+  geno_idx <- sort(unique(round(dosage_vec[!is.na(dosage_vec)])))
+  geno_idx <- geno_idx[geno_idx %in% 0:2]
+  labels[geno_idx + 1L]
+}
+
+validate_ref_axis_dry_run <- function(eqtl_dt) {
+  dt <- as.data.table(copy(eqtl_dt))
+  assert_cols(dt, "variant_id", "eqtl_dt")
+  variants <- unique(dt$variant_id)
+  ori <- build_orientation_lut(variants)
+  bad_ori <- ori[!orientation_status %chin% c("aligned", "swapped")]
+  if (nrow(bad_ori) > 0L) {
+    stop("Variant REF/ALT mismatch in pvar: ", paste(bad_ori$variant_id, collapse = ", "))
+  }
+
+  dosage <- load_pgen_dosage(variants)
+  checks <- rbindlist(lapply(seq_len(nrow(ori)), function(i) {
+    variant_id <- ori$variant_id[i]
+    raw_dosage <- dosage[, variant_id]
+    plot_dosage <- if (!is.na(ori$orientation_sign[i]) && ori$orientation_sign[i] == -1L) {
+      2 - raw_dosage
+    } else {
+      raw_dosage
+    }
+    observed_labels <- expected_ref_genotype_labels(variant_id, plot_dosage)
+    data.table(
+      variant_id = variant_id,
+      orientation_status = ori$orientation_status[i],
+      max_noninteger = max(abs(raw_dosage - round(raw_dosage)), na.rm = TRUE),
+      dosage_min = min(raw_dosage, na.rm = TRUE),
+      dosage_max = max(raw_dosage, na.rm = TRUE),
+      expected_axis_labels = paste(observed_labels, collapse = "|")
+    )
+  }), use.names = TRUE)
+
+  if (any(checks$max_noninteger > 1e-6)) {
+    stop("Non-integer dosages detected for REF-axis labels.")
+  }
+  if (any(checks$dosage_min < -1e-6 | checks$dosage_max > 2 + 1e-6)) {
+    stop("Dosage outside 0..2 detected for REF-axis labels.")
+  }
+  checks[]
+}
+
+pdf_ordered_eqtls <- function(eqtl_dt) {
+  dt <- as.data.table(copy(eqtl_dt))
+  dt[, context_order_rank := match(context, context_order)]
+  setorder(dt, context_order_rank, gene_name, gene_id, pval_nominal, variant_id)
+  dt[, context_order_rank := NULL]
+  dt[, pdf_page := .I]
+  dt[]
+}
+
+validate_pdf_ref_axis_labels <- function(pdf_file, eqtl_dt, pages) {
+  if (!file.exists(pdf_file)) stop("Missing PDF for validation: ", pdf_file)
+  ordered_dt <- pdf_ordered_eqtls(eqtl_dt)
+  page_dt <- ordered_dt[pdf_page %in% pages]
+  if (nrow(page_dt) != length(pages)) {
+    stop("Missing requested page metadata for PDF validation.")
+  }
+
+  axis_checks <- validate_ref_axis_dry_run(page_dt)
+  setkey(axis_checks, variant_id)
+
+  for (page in pages) {
+    row <- page_dt[pdf_page == page][1]
+    text_lines <- trimws(pdf_page_text(pdf_file, page))
+    text_lines <- text_lines[nzchar(text_lines)]
+    expected_labels <- strsplit(axis_checks[J(row$variant_id), expected_axis_labels], "|", fixed = TRUE)[[1]]
+    missing_labels <- setdiff(expected_labels, text_lines)
+    if (length(missing_labels) > 0L) {
+      stop(
+        "PDF page ", page, " has wrong genotype x-axis labels for ", row$variant_id,
+        ". Missing expected labels: ", paste(missing_labels, collapse = ", ")
+      )
+    }
+  }
+
+  invisible(TRUE)
 }
 
 format_variant_label <- function(variant_id) {
@@ -432,15 +542,15 @@ plot_eQTL_boxplots <- function(dataset_id, eqtl_pairs, axis_mode = c("ref", "gwa
 
   plot_parts <- lapply(seq_len(nrow(eqtl_pairs)), function(i) {
     gene_id <- eqtl_pairs$phenotype_id[i]
-    variant_id <- eqtl_pairs$variant_id[i]
+    this_variant_id <- eqtl_pairs$variant_id[i]
     gene_name <- eqtl_pairs$gene_name[i]
 
-    orow <- ori[J(variant_id)][1]
+    orow <- ori[J(this_variant_id)][1]
     if (is.na(orow$orientation_status) || orow$orientation_status == "missing_pvar") {
-      stop("Missing pvar orientation for ", variant_id)
+      stop("Missing pvar orientation for ", this_variant_id)
     }
 
-    raw_dosage <- dosage[, variant_id]
+    raw_dosage <- dosage[, this_variant_id]
     orientation_mode <- "ref"
     axis_status <- orow$orientation_status
     allele0 <- orow$id_REF
@@ -448,7 +558,7 @@ plot_eQTL_boxplots <- function(dataset_id, eqtl_pairs, axis_mode = c("ref", "gwa
     plot_dosage <- if (!is.na(orow$orientation_sign) && orow$orientation_sign == -1L) 2 - raw_dosage else raw_dosage
 
     if (axis_mode == "gwas_effect") {
-      grow <- gwas_lut[J(variant_id)][1]
+      grow <- gwas_lut[J(this_variant_id)][1]
       if (!is.na(grow$A1) && nzchar(grow$A1)) {
         a1 <- toupper(grow$A1)
         a2 <- toupper(grow$A2)
@@ -494,8 +604,8 @@ plot_eQTL_boxplots <- function(dataset_id, eqtl_pairs, axis_mode = c("ref", "gwa
       dataset_id = dataset_id,
       gene_id = gene_id,
       gene_name = gene_name,
-      variant_id = variant_id,
-      facet = sprintf("%s\n%s", format_variant_label(variant_id), gene_name),
+      variant_id = this_variant_id,
+      facet = sprintf("%s\n%s", format_variant_label(this_variant_id), gene_name),
       orientation_mode = orientation_mode,
       axis_status = axis_status,
       slope = slope,
@@ -803,6 +913,11 @@ message("Wrote DEG plot pair metadata: ", sig_plot_degs_file)
 sig_plot_deg_counts
 ```
 
+```{r validate-deg-genotype-axis, include=FALSE}
+deg_axis_dry_run <- validate_ref_axis_dry_run(sig_plot_degs)
+stopifnot(nrow(deg_axis_dry_run) == uniqueN(sig_plot_degs$variant_id))
+```
+
 ```{r plot-significant-examples, fig.width=3.5, fig.height=5}
 sig_plot_examples <- examples[example_type == "mdd_significant"]
 saved_sig_pdfs <- character()
@@ -886,14 +1001,23 @@ if (nzchar(Sys.which("gs"))) {
 ```{r full-deg-pdf-save, eval=FALSE}
 ## set RUN_FULL_DEG_BOXPLOT_PDF <- TRUE and run this chunk explicitly to write all 263 pages.
 if (isTRUE(RUN_FULL_DEG_BOXPLOT_PDF)) {
-  full_deg_pdf <- file.path(plots_dir, "eqtl_boxplot_degs_broad_union.pdf")
   saved_full_deg_pdf <- save_eQTL_boxplots(
     sig_plot_degs,
     dataset_id = NULL,
-    out_file = full_deg_pdf,
+    out_file = full_deg_pdf_file,
     axis_mode = "ref"
   )
   saved_full_deg_pdf
+}
+```
+
+```{r validate-full-deg-pdf-axis, include=FALSE}
+if (file.exists(full_deg_pdf_file) && nzchar(Sys.which("mutool"))) {
+  validate_pdf_ref_axis_labels(
+    full_deg_pdf_file,
+    sig_plot_degs,
+    pages = c(1L, 2L, 3L, 263L)
+  )
 }
 ```
 
