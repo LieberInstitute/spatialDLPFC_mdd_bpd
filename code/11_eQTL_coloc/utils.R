@@ -2392,6 +2392,7 @@ coloc_nominal_parquet_files <- function(dataset_id, tqtl_out_dir) {
 read_coloc_nominal_dataset <- function(dataset_id, tqtl_out_dir, cis_window = 1000000L,
                                        chromosomes = NULL) {
   if (!requireNamespace("arrow", quietly = TRUE)) stop("The arrow package is required")
+  if (!requireNamespace("tidyselect", quietly = TRUE)) stop("The tidyselect package is required")
   require_data_table()
 
   files <- coloc_nominal_parquet_files(dataset_id = dataset_id, tqtl_out_dir = tqtl_out_dir)
@@ -2406,7 +2407,7 @@ read_coloc_nominal_dataset <- function(dataset_id, tqtl_out_dir, cis_window = 10
     "ma_count", "pval_nominal", "slope", "slope_se"
   )
   dt <- data.table::rbindlist(lapply(files, function(path) {
-    as.data.table(arrow::read_parquet(path, col_select = cols))
+    as.data.table(arrow::read_parquet(path, col_select = tidyselect::all_of(cols)))
   }), use.names = TRUE, fill = TRUE)
   assert_cols(dt, cols, paste0(dataset_id, " nominal parquet"))
   dt[, `:=`(

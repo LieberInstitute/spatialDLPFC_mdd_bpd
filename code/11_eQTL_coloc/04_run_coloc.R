@@ -93,7 +93,7 @@ sensitivity_rule <- "H4 > 0.8"
 sensitivity_npoints <- 100L
 priors <- list(p1 = 1e-4, p2 = 1e-4, p12 = 1e-5)
 
-required_packages <- c("arrow", "coloc", "BiocParallel", "qs2", "data.table")
+required_packages <- c("arrow", "tidyselect", "coloc", "BiocParallel", "qs2", "data.table")
 missing_packages <- required_packages[!vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)]
 if (length(missing_packages) > 0L) {
   stop("Missing required R package(s): ", paste(missing_packages, collapse = ", "))

@@ -4,8 +4,6 @@ suppressPackageStartupMessages({
   library(SpatialExperiment)
   library(SummarizedExperiment)
   library(data.table)
-  library(dplyr)
-  library(tibble)
   library(edgeR)
   library(matrixStats)
   library(sva)
@@ -434,31 +432,28 @@ prep_spe_qtl <- function(
 }
 
 spe2bed <- function(spe_bed) {
-  rr_df <- as.data.frame(rowRanges(spe_bed))
+  rr_dt <- as.data.table(as.data.frame(rowRanges(spe_bed)), keep.rownames = "ID")
   tmm <- assays(spe_bed)$tmm
   stopifnot(!is.null(tmm))
 
   rinvnorm <- function(x) qnorm((rank(x, ties.method = "average") - 0.5) / length(x))
   counts <- t(apply(tmm, 1, rinvnorm))
 
-  rr_df$tss_start <- ifelse(rr_df$strand == "-", rr_df$end, rr_df$start)
-  rr_df$start <- rr_df$tss_start
-  rr_df <- rr_df %>%
-    tibble::rownames_to_column("ID") %>%
-    dplyr::arrange(seqnames, start) %>%
-    dplyr::mutate(end = start + 1) %>%
-    dplyr::select(`#Chr` = seqnames, start, end, ID)
+  rr_dt[, tss_start := fifelse(as.character(strand) == "-", end, start)]
+  rr_dt[, `:=`(start = tss_start, end = tss_start + 1L)]
+  rr_dt <- rr_dt[order(seqnames, start), .(`#Chr` = seqnames, start, end, ID)]
 
   colnames(counts) <- colnames(spe_bed)
-  as.data.frame(counts) %>%
-    tibble::rownames_to_column("ID") %>%
-    dplyr::left_join(rr_df, ., by = "ID")
+  counts_dt <- as.data.table(as.data.frame(counts), keep.rownames = "ID")
+  out <- merge(rr_dt, counts_dt, by = "ID", all.x = TRUE, sort = FALSE)
+  setcolorder(out, c("#Chr", "start", "end", "ID", setdiff(names(out), c("#Chr", "start", "end", "ID"))))
+  out[]
 }
 
 covar_format <- function(data) {
   data <- as.data.frame(data)
   data <- t(data)
-  as.data.frame(data) %>% rownames_to_column("id")
+  as.data.frame(as.data.table(as.data.frame(data), keep.rownames = "id"))
 }
 
 sanitize <- function(x) {
@@ -660,7 +655,7 @@ for (cluster in clusters) {
   }
 }
 
-manifest_df <- dplyr::bind_rows(manifest)
+manifest_df <- rbindlist(manifest, use.names = TRUE, fill = TRUE)
 if (nrow(manifest_df) == 0) stop("No datasets were processed")
 
 if (!opt$check_only) {
