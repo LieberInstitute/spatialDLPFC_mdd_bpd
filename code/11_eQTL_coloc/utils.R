@@ -1692,7 +1692,8 @@ gwasx_matched_from_gwas <- function(gwas_matched,
   out <- lapply(names(thresholds), function(dis) {
     if (!dis %in% names(gwas_matched)) stop("Missing matched GWAS for GWASx disorder: ", dis)
     dt <- data.table::copy(data.table::as.data.table(gwas_matched[[dis]]))
-    dt[p <= thresholds[[dis]] & !is.na(variant_id), .(
+    ## use a strict suggestive cutoff for exploratory exact-variant matches.
+    dt[p < thresholds[[dis]] & !is.na(variant_id), .(
       variant_id = as.character(variant_id),
       p = as.numeric(p),
       beta = as.numeric(beta),
