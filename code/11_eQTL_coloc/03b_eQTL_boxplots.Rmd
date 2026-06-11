@@ -16,6 +16,8 @@ here::i_am(".git/HEAD")
 repo_root <- here()
 code_dir <- here("code", "11_eQTL_coloc")
 source(file.path(code_dir, "utils.R"), chdir = FALSE)
+source(file.path(code_dir, "datatable_scope_conflicts.R"), chdir = FALSE)
+configure_datatable_scope_conflict_warnings()
 
 tqtl_in_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_in")
 tqtl_out_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_out")
@@ -412,17 +414,18 @@ validate_ref_axis_dry_run <- function(eqtl_dt) {
   }
 
   dosage <- load_pgen_dosage(variants)
+  ## this catches data.table scoping bugs where REF/ALT labels come from a different variant row.
   checks <- rbindlist(lapply(seq_len(nrow(ori)), function(i) {
-    variant_id <- ori$variant_id[i]
-    raw_dosage <- dosage[, variant_id]
+    this_variant_id <- ori$variant_id[i]
+    raw_dosage <- dosage[, this_variant_id]
     plot_dosage <- if (!is.na(ori$orientation_sign[i]) && ori$orientation_sign[i] == -1L) {
       2 - raw_dosage
     } else {
       raw_dosage
     }
-    observed_labels <- expected_ref_genotype_labels(variant_id, plot_dosage)
+    observed_labels <- expected_ref_genotype_labels(this_variant_id, plot_dosage)
     data.table(
-      variant_id = variant_id,
+      variant_id = this_variant_id,
       orientation_status = ori$orientation_status[i],
       max_noninteger = max(abs(raw_dosage - round(raw_dosage)), na.rm = TRUE),
       dosage_min = min(raw_dosage, na.rm = TRUE),

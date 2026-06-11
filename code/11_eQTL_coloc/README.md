@@ -65,7 +65,56 @@ Major workflow files:
 - `03b_eQTL_boxplots.Rmd`: select example eQTL pairs and render genotype boxplots.
 - `04_run_coloc.R`: run coloc ABF and sensitivity checks from full tensorQTL nominal parquet.
 - `05_coloc_explore.Rmd`: flatten coloc outputs, apply sensitivity gates, write tables, and plot strong coloc counts.
+- `check_datatable_scoping.R`: heuristic scan for risky bare-symbol data.table joins.
+- `datatable_scope_conflicts.R`: opt-in runtime diagnostics for data.table column/caller-scope name collisions.
 - `utils.R`: shared DEG, GWAS, tensorQTL, summary, and plotting helpers.
+
+## R data.table Safety
+
+Bare names inside `DT[...]` should mean data.table columns. Do not create
+caller-scope variables whose names match any column in a data.table used in
+that same scope. This is a general rule, not limited to eQTL key columns.
+
+This failure mode is silent: `DT[col == col]`, `DT[col %in% col]`, and
+`DT[J(col)]` can use the column twice when a caller scalar named `col` was
+intended. Mixed-symbol filters are just as dangerous: `DT[col == var_id]` can
+silently use column `var_id` when the coding user or agent intended a caller
+variable named `var_id`. Numeric results may look plausible while labels,
+filters, or joins are wrong.
+
+Static scans cannot prove safety when table columns come from loaded files.
+Runtime object introspection is required because only the live data.table knows
+whether a bare RHS/filter symbol is also a column.
+
+Name caller scalars by their role, not by the target column. Use names such as
+`lookup_variant_id`, `target_gene_id`, `value_filter`, `query_id`, or
+`current_dataset`, not bare column names such as `variant_id`, `gene_id`,
+`dataset_id`, `sample_id`, or `rsid` in scopes that query data.tables.
+
+For scalar joins, explicit input tables or base matching are safest:
+
+```r
+dt[data.table(variant_id = lookup_variant_id), on = "variant_id"]
+dt[match(lookup_variant_id, dt$variant_id)]
+```
+
+Before committing R/Rmd code that touches keyed data.table joins, run this
+heuristic precheck:
+
+```bash
+Rscript ./check_datatable_scoping.R
+```
+
+For runtime validation of code that touches data.table filters or joins, enable
+data.table scope-collision diagnostics:
+
+```bash
+DATATABLE_WARN_SCOPE_CONFLICTS=caller Rscript -e 'source("datatable_scope_conflicts.R"); stopifnot(test_datatable_scope_conflict_diagnostics())'
+DATATABLE_WARN_SCOPE_CONFLICTS=caller Rscript -e 'rmarkdown::render("03b_eQTL_boxplots.Rmd")'
+```
+
+Use `DATATABLE_WARN_SCOPE_CONFLICTS=search` only for strict local debugging; it
+also warns in `j`, so ordinary column-selection code may be noisy.
 
 ## Prepare Inputs
 
