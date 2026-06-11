@@ -109,7 +109,7 @@ pdf_page_text <- function(pdf_file, page) {
   )
 }
 
-save_eQTL_boxplots <- function(eqtl_dt, dataset_id = NULL, out_file,
+save_eQTL_boxplots <- function(eqtl_dt, filter_dataset_id = NULL, out_file,
                                axis_mode = "ref", plot_style = "publication",
                                gwas_disorder = "MDD",
                                width = publication_pdf_width,
@@ -122,12 +122,11 @@ save_eQTL_boxplots <- function(eqtl_dt, dataset_id = NULL, out_file,
     c("dataset_id", "context", "gene_id", "gene_name", "phenotype_id", "variant_id", "pval_nominal"),
     "eqtl_dt"
   )
-  if (!is.null(dataset_id)) {
-    dataset_value <- dataset_id
-    dt <- dt[dt$dataset_id == dataset_value]
+  if (!is.null(filter_dataset_id)) {
+    dt <- dt[dataset_id == filter_dataset_id]
   }
   if (nrow(dt) == 0L) {
-    stop("No eQTL rows", if (!is.null(dataset_id)) paste0(" for ", dataset_id) else ".")
+    stop("No eQTL rows", if (!is.null(filter_dataset_id)) paste0(" for ", filter_dataset_id) else ".")
   }
 
   if (!"rsid" %in% names(dt)) {
@@ -491,7 +490,7 @@ format_variant_label <- function(variant_id) {
 ```
 
 ```{r plot-function}
-plot_eQTL_boxplots <- function(dataset_id, eqtl_pairs, axis_mode = c("ref", "gwas_effect"),
+plot_eQTL_boxplots <- function(plot_dataset_id, eqtl_pairs, axis_mode = c("ref", "gwas_effect"),
                                gwas_disorder = "MDD", use_raw = FALSE,
                                title = "auto",
                                plot_style = c("publication", "current"),
@@ -507,7 +506,7 @@ plot_eQTL_boxplots <- function(dataset_id, eqtl_pairs, axis_mode = c("ref", "gwa
   if (nrow(eqtl_pairs) == 0L) stop("No eQTL pairs supplied.")
 
   ctx <- if (is.null(plot_context)) {
-    load_plot_context(dataset_id, gene_ids = eqtl_pairs$phenotype_id)
+    load_plot_context(plot_dataset_id, gene_ids = eqtl_pairs$phenotype_id)
   } else {
     plot_context
   }
@@ -519,18 +518,18 @@ plot_eQTL_boxplots <- function(dataset_id, eqtl_pairs, axis_mode = c("ref", "gwa
   }
 
   common_samples <- Reduce(intersect, list(colnames(expr), rownames(dosage), ctx$sample_info$sample_id))
-  if (length(common_samples) == 0L) stop("No shared samples for plotting ", dataset_id)
+  if (length(common_samples) == 0L) stop("No shared samples for plotting ", plot_dataset_id)
   expr <- expr[, common_samples, drop = FALSE]
   dosage <- dosage[common_samples, , drop = FALSE]
   sample_info <- ctx$sample_info[match(common_samples, sample_id)]
 
   missing_genes <- setdiff(eqtl_pairs$phenotype_id, rownames(expr))
   if (length(missing_genes) > 0L) {
-    stop("Genes missing from expression BED for ", dataset_id, ": ", paste(missing_genes, collapse = ", "))
+    stop("Genes missing from expression BED for ", plot_dataset_id, ": ", paste(missing_genes, collapse = ", "))
   }
   missing_variants <- setdiff(eqtl_pairs$variant_id, colnames(dosage))
   if (length(missing_variants) > 0L) {
-    stop("Variants missing from preloaded dosage for ", dataset_id, ": ", paste(missing_variants, collapse = ", "))
+    stop("Variants missing from preloaded dosage for ", plot_dataset_id, ": ", paste(missing_variants, collapse = ", "))
   }
 
   ori <- if (is.null(orientation_lut)) {
@@ -604,7 +603,7 @@ plot_eQTL_boxplots <- function(dataset_id, eqtl_pairs, axis_mode = c("ref", "gwa
       dosage = plot_dosage,
       dosage_raw = raw_dosage,
       DX = sample_info$DX,
-      dataset_id = dataset_id,
+      dataset_id = plot_dataset_id,
       gene_id = gene_id,
       gene_name = gene_name,
       variant_id = this_variant_id,
@@ -627,8 +626,8 @@ plot_eQTL_boxplots <- function(dataset_id, eqtl_pairs, axis_mode = c("ref", "gwa
   ), by = facet]
   annot[, label := sprintf("beta = %.3g\np = %.2e", slope, pval_nominal)]
 
-  context_label <- manifest[manifest[["dataset_id"]] == dataset_id, context][1]
-  if (is.na(context_label)) context_label <- dataset_id
+  context_label <- manifest[dataset_id == plot_dataset_id, context][1]
+  if (is.na(context_label)) context_label <- plot_dataset_id
   if (nrow(eqtl_pairs) == 1L) {
     rsid <- if ("rsid" %in% names(eqtl_pairs)) eqtl_pairs$rsid[1] else NA_character_
     variant_label <- if (!is.na(rsid) && nzchar(rsid)) rsid else eqtl_pairs$variant_id[1]
@@ -932,7 +931,7 @@ for (ds in unique(sig_plot_examples$dataset_id)) {
     saved_sig_pdfs,
     save_eQTL_boxplots(
       pairs,
-      dataset_id = ds,
+      filter_dataset_id = ds,
       out_file = file.path(
         plots_dir,
         paste0("eqtl_boxplot_significant_", safe_plot_slug(ds), ".pdf")
@@ -951,7 +950,7 @@ pobj_nominal <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "r
 print(pobj_nominal$plot)
 saved_nominal_pdf <- save_eQTL_boxplots(
   nominal_plot_examples,
-  dataset_id = "l2-3",
+  filter_dataset_id = "l2-3",
   out_file = file.path(plots_dir, "eqtl_boxplot_nominal_l2-3.pdf"),
   axis_mode = "ref",
   plot_style = "publication"
@@ -977,7 +976,7 @@ for (pdf_name in names(expected_example_pages)) {
 test_deg_pdf <- file.path(plots_dir, "eqtl_boxplot_degs_broad_union_uvasc.pdf")
 saved_test_deg_pdf <- save_eQTL_boxplots(
   sig_plot_degs,
-  dataset_id = "uvasc",
+  filter_dataset_id = "uvasc",
   out_file = test_deg_pdf,
   axis_mode = "ref"
 )
@@ -1006,7 +1005,7 @@ if (nzchar(Sys.which("gs"))) {
 if (isTRUE(RUN_FULL_DEG_BOXPLOT_PDF)) {
   saved_full_deg_pdf <- save_eQTL_boxplots(
     sig_plot_degs,
-    dataset_id = NULL,
+    filter_dataset_id = NULL,
     out_file = full_deg_pdf_file,
     axis_mode = "ref"
   )
