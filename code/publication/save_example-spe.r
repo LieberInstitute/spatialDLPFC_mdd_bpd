@@ -46,9 +46,8 @@ metadata$title = paste(metadata$MBv_sample, gsub("BPD","BD", metadata$condition)
 metadata$condition <- NULL
 metadata$sex <- NULL
 
-write.csv(metadata, "processed-data/publication/GEO_samples_title.csv")
+write.csv(metadata, "processed-data/publication/GEO_samples_title.csv", row.names=F)
 
-#stop("Early stopping to update csv file only")
 #subset to example samples
 example.samples = c("342-A1", "332-A1", "279-A1", "327-C1", #NTC F
                     "382-D1", "023-D1", "334-A1", "309-C1", #MDD F
@@ -63,21 +62,22 @@ example.samples[[6]] = "V13Y10-023_D1"
 tmp = spe[,spe$sample_id %in% example.samples]
 dim(tmp) #28965 111258
 tmp$sample_id = factor(tmp$sample_id, levels=example.samples)
-tmp$condition = factor(tmp$condition, levels=c("NTC","MDD","BPD"))
+tmp$condition = factor(tmp$condition, levels=c("NTC","MDD","BPD"), labels=c("NTC","MDD","BD"))
 tmp$sex = factor(tmp$sex, levels=c("F","M"))
+
+tmp$title = paste(tmp$MBv_sample, tmp$condition, tmp$sex, tmp$brnum, sep="_")
 
 table(distinct(as.data.frame(colData(tmp)[,c("condition","sex","sample_id")]))[,c("condition","sex")])
 
-#realize matrix
-#regular_matrix_counts <- as.matrix(assays(tmp)[["counts"]])
-#sparse_matrix_counts <- as(regular_matrix_counts, "dgCMatrix")
+colData(tmp) <-	colData(tmp)[,c(1:5,15,6:14)]
+print(head(colData(tmp)))
+
+#remove counts assay to save space
 assays(tmp)$counts <- NULL
 
 regular_matrix_logcounts <- as.matrix(assays(tmp)[["logcounts"]])
 sparse_matrix_logcounts <- as(regular_matrix_logcounts, "dgCMatrix")
 assays(tmp)$logcounts <- sparse_matrix_logcounts
-
-print(head(colData(tmp)))
 
 saveRDS(tmp, "processed-data/publication/spe_n24_example-samples.rds")
 

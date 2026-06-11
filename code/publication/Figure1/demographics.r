@@ -5,34 +5,16 @@ suppressPackageStartupMessages({
 })
 
 cpList <- readRDS("plots/colorPalettes.rds")
-source("code/02_build_spe/getMBvSampleInfo_function.r")
 
-fastqs = grep("^V", list.files('raw-data/FASTQ'), value=T)
-space = grep("^V", list.files("processed-data/01_spaceranger"), value=T)
+demo = read.csv("processed-data/publication/demographics.csv")
 
-demo = getMBvSampleInfo(REDCapFile="Visium_DATA_2025-01-22_1406.csv",
-                        demoFile="DLPFC_cross-disorders_demographics_MBv.csv")
-head(demo)
-#remove sample missing spacerange (run with NAc i think)
-demo = demo[demo$sample_id!="V13B23-339_A1",]
+demo$cond_sex = factor(paste(demo$condition, demo$sex), levels=c("NTC F","NTC M","MDD F","MDD M","BD F","BD M"),
+	labels=gsub(" ", "\n", c("NTC F","NTC M","MDD F","MDD M","BD F","BD M")))
+demo$condition = factor(demo$condition, levels=c("NTC","MDD","BD"), labels=c("NTC","MDD","BPD"))
 
-demo$condition = factor(demo$condition, levels=c("NTC","MDD","BPD"))
-demo$sex = factor(demo$sex, levels=c("F","M"))
-
-#current sample list at 128 because of re-run slides
-demo = demo[!demo$slide %in% c("V13Y10-020","V13B23-331"),]
-
-dim(demo) #120
-
-#remove repeated NTC M 
-demo = demo[!demo$sample_id=="V13F27-338_C1",]
-
-demo$cond_sex = factor(paste(demo$condition, demo$sex), levels=c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M"))
-
-p1 <- ggplot(demo, aes(x=cond_sex, y=age, color=condition, shape=sex))+
-  ggbeeswarm::geom_beeswarm()+scale_color_manual(values=cpList$dx.pal)+
+p1 <- ggplot(demo, aes(x=cond_sex, y=age, color=condition))+
+  ggbeeswarm::geom_beeswarm(cex=3)+scale_color_manual(values=cpList$dx.pal)+
   geom_boxplot(outliers=F, color="black", fill="transparent", width=.7)+
-  scale_shape_manual(values=c(21,23))+
   ylim(0,75)+labs(title="Age (donor)", x="", y="years")+
   theme_minimal()+theme(legend.position="none", panel.grid.minor=element_blank())
 
