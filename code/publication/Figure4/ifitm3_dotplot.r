@@ -11,7 +11,7 @@ refined.modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_a
 source("code/publication/plotting_utils.r")
 
 mod_gene="IFITM3"
-plot.genes = c("IFITM3", "IFITM2", "SLCO4A1", "SRGN", "OSMR", "CEBPD", "IL1R1", "DEPP1", "ADAMTS9","YBX3")
+plot.genes = c("IFITM3", "IFITM2", "SLCO4A1", "SRGN", "OSMR", "CEBPD", "IL1R1", "YBX3")
 
 
 o1 = filter(refined.modules, TF==mod_gene, target %in% plot.genes) %>% arrange(desc(importance))
@@ -42,7 +42,7 @@ p3.3 <- ggplot(mutate(imp.df, y_lab=factor(y_lab, levels=rev(plot.genes))),
 
 ggsave(file=paste0("plots/publication/Figure4/",mod_gene,"_dotplot.pdf"), 
        arrangeGrob(grobs=list(p3, p3.1, p3.2, p3.3), layout_matrix=matrix(c(1,1,1,1,1,2,3,4), ncol=8)),
-       height=3, width=6.5)
+       height=2.5, width=6.5)
 
 ## Reproducibility information
 print("Reproducibility information:")
