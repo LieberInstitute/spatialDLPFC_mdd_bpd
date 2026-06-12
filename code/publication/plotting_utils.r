@@ -142,14 +142,22 @@ getMeanRatioBar <- function(ordered_genes, sce_summ) {
 	return(p1.2)
 }
 
-getViolin <- function(.plot.genes, .y.upper.bound=11, .y.breaks=c(0,2,4,6,8,10), version=c("seurat","precast")) {
+getViolin <- function(.plot.genes, .y.upper.bound=11, .y.breaks=c(0,2,4,6,8,10), version=c("seurat","precast"), whole.tissue_only=F) {
 	if(version=="seurat") {
 		load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
-		return(getViolin_seurat(.plot.genes, .y.upper.bound, .y.breaks, spe_pseudo))
+		if(whole.tissue_only) {
+			return(getViolin_wholeTissue(.plot.genes, .y.upper.bound, .y.breaks, spe_pseudo, sigList_level="se.la"))
+		} else {
+			return(getViolin_seurat(.plot.genes, .y.upper.bound, .y.breaks, spe_pseudo))
+		}
 	}
 	if(version=="precast") {
 		load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
-		return(getViolin_precast(.plot.genes, .y.upper.bound, .y.breaks, spe_pseudo))
+		if(whole.tissue_only) {
+                        return(getViolin_wholeTissue(.plot.genes, .y.upper.bound, .y.breaks, spe_pseudo, sigList_level="sm.la"))
+                } else {
+			return(getViolin_precast(.plot.genes, .y.upper.bound, .y.breaks, spe_pseudo))
+		}
 	}
 	if(!version %in% c("seurat","precast")) stop("Please specify pseudobulk version to use as one of 'seurat' or 'precast'.")
 	if(length(version)>1) stop("Please specify pseudobulk version to use as *one* of 'seurat' or 'precast'.")
@@ -281,4 +289,60 @@ getViolin_precast <- function(plot.genes, y.upper.bound=11, y.breaks=c(0,2,4,6,8
                      axis.ticks = element_line(linewidth=.2), strip.text.y.left = element_blank(),
                      panel.grid.minor=element_blank(), panel.grid.major=element_line(linewidth=.2))
   return(p1)
+}
+
+getViolin_wholeTissue <- function(plot.genes, y.upper.bound=11, y.breaks=c(0,2,4,6,8,10), spe_pseudo, sigList_level) {
+  for (j in plot.genes) {
+    colData(spe_pseudo)[[gsub("-","\\.", j)]] = logcounts(spe_pseudo)[rowData(spe_pseudo)$gene_name==j,]
+  }
+  
+  la.df = as.data.frame(colData(spe_pseudo)[,c("condition", "sex", plot.genes)]) %>%
+    tidyr::pivot_longer(all_of(plot.genes), names_to="key_genes", values_to="logcounts") %>%
+    mutate(key_genes= factor(key_genes, levels=plot.genes))
+  
+  summ.df = group_by(la.df, condition, sex, key_genes) %>% 
+    summarise(ypos=mean(logcounts), ysd=sd(logcounts), n=n(), yse=ysd/sqrt(n)) 
+  
+  sig.df = filter(sigList[[sigList_level]], gene_name %in% plot.genes, group!="MDD.BPD") %>%
+    mutate(is_sig=T) %>% tidyr::separate_rows(group, sep="\\.") %>%
+    select(gene_name, sex, condition=group, is_sig)
+  
+  plot.df1 = left_join(la.df, sig.df, by=c("key_genes"="gene_name","sex","condition")) %>%
+    mutate(is_sig= ifelse(is.na(is_sig), "False", "True"),
+           point_color= paste(condition, is_sig),
+           condition=factor(condition, levels=c("NTC","MDD","BPD")),
+           sex=factor(sex, levels=c("F","M")),
+           key_genes=factor(key_genes, levels=plot.genes))
+  
+  plot.df2 = left_join(summ.df, sig.df, by=c("key_genes"="gene_name","sex","condition")) %>%
+    mutate(is_sig= ifelse(is.na(is_sig), "False", "True"),
+           point_color= paste(condition, is_sig),
+           condition=factor(condition, levels=c("NTC","MDD","BPD")),
+           sex=factor(sex, levels=c("F","M")),
+           key_genes=factor(key_genes, levels=plot.genes))
+  
+  
+  plist <- lapply(plot.genes, function(y) {
+    tmp1 = filter(plot.df1, key_genes==y)
+    tmp2 = filter(plot.df2, key_genes==y)
+    
+    ggplot(tmp1, aes(x=sex, y=logcounts))+
+      geom_violin(aes(fill=condition), scale="width", trim=F, bounds=c(0,y.upper.bound), position=position_dodge(width=.8), 
+                  color="transparent")+
+      geom_crossbar(data=tmp2, aes(group=condition, y=ypos, ymax=ypos+ysd, ymin=ypos-ysd, 
+                                       fill=point_color, color=point_color),
+                    position = position_dodge(width=.8), width=.6, linewidth=.3)+
+      scale_color_manual(values=col.pal_color, guide="none")+
+      scale_fill_manual(values=col.pal_fill, guide="none")+
+      scale_y_continuous(breaks=y.breaks)+coord_cartesian(ylim=c(0,y.upper.bound))+
+      #include sigList level in title so that I don't get confused about what was plotted after the fact
+      labs(title=paste(y, sigList_level))+
+      theme_bw()+theme(strip.background = element_rect(fill="transparent", color="transparent"),
+                       text=element_text(size=8), axis.text=element_text(size=6),
+                       axis.title.x=element_blank(), axis.title.y=element_blank(),
+                       axis.ticks = element_line(linewidth=.2), strip.text.y.left = element_blank(),
+                       panel.grid.minor=element_blank(), panel.grid.major=element_line(linewidth=.2))
+  })
+  names(plist) <- plot.genes
+  return(plist)
 }
