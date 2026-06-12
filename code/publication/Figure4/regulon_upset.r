@@ -5,7 +5,7 @@ suppressPackageStartupMessages({
 })
 
 #mod_genes = c("GFAP","GLUL","MT1M")
-mod_genes = c("IFITM3","HSPA1A","A2M")
+mod_genes = c("IFITM3","CD74","A2M")
 
 # load modules
 refined.modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules-subset-refined.csv")
@@ -23,6 +23,11 @@ for(mod_gene in	mod_genes) {
 
 	# overlaps
 	reg1 = lapply(regulonList, intersect, y=modlist)
+
+	if(max(sapply(reg1, length))==0) {
+		cat("\n>>>", mod_gene, "module has no overlaps with any regulon!\n\n")
+		next
+	}
 	reg1[[mod_gene]] = modlist
 
 

@@ -15,9 +15,9 @@ p2 <- getViolin(c("APOLD1"), version="seurat")
 ggsave(file="plots/publication/Figure4/APOLD1_violin.pdf", p2, width=3.5, height=1.7)
 
 
-#p4 <- getViolin(c("APOLD1","ANGPTL4"), #.y.upper.bound=13, .y.breaks=c(0,3,6,9,12), 
-#	version="seurat")
-#ggsave(file="plots/publication/Figure4/APOLD1-ANGPTL4_violin.pdf", p4, width=3.5, height=3.2)
+plist3 <- getViolin(c("CD74","C1QB"), .y.upper.bound=12, .y.breaks=c(0,3,6,9,12), version="seurat", whole.tissue_only=T)
+ggsave(file="plots/publication/Figure4/CD74-C1QB_whole-tissue-only_violins.pdf", 
+	arrangeGrob(grobs=plist3, top=NULL, ncol=2), width=2, height=1.7)
 
 ## Reproducibility information
 print("Reproducibility information:")
