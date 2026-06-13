@@ -44,9 +44,11 @@ p3.3 <- ggplot(mutate(imp.df, y_lab=factor(y_lab, levels=rev(plot.genes))),
                         panel.grid.minor=element_blank(), #panel.grid.major.y=element_blank(),
                         plot.margin = margin(.2,.0,1.8,0, unit="cm"))
 
+if(mod_gene=="A2M") height1=2.7
+if(mod_gene=="IFITM3") height1 = 3
 ggsave(file=paste0("plots/publication/Figure4/",mod_gene,"_dotplot.pdf"), 
        arrangeGrob(grobs=list(p3, p3.1, p3.2, p3.3), layout_matrix=matrix(c(1,1,1,1,1,2,3,4), ncol=8)),
-       height=3, width=6.5)
+       height=height1, width=6.5)
 
 }
 ## Reproducibility information
