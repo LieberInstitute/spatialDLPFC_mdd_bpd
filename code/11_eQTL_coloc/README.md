@@ -30,7 +30,7 @@ Canonical inputs:
 - `processed-data/00_genotypes/plink2/merged_maf05.{pgen,psam,pvar}`
 - `processed-data/00_genotypes/plink2/merged_maf05_pca.eigenvec`
 - `processed-data/ref/granges.qs2`
-- `processed-data/ref/GWAS/{BPD,MDD,SCZD}`
+- `processed-data/ref/GWAS/{BD,MDD,SCZD}`
 
 Canonical Seurat eQTL paths:
 
@@ -165,7 +165,7 @@ cis gene-SNP pairs, not only eGenes or significant pairs.
 
 ## Run Coloc ABF
 
-Run MDD and BPD coloc ABF for all Seurat all-donor domainCTs:
+Run MDD and BD coloc ABF for all Seurat all-donor domainCTs:
 
 ```bash
 Rscript ./04_run_coloc.R
@@ -175,21 +175,21 @@ Run one disorder only, useful for separate machines:
 
 ```bash
 Rscript ./04_run_coloc.R --disorder MDD
-Rscript ./04_run_coloc.R --disorder BPD
+Rscript ./04_run_coloc.R --disorder BD
 ```
 
 Optional filters:
 
 ```bash
 Rscript ./04_run_coloc.R --datasets astro,l2-3 --disorder MDD
-Rscript ./04_run_coloc.R --disorder BPD --chromosomes chr22
-Rscript ./04_run_coloc.R --dry-run --disorder BPD
+Rscript ./04_run_coloc.R --disorder BD --chromosomes chr22
+Rscript ./04_run_coloc.R --dry-run --disorder BD
 Rscript ./04_run_coloc.R --disorder MDD --n-cores 12
 ```
 
 Coloc defaults:
 
-- disorders: `MDD`, `BPD`
+- disorders: `MDD`, `BD`
 - datasets: Seurat all-donor `split == "all"` domainCTs
 - loci: all genes present in tensorQTL nominal parquet after GWAS/eQTL overlap
 - SNPs: all overlapping nominal cis SNPs within the 1 Mb tensorQTL window
@@ -260,7 +260,7 @@ Disorder-related DEG columns in `map_significant_summary.csv` use the same
 F-test-filtered source rows, then require a same-disorder post-hoc t-test flag:
 
 - MDD-related: `F_NTC.MDD_ttest` or `M_NTC.MDD_ttest` is significant.
-- BPD-related: `F_NTC.BPD_ttest` or `M_NTC.BPD_ttest` is significant.
+- BD-related: `F_NTC.BD_ttest` or `M_NTC.BD_ttest` is significant.
 
 These columns are disorder-related, not formal disorder-specific-only calls.
 The broad DEG columns remain the four-file F-test union. See
