@@ -67,7 +67,7 @@ plotFunction <- function(logcount_DF, summary_DF, annot_name, spe_pseudo) {
 
 # extract F statistics for labeling
 getFname <- function(gene_name, logcount_DF, spe_pseudo) {
-  rdata= rowData(spe_pseudo)[name2id(gene_name, spe_pseudo),]
+  rdata= metadata(spe_pseudo)[[1]][name2id(gene_name, spe_pseudo),]
   
   if(length(unique(logcount_DF$domain))==1) {
     fstat = rdata$whole.tissue_F_stat
@@ -92,7 +92,7 @@ getFname <- function(gene_name, logcount_DF, spe_pseudo) {
 
 # conditional F sig for formatting
 isFsig <- function(gene_name, logcount_DF, spe_pseudo) {
-  rdata= rowData(spe_pseudo)[name2id(gene_name, spe_pseudo),]
+  rdata= metadata(spe_pseudo)[[1]][name2id(gene_name, spe_pseudo),]
   
   if(length(unique(logcount_DF$domain))==1) {
     fpadj = rdata$whole.tissue_F_adj.P.Val
@@ -105,7 +105,7 @@ isFsig <- function(gene_name, logcount_DF, spe_pseudo) {
 
 # extract t-test results
 getTstats <- function(gene_name, spe_pseudo) {
-  rdata= as.data.frame(rowData(spe_pseudo)[name2id(gene_name, spe_pseudo),])
+  rdata= as.data.frame(metadata(spe_pseudo)[[1]][name2id(gene_name, spe_pseudo),])
   
   pos1 = grep("t_adj", colnames(rdata))
   data.frame("model"=sapply(strsplit(colnames(rdata)[pos1], "_"), function(x) x[[1]]),

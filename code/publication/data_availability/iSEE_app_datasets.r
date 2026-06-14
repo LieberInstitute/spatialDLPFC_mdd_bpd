@@ -20,10 +20,10 @@ for(results_set in c("smoothed-k9-1663","seurat-pc30")) {
 
   # subset to genelist with DE
   f.df = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_", results_set, "_rev-gene-input_F-test.csv"))
-  spe_pseudo = spe_pseudo[f.df$gene_id,]
+#  spe_pseudo = spe_pseudo[f.df$gene_id,]
   
   # extract rowData
-  rdata = rowData(spe_pseudo)[,c("gene_id","gene_name","gene_type")]
+  rdata = rowData(spe_pseudo)[f.df$gene_id,c("gene_id","gene_name","gene_type")]
   
   
   # add whole-tissue model stats to rdata
@@ -54,8 +54,9 @@ for(results_set in c("smoothed-k9-1663","seurat-pc30")) {
   
   # add ammended rdata back to spe
   rownames(rdata2) = rdata2$gene_id
-  stopifnot(identical(rownames(rowData(spe_pseudo)), rownames(rdata2)))
-  rowData(spe_pseudo) <- rdata2
+#  stopifnot(identical(rownames(rowData(spe_pseudo)), rownames(rdata2)))
+#  rowData(spe_pseudo) <- rdata2
+  metadata(spe_pseudo)[[paste0(annot_name, "_DE")]] <- rdata2  
   
   # remove counts assay to save space
   counts(spe_pseudo) <- NULL
