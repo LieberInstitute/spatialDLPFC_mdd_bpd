@@ -212,9 +212,7 @@ infer_dx <- function(covar_mat) {
   dx <- rep("NTC", nrow(covar_mat))
   names(dx) <- rownames(covar_mat)
   if ("DXMDD" %in% colnames(covar_mat)) dx[covar_mat[, "DXMDD"] == 1] <- "MDD"
-  ## accept new "DXBD" prep and legacy "DXBPD" covariate files already on disk.
-  bd_cols <- intersect(c("DXBD", "DXBPD"), colnames(covar_mat))
-  if (length(bd_cols) > 0L) dx[covar_mat[, bd_cols[[1]]] == 1] <- "BD"
+  if ("DXBD" %in% colnames(covar_mat)) dx[covar_mat[, "DXBD"] == 1] <- "BD"
   factor(dx, levels = c("NTC", "MDD", "BD"))
 }
 
@@ -699,8 +697,8 @@ assert_files(c(sig_file, nominal_file))
 
 sig <- fread(sig_file)
 nominal <- fread(nominal_file)
-assert_cols(sig, c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "DEG", "MDD_GWAS", "MDD_GWASg", "pval_nominal"), basename(sig_file))
-assert_cols(nominal, c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "DEG", "MDD_GWAS", "MDD_GWASg", "fdr", "pval_nominal"), basename(nominal_file))
+assert_cols(sig, c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "DEG", "MDD_gwasVar_strict", "MDD_gwas_strict", "pval_nominal"), basename(sig_file))
+assert_cols(nominal, c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "DEG", "MDD_gwasVar_strict", "MDD_gwas_strict", "fdr", "pval_nominal"), basename(nominal_file))
 
 degs <- load_DEGs(repo_root = repo_root, mode = "standard", verbose = FALSE)
 mdd_deg_ids <- unique(as.data.table(degs$disorder_related$global$MDD)$gene_id)
@@ -716,26 +714,27 @@ nominal[, `:=`(
   BD_DEG = as.integer(gene_id %in% bd_deg_ids)
 )]
 
-sig_candidates <- sig[split == "all" & MDD_DEG == 1L & MDD_GWASg == 1L]
+sig_candidates <- sig[split == "all" & MDD_DEG == 1L & MDD_gwas_strict == 1L]
 sig_deg_basis <- "MDD_DEG"
 if (nrow(sig_candidates) == 0L) {
-  sig_candidates <- sig[split == "all" & DEG == 1L & MDD_GWASg == 1L]
+  sig_candidates <- sig[split == "all" & DEG == 1L & MDD_gwas_strict == 1L]
   sig_deg_basis <- "broad_DEG"
 }
 if (nrow(sig_candidates) == 0L) {
   sig_candidates <- sig[split == "all" & MDD_DEG == 1L]
-  sig_deg_basis <- "MDD_DEG_no_MDD_GWASg"
+  sig_deg_basis <- "MDD_DEG_no_MDD_gwas"
 }
 if (nrow(sig_candidates) == 0L) {
   sig_candidates <- sig[split == "all" & DEG == 1L]
-  sig_deg_basis <- "broad_DEG_no_MDD_GWASg"
+  sig_deg_basis <- "broad_DEG_no_MDD_gwas"
 }
 if (nrow(sig_candidates) == 0L) {
   sig_candidates <- sig[split == "all"]
   sig_deg_basis <- "none"
 }
 if (nrow(sig_candidates) == 0L) stop("No significant examples found.")
-sig_candidates[, example_priority := fifelse(MDD_GWAS == 1L, 1L, fifelse(MDD_GWASg_variant == 1L, 2L, 3L))]
+## prioritise variant-level GWAS hits, then curated gene-list hits, then the rest.
+sig_candidates[, example_priority := fifelse(MDD_gwasVar_strict == 1L, 1L, fifelse(MDD_gwasGene == 1L, 2L, 3L))]
 setorder(sig_candidates, example_priority, pval_nominal)
 sig_examples <- head(sig_candidates[, .SD[1], by = gene_id], 3L)
 sig_examples[, example_type := "mdd_significant"]
@@ -744,22 +743,22 @@ sig_examples[, example_deg_basis := sig_deg_basis]
 sig_keys <- unique(sig[split == "all", .(dataset_id, gene_id, variant_id)])
 nominal_l23 <- nominal[split == "all" & dataset_id == "l2-3"]
 nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
-nominal_only <- nominal_only[MDD_DEG == 1L & MDD_GWASg == 1L]
+nominal_only <- nominal_only[MDD_DEG == 1L & MDD_gwas_strict == 1L]
 nominal_deg_basis <- "MDD_DEG"
 if (nrow(nominal_only) == 0L) {
   nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
-  nominal_only <- nominal_only[DEG == 1L & MDD_GWASg == 1L]
+  nominal_only <- nominal_only[DEG == 1L & MDD_gwas_strict == 1L]
   nominal_deg_basis <- "broad_DEG"
 }
 if (nrow(nominal_only) == 0L) {
   nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
   nominal_only <- nominal_only[MDD_DEG == 1L]
-  nominal_deg_basis <- "MDD_DEG_no_MDD_GWASg"
+  nominal_deg_basis <- "MDD_DEG_no_MDD_gwas"
 }
 if (nrow(nominal_only) == 0L) {
   nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
   nominal_only <- nominal_only[DEG == 1L]
-  nominal_deg_basis <- "broad_DEG_no_MDD_GWASg"
+  nominal_deg_basis <- "broad_DEG_no_MDD_gwas"
 }
 if (nrow(nominal_only) == 0L) {
   nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
@@ -773,8 +772,8 @@ nominal_examples[, example_deg_basis := nominal_deg_basis]
 
 example_cols <- unique(c(
   "example_type", "example_deg_basis", "dataset_id", "context", "split", "gene_id", "gene_name",
-  "phenotype_id", "variant_id", "DEG", "MDD_DEG", "BD_DEG", "MDD_GWAS", "MDD_GWASg",
-  "MDD_GWASg_variant", "MDD_GWASg_gene", "pval_nominal", "fdr",
+  "phenotype_id", "variant_id", "DEG", "MDD_DEG", "BD_DEG", "MDD_gwasVar_strict", "MDD_gwas_strict",
+  "MDD_gwasGene", "pval_nominal", "fdr",
   "pval_perm", "qval", "qval_parent", "slope", "slope_se"
 ))
 examples <- rbindlist(

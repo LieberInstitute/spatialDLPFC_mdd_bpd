@@ -250,6 +250,10 @@ out_summary <- file.path(tables_dir, "nominal_BH05_summary.csv")
 out_qc <- file.path(tables_dir, "nominal_BH05_qc.csv")
 out_xlsx <- file.path(tables_dir, "nominal_BH05.xlsx")
 
+## relabel overlap columns to the cleaned GWAS/DEG scheme (strict-level only here).
+nominal_BH05 <- rename_eqtl_overlap_cols(nominal_BH05)
+nominal_summary <- build_merged_significant_summary(nominal_summary)
+
 fwrite(nominal_BH05, out_nominal)
 fwrite(nominal_summary, out_summary)
 fwrite(nominal_qc, out_qc)
