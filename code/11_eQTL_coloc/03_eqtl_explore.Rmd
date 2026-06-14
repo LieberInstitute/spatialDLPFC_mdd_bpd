@@ -74,7 +74,7 @@ degs_by_mode <- list(standard = load_DEGs(repo_root = repo_root, mode = "standar
 
 plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05")
 
-## load matched caches broad enough for strict GWAS and MDD/BPD GWASx reuse.
+## load matched caches broad enough for strict GWAS and MDD/BD GWASx reuse.
 gwas_matched <- load_matched_gwas_by_disorder(
   DEFAULT_GWAS_OVERLAP_DISORDERS,
   plink2_prefix = plink2_prefix,
@@ -86,7 +86,7 @@ gwas_matched <- load_matched_gwas_by_disorder(
 gwas_sets <- strict_gwas_sets_from_matched(gwas_matched, GWAS_STRICT_P_THRESHOLD)
 vapply(gwas_sets, length, integer(1))
 
-## GWASx columns are suggestive/exploratory MDD/BPD checks at p <= 1e-5.
+## GWASx columns are suggestive/exploratory MDD/BD checks at p <= 1e-5.
 gwasx_matched <- gwasx_matched_from_gwas(gwas_matched, GWAS_EXPLORATORY_P_THRESHOLDS)
 vapply(gwasx_matched, nrow, integer(1))
 
@@ -111,8 +111,8 @@ eqtl_barchart <- function(mapsum, indep = FALSE, analysis_label = NULL,
   dt[, split := factor(split, levels = split_order)]
   if (all(gwas_count_cols(DEFAULT_GWAS_OVERLAP_DISORDERS) %in% names(dt))) {
     dt[, lab_above := sprintf(
-      "SCZD: %d\nMDD: %d\nBPD: %d\nDEG: %d",
-      n_SCZD_GWAS, n_MDD_GWAS, n_BPD_GWAS, n_DEG
+      "SCZD: %d\nMDD: %d\nBD: %d\nDEG: %d",
+      n_SCZD_GWAS, n_MDD_GWAS, n_BD_GWAS, n_DEG
     )]
   } else {
     dt[, lab_above := sprintf("SCZD GWAS: %d\nDEG: %d\nDEG+SCZD: %d", n_SCZD_GWAS, n_DEG, n_DEG_SCZD_GWAS)]
@@ -355,7 +355,7 @@ write_analysis_tables <- function(result, config, write_deg_view_tables = FALSE)
   fwrite(result$map_significant_unified, table_path(config, "map_significant_unified.csv.gz"))
   fwrite(result$map_significant_pairs, table_path(config, "map_significant_pairs.csv.gz"))
   if (!is.null(result$map_significant_summary_GWASx)) {
-    ## GWASx audit tables expose the exploratory MDD/BPD exact-variant p values.
+    ## GWASx audit tables expose the exploratory MDD/BD exact-variant p values.
     fwrite(result$map_significant_unified, table_path(config, "map_significant_unified_GWASx.csv.gz"))
     fwrite(result$map_significant_pairs, table_path(config, "map_significant_pairs_GWASx.csv.gz"))
     fwrite(result$map_significant_summary_GWASx, table_path(config, "map_significant_summary_GWASx.csv"))

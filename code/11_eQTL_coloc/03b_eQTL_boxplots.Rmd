@@ -27,10 +27,10 @@ plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05"
 full_deg_pdf_file <- file.path(plots_dir, "eqtl_boxplot_degs_broad_union.pdf")
 
 context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
-disorders <- c("BPD", "MDD", "SCZD")
+disorders <- c("BD", "MDD", "SCZD")
 publication_pdf_width <- 3.5
 publication_pdf_height <- 5
-dx_palette <- c(NTC = "#7F7F7F", MDD = "#FB8861", BPD = "#9260B2")
+dx_palette <- c(NTC = "#7F7F7F", MDD = "#FB8861", BD = "#9260B2")
 RUN_FULL_DEG_BOXPLOT_PDF <- FALSE
 
 dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
@@ -212,8 +212,10 @@ infer_dx <- function(covar_mat) {
   dx <- rep("NTC", nrow(covar_mat))
   names(dx) <- rownames(covar_mat)
   if ("DXMDD" %in% colnames(covar_mat)) dx[covar_mat[, "DXMDD"] == 1] <- "MDD"
-  if ("DXBPD" %in% colnames(covar_mat)) dx[covar_mat[, "DXBPD"] == 1] <- "BPD"
-  factor(dx, levels = c("NTC", "MDD", "BPD"))
+  ## accept new "DXBD" prep and legacy "DXBPD" covariate files already on disk.
+  bd_cols <- intersect(c("DXBD", "DXBPD"), colnames(covar_mat))
+  if (length(bd_cols) > 0L) dx[covar_mat[, bd_cols[[1]]] == 1] <- "BD"
+  factor(dx, levels = c("NTC", "MDD", "BD"))
 }
 
 residualize_expression <- function(expr_mat, covar_mat) {
@@ -702,16 +704,16 @@ assert_cols(nominal, c("dataset_id", "context", "split", "gene_id", "gene_name",
 
 degs <- load_DEGs(repo_root = repo_root, mode = "standard", verbose = FALSE)
 mdd_deg_ids <- unique(as.data.table(degs$disorder_related$global$MDD)$gene_id)
-bpd_deg_ids <- unique(as.data.table(degs$disorder_related$global$BPD)$gene_id)
+bd_deg_ids <- unique(as.data.table(degs$disorder_related$global$BD)$gene_id)
 
 ## use disorder-related DEG lists for disorder-targeted examples.
 sig[, `:=`(
   MDD_DEG = as.integer(gene_id %in% mdd_deg_ids),
-  BPD_DEG = as.integer(gene_id %in% bpd_deg_ids)
+  BD_DEG = as.integer(gene_id %in% bd_deg_ids)
 )]
 nominal[, `:=`(
   MDD_DEG = as.integer(gene_id %in% mdd_deg_ids),
-  BPD_DEG = as.integer(gene_id %in% bpd_deg_ids)
+  BD_DEG = as.integer(gene_id %in% bd_deg_ids)
 )]
 
 sig_candidates <- sig[split == "all" & MDD_DEG == 1L & MDD_GWASg == 1L]
@@ -771,7 +773,7 @@ nominal_examples[, example_deg_basis := nominal_deg_basis]
 
 example_cols <- unique(c(
   "example_type", "example_deg_basis", "dataset_id", "context", "split", "gene_id", "gene_name",
-  "phenotype_id", "variant_id", "DEG", "MDD_DEG", "BPD_DEG", "MDD_GWAS", "MDD_GWASg",
+  "phenotype_id", "variant_id", "DEG", "MDD_DEG", "BD_DEG", "MDD_GWAS", "MDD_GWASg",
   "MDD_GWASg_variant", "MDD_GWASg_gene", "pval_nominal", "fdr",
   "pval_perm", "qval", "qval_parent", "slope", "slope_se"
 ))
@@ -1039,8 +1041,8 @@ stopifnot(nrow(gwas_axis_check$data) > 0L)
 pobj_mdd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "MDD")
 print(pobj_mdd$plot)
 
-## switch the GWAS effect-allele context to BPD or SCZD.
-pobj_bpd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "BPD")
+## switch the GWAS effect-allele context to BD or SCZD.
+pobj_bd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "BD")
 pobj_sczd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "SCZD")
 
 ## plot a gene-variant pair in another Seurat cluster.

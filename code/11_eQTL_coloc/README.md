@@ -86,39 +86,10 @@ Static scans cannot prove safety when table columns come from loaded files.
 Runtime object introspection is required because only the live data.table knows
 whether a bare RHS/filter symbol is also a column.
 
-Name caller scalars by their role, not by the target column. Use names such as
-`lookup_variant_id`, `target_gene_id`, `value_filter`, `query_id`, or
-`current_dataset`, not bare column names such as `variant_id`, `gene_id`,
-`dataset_id`, `sample_id`, or `rsid` in scopes that query data.tables.
-
-For scalar joins, explicit input tables or base matching are safest:
-
-```r
-dt[data.table(variant_id = lookup_variant_id), on = "variant_id"]
-dt[match(lookup_variant_id, dt$variant_id)]
-```
-
-Before committing R/Rmd code that touches keyed data.table joins, run this
-heuristic precheck:
-
-```bash
-Rscript ./check_datatable_scoping.R
-```
-
-For runtime validation of code that touches data.table filters or joins, enable
-data.table scope-collision diagnostics:
-
-```bash
-DATATABLE_WARN_SCOPE_CONFLICTS=caller Rscript -e 'source("datatable_scope_conflicts.R"); stopifnot(test_datatable_scope_conflict_diagnostics())'
-DATATABLE_WARN_SCOPE_CONFLICTS=caller Rscript -e 'rmarkdown::render("03b_eQTL_boxplots.Rmd")'
-```
-
-Use `DATATABLE_WARN_SCOPE_CONFLICTS=search` only for strict local debugging; it
-also warns in `j`, so ordinary column-selection code may be noisy.
 
 ## Prepare Inputs
 
-Stage required local inputs:
+Stage required local inputs as needed if working locally instead of on the cluster:
 
 ```bash
 ./stage_required_data.sh

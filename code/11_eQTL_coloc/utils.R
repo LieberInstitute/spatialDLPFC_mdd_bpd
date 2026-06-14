@@ -53,12 +53,12 @@ AUTHOR_UNION_REL_PATH <- file.path(
 GENE_RANGES_REL_PATH <- file.path("processed-data", "ref", "granges.qs2")
 
 GWAS_BCF_FILES <- c(
-  BPD = file.path("BPD", "bip2024_eur_no23andMe.hg38.bcf"),
+  BD = file.path("BD", "bip2024_eur_no23andMe.hg38.bcf"),
   MDD = file.path("MDD", "pgc-mdd2025_no23andMe_eur_v3-49-24-11.hg38.bcf"),
   SCZD = file.path("SCZD", "PGC3_SCZ_wave3.european.autosome.public.v3.hg38.bcf")
 )
 
-DEFAULT_GWAS_OVERLAP_DISORDERS <- c("SCZD", "MDD", "BPD")
+DEFAULT_GWAS_OVERLAP_DISORDERS <- c("SCZD", "MDD", "BD")
 
 GWAS_STRICT_P_THRESHOLD <- 5e-8
 
@@ -66,14 +66,14 @@ GWAS_MATCH_SI_MIN <- 0.8
 
 ## GWASx is the suggestive/exploratory mood-disorder overlap threshold.
 ## It is relaxed relative to strict genome-wide significance.
-GWAS_EXPLORATORY_P_THRESHOLDS <- c(MDD = 1e-5, BPD = 1e-5)
+GWAS_EXPLORATORY_P_THRESHOLDS <- c(MDD = 1e-5, BD = 1e-5)
 
 DEFAULT_GWASX_DISORDERS <- names(GWAS_EXPLORATORY_P_THRESHOLDS)
 
 GWAS_GENE_LIST_FILES <- list(
-  BPD = list(
-    broad = file.path("BPD", "bpd2024_gene_lists.tsv"),
-    prio = file.path("BPD", "bpd2024_prioritized_credible_genes.tsv")
+  BD = list(
+    broad = file.path("BD", "bd2024_gene_lists.tsv"),
+    prio = file.path("BD", "bd2024_prioritized_credible_genes.tsv")
   ),
   MDD = list(
     broad = file.path("MDD", "mdd2025_high_confidence_genes.tsv"),
@@ -86,9 +86,9 @@ GWAS_GENE_LIST_FILES <- list(
 )
 
 GWAS_STANDARD_GENE_LIST_FILES <- list(
-  BPD = list(
-    broad = file.path("BPD", "GWAS_BPD_gene_list.tsv"),
-    prio = file.path("BPD", "GWAS_BPD_prio_gene_list.tsv")
+  BD = list(
+    broad = file.path("BD", "GWAS_BD_gene_list.tsv"),
+    prio = file.path("BD", "GWAS_BD_prio_gene_list.tsv")
   ),
   MDD = list(
     broad = file.path("MDD", "GWAS_MDD_gene_list.tsv"),
@@ -133,9 +133,11 @@ CUSTOM_CONTEXT_TO_DATASET_ID <- c(
 
 DEG_SEX_PREFIX <- c(female = "F", male = "M")
 
+## DEG t-test contrast tokens must match the 07_dx_DE summary column names, which
+## use the legacy "BPD" label. Only the disorder key is the project-standard "BD".
 DEG_TTEST_CONTRASTS <- c("NTC.MDD", "NTC.BPD", "MDD.BPD")
 
-DEG_DISORDER_CONTRASTS <- c(MDD = "NTC.MDD", BPD = "NTC.BPD")
+DEG_DISORDER_CONTRASTS <- c(MDD = "NTC.MDD", BD = "NTC.BPD")
 
 DEG_TTEST_SIG_LABELS <- c("padj<.0001", "padj<.01", "padj<.05")
 
@@ -168,6 +170,7 @@ resolve_repo_root <- function(repo_root = NULL) {
 
 gwas_check_disorder <- function(dis) {
   dis <- toupper(dis)
+  if (identical(dis, "BPD")) dis <- "BD"  # accept legacy "BPD" alias on input
   if (!dis %in% names(GWAS_BCF_FILES)) {
     stop("Unsupported disorder: ", dis, ". Expected one of: ", paste(names(GWAS_BCF_FILES), collapse = ", "))
   }
