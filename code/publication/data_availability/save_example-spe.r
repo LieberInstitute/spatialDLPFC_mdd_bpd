@@ -72,6 +72,14 @@ table(distinct(as.data.frame(colData(tmp)[,c("condition","sex","sample_id")]))[,
 colData(tmp) <-	colData(tmp)[,c(1:5,15,6:14)]
 print(head(colData(tmp)))
 
+##rearrange spe order so M example sample is first 
+order1 = distinct(as.data.frame(colData(tmp)), sample_id, title) %>%
+	mutate(sample_id = factor(sample_id, levels=example.samples[c(13:24,1:12)])) %>%
+	arrange(sample_id)
+tmp$title= factor(tmp$title, levels=order1$title)
+
+tmp = tmp[,order(tmp$title)]
+
 #remove counts assay to save space
 assays(tmp)$counts <- NULL
 
