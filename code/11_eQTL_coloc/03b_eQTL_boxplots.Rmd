@@ -31,6 +31,8 @@ disorders <- c("BD", "MDD", "SCZD")
 publication_pdf_width <- 3.5
 publication_pdf_height <- 5
 dx_palette <- c(NTC = "#7F7F7F", MDD = "#FB8861", BD = "#9260B2")
+
+## change to TRUE to run the full DEG boxplot PDF generation
 RUN_FULL_DEG_BOXPLOT_PDF <- FALSE
 
 dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
