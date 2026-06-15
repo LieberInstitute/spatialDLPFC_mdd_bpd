@@ -239,40 +239,6 @@ adjustYposition <- function(logcount_DF, stat_DF) {
 }
 
 
-# putting it all together
-iSEEplots <- function(spe_pseudo, gene1, ...) {
-  # get counts and stats
-  log.df = extractLogcounts(name2id(gene1, spe_pseudo), spe_pseudo)
-  log.df_all = mutate(log.df, domain="all")
-  
-  t.df = getTstats(gene1, spe_pseudo)
-  
-  stat.df = annotStandin(log.df, t.df)
-  stat.df_all = annotStandin(log.df_all, t.df)
-  
-  ymax1 = max(ceiling(c(max(log.df[,5]), max(stat.df$y.position), 
-                        max(stat.df_all$y.position))), na.rm=T)
-  
-  # summarise counts for cross bars 
-  cross.df = crossbarLogcounts(log.df)
-  cross.df_all = crossbarLogcounts(log.df_all)
-  
-  # plot for domain-restricted
-  p1 <- plotFunction(log.df, cross.df, spe_pseudo, ...)+
-    stat_pvalue_manual(stat.df, label="p.adj.signif", hide.ns=T, label.size = 6,
-                       color=ifelse(isFsig(gene1, log.df, spe_pseudo),"black","grey50"))+
-    ylim(0,ymax1)
-  
-  # plot for whole-tissue
-  p2 <- plotFunction(log.df_all, cross.df_all, spe_pseudo, ...)+
-    stat_pvalue_manual(stat.df_all, label="p.adj.signif", hide.ns=T, label.size = 6,
-                       color= ifelse(isFsig(gene1, log.df_all, spe_pseudo),"black","grey50"))+
-    ylim(0,ymax1)+
-    theme(legend.position="none")
-  
-  
-  return(grid.arrange(p2, p1, layout_matrix=matrix(c(1,2,2,2), ncol=4)))
-}
 # putting it all together: domain restricted, revised for iSEE
 DOMAIN_RESTRICTED <- function(se, gene1, annot_name) {
   # get counts and stats
