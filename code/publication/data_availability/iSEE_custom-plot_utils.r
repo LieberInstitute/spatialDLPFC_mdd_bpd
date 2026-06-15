@@ -16,9 +16,13 @@ name2id <- function(gene_name, spe_pseudo) {
 
 
 # whole tissue dataframe
-extractLogcounts <- function(gene_id, spe_pseudo) {
+extractLogcounts <- function(gene_id, spe_pseudo, annot_name) {
+  spe_pseudo = spe_pseudo[,spe_pseudo$annotation==annot_name]
   spe_pseudo[[names(gene_id)]] = logcounts(spe_pseudo)[gene_id,]
   df = as.data.frame(colData(spe_pseudo)[,c("sample_id","condition","sex","domain",names(gene_id))])
+  df$domain = droplevels(df$domain)
+  if(annot_name=="domain-SP") df$domain = factor(df$domain, levels=c("L1","L2","L3.4","L5","L6","WM"))
+  if(annot_name=="domain-CT") df$domain = factor(df$domain, levels=c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
   return(df)
 }
 
@@ -33,8 +37,8 @@ crossbarLogcounts <- function(logcount_DF) {
 }
 
 
-# create ggplot base
-plotFunction <- function(logcount_DF, summary_DF, annot_name, spe_pseudo) {
+# create domain-restricted ggplot base
+plotDomainRestricted <- function(logcount_DF, summary_DF, annot_name, spe_pseudo) {
   save_name = colnames(logcount_DF)[5]
   colnames(logcount_DF)[5] = "plot.gene"
   
@@ -42,15 +46,25 @@ plotFunction <- function(logcount_DF, summary_DF, annot_name, spe_pseudo) {
   ymax1 = ceiling(max(logcount_DF$plot.gene))
   
   # subtitle formating based on sig F test
-  subtitle_face = ifelse(isFsig(save_name, logcount_DF, spe_pseudo),"bold","plain")
+  subtitle_face = ifelse(isFsig(save_name, logcount_DF, spe_pseudo, annot_name),"bold","plain")
   # subtitle text to include model name
-  if(length(unique(logcount_DF$domain))>1) {
-    sub_text="Domain-restricted DE"
-  } else {
-    sub_text="Whole-tissue DE"
-  }
+#  if(length(unique(logcount_DF$domain))>1) {
+#    sub_text="Domain-restricted DE"
+#  } else {
+#    sub_text="Whole-tissue DE"
+#  }
 
   dx.pal = c("NTC"="#7f7f7f","MDD"="#FB8861","BPD"="#9260b2")
+  if(annot_name=="domain-SP") {
+#	logcount_DF$domain = factor(logcount_DF$domain, levels=c("L1","L2","L3.4","L5","L6","WM"))
+#	summary_DF$domain = factor(summary_DF$domain, levels=c("L1","L2","L3.4","L5","L6","WM"))
+	x_labels = c("L1","L2","L3/4","L5","L6","WM")
+  } 
+  if(annot_name=="domain-CT") {
+#	logcount_DF$domain = factor(logcount_DF$domain,	levels=c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
+#	summary_DF$domain = factor(summary_DF$domain, levels=c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
+	x_labels = c("M/V","Ast","L2/3","L4","Inb","L5","L6","Olg")
+  }
 
   ggplot(logcount_DF, aes(x=domain))+
     geom_quasirandom(aes(y=plot.gene, color=condition), dodge.width=.8, cex=1)+
@@ -58,16 +72,39 @@ plotFunction <- function(logcount_DF, summary_DF, annot_name, spe_pseudo) {
     geom_crossbar(data=summary_DF, aes(y=yavg, ymin=y_min, ymax=y_max, group=condition),
                   color="black", fill="transparent", position=position_dodge(width=.8), width=.6)+
     facet_grid(cols=vars(sex), labeller= as_labeller(c("F"="Female","M"="Male")))+
-    ylim(0,ymax1)+
-    labs(title=save_name, subtitle=paste(sub_text, getFname(save_name, logcount_DF, spe_pseudo), sep="\n"), 
+    ylim(0,ymax1)+scale_x_discrete(labels=x_labels)+
+    labs(title=save_name, subtitle=paste(annot_name, getFname(save_name, logcount_DF, spe_pseudo, annot_name), sep=" "), 
          y="logcounts", x=annot_name)+
     theme_minimal()+theme(plot.title=element_text(face="italic"), plot.subtitle = element_text(face=subtitle_face))
 }
 
+# whole tissue ggplot base 
+plotWholeTissue <- function(logcount_DF, summary_DF, ...) {
+  save_name = colnames(logcount_DF)[5]
+  colnames(logcount_DF)[5] = "plot.gene"
+
+  # get limits (just ceiling of max for now, will need to change later with ggpubr)
+  ymax1 = ceiling(max(logcount_DF$plot.gene))
+
+  dx.pal = c("NTC"="#7f7f7f","MDD"="#FB8861","BPD"="#9260b2")
+
+  ggplot(logcount_DF, aes(x=sex))+
+    geom_quasirandom(aes(y=plot.gene, color=condition), dodge.width=.8, cex=1)+
+    scale_color_manual("DX", values=dx.pal)+
+    geom_crossbar(data=summary_DF, aes(y=yavg, ymin=y_min, ymax=y_max, group=condition),
+                  color="black", fill="transparent", position=position_dodge(width=.8), width=.6)+
+    facet_grid(cols=vars(domain), 
+	labeller= as_labeller(c("all-SP"=paste0("domain-SP\n", getFname(save_name, filter(logcount_DF, domain=="all-SP"), ..., "domain-SP")),
+		"all-CT"=paste0("domain-CT\n", getFname(save_name, filter(logcount_DF, domain=="all-CT"), ..., "domain-CT")))))+
+    ylim(0,ymax1)+
+    labs(title=save_name, 
+         y="logcounts", x="")+
+    theme_bw()+theme(plot.title=element_text(face="italic"))
+}
 
 # extract F statistics for labeling
-getFname <- function(gene_name, logcount_DF, spe_pseudo) {
-  rdata= metadata(spe_pseudo)[[1]][name2id(gene_name, spe_pseudo),]
+getFname <- function(gene_name, logcount_DF, spe_pseudo, annot_name) {
+  rdata= metadata(spe_pseudo)[[paste0(annot_name, "_DE")]][name2id(gene_name, spe_pseudo),]
   
   if(length(unique(logcount_DF$domain))==1) {
     fstat = rdata$whole.tissue_F_stat
@@ -91,8 +128,8 @@ getFname <- function(gene_name, logcount_DF, spe_pseudo) {
 }
 
 # conditional F sig for formatting
-isFsig <- function(gene_name, logcount_DF, spe_pseudo) {
-  rdata= metadata(spe_pseudo)[[1]][name2id(gene_name, spe_pseudo),]
+isFsig <- function(gene_name, logcount_DF, spe_pseudo, annot_name) {
+  rdata= metadata(spe_pseudo)[[paste0(annot_name, "_DE")]][name2id(gene_name, spe_pseudo),]
   
   if(length(unique(logcount_DF$domain))==1) {
     fpadj = rdata$whole.tissue_F_adj.P.Val
@@ -104,8 +141,8 @@ isFsig <- function(gene_name, logcount_DF, spe_pseudo) {
 }
 
 # extract t-test results
-getTstats <- function(gene_name, spe_pseudo) {
-  rdata= as.data.frame(metadata(spe_pseudo)[[1]][name2id(gene_name, spe_pseudo),])
+getTstats <- function(gene_name, spe_pseudo, annot_name) {
+  rdata= as.data.frame(metadata(spe_pseudo)[[paste0(annot_name, "_DE")]][name2id(gene_name, spe_pseudo),])
   
   pos1 = grep("t_adj", colnames(rdata))
   data.frame("model"=sapply(strsplit(colnames(rdata)[pos1], "_"), function(x) x[[1]]),
@@ -128,7 +165,7 @@ getTstats <- function(gene_name, spe_pseudo) {
              "domain"= sapply(strsplit(colnames(rdata)[pos1], "_"), function(x) {
                xlen = length(x)
                if(xlen==6) return(x[[4]])
-               return("all")
+               return(paste0("all",substr(annot_name, 7, 10)))
              }),
              "t_adj.P.Val"=as.numeric(rdata[1,pos1])
   )
@@ -149,14 +186,15 @@ annotStandin <- function(logcount_DF, tstat_DF) {
                                 group1==standin$group1[[i]], group2==standin$group2[[i]])$t_adj.P.Val
   }
   standin$p.adj.signif = ifelse(standin$p.adj<.05, "*", "ns")
-  
-  stat_DF = add_xy_position(standin, x="domain", dodge=.8, scales="fixed", step.increase=0)
-  stat_DF = adjustYposition(logcount_DF, stat_DF)
-  return(stat_DF)
+
+  return(standin)
 }
 
 # custom y position adjustments
 adjustYposition <- function(logcount_DF, stat_DF) {
+  save_name = colnames(logcount_DF)[5]
+  colnames(logcount_DF)[5] = "plot.gene"
+
   #reset the baseline
   adjust.step1 = filter(stat_DF, p.adj.signif!="ns") 
   if(nrow(adjust.step1)==0) return(stat_DF)
@@ -235,3 +273,61 @@ iSEEplots <- function(spe_pseudo, gene1, ...) {
   
   return(grid.arrange(p2, p1, layout_matrix=matrix(c(1,2,2,2), ncol=4)))
 }
+# putting it all together: domain restricted, revised for iSEE
+DOMAIN_RESTRICTED <- function(se, gene1, annot_name) {
+  # get counts and stats
+  log.df = extractLogcounts(name2id(gene1, se), se, annot_name)
+
+  t.df = getTstats(gene1, se, annot_name)
+
+  stat.df = annotStandin(log.df, t.df) %>%
+	add_xy_position(x="domain", dodge=.8, scales="fixed", step.increase=0)
+  stat.df = adjustYposition(log.df, stat.df)
+
+  ymax1 = max(ceiling(c(max(log.df[,5]), max(stat.df$y.position))))
+
+  # summarise counts for cross bars 
+  cross.df = crossbarLogcounts(log.df)
+
+  # plot for domain-restricted
+  plotDomainRestricted(log.df, cross.df, annot_name, se)+
+    stat_pvalue_manual(stat.df, label="p.adj.signif", hide.ns=T, label.size = 6,
+                       color=ifelse(isFsig(gene1, log.df, se, annot_name),"black","grey50"))+
+    ylim(0,ymax1)
+
+}
+
+# putting it all together: whole tissue, revised for iSEE
+WHOLE_TISSUE <- function(se, gene1) {
+	#function(se, rows, columns) {
+
+	log.df_sp = extractLogcounts(name2id(gene1, se), se, "domain-SP") %>%
+		mutate(domain="all-SP")
+	t.df_sp = getTstats(gene1, se, "domain-SP")
+	stat.df_sp = annotStandin(log.df_sp, t.df_sp) %>%
+		add_xy_position(x="sex", dodge=.8, scales="fixed", step.increase=0)
+	stat.df_sp = adjustYposition(log.df_sp, stat.df_sp)
+	cross.df_sp = crossbarLogcounts(log.df_sp)
+
+	log.df_ct = extractLogcounts(name2id(gene1, se), se, "domain-CT") %>%
+		mutate(domain="all-CT")
+	t.df_ct = getTstats(gene1, se, "domain-CT")
+	stat.df_ct = annotStandin(log.df_ct, t.df_ct) %>%
+		add_xy_position(x="sex", dodge=.8, scales="fixed", step.increase=0)
+	stat.df_ct = adjustYposition(log.df_ct, stat.df_ct)
+	cross.df_ct = crossbarLogcounts(log.df_ct)
+
+	log.df = rbind(log.df_sp, log.df_ct) %>% mutate(domain=factor(domain, levels=c("all-SP","all-CT")))
+	stat.df = rbind(stat.df_sp, stat.df_ct) %>% mutate(domain=factor(domain, levels=c("all-SP","all-CT")))
+	cross.df = rbind(cross.df_sp, cross.df_ct) %>% mutate(domain=factor(domain, levels=c("all-SP","all-CT")))
+
+	p1 <- plotWholeTissue(log.df, cross.df, spe_pseudo=se)
+	ymax1 = max(ceiling(c(max(log.df[,5]), max(stat.df$y.position), na.rm=T)))
+	p1+stat_pvalue_manual(filter(stat.df, domain=="all-SP"), label="p.adj.signif", hide.ns=T, label.size = 6,
+		color= ifelse(isFsig(gene1, log.df_sp, spe, "domain-SP"),"black","grey50"))+
+	stat_pvalue_manual(filter(stat.df, domain=="all-CT"), label="p.adj.signif", hide.ns=T, label.size = 6,
+		color= ifelse(isFsig(gene1, log.df_ct, spe, "domain-CT"),"black","grey50"))+
+	ylim(0,ymax1)
+
+}
+

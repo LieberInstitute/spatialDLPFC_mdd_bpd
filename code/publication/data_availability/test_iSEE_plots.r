@@ -9,17 +9,27 @@ set.seed(1234)
 # read in custom functions
 source("code/publication/data_availability/iSEE_custom-plot_utils.r")
 
-# create test CORT plot for each pseudobulk dataset
-domain1 = c("domain-SP","domain-CT")
-plist = lapply(domain1, function(x) {
-	spe <- readRDS(paste0("processed-data/publication/iSEE_pseudobulk-spe_donor-", x, ".rds"))	
+## create test CORT plot for each pseudobulk dataset
+#domain1 = c("domain-SP","domain-CT")
+#plist = lapply(domain1, function(x) {
+#	spe <- readRDS(paste0("processed-data/publication/iSEE_pseudobulk-spe_donor-", x, ".rds"))	
+#
+#	suppressMessages(iSEEplots(spe, "CORT", annot_name=domain1))
+#})
+#
+#ggsave(file="plots/publication/test_iSEE_CORT.pdf", 
+#	gridExtra::arrangeGrob(grobs=plist, ncol=1, top=NULL),
+#	width=8, height=7)
 
-	suppressMessages(iSEEplots(spe, "CORT", annot_name=domain1))
-})
+spe <- readRDS("processed-data/publication/iSEE_pseudobulk-spe_both-annotations.rds")
 
-ggsave(file="plots/publication/test_iSEE_CORT.pdf", 
-	gridExtra::arrangeGrob(grobs=plist, ncol=1, top=NULL),
-	width=8, height=7)
+p1 <- WHOLE_TISSUE(spe, "CORT")
+p2 <- DOMAIN_RESTRICTED(spe, "CORT", "domain-SP")
+p3 <- DOMAIN_RESTRICTED(spe, "CORT", "domain-CT")
+
+ggsave(file="plots/publication/test_iSEE-revised_CORT.pdf", 
+	gridExtra::grid.arrange(p1, p2, p3, ncol=1),
+	width=7, height=10)
 
 ## Reproducibility information
 print("Reproducibility information:")
