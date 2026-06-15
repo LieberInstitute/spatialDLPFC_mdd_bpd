@@ -303,7 +303,8 @@ if ("condition" %in% names(cd)) {
 } else {
   stop("Missing diagnosis column: expected one of condition/DX/dx")
 }
-cd$DX <- factor(dx0, levels = c("NTC", "MDD", "BPD"))
+dx0[dx0 == "BPD"] <- "BD"  # source SpatialExperiment diagnosis label is "BPD"
+cd$DX <- factor(dx0, levels = c("NTC", "MDD", "BD"))
 if (any(is.na(cd$DX))) {
   bad <- unique(dx0[is.na(cd$DX)])
   stop("Unexpected diagnosis labels: ", paste(bad, collapse = ", "))
@@ -564,7 +565,7 @@ for (cluster in clusters) {
     }
 
     pd <- as.data.frame(colData(spe_sub))
-    pd$DX <- factor(as.character(pd$DX), levels = c("NTC", "MDD", "BPD"))
+    pd$DX <- factor(as.character(pd$DX), levels = c("NTC", "MDD", "BD"))
     pd$age <- as.numeric(pd$age)
     pd$PC3 <- as.numeric(pd$PC3)
     if (identical(opt$model, "nspots")) pd$nspots <- as.numeric(pd$nspots)

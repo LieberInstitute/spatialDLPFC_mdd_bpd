@@ -24,12 +24,12 @@ plots_dir <- here("plots", "11_eQTL_coloc", "coloc")
 plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05")
 
 ## add SCZD here when available.
-disorders <- c("MDD", "BPD")
+disorders <- c("MDD", "BD", "SCZD")
 context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
 dataset_order <- unname(SEURAT_CONTEXT_TO_DATASET_ID)
 gate_frac_min_cfg <- 0.5
 write_snp_pph4_cfg <- FALSE
-disorder_colors <- c(MDD = "#FB8861", BPD = "#9260B2", SCZD = "#59A14F")
+disorder_colors <- c(MDD = "#FB8861", BD = "#9260B2", SCZD = "#59A14F")
 
 dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)

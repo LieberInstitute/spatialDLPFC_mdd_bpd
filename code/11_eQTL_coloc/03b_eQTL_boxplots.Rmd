@@ -27,10 +27,12 @@ plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05"
 full_deg_pdf_file <- file.path(plots_dir, "eqtl_boxplot_degs_broad_union.pdf")
 
 context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
-disorders <- c("BPD", "MDD", "SCZD")
+disorders <- c("BD", "MDD", "SCZD")
 publication_pdf_width <- 3.5
 publication_pdf_height <- 5
-dx_palette <- c(NTC = "#7F7F7F", MDD = "#FB8861", BPD = "#9260B2")
+dx_palette <- c(NTC = "#7F7F7F", MDD = "#FB8861", BD = "#9260B2")
+
+## change to TRUE to run the full DEG boxplot PDF generation
 RUN_FULL_DEG_BOXPLOT_PDF <- FALSE
 
 dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
@@ -212,8 +214,8 @@ infer_dx <- function(covar_mat) {
   dx <- rep("NTC", nrow(covar_mat))
   names(dx) <- rownames(covar_mat)
   if ("DXMDD" %in% colnames(covar_mat)) dx[covar_mat[, "DXMDD"] == 1] <- "MDD"
-  if ("DXBPD" %in% colnames(covar_mat)) dx[covar_mat[, "DXBPD"] == 1] <- "BPD"
-  factor(dx, levels = c("NTC", "MDD", "BPD"))
+  if ("DXBD" %in% colnames(covar_mat)) dx[covar_mat[, "DXBD"] == 1] <- "BD"
+  factor(dx, levels = c("NTC", "MDD", "BD"))
 }
 
 residualize_expression <- function(expr_mat, covar_mat) {
@@ -697,43 +699,44 @@ assert_files(c(sig_file, nominal_file))
 
 sig <- fread(sig_file)
 nominal <- fread(nominal_file)
-assert_cols(sig, c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "DEG", "MDD_GWAS", "MDD_GWASg", "pval_nominal"), basename(sig_file))
-assert_cols(nominal, c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "DEG", "MDD_GWAS", "MDD_GWASg", "fdr", "pval_nominal"), basename(nominal_file))
+assert_cols(sig, c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "DEG", "MDD_gwasVar_strict", "MDD_gwas_strict", "pval_nominal"), basename(sig_file))
+assert_cols(nominal, c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "DEG", "MDD_gwasVar_strict", "MDD_gwas_strict", "fdr", "pval_nominal"), basename(nominal_file))
 
 degs <- load_DEGs(repo_root = repo_root, mode = "standard", verbose = FALSE)
 mdd_deg_ids <- unique(as.data.table(degs$disorder_related$global$MDD)$gene_id)
-bpd_deg_ids <- unique(as.data.table(degs$disorder_related$global$BPD)$gene_id)
+bd_deg_ids <- unique(as.data.table(degs$disorder_related$global$BD)$gene_id)
 
 ## use disorder-related DEG lists for disorder-targeted examples.
 sig[, `:=`(
   MDD_DEG = as.integer(gene_id %in% mdd_deg_ids),
-  BPD_DEG = as.integer(gene_id %in% bpd_deg_ids)
+  BD_DEG = as.integer(gene_id %in% bd_deg_ids)
 )]
 nominal[, `:=`(
   MDD_DEG = as.integer(gene_id %in% mdd_deg_ids),
-  BPD_DEG = as.integer(gene_id %in% bpd_deg_ids)
+  BD_DEG = as.integer(gene_id %in% bd_deg_ids)
 )]
 
-sig_candidates <- sig[split == "all" & MDD_DEG == 1L & MDD_GWASg == 1L]
+sig_candidates <- sig[split == "all" & MDD_DEG == 1L & MDD_gwas_strict == 1L]
 sig_deg_basis <- "MDD_DEG"
 if (nrow(sig_candidates) == 0L) {
-  sig_candidates <- sig[split == "all" & DEG == 1L & MDD_GWASg == 1L]
+  sig_candidates <- sig[split == "all" & DEG == 1L & MDD_gwas_strict == 1L]
   sig_deg_basis <- "broad_DEG"
 }
 if (nrow(sig_candidates) == 0L) {
   sig_candidates <- sig[split == "all" & MDD_DEG == 1L]
-  sig_deg_basis <- "MDD_DEG_no_MDD_GWASg"
+  sig_deg_basis <- "MDD_DEG_no_MDD_gwas"
 }
 if (nrow(sig_candidates) == 0L) {
   sig_candidates <- sig[split == "all" & DEG == 1L]
-  sig_deg_basis <- "broad_DEG_no_MDD_GWASg"
+  sig_deg_basis <- "broad_DEG_no_MDD_gwas"
 }
 if (nrow(sig_candidates) == 0L) {
   sig_candidates <- sig[split == "all"]
   sig_deg_basis <- "none"
 }
 if (nrow(sig_candidates) == 0L) stop("No significant examples found.")
-sig_candidates[, example_priority := fifelse(MDD_GWAS == 1L, 1L, fifelse(MDD_GWASg_variant == 1L, 2L, 3L))]
+## prioritise variant-level GWAS hits, then curated gene-list hits, then the rest.
+sig_candidates[, example_priority := fifelse(MDD_gwasVar_strict == 1L, 1L, fifelse(MDD_gwasGene == 1L, 2L, 3L))]
 setorder(sig_candidates, example_priority, pval_nominal)
 sig_examples <- head(sig_candidates[, .SD[1], by = gene_id], 3L)
 sig_examples[, example_type := "mdd_significant"]
@@ -742,22 +745,22 @@ sig_examples[, example_deg_basis := sig_deg_basis]
 sig_keys <- unique(sig[split == "all", .(dataset_id, gene_id, variant_id)])
 nominal_l23 <- nominal[split == "all" & dataset_id == "l2-3"]
 nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
-nominal_only <- nominal_only[MDD_DEG == 1L & MDD_GWASg == 1L]
+nominal_only <- nominal_only[MDD_DEG == 1L & MDD_gwas_strict == 1L]
 nominal_deg_basis <- "MDD_DEG"
 if (nrow(nominal_only) == 0L) {
   nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
-  nominal_only <- nominal_only[DEG == 1L & MDD_GWASg == 1L]
+  nominal_only <- nominal_only[DEG == 1L & MDD_gwas_strict == 1L]
   nominal_deg_basis <- "broad_DEG"
 }
 if (nrow(nominal_only) == 0L) {
   nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
   nominal_only <- nominal_only[MDD_DEG == 1L]
-  nominal_deg_basis <- "MDD_DEG_no_MDD_GWASg"
+  nominal_deg_basis <- "MDD_DEG_no_MDD_gwas"
 }
 if (nrow(nominal_only) == 0L) {
   nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
   nominal_only <- nominal_only[DEG == 1L]
-  nominal_deg_basis <- "broad_DEG_no_MDD_GWASg"
+  nominal_deg_basis <- "broad_DEG_no_MDD_gwas"
 }
 if (nrow(nominal_only) == 0L) {
   nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
@@ -771,8 +774,8 @@ nominal_examples[, example_deg_basis := nominal_deg_basis]
 
 example_cols <- unique(c(
   "example_type", "example_deg_basis", "dataset_id", "context", "split", "gene_id", "gene_name",
-  "phenotype_id", "variant_id", "DEG", "MDD_DEG", "BPD_DEG", "MDD_GWAS", "MDD_GWASg",
-  "MDD_GWASg_variant", "MDD_GWASg_gene", "pval_nominal", "fdr",
+  "phenotype_id", "variant_id", "DEG", "MDD_DEG", "BD_DEG", "MDD_gwasVar_strict", "MDD_gwas_strict",
+  "MDD_gwasGene", "pval_nominal", "fdr",
   "pval_perm", "qval", "qval_parent", "slope", "slope_se"
 ))
 examples <- rbindlist(
@@ -1039,8 +1042,8 @@ stopifnot(nrow(gwas_axis_check$data) > 0L)
 pobj_mdd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "MDD")
 print(pobj_mdd$plot)
 
-## switch the GWAS effect-allele context to BPD or SCZD.
-pobj_bpd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "BPD")
+## switch the GWAS effect-allele context to BD or SCZD.
+pobj_bd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "BD")
 pobj_sczd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "SCZD")
 
 ## plot a gene-variant pair in another Seurat cluster.

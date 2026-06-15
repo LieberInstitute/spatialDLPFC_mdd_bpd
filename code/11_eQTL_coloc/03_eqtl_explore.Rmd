@@ -74,7 +74,7 @@ degs_by_mode <- list(standard = load_DEGs(repo_root = repo_root, mode = "standar
 
 plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05")
 
-## load matched caches broad enough for strict GWAS and MDD/BPD GWASx reuse.
+## load matched caches broad enough for strict GWAS and MDD/BD GWASx reuse.
 gwas_matched <- load_matched_gwas_by_disorder(
   DEFAULT_GWAS_OVERLAP_DISORDERS,
   plink2_prefix = plink2_prefix,
@@ -86,7 +86,7 @@ gwas_matched <- load_matched_gwas_by_disorder(
 gwas_sets <- strict_gwas_sets_from_matched(gwas_matched, GWAS_STRICT_P_THRESHOLD)
 vapply(gwas_sets, length, integer(1))
 
-## GWASx columns are suggestive/exploratory MDD/BPD checks at p <= 1e-5.
+## GWASx columns are suggestive/exploratory MDD/BD checks at p <= 1e-5.
 gwasx_matched <- gwasx_matched_from_gwas(gwas_matched, GWAS_EXPLORATORY_P_THRESHOLDS)
 vapply(gwasx_matched, nrow, integer(1))
 
@@ -109,13 +109,14 @@ eqtl_barchart <- function(mapsum, indep = FALSE, analysis_label = NULL,
   dt <- copy(mapsum)
   dt[, context := factor(context, levels = context_order)]
   dt[, split := factor(split, levels = split_order)]
-  if (all(gwas_count_cols(DEFAULT_GWAS_OVERLAP_DISORDERS) %in% names(dt))) {
+  gwas_label_cols <- c("n_SCZD_gwas_strict", "n_MDD_gwas_strict", "n_BD_gwas_strict")
+  if (all(c(gwas_label_cols, "n_DEG") %in% names(dt))) {
     dt[, lab_above := sprintf(
-      "SCZD: %d\nMDD: %d\nBPD: %d\nDEG: %d",
-      n_SCZD_GWAS, n_MDD_GWAS, n_BPD_GWAS, n_DEG
+      "SCZD: %d\nMDD: %d\nBD: %d\nDEG: %d",
+      n_SCZD_gwas_strict, n_MDD_gwas_strict, n_BD_gwas_strict, n_DEG
     )]
   } else {
-    dt[, lab_above := sprintf("SCZD GWAS: %d\nDEG: %d\nDEG+SCZD: %d", n_SCZD_GWAS, n_DEG, n_DEG_SCZD_GWAS)]
+    dt[, lab_above := sprintf("SCZD GWAS: %d\nDEG: %d\ntrifecta: %d", n_SCZD_gwas_strict, n_DEG, n_trifecta_SCZD_strict)]
   }
   dt[, y_top := fifelse(n_eGenes > 0, n_eGenes, 0)]
 
@@ -346,20 +347,22 @@ table_path <- function(config, filename) {
 write_analysis_tables <- function(result, config, write_deg_view_tables = FALSE) {
   dir.create(config$tables_dir, recursive = TRUE, showWarnings = FALSE)
 
+  ## relabel overlap columns to the cleaned GWAS/DEG scheme. The strict (5e-8)
+  ## and exploratory (1e-5) summaries are merged into one table carrying both
+  ## levels, so the separate *_GWASx outputs are retired.
+  merged_summary <- build_merged_significant_summary(
+    result$map_significant_summary,
+    result$map_significant_summary_GWASx
+  )
+
   fwrite(result$manifest_qc, table_path(config, "manifest_qc.csv"))
-  fwrite(result$map_cis_summary, table_path(config, "map_cis_summary.csv"))
-  fwrite(result$map_independent_summary, table_path(config, "map_independent_summary.csv"))
-  fwrite(result$map_significant_summary, table_path(config, "map_significant_summary.csv"))
-  fwrite(result$map_cis_significant, table_path(config, "map_cis_significant.csv.gz"))
-  fwrite(result$map_independent_significant, table_path(config, "map_independent_significant.csv.gz"))
-  fwrite(result$map_significant_unified, table_path(config, "map_significant_unified.csv.gz"))
-  fwrite(result$map_significant_pairs, table_path(config, "map_significant_pairs.csv.gz"))
-  if (!is.null(result$map_significant_summary_GWASx)) {
-    ## GWASx audit tables expose the exploratory MDD/BPD exact-variant p values.
-    fwrite(result$map_significant_unified, table_path(config, "map_significant_unified_GWASx.csv.gz"))
-    fwrite(result$map_significant_pairs, table_path(config, "map_significant_pairs_GWASx.csv.gz"))
-    fwrite(result$map_significant_summary_GWASx, table_path(config, "map_significant_summary_GWASx.csv"))
-  }
+  fwrite(build_merged_significant_summary(result$map_cis_summary), table_path(config, "map_cis_summary.csv"))
+  fwrite(build_merged_significant_summary(result$map_independent_summary), table_path(config, "map_independent_summary.csv"))
+  fwrite(merged_summary, table_path(config, "map_significant_summary.csv"))
+  fwrite(rename_eqtl_overlap_cols(result$map_cis_significant), table_path(config, "map_cis_significant.csv.gz"))
+  fwrite(rename_eqtl_overlap_cols(result$map_independent_significant), table_path(config, "map_independent_significant.csv.gz"))
+  fwrite(rename_eqtl_overlap_cols(result$map_significant_unified), table_path(config, "map_significant_unified.csv.gz"))
+  fwrite(rename_eqtl_overlap_cols(result$map_significant_pairs), table_path(config, "map_significant_pairs.csv.gz"))
 
   if (isTRUE(write_deg_view_tables) && !is.null(result$deg_view_tables)) {
     fwrite(

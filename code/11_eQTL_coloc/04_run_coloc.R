@@ -36,7 +36,7 @@ coloc_thread_env_summary <- function() {
 ## ---- config --------------------------------------------------------------
 args <- commandArgs(trailingOnly = TRUE)
 
-## set to "MDD" or "BPD" to restrict runs without CLI arguments.
+## set to "MDD" or "BD" to restrict runs without CLI arguments.
 RUN_DISORDER <- NULL
 
 arg_value <- function(flag, default = NULL) {
@@ -68,7 +68,7 @@ if (!is.null(single_disorder_arg)) {
     stop("RUN_DISORDER must be NULL or exactly one disorder.")
   }
 } else {
-  disorders <- split_csv(arg_value("--disorders"), c("MDD", "BPD"))
+  disorders <- split_csv(arg_value("--disorders"), c("MDD", "BD"))
 }
 disorders <- vapply(disorders, gwas_check_disorder, character(1))
 dataset_filter <- split_csv(arg_value("--datasets"), character())

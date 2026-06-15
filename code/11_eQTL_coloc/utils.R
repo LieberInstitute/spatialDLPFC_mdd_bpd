@@ -53,12 +53,12 @@ AUTHOR_UNION_REL_PATH <- file.path(
 GENE_RANGES_REL_PATH <- file.path("processed-data", "ref", "granges.qs2")
 
 GWAS_BCF_FILES <- c(
-  BPD = file.path("BPD", "bip2024_eur_no23andMe.hg38.bcf"),
+  BD = file.path("BD", "bip2024_eur_no23andMe.hg38.bcf"),
   MDD = file.path("MDD", "pgc-mdd2025_no23andMe_eur_v3-49-24-11.hg38.bcf"),
   SCZD = file.path("SCZD", "PGC3_SCZ_wave3.european.autosome.public.v3.hg38.bcf")
 )
 
-DEFAULT_GWAS_OVERLAP_DISORDERS <- c("SCZD", "MDD", "BPD")
+DEFAULT_GWAS_OVERLAP_DISORDERS <- c("SCZD", "MDD", "BD")
 
 GWAS_STRICT_P_THRESHOLD <- 5e-8
 
@@ -66,14 +66,14 @@ GWAS_MATCH_SI_MIN <- 0.8
 
 ## GWASx is the suggestive/exploratory mood-disorder overlap threshold.
 ## It is relaxed relative to strict genome-wide significance.
-GWAS_EXPLORATORY_P_THRESHOLDS <- c(MDD = 1e-5, BPD = 1e-5)
+GWAS_EXPLORATORY_P_THRESHOLDS <- c(MDD = 1e-5, BD = 1e-5)
 
 DEFAULT_GWASX_DISORDERS <- names(GWAS_EXPLORATORY_P_THRESHOLDS)
 
 GWAS_GENE_LIST_FILES <- list(
-  BPD = list(
-    broad = file.path("BPD", "bpd2024_gene_lists.tsv"),
-    prio = file.path("BPD", "bpd2024_prioritized_credible_genes.tsv")
+  BD = list(
+    broad = file.path("BD", "bd2024_gene_lists.tsv"),
+    prio = file.path("BD", "bd2024_prioritized_credible_genes.tsv")
   ),
   MDD = list(
     broad = file.path("MDD", "mdd2025_high_confidence_genes.tsv"),
@@ -86,9 +86,9 @@ GWAS_GENE_LIST_FILES <- list(
 )
 
 GWAS_STANDARD_GENE_LIST_FILES <- list(
-  BPD = list(
-    broad = file.path("BPD", "GWAS_BPD_gene_list.tsv"),
-    prio = file.path("BPD", "GWAS_BPD_prio_gene_list.tsv")
+  BD = list(
+    broad = file.path("BD", "GWAS_BD_gene_list.tsv"),
+    prio = file.path("BD", "GWAS_BD_prio_gene_list.tsv")
   ),
   MDD = list(
     broad = file.path("MDD", "GWAS_MDD_gene_list.tsv"),
@@ -133,9 +133,11 @@ CUSTOM_CONTEXT_TO_DATASET_ID <- c(
 
 DEG_SEX_PREFIX <- c(female = "F", male = "M")
 
+## DEG t-test contrast tokens must match the 07_dx_DE summary column names, which
+## use the legacy "BPD" label. Only the disorder key is the project-standard "BD".
 DEG_TTEST_CONTRASTS <- c("NTC.MDD", "NTC.BPD", "MDD.BPD")
 
-DEG_DISORDER_CONTRASTS <- c(MDD = "NTC.MDD", BPD = "NTC.BPD")
+DEG_DISORDER_CONTRASTS <- c(MDD = "NTC.MDD", BD = "NTC.BPD")
 
 DEG_TTEST_SIG_LABELS <- c("padj<.0001", "padj<.01", "padj<.05")
 
@@ -168,6 +170,7 @@ resolve_repo_root <- function(repo_root = NULL) {
 
 gwas_check_disorder <- function(dis) {
   dis <- toupper(dis)
+  if (identical(dis, "BPD")) dis <- "BD"  # accept legacy "BPD" alias on input
   if (!dis %in% names(GWAS_BCF_FILES)) {
     stop("Unsupported disorder: ", dis, ". Expected one of: ", paste(names(GWAS_BCF_FILES), collapse = ", "))
   }
@@ -2285,6 +2288,145 @@ summarize_significant_pairs <- function(dt, context_order = names(SEURAT_CONTEXT
   )
   data.table::setcolorder(out, c(front_cols, setdiff(names(out), front_cols)))
   out[order(match(split, split_order), match(context, context_order))]
+}
+
+## ---- output column finalization (clean GWAS/DEG overlap naming) ----------
+## The internal engine emits legacy overlap columns per disorder DIS:
+##   DIS_GWAS / DIS_GWASx          variant in GWAS set at 5e-8 / 1e-5
+##   DIS_GWASg_gene (= DIS_GWASxg_gene)  eGene in curated disorder gene list
+##   DIS_GWASg / DIS_GWASxg        variant OR gene-list (combined)
+##   DIS_GWASg_variant (= DIS_GWAS), DIS_GWASxg_variant (= DIS_GWASx)  duplicates
+##   DIS_GWASx_p/_beta/_beta_se    GWAS stats at the matched variant
+## These helpers relabel the *output* tables to the cleaned scheme
+##   DIS_gwasVar_strict / DIS_gwasVar_exp / DIS_gwasGene
+##   DIS_gwas_strict / DIS_gwas_exp / DIS_gwasP / DIS_gwasBeta / DIS_gwasBetaSE
+## dropping the redundant *_variant duplicates and the duplicate exp gene column.
+
+eqtl_overlap_disorders <- function(dt) {
+  sub("_GWAS$", "", grep("^[A-Z0-9]+_GWAS$", names(dt), value = TRUE))
+}
+
+order_eqtl_overlap_cols <- function(dt) {
+  disorders <- intersect(
+    c("MDD", "BD", "SCZD"),
+    sub("_gwasVar_strict$", "", grep("_gwasVar_strict$", names(dt), value = TRUE))
+  )
+  overlap <- unlist(lapply(disorders, function(d) paste0(d, c(
+    "_gwasVar_strict", "_gwasVar_exp", "_gwasGene",
+    "_gwas_strict", "_gwas_exp", "_gwasP", "_gwasBeta", "_gwasBetaSE"
+  ))))
+  front <- c(
+    intersect(c("source", "result_source", "pair_provenance", "cis_supported",
+                "indep_supported", "dataset_id", "context", "split",
+                "gene_id", "gene_name", "DEG", "MDD_DEG", "BD_DEG"), names(dt)),
+    intersect(overlap, names(dt))
+  )
+  data.table::setcolorder(dt, c(front, setdiff(names(dt), front)))
+  dt[]
+}
+
+## relabel per-eQTL-row overlap columns; tolerant of strict-only tables.
+rename_eqtl_overlap_cols <- function(dt) {
+  require_data_table()
+  dt <- data.table::as.data.table(dt)
+  for (dis in eqtl_overlap_disorders(dt)) {
+    drop <- intersect(paste0(dis, c("_GWASg_variant", "_GWASxg_variant", "_GWASxg_gene")), names(dt))
+    if (length(drop)) dt[, (drop) := NULL]
+    map <- c(
+      "_GWAS" = "_gwasVar_strict",
+      "_GWASx" = "_gwasVar_exp",
+      "_GWASg_gene" = "_gwasGene",
+      "_GWASg" = "_gwas_strict",
+      "_GWASxg" = "_gwas_exp",
+      "_GWASx_p" = "_gwasP",
+      "_GWASx_beta" = "_gwasBeta",
+      "_GWASx_beta_se" = "_gwasBetaSE"
+    )
+    old <- paste0(dis, names(map))
+    new <- paste0(dis, unname(map))
+    keep <- old %in% names(dt)
+    if (any(keep)) data.table::setnames(dt, old[keep], new[keep])
+  }
+  order_eqtl_overlap_cols(dt)
+}
+
+## relabel summary overlap columns: drop variant-only counts, keep the combined
+## (variant-or-gene-list) counts as gwas_<level>, broad-DEG trifecta as
+## trifecta_<DIS>_<level>, and disorder-DEG overlap as <DIS>_DEGxGWAS_<level>.
+rename_summary_overlap_cols <- function(dt) {
+  require_data_table()
+  dt <- data.table::as.data.table(dt)
+  relabel_one <- function(dt, dis, combined, variant_only) {
+    suffix <- if (identical(combined, "GWASg")) "strict" else "exp"
+    drop <- intersect(c(
+      paste0("n_", dis, "_", variant_only),
+      paste0("n_DEG_", dis, "_", variant_only),
+      paste0("n_", dis, "_DEG_", dis, "_", variant_only),
+      paste0(dis, "_", variant_only, "_genes"),
+      paste0("DEG_", dis, "_", variant_only, "_genes"),
+      paste0(dis, "_DEG_", dis, "_", variant_only, "_genes")
+    ), names(dt))
+    if (length(drop)) dt[, (drop) := NULL]
+    pairs <- c(
+      paste0("n_", dis, "_", combined),                   paste0("n_", dis, "_gwas_", suffix),
+      paste0(dis, "_", combined, "_genes"),               paste0(dis, "_gwas_", suffix, "_genes"),
+      paste0("n_DEG_", dis, "_", combined),               paste0("n_trifecta_", dis, "_", suffix),
+      paste0("DEG_", dis, "_", combined, "_genes"),       paste0("trifecta_", dis, "_", suffix, "_genes"),
+      paste0("n_", dis, "_DEG_", dis, "_", combined),     paste0("n_", dis, "_DEGxGWAS_", suffix),
+      paste0(dis, "_DEG_", dis, "_", combined, "_genes"), paste0(dis, "_DEGxGWAS_", suffix, "_genes")
+    )
+    old <- pairs[c(TRUE, FALSE)]
+    new <- pairs[c(FALSE, TRUE)]
+    keep <- old %in% names(dt)
+    if (any(keep)) data.table::setnames(dt, old[keep], new[keep])
+    dt
+  }
+  for (dis in sub("^n_", "", sub("_GWASg$", "", grep("^n_[A-Z0-9]+_GWASg$", names(dt), value = TRUE)))) {
+    dt <- relabel_one(dt, dis, "GWASg", "GWAS")
+  }
+  for (dis in sub("^n_", "", sub("_GWASxg$", "", grep("^n_[A-Z0-9]+_GWASxg$", names(dt), value = TRUE)))) {
+    dt <- relabel_one(dt, dis, "GWASxg", "GWASx")
+  }
+  dt
+}
+
+order_significant_summary_cols <- function(dt) {
+  disorders <- intersect(
+    c("MDD", "BD", "SCZD"),
+    sub("^n_", "", sub("_gwas_strict$", "", grep("^n_[A-Z0-9]+_gwas_strict$", names(dt), value = TRUE)))
+  )
+  by_dis <- function(tpl) unlist(lapply(disorders, function(d) sprintf(tpl, d, c("strict", "exp"))))
+  front <- c(
+    "split", "context",
+    intersect(c("n_independent_signals", "n_significant_pairs", "n_cis_supported_pairs",
+                "n_indep_supported_pairs", "n_shared_pairs", "n_cis_only_pairs",
+                "n_indep_only_pairs", "n_nominal_pairs"), names(dt)),
+    "n_eGenes", "n_DEG",
+    intersect(c("n_MDD_DEG", "n_BD_DEG"), names(dt)),
+    by_dis("n_%s_gwas_%s"), by_dis("n_trifecta_%s_%s"), by_dis("n_%s_DEGxGWAS_%s"),
+    "DEG_genes",
+    intersect(c("MDD_DEG_genes", "BD_DEG_genes"), names(dt)),
+    by_dis("%s_gwas_%s_genes"), by_dis("trifecta_%s_%s_genes"), by_dis("%s_DEGxGWAS_%s_genes")
+  )
+  front <- intersect(front, names(dt))
+  data.table::setcolorder(dt, c(front, setdiff(names(dt), front)))
+  dt[]
+}
+
+## merge the strict (5e-8) summary with the exploratory (1e-5) summary into a
+## single relabelled summary carrying both levels side by side.
+build_merged_significant_summary <- function(strict, exp = NULL) {
+  require_data_table()
+  key <- c("split", "context")
+  out <- rename_summary_overlap_cols(data.table::copy(data.table::as.data.table(strict)))
+  if (!is.null(exp)) {
+    x <- rename_summary_overlap_cols(data.table::copy(data.table::as.data.table(exp)))
+    exp_cols <- setdiff(grep("_exp(_genes)?$", names(x), value = TRUE), names(out))
+    if (length(exp_cols)) {
+      out <- merge(out, x[, c(key, exp_cols), with = FALSE], by = key, all.x = TRUE)
+    }
+  }
+  order_significant_summary_cols(out)
 }
 
 summarize_eqtl_deg_views <- function(eqtl_dt, manifest, degs,
