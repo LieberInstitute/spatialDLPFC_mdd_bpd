@@ -18,7 +18,7 @@ module load conda_R/4.4.x
 module list
 
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/supp_clustering_compare/sankey.r
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/supp_clustering_compare/dlpfc-genes_dotplots.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/supp_clustering_compare/dx-sex_dlPFC-genes_dotplot.r
 
 echo "**** Job ends ****"
 date
