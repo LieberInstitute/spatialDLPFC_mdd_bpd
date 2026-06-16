@@ -21,7 +21,7 @@ plot.df = filter(de.df, source=="se", cluster=="L-A") %>%
 
 p1 <- ggplot(plot.df, aes(x=logFC, y=-log10(adj.P.Val)))+
   rasterize(geom_point(size=.1, color="grey"), dpi=300)+
-  rasterize(geom_point(data=filter(plot.df, adj.P.Val<.05), size=.1, color="black"), dpi=300)+
+  rasterize(geom_point(data=filter(plot.df, adj.P.Val2<.05), size=.1, color="black"), dpi=300)+
   facet_wrap(vars(sex.group), ncol=2)+
   scale_y_continuous(limits=c(0,10), breaks=c(0,2,4,6,8,10))+
   coord_cartesian(xlim=c(-3,3))+
