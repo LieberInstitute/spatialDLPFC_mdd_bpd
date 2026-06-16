@@ -1,53 +1,67 @@
-# Exploratory GWAS Trifecta Overlaps
+# Exploratory GWAS Overlaps
 
-This note documents whether SCZD-supported eQTL-DEG-GWASg variants from the
-current MBv Seurat eQTL analysis also appear in the exploratory MDD or BPD GWAS
-overlap checks.
+This note documents how exploratory MDD and BD GWAS exact-variant overlaps are
+represented in the current Seurat eQTL tables.
 
-The companion machine-readable trifecta table is:
+The authoritative downstream tables are under
+`processed-data/11_eQTL_coloc/seurat/tables/`:
+
+- `map_significant_summary.csv`
+- `map_significant_pairs.csv.gz`
+- `map_significant_unified.csv.gz`
+
+The companion SCZD-focused example table in this directory is:
 
 - `GWAS_exploratory_trifecta.csv`
 
-The per-variant eQTL overlap tables are written under
-`processed-data/11_eQTL_coloc/seurat/tables/`:
+## Thresholds
 
-- `map_significant_unified_GWASx.csv.gz`
-- `map_significant_pairs_GWASx.csv.gz`
-- `map_significant_summary_GWASx.csv`
+| Disorder | Strict overlap | Exploratory overlap |
+|---|---:|---:|
+| SCZD | `p <= 5e-8` | not used |
+| MDD | `p <= 5e-8` | `p < 1e-5` |
+| BD | `p <= 5e-8` | `p < 1e-5` |
 
-Legacy copies are also written with `GWAS_relaxed` in the filename.
+The `p < 1e-5` MDD/BD cutoff is an exploratory exact-variant check. It is
+integrated into the same row-level and summary tables as the strict overlaps.
 
-## Thresholds and Context Columns
+## Table Columns
 
-The SCZD reference uses the strict GWAS threshold, while MDD and BPD matching
-uses the most relaxed genotype-matched GWAS cache currently available locally.
+Row-level tables use the cleaned GWAS overlap convention:
 
-| Disorder | Role | Threshold |
-|---|---|---:|
-| SCZD | reference | `p <= 5e-8` |
-| MDD | exploratory matching | `p < 1e-5` |
-| BPD | exploratory matching | `p < 1e-5` |
+- `DIS_gwasVar_strict`: exact eQTL variant overlap with the strict GWAS set.
+- `DIS_gwasVar_exp`: exact eQTL variant overlap with the exploratory GWAS set;
+  present for MDD and BD.
+- `DIS_gwasGene`: curated GWAS gene-list overlap.
+- `DIS_gwas_strict`: `DIS_gwasVar_strict OR DIS_gwasGene`.
+- `DIS_gwas_exp`: `DIS_gwasVar_exp OR DIS_gwasGene`; present for MDD and BD.
+- `DIS_gwasP`, `DIS_gwasBeta`, `DIS_gwasBetaSE`: exploratory exact-variant
+  GWAS statistics for MDD/BD variant matches.
 
-The `p < 1e-5` MDD/BPD cutoff is suggestive/exploratory and relaxed relative
-to strict genome-wide significance.
+`map_significant_summary.csv` reports combined eGene counts:
 
-`SCZD_context`, `MDD_context`, and `BPD_context` all refer to MBv Seurat eQTL
-contexts from this study, not to a GWAS cohort stratum. Specifically:
+- `n_DIS_gwas_strict`: unique eGenes with strict variant or gene-list support.
+- `n_DIS_gwas_exp`: unique eGenes with exploratory variant or gene-list support;
+  present for MDD and BD.
+
+Variant-only counts are not separate summary columns; use the row-level
+`DIS_gwasVar_*` flags when exact variant support is needed.
+
+## Context Columns In The Example Table
+
+`SCZD_context`, `MDD_context`, and `BD_context` all refer to Seurat eQTL
+contexts from this study, not to GWAS cohort strata.
 
 - `SCZD_context`: Seurat context(s) where the SCZD-supported eGene/variant is
   part of the broad-DEG overlap.
-- `MDD_context` and `BPD_context`: Seurat context(s) where the same variant is
-  also observed in the MDD or BPD exploratory broad-DEG exact-variant overlap.
-- Blank MDD/BPD columns mean the SCZD variant was not present in the matching
+- `MDD_context` and `BD_context`: Seurat context(s) where the same variant is
+  also observed in the MDD or BD exploratory broad-DEG exact-variant overlap.
+- Blank MDD/BD columns mean the SCZD variant was not present in the matching
   disorder's `p < 1e-5` genotype-matched GWAS/eQTL-DEG overlap.
-
-In the eQTL tables, strict GWAS columns keep their existing names
-(`SCZD_GWAS`, `MDD_GWAS`, `BPD_GWAS`). Exploratory mood-disorder columns use
-`GWASx`, for example `MDD_GWASx`, `MDD_GWASxg`, and `MDD_GWASx_p`.
 
 ## Simplified Variant Match Table
 
-| Gene | SCZD_context | SCZD_support | SCZD_variant | SCZD_rsid | SCZD_GWAS_p | MDD_context | MDD_variant | MDD_rsid | MDD_GWAS_p | BPD_context | BPD_variant | BPD_rsid | BPD_GWAS_p |
+| Gene | SCZD_context | SCZD_support | SCZD_variant | SCZD_rsid | SCZD_gwasP | MDD_context | MDD_variant | MDD_rsid | MDD_gwasP | BD_context | BD_variant | BD_rsid | BD_gwasP |
 |---|---|---|---|---|---:|---|---|---|---:|---|---|---|---:|
 | ARL17B | L2.3 | exact eQTL=SCZD GWAS variant | `chr17:45855941:T:C` | rs7221167 | 1.949979e-08 |  |  |  |  |  |  |  |  |
 | ARL17B | Inhb | gene-list-only eQTL variant | `chr17:46025316:C:CT` |  |  |  |  |  |  |  |  |  |  |
@@ -58,14 +72,12 @@ In the eQTL tables, strict GWAS columns keep their existing names
 
 ## Main Interpretation
 
-The exact SCZD eQTL/GWAS variant overlap that also appears in a mood-disorder
-exploratory match is MAPK3 `rs28529403` / `chr16:30123335:T:C`, which appears
-in BPD at `p = 7.313917e-08` and in the same MBv contexts as the SCZD row:
+The exact SCZD eQTL/GWAS variant overlap that also appears in an exploratory
+mood-disorder match is MAPK3 `rs28529403` / `chr16:30123335:T:C`, which appears
+in BD at `p = 7.313917e-08` and in the same Seurat contexts as the SCZD row:
 Astro, L2.3, L4, and L5.
 
 The MAPK3 Inhb variant `rs148788997` / `chr16:30311847:G:C` appears in MDD at
-`p = 5.908946e-07`, but this SCZD row is gene-list-only support rather than an
-exact SCZD GWAS variant overlap. ARL17B and ATF4 do not have matching MDD or
-BPD variant overlaps in the available `p < 1e-5` caches. Compared with the
-prior narrower exploratory run, the wider `p < 1e-5` threshold did not add new
-SCZD-supported trifecta variant recoveries.
+`p = 5.908946e-07`, but that SCZD row is gene-list support rather than an exact
+SCZD variant overlap. ARL17B and ATF4 do not have matching MDD or BD variant
+overlaps in the available `p < 1e-5` caches.

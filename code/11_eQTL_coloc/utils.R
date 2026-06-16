@@ -2302,8 +2302,26 @@ summarize_significant_pairs <- function(dt, context_order = names(SEURAT_CONTEXT
 ##   DIS_gwas_strict / DIS_gwas_exp / DIS_gwasP / DIS_gwasBeta / DIS_gwasBetaSE
 ## dropping the redundant *_variant duplicates and the duplicate exp gene column.
 
+canonical_overlap_disorder <- function(dis) {
+  tryCatch(gwas_check_disorder(dis), error = function(e) toupper(dis))
+}
+
+rename_or_drop_existing_col <- function(dt, old, new) {
+  if (!old %in% names(dt)) return(invisible(dt))
+  if (identical(old, new)) return(invisible(dt))
+  if (new %in% names(dt)) {
+    if (!identical(dt[[old]], dt[[new]])) {
+      stop("Cannot rename ", old, " to existing column ", new, ": values differ.")
+    }
+    dt[, (old) := NULL]
+    return(invisible(dt))
+  }
+  data.table::setnames(dt, old, new)
+  invisible(dt)
+}
+
 eqtl_overlap_disorders <- function(dt) {
-  sub("_GWAS$", "", grep("^[A-Z0-9]+_GWAS$", names(dt), value = TRUE))
+  unique(sub("_GWAS.*$", "", grep("^[A-Z0-9]+_GWAS", names(dt), value = TRUE)))
 }
 
 order_eqtl_overlap_cols <- function(dt) {
@@ -2330,6 +2348,7 @@ rename_eqtl_overlap_cols <- function(dt) {
   require_data_table()
   dt <- data.table::as.data.table(dt)
   for (dis in eqtl_overlap_disorders(dt)) {
+    out_dis <- canonical_overlap_disorder(dis)
     drop <- intersect(paste0(dis, c("_GWASg_variant", "_GWASxg_variant", "_GWASxg_gene")), names(dt))
     if (length(drop)) dt[, (drop) := NULL]
     map <- c(
@@ -2343,9 +2362,11 @@ rename_eqtl_overlap_cols <- function(dt) {
       "_GWASx_beta_se" = "_gwasBetaSE"
     )
     old <- paste0(dis, names(map))
-    new <- paste0(dis, unname(map))
+    new <- paste0(out_dis, unname(map))
     keep <- old %in% names(dt)
-    if (any(keep)) data.table::setnames(dt, old[keep], new[keep])
+    if (any(keep)) {
+      for (i in which(keep)) rename_or_drop_existing_col(dt, old[i], new[i])
+    }
   }
   order_eqtl_overlap_cols(dt)
 }
@@ -2357,6 +2378,7 @@ rename_summary_overlap_cols <- function(dt) {
   require_data_table()
   dt <- data.table::as.data.table(dt)
   relabel_one <- function(dt, dis, combined, variant_only) {
+    out_dis <- canonical_overlap_disorder(dis)
     suffix <- if (identical(combined, "GWASg")) "strict" else "exp"
     drop <- intersect(c(
       paste0("n_", dis, "_", variant_only),
@@ -2368,17 +2390,19 @@ rename_summary_overlap_cols <- function(dt) {
     ), names(dt))
     if (length(drop)) dt[, (drop) := NULL]
     pairs <- c(
-      paste0("n_", dis, "_", combined),                   paste0("n_", dis, "_gwas_", suffix),
-      paste0(dis, "_", combined, "_genes"),               paste0(dis, "_gwas_", suffix, "_genes"),
-      paste0("n_DEG_", dis, "_", combined),               paste0("n_trifecta_", dis, "_", suffix),
-      paste0("DEG_", dis, "_", combined, "_genes"),       paste0("trifecta_", dis, "_", suffix, "_genes"),
-      paste0("n_", dis, "_DEG_", dis, "_", combined),     paste0("n_", dis, "_DEGxGWAS_", suffix),
-      paste0(dis, "_DEG_", dis, "_", combined, "_genes"), paste0(dis, "_DEGxGWAS_", suffix, "_genes")
+      paste0("n_", dis, "_", combined),                   paste0("n_", out_dis, "_gwas_", suffix),
+      paste0(dis, "_", combined, "_genes"),               paste0(out_dis, "_gwas_", suffix, "_genes"),
+      paste0("n_DEG_", dis, "_", combined),               paste0("n_trifecta_", out_dis, "_", suffix),
+      paste0("DEG_", dis, "_", combined, "_genes"),       paste0("trifecta_", out_dis, "_", suffix, "_genes"),
+      paste0("n_", dis, "_DEG_", dis, "_", combined),     paste0("n_", out_dis, "_DEGxGWAS_", suffix),
+      paste0(dis, "_DEG_", dis, "_", combined, "_genes"), paste0(out_dis, "_DEGxGWAS_", suffix, "_genes")
     )
     old <- pairs[c(TRUE, FALSE)]
     new <- pairs[c(FALSE, TRUE)]
     keep <- old %in% names(dt)
-    if (any(keep)) data.table::setnames(dt, old[keep], new[keep])
+    if (any(keep)) {
+      for (i in which(keep)) rename_or_drop_existing_col(dt, old[i], new[i])
+    }
     dt
   }
   for (dis in sub("^n_", "", sub("_GWASg$", "", grep("^n_[A-Z0-9]+_GWASg$", names(dt), value = TRUE)))) {
