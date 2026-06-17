@@ -6,19 +6,37 @@ suppressPackageStartupMessages({
 
 cpList = readRDS("plots/colorPalettes.rds")
 
-egene.df = read.csv("processed-data/11_eQTL_coloc/seurat/tables/map_cis_summary.csv")
+egene.df = read.csv("processed-data/11_eQTL_coloc/seurat/tables/map_significant_pairs.csv.gz")
 
 
-plot.df = mutate(egene.df, cluster= factor(context, levels=rev(c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")))) %>%
-	select(cluster, n_MDD_gwas_strict, n_BD_gwas_strict, n_SCZD_gwas_strict) %>%
-	tidyr::pivot_longer(c("n_MDD_gwas_strict", "n_BD_gwas_strict", "n_SCZD_gwas_strict"), 
-		names_to="gwas_set", values_to="n_eGenes") %>%
-	mutate(gwas_set= factor(gwas_set, levels=rev(c("n_MDD_gwas_strict", "n_BD_gwas_strict", "n_SCZD_gwas_strict")),
-		labels=rev(c("MDD","BPD","SCZ"))))
+var.df = mutate(egene.df, cluster= factor(context, levels=rev(c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")))) %>%
+	select(cluster, MDD_gwasVar_strict, BD_gwasVar_strict, SCZD_gwasVar_strict) %>%
+	tidyr::pivot_longer(c("MDD_gwasVar_strict", "BD_gwasVar_strict", "SCZD_gwasVar_strict"), 
+		names_to="gwas_set", values_to="n_vars") %>%
+	filter(n_vars>0) %>%
+	mutate(gwas_set= factor(gwas_set, levels=rev(c("MDD_gwasVar_strict", "BD_gwasVar_strict", "SCZD_gwasVar_strict")),
+		labels=rev(c("MDD","BPD","SCZ")))) %>%
+	group_by(cluster, gwas_set, .drop=F) %>% tally()
+gene.df = mutate(egene.df, cluster= factor(context, levels=rev(c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")))) %>%
+        select(cluster, MDD_gwasGene, BD_gwasGene, SCZD_gwasGene) %>%
+        tidyr::pivot_longer(c("MDD_gwasGene", "BD_gwasGene", "SCZD_gwasGene"),
+                names_to="gwas_set", values_to="n_vars") %>%
+        filter(n_vars>0) %>%
+        mutate(gwas_set= factor(gwas_set, levels=rev(c("MDD_gwasGene", "BD_gwasGene", "SCZD_gwasGene")),
+                labels=rev(c("MDD","BPD","SCZ")))) %>%
+	group_by(cluster, gwas_set, .drop=F) %>% tally()
 
-col.pal = c(cpList$dx.pal[2:3], "SCZ"="#27418A")
+plot.df = bind_rows(mutate(var.df, type="variant"), mutate(gene.df, type="gene")) %>%
+	mutate(fill_factor= factor(paste(gwas_set, type),
+		levels=rev(c("MDD gene","MDD variant","BPD gene","BPD variant","SCZ gene","SCZ variant"))))
 
-p1 <- ggplot(plot.df, aes(y=cluster, x=n_eGenes, fill=gwas_set))+
+col.pal = c("#F5C3AF", cpList$dx.pal[["MDD"]],
+	"#C8AFD7", cpList$dx.pal[["BPD"]],
+	"#89B6DA", "#27418A")
+names(col.pal) = c("MDD gene","MDD variant","BPD gene","BPD variant","SCZ gene","SCZ variant")
+
+
+p1 <- ggplot(plot.df, aes(y=cluster, x=n, fill=fill_factor))+
 	geom_bar(stat="identity", position="stack")+
 	scale_fill_manual(values=col.pal)+
 	scale_y_discrete(labels=rev(c("M/V","Ast","L2/3","L4","Inb","L5","L6","Olg")))+
