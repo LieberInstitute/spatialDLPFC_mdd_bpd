@@ -336,3 +336,11 @@ WHOLE_TISSUE <- function(se, gene1) {
 
 }
 
+# master function to be called by iSEE
+CUSTOM_VIOLIN <- function(se, rows, columns, mode=c("whole-tissue", "domain-SP", "domain-CT")) {
+	mode = match.arg(mode)
+	if(mode=="whole-tissue") plot_out = WHOLE_TISSUE(se, rows)
+	if(mode=="domain-SP") plot_out = DOMAIN_RESTRICTED(se, rows, "domain-SP")
+	if(mode=="domain-CT") plot_out = DOMAIN_RESTRICTED(se, rows, "domain-CT")
+	return(plot_out)
+}
