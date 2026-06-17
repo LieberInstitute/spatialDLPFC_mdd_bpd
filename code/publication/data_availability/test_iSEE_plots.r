@@ -4,6 +4,9 @@ suppressPackageStartupMessages({
   library(SpatialExperiment)
 })
 
+#test_gene = "CORT"
+test_gene = "SAMD11"
+
 set.seed(1234)
 
 # read in custom functions
@@ -28,11 +31,11 @@ rownames(spe) <- rowData(spe)$gene_name
 rownames(metadata(spe)[[1]]) <- metadata(spe)[[1]]$gene_name
 rownames(metadata(spe)[[2]]) <-	metadata(spe)[[2]]$gene_name
 
-p1 <- WHOLE_TISSUE(spe, "CORT")
-p2 <- DOMAIN_RESTRICTED(spe, "CORT", "domain-SP")
-p3 <- DOMAIN_RESTRICTED(spe, "CORT", "domain-CT")
+p1 <- WHOLE_TISSUE(spe, test_gene)
+p2 <- DOMAIN_RESTRICTED(spe, test_gene, "domain-SP")
+p3 <- DOMAIN_RESTRICTED(spe, test_gene, "domain-CT")
 
-ggsave(file="plots/publication/test_iSEE-revised_CORT.pdf", 
+ggsave(file=paste0("plots/publication/test_iSEE-revised_", test_gene, ".pdf"), 
 	gridExtra::grid.arrange(p1, p2, p3, ncol=1),
 	width=7, height=10)
 

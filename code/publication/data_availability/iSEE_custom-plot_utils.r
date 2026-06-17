@@ -102,8 +102,15 @@ plotWholeTissue <- function(logcount_DF, summary_DF, ...) {
     theme_bw()+theme(plot.title=element_text(face="italic"))
 }
 
+
+# check if gene was run in model
+inModel <- function(gene_name, spe_pseudo, annot_name) {
+	gene_name %in% rownames(metadata(spe_pseudo)[[paste0(annot_name, "_DE")]])
+}
+
 # extract F statistics for labeling
 getFname <- function(gene_name, logcount_DF, spe_pseudo, annot_name) {
+  if(!inModel(gene_name, spe_pseudo, annot_name)) return("(gene not run in model, excluded by pre-filters)") 
   rdata= metadata(spe_pseudo)[[paste0(annot_name, "_DE")]][gene_name,]
   
   if(length(unique(logcount_DF$domain))==1) {
@@ -129,6 +136,7 @@ getFname <- function(gene_name, logcount_DF, spe_pseudo, annot_name) {
 
 # conditional F sig for formatting
 isFsig <- function(gene_name, logcount_DF, spe_pseudo, annot_name) {
+  if(!inModel(gene_name, spe_pseudo, annot_name)) return(FALSE)
   rdata= metadata(spe_pseudo)[[paste0(annot_name, "_DE")]][gene_name,]
   
   if(length(unique(logcount_DF$domain))==1) {
@@ -190,6 +198,18 @@ annotStandin <- function(logcount_DF, tstat_DF) {
   return(standin)
 }
 
+# create empty dataframe if not present in model (needed for whole tissue plots only)
+annotEmpty <- function(logcount_DF) {
+  save_name = colnames(logcount_DF)[5]
+  colnames(logcount_DF)[5] = "plot.gene"
+
+  standin = logcount_DF %>% group_by(domain, sex) %>%
+    t_test(plot.gene ~ condition)
+  standin$p.adj.signif = "ns"
+
+  return(standin)
+}
+
 # custom y position adjustments
 adjustYposition <- function(logcount_DF, stat_DF) {
   save_name = colnames(logcount_DF)[5]
@@ -241,47 +261,66 @@ adjustYposition <- function(logcount_DF, stat_DF) {
 
 # putting it all together: domain restricted, revised for iSEE
 DOMAIN_RESTRICTED <- function(se, gene1, annot_name) {
-  # get counts and stats
+  # get pseudobulk count info
   log.df = extractLogcounts(gene1, se, annot_name)
-
-  t.df = getTstats(gene1, se, annot_name)
-
-  stat.df = annotStandin(log.df, t.df) %>%
-	add_xy_position(x="domain", dodge=.8, scales="fixed", step.increase=0)
-  stat.df = adjustYposition(log.df, stat.df)
-
-  ymax1 = max(ceiling(c(max(log.df[,5]), max(stat.df$y.position))))
-
-  # summarise counts for cross bars 
   cross.df = crossbarLogcounts(log.df)
 
-  # plot for domain-restricted
-  plotDomainRestricted(log.df, cross.df, annot_name, se)+
-    stat_pvalue_manual(stat.df, label="p.adj.signif", hide.ns=T, label.size = 6,
-                       color=ifelse(isFsig(gene1, log.df, se, annot_name),"black","grey50"))+
-    ylim(0,ymax1)
+  if(!inModel(gene1, se, annot_name)) {
+	ymax1 = ceiling(max(log.df[,5]))
+	p1 <- plotDomainRestricted(log.df, cross.df, annot_name, se)+ylim(0,ymax1)
+  } else {
+	#get stats
+	t.df = getTstats(gene1, se, annot_name)
 
+	stat.df = annotStandin(log.df, t.df) %>%
+		add_xy_position(x="domain", dodge=.8, scales="fixed", step.increase=0)
+	stat.df = adjustYposition(log.df, stat.df)
+
+	ymax1 = max(ceiling(c(max(log.df[,5]), max(stat.df$y.position))))
+
+	p1 <- plotDomainRestricted(log.df, cross.df, annot_name, se)+
+		stat_pvalue_manual(stat.df, label="p.adj.signif", hide.ns=T, label.size = 6,
+			color=ifelse(isFsig(gene1, log.df, se, annot_name),"black","grey50"))+
+		ylim(0,ymax1)
+  }
+  
+  return(p1)
 }
 
 # putting it all together: whole tissue, revised for iSEE
 WHOLE_TISSUE <- function(se, gene1) {
 	#function(se, rows, columns) {
-
+	# domain-SP first
 	log.df_sp = extractLogcounts(gene1, se, "domain-SP") %>%
 		mutate(domain="all-SP")
-	t.df_sp = getTstats(gene1, se, "domain-SP")
-	stat.df_sp = annotStandin(log.df_sp, t.df_sp) %>%
-		add_xy_position(x="sex", dodge=.8, scales="fixed", step.increase=0)
-	stat.df_sp = adjustYposition(log.df_sp, stat.df_sp)
 	cross.df_sp = crossbarLogcounts(log.df_sp)
+	# if in model, get stats
+	if(!inModel(gene1, se, "domain-SP")) {
+		stat.df_sp = annotEmpty(log.df_sp) %>%
+			add_xy_position(x="sex", dodge=.8, scales="fixed", step.increase=0)
+		stat.df_sp = adjustYposition(log.df_sp, stat.df_sp)
+	} else {
+		t.df_sp = getTstats(gene1, se, "domain-SP")
+		stat.df_sp = annotStandin(log.df_sp, t.df_sp) %>%
+			add_xy_position(x="sex", dodge=.8, scales="fixed", step.increase=0)
+		stat.df_sp = adjustYposition(log.df_sp, stat.df_sp)
+	}
 
+	# domain-CT next
 	log.df_ct = extractLogcounts(gene1, se, "domain-CT") %>%
 		mutate(domain="all-CT")
-	t.df_ct = getTstats(gene1, se, "domain-CT")
-	stat.df_ct = annotStandin(log.df_ct, t.df_ct) %>%
-		add_xy_position(x="sex", dodge=.8, scales="fixed", step.increase=0)
-	stat.df_ct = adjustYposition(log.df_ct, stat.df_ct)
 	cross.df_ct = crossbarLogcounts(log.df_ct)
+	# if in model get stats
+        if(!inModel(gene1, se, "domain-CT")) {
+                stat.df_ct = annotEmpty(log.df_ct) %>%
+			add_xy_position(x="sex", dodge=.8, scales="fixed", step.increase=0)
+		stat.df_ct = adjustYposition(log.df_ct, stat.df_ct)
+        } else {
+		t.df_ct = getTstats(gene1, se, "domain-CT")
+		stat.df_ct = annotStandin(log.df_ct, t.df_ct) %>%
+			add_xy_position(x="sex", dodge=.8, scales="fixed", step.increase=0)
+		stat.df_ct = adjustYposition(log.df_ct, stat.df_ct)
+	}
 
 	log.df = rbind(log.df_sp, log.df_ct) %>% mutate(domain=factor(domain, levels=c("all-SP","all-CT")))
 	stat.df = rbind(stat.df_sp, stat.df_ct) %>% mutate(domain=factor(domain, levels=c("all-SP","all-CT")))
