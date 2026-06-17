@@ -23,6 +23,11 @@ source("code/publication/data_availability/iSEE_custom-plot_utils.r")
 
 spe <- readRDS("processed-data/publication/iSEE_pseudobulk-spe_both-annotations.rds")
 
+# swap rownames, update metadata rownames
+rownames(spe) <- rowData(spe)$gene_name
+rownames(metadata(spe)[[1]]) <- metadata(spe)[[1]]$gene_name
+rownames(metadata(spe)[[2]]) <-	metadata(spe)[[2]]$gene_name
+
 p1 <- WHOLE_TISSUE(spe, "CORT")
 p2 <- DOMAIN_RESTRICTED(spe, "CORT", "domain-SP")
 p3 <- DOMAIN_RESTRICTED(spe, "CORT", "domain-CT")

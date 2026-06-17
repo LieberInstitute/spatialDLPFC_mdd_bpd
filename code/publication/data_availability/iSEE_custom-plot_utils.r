@@ -8,18 +8,18 @@ suppressPackageStartupMessages({
 	library(gridExtra)
 })
 
-name2id <- function(gene_name, spe_pseudo) {
-  gid = rownames(rowData(spe_pseudo))[rowData(spe_pseudo)[,"gene_name"]==gene_name]
-  names(gid) = gene_name
-  return(gid)
-}
+#name2id <- function(gene_name, spe_pseudo) {
+#  gid = rownames(rowData(spe_pseudo))[rowData(spe_pseudo)[,"gene_name"]==gene_name]
+#  names(gid) = gene_name
+#  return(gid)
+#}
 
 
 # whole tissue dataframe
-extractLogcounts <- function(gene_id, spe_pseudo, annot_name) {
+extractLogcounts <- function(gene_name, spe_pseudo, annot_name) {
   spe_pseudo = spe_pseudo[,spe_pseudo$annotation==annot_name]
-  spe_pseudo[[names(gene_id)]] = logcounts(spe_pseudo)[gene_id,]
-  df = as.data.frame(colData(spe_pseudo)[,c("sample_id","condition","sex","domain",names(gene_id))])
+  spe_pseudo[[gene_name]] = logcounts(spe_pseudo)[gene_name,]
+  df = as.data.frame(colData(spe_pseudo)[,c("sample_id","condition","sex","domain",gene_name)])
   df$domain = droplevels(df$domain)
   if(annot_name=="domain-SP") df$domain = factor(df$domain, levels=c("L1","L2","L3.4","L5","L6","WM"))
   if(annot_name=="domain-CT") df$domain = factor(df$domain, levels=c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
@@ -104,7 +104,7 @@ plotWholeTissue <- function(logcount_DF, summary_DF, ...) {
 
 # extract F statistics for labeling
 getFname <- function(gene_name, logcount_DF, spe_pseudo, annot_name) {
-  rdata= metadata(spe_pseudo)[[paste0(annot_name, "_DE")]][name2id(gene_name, spe_pseudo),]
+  rdata= metadata(spe_pseudo)[[paste0(annot_name, "_DE")]][gene_name,]
   
   if(length(unique(logcount_DF$domain))==1) {
     fstat = rdata$whole.tissue_F_stat
@@ -129,7 +129,7 @@ getFname <- function(gene_name, logcount_DF, spe_pseudo, annot_name) {
 
 # conditional F sig for formatting
 isFsig <- function(gene_name, logcount_DF, spe_pseudo, annot_name) {
-  rdata= metadata(spe_pseudo)[[paste0(annot_name, "_DE")]][name2id(gene_name, spe_pseudo),]
+  rdata= metadata(spe_pseudo)[[paste0(annot_name, "_DE")]][gene_name,]
   
   if(length(unique(logcount_DF$domain))==1) {
     fpadj = rdata$whole.tissue_F_adj.P.Val
@@ -142,7 +142,7 @@ isFsig <- function(gene_name, logcount_DF, spe_pseudo, annot_name) {
 
 # extract t-test results
 getTstats <- function(gene_name, spe_pseudo, annot_name) {
-  rdata= as.data.frame(metadata(spe_pseudo)[[paste0(annot_name, "_DE")]][name2id(gene_name, spe_pseudo),])
+  rdata= as.data.frame(metadata(spe_pseudo)[[paste0(annot_name, "_DE")]][gene_name,])
   
   pos1 = grep("t_adj", colnames(rdata))
   data.frame("model"=sapply(strsplit(colnames(rdata)[pos1], "_"), function(x) x[[1]]),
@@ -242,7 +242,7 @@ adjustYposition <- function(logcount_DF, stat_DF) {
 # putting it all together: domain restricted, revised for iSEE
 DOMAIN_RESTRICTED <- function(se, gene1, annot_name) {
   # get counts and stats
-  log.df = extractLogcounts(name2id(gene1, se), se, annot_name)
+  log.df = extractLogcounts(gene1, se, annot_name)
 
   t.df = getTstats(gene1, se, annot_name)
 
@@ -267,7 +267,7 @@ DOMAIN_RESTRICTED <- function(se, gene1, annot_name) {
 WHOLE_TISSUE <- function(se, gene1) {
 	#function(se, rows, columns) {
 
-	log.df_sp = extractLogcounts(name2id(gene1, se), se, "domain-SP") %>%
+	log.df_sp = extractLogcounts(gene1, se, "domain-SP") %>%
 		mutate(domain="all-SP")
 	t.df_sp = getTstats(gene1, se, "domain-SP")
 	stat.df_sp = annotStandin(log.df_sp, t.df_sp) %>%
@@ -275,7 +275,7 @@ WHOLE_TISSUE <- function(se, gene1) {
 	stat.df_sp = adjustYposition(log.df_sp, stat.df_sp)
 	cross.df_sp = crossbarLogcounts(log.df_sp)
 
-	log.df_ct = extractLogcounts(name2id(gene1, se), se, "domain-CT") %>%
+	log.df_ct = extractLogcounts(gene1, se, "domain-CT") %>%
 		mutate(domain="all-CT")
 	t.df_ct = getTstats(gene1, se, "domain-CT")
 	stat.df_ct = annotStandin(log.df_ct, t.df_ct) %>%
