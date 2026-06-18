@@ -23,13 +23,16 @@ tables_dir <- file.path(coloc_dir, "tables")
 plots_dir <- here("plots", "11_eQTL_coloc", "coloc")
 plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05")
 
-## add SCZD here when available.
-disorders <- c("MDD", "BD", "SCZD")
+disorders <- c("BD", "MDD", "SCZD")
 context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
 dataset_order <- unname(SEURAT_CONTEXT_TO_DATASET_ID)
 gate_frac_min_cfg <- 0.5
 write_snp_pph4_cfg <- FALSE
 disorder_colors <- c(MDD = "#FB8861", BD = "#9260B2", SCZD = "#59A14F")
+legend_disorder_order <- c("BD", "MDD", "SCZD")
+horizontal_lane_disorder_order <- c("MDD", "BD", "SCZD")
+horizontal_plot_disorder_levels <- rev(horizontal_lane_disorder_order)
+svg_device <- if (requireNamespace("svglite", quietly = TRUE)) svglite::svglite else grDevices::svg
 
 dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
@@ -314,6 +317,7 @@ list(
 ```{r plot-strong-counts, fig.width=8, fig.height=5}
 plot_dt <- copy(strong_summary)
 plot_dt[, context := factor(context, levels = context_order)]
+plot_dt[, disorder := factor(disorder, levels = legend_disorder_order)]
 
 p_strong <- ggplot(plot_dt, aes(x = context, y = n_gated_strong, fill = disorder)) +
   geom_col(position = position_dodge(width = 0.72), width = 0.64, color = "grey25", linewidth = 0.2) +
@@ -323,7 +327,7 @@ p_strong <- ggplot(plot_dt, aes(x = context, y = n_gated_strong, fill = disorder
     vjust = -0.25,
     size = 3
   ) +
-  scale_fill_manual(values = disorder_colors) +
+  scale_fill_manual(values = disorder_colors, breaks = legend_disorder_order, drop = FALSE) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
   labs(
     x = NULL,
@@ -342,13 +346,14 @@ p_strong <- ggplot(plot_dt, aes(x = context, y = n_gated_strong, fill = disorder
 print(p_strong)
 
 strong_plot_file <- file.path(plots_dir, "strong_coloc_counts_by_domainCT.svg")
-ggsave(strong_plot_file, p_strong, width = 8, height = 5, units = "in")
+ggsave(strong_plot_file, p_strong, width = 8, height = 5, units = "in", device = svg_device)
 strong_plot_file
 ```
 
 ```{r plot-strong-counts-horizontal, fig.width=12, fig.height=6}
 horizontal_dt <- copy(strong_summary)
 horizontal_dt[, context := factor(context, levels = rev(context_order))]
+horizontal_dt[, disorder := factor(disorder, levels = horizontal_plot_disorder_levels)]
 
 p_strong_horizontal <- ggplot(horizontal_dt, aes(x = context, y = n_gated_strong, fill = disorder)) +
   geom_col(position = position_dodge(width = 0.76), width = 0.68, color = "grey25", linewidth = 0.2) +
@@ -356,30 +361,48 @@ p_strong_horizontal <- ggplot(horizontal_dt, aes(x = context, y = n_gated_strong
     aes(label = fifelse(n_gated_strong > 0L, as.character(n_gated_strong), "")),
     position = position_dodge(width = 0.76),
     hjust = -0.2,
-    size = 4
+    size = 3.6
   ) +
   coord_flip(clip = "off") +
-  scale_fill_manual(values = disorder_colors) +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.12))) +
+  scale_fill_manual(values = disorder_colors, breaks = legend_disorder_order, drop = FALSE) +
+  scale_y_continuous(breaks = seq(0, 12, by = 3), expand = expansion(mult = c(0, 0.14))) +
   labs(
     x = NULL,
-    y = "Sensitivity-gated strong coloc loci",
-    fill = "Disorder",
-    title = "Strong coloc counts by Seurat domainCT"
+    y = NULL,
+    fill = "Disorder"
   ) +
-  theme_bw(base_size = 16) +
+  theme_bw(base_size = 15) +
   theme(
     panel.grid.minor = element_blank(),
     axis.ticks.y = element_blank(),
     legend.position = "top",
-    plot.margin = margin(8, 20, 8, 8)
+    legend.margin = margin(0, 0, 0, 0),
+    plot.margin = margin(4, 18, 4, 4)
   )
 
 print(p_strong_horizontal)
 
 strong_horizontal_plot_file <- file.path(plots_dir, "strong_coloc_counts_horizontal.svg")
-ggsave(strong_horizontal_plot_file, p_strong_horizontal, width = 6, height = 8, units = "in")
-strong_horizontal_plot_file
+strong_horizontal_plot_png_file <- file.path(plots_dir, "strong_coloc_counts_horizontal_slide11.png")
+strong_horizontal_labels_file <- file.path(plots_dir, "strong_coloc_counts_horizontal_slide11_labels.csv")
+
+ggsave(strong_horizontal_plot_file, p_strong_horizontal, width = 6, height = 8, units = "in", device = svg_device)
+ggsave(strong_horizontal_plot_png_file, p_strong_horizontal, width = 6, height = 8, units = "in", dpi = 300, bg = "white")
+
+horizontal_gene_labels <- copy(strong_summary)
+horizontal_gene_labels[, context_order_rank := match(context, context_order)]
+horizontal_gene_labels[, lane_order := match(disorder, horizontal_lane_disorder_order)]
+setorder(horizontal_gene_labels, context_order_rank, lane_order)
+fwrite(
+  horizontal_gene_labels[, .(context, dataset_id, disorder, lane_order, n_gated_strong, strong_genes)],
+  strong_horizontal_labels_file
+)
+
+list(
+  svg = strong_horizontal_plot_file,
+  png = strong_horizontal_plot_png_file,
+  labels = strong_horizontal_labels_file
+)
 ```
 
 ```{r plot-strong-counts-by-disorder, fig.width=12, fig.height=5}
@@ -410,7 +433,7 @@ per_disorder_plot_files <- lapply(sort(unique(strong_summary$disorder)), functio
 
   print(p_dis)
   out_file <- file.path(plots_dir, sprintf("strong_coloc_counts_horizontal_%s.svg", dis))
-  ggsave(out_file, p_dis, width = 12, height = 5, units = "in")
+  ggsave(out_file, p_dis, width = 12, height = 5, units = "in", device = svg_device)
   out_file
 })
 unlist(per_disorder_plot_files, use.names = FALSE)
