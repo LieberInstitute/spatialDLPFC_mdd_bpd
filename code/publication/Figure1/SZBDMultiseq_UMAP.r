@@ -23,9 +23,9 @@ p1 <- DimPlot(seu_con, group.by="seurat_low.res",
 	scale_color_manual(values=cpList$low.res.bright)+
 	theme(axis.title=element_blank(), axis.text=element_blank(), plot.title=element_blank())
 
-ggsave(file="plots/publication/Figure1/seu-con_umap_cell-type-annotations.pdf",
-	rasterize(p1, layers="Point", dpi=300),
-	height=6, width=6)
+#ggsave(file="plots/publication/Figure1/seu-con_umap_cell-type-annotations.pdf",
+#	rasterize(p1, layers="Point", dpi=300),
+#	height=6, width=6)
 
 
 
@@ -54,7 +54,7 @@ seu_con$azimuth_super.broad <- factor(as.character(seu_con$azimuth),
                                          "InhN")
 )
 color.palette = c("Vasc"=cpList$low.res.light[["Micro.Vasc"]],
-            "Micro"=cpList$low.res.light[["L3"]],
+            "Micro"="#C28658",
             cpList$low.res.light[c("Astro")], cpList$low.res.bright["Oligo"],
             "InhN"=cpList$low.res.light[["Inhb"]],
             "ExcN"=cpList$low.res.light[["L2"]])
@@ -68,8 +68,8 @@ ggsave(file="plots/publication/Figure1/seu-con_umap_super-broad-annotations.pdf"
         rasterize(p2, layers="Point", dpi=300),
         height=6, width=6)
 
-load("processed-data/05_clustering/Seurat/seurat_SZBDMulti-seq_bipolar_MBv-filtered_processed-SCT.Rdata")
-table(distinct(seu_bd@meta.data[,c("individualID","Biological_Sex")]))
+#load("processed-data/05_clustering/Seurat/seurat_SZBDMulti-seq_bipolar_MBv-filtered_processed-SCT.Rdata")
+#table(distinct(seu_bd@meta.data[,c("individualID","Biological_Sex")]))
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time())
