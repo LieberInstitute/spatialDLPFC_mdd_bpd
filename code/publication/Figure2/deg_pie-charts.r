@@ -49,12 +49,24 @@ pbase <- ggplot(plot.df, aes(x=facet_group, y=n, fill=cellType.target))+
 	facet_wrap(vars(facet_group), scales="free")+
 	theme_void()+theme(aspect.ratio=1, legend.position="bottom")
 
-#ggsave(file="plots/publication/Figure2/deg_pie-charts.pdf", p1)
-pdf(file="plots/publication/Figure2/deg_pie-charts.pdf")
-pbase+geom_bar(stat="identity", position="fill")
-pbase+geom_bar(stat="identity", position="fill", color="white", linewidth=.3) 
-pbase+geom_bar(stat="identity", position="fill", color="black", linewidth=.3)
-dev.off()
+#pdf(file="plots/publication/Figure2/deg_pie-charts.pdf")
+#pbase+geom_bar(stat="identity", position="fill")
+#pbase+geom_bar(stat="identity", position="fill", color="white", linewidth=.3) 
+#pbase+geom_bar(stat="identity", position="fill", color="black", linewidth=.3)
+#dev.off()
+
+
+# this time save as bar plot
+p2 <- ggplot(plot.df, aes(x=facet_group, y=n, fill=cellType.target))+
+       geom_bar(stat="identity", position="fill", color="white", linewidth=.3)+
+        scale_fill_manual(values=color.palette)+
+#        coord_polar(theta="y")+
+#        facet_wrap(vars(facet_group), scales="free")+
+        theme_minimal()+theme(text=element_text(size=6), axis.text.x=element_text(angle=90, hjust=1, vjust=.5),
+		legend.position="none")
+
+ggsave(file="plots/publication/Figure2/deg_pie-charts_bar-style.pdf", p2,
+	height=3, width=5)
 
 ## Reproducibility information
 print("Reproducibility information:")
