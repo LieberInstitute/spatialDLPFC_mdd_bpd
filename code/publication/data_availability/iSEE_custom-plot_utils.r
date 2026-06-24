@@ -19,7 +19,7 @@ suppressPackageStartupMessages({
 extractLogcounts <- function(gene_name, spe_pseudo, annot_name) {
   spe_pseudo = spe_pseudo[,spe_pseudo$annotation==annot_name]
   spe_pseudo[[gene_name]] = logcounts(spe_pseudo)[gene_name,]
-  df = as.data.frame(colData(spe_pseudo)[,c("sample_id","condition","sex","domain",gene_name)])
+  df = as.data.frame(colData(spe_pseudo)[,c("sample_id","condition","sex","domain", gene_name)])
   df$domain = droplevels(df$domain)
   if(annot_name=="domain-SP") df$domain = factor(df$domain, levels=c("L1","L2","L3.4","L5","L6","WM"))
   if(annot_name=="domain-CT") df$domain = factor(df$domain, levels=c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
@@ -338,6 +338,14 @@ WHOLE_TISSUE <- function(se, gene1) {
 
 # master function to be called by iSEE
 CUSTOM_VIOLIN <- function(se, rows, columns, mode=c("whole-tissue", "domain-SP", "domain-CT")) {
+	if (is.null(columns) & is.null(rows)) {
+		return(ggplot() + theme_void() + geom_text(
+	                aes(x, y, label=label),
+	                data.frame(x=0, y=0, label="No column OR ROW data selected."),
+	                size=5)
+	        )
+	}
+
 	mode = match.arg(mode)
 	if(mode=="whole-tissue") plot_out = WHOLE_TISSUE(se, rows)
 	if(mode=="domain-SP") plot_out = DOMAIN_RESTRICTED(se, rows, "domain-SP")
