@@ -44,8 +44,10 @@ p2 <- getDetectedBoxplot(order4, spe_summ)
 
 ggsave(file="plots/publication/modules/supp_missing-degs_dotplot.pdf",
        arrangeGrob(grobs=list(p0,p1,p2), layout_matrix=matrix(c(1,1,1,1,1,2,3), ncol=7), top=NULL),
-       height=7, width=7)
+       height=7, width=6.5)
 
+
+stop("Early stopping: Just need dotplot")
 
 # now GO ORA dotplot
 ora_modules = readRDS("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_modules-DEG-subset-refined_ORA-GO-results.rda")
