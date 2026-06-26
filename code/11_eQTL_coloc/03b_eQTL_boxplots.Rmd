@@ -16,8 +16,6 @@ here::i_am(".git/HEAD")
 repo_root <- here()
 code_dir <- here("code", "11_eQTL_coloc")
 source(file.path(code_dir, "utils.R"), chdir = FALSE)
-source(file.path(code_dir, "datatable_scope_conflicts.R"), chdir = FALSE)
-configure_datatable_scope_conflict_warnings()
 
 tqtl_in_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_in")
 tqtl_out_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_out")
@@ -224,19 +222,16 @@ residualize_expression <- function(expr_mat, covar_mat) {
   y <- t(expr_mat)
 
   fit <- lm.fit(x = x, y = y)
-  coef <- fit$coefficients
-  if (is.null(dim(coef))) {
-    coef <- matrix(coef, ncol = 1L, dimnames = list(colnames(x), rownames(expr_mat)))
-  }
-  coef[is.na(coef)] <- 0
   fit_resid <- fit$residuals
   if (is.null(dim(fit_resid))) {
     fit_resid <- matrix(fit_resid, ncol = 1L, dimnames = list(colnames(expr_mat), rownames(expr_mat)))
   }
 
-  ## preserve the intercept column, matching jaffelab::cleaningY(..., P = 1).
-  intercept <- x[, "(Intercept)", drop = FALSE] %*% coef["(Intercept)", , drop = FALSE]
-  adjusted <- t(fit_resid + intercept)
+  ## Plot pure residuals. Legacy plots added the fitted intercept
+  ## (`fit_resid + x[, "(Intercept)"] %*% coef["(Intercept)", ]`), matching
+  ## jaffelab::cleaningY(..., P = 1), but that offset is a model-reference
+  ## baseline rather than a biologically interpretable domain mean.
+  adjusted <- t(fit_resid)
   rownames(adjusted) <- rownames(expr_mat)
   colnames(adjusted) <- colnames(expr_mat)
   adjusted

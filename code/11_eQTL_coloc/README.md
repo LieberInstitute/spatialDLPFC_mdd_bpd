@@ -66,7 +66,6 @@ Major workflow files:
 - `04_run_coloc.R`: run coloc ABF and sensitivity checks from full tensorQTL nominal parquet.
 - `05_coloc_explore.Rmd`: flatten coloc outputs, apply sensitivity gates, write tables, and plot strong coloc counts.
 - `check_datatable_scoping.R`: heuristic scan for risky bare-symbol data.table joins.
-- `datatable_scope_conflicts.R`: opt-in runtime diagnostics for data.table column/caller-scope name collisions.
 - `utils.R`: shared DEG, GWAS, tensorQTL, summary, and plotting helpers.
 
 ## R data.table Safety
