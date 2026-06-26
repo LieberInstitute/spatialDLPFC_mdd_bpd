@@ -847,7 +847,7 @@ message("Wrote examples: ", examples_file)
 MAPK3_GENE_ID <- "ENSG00000102882"
 MAPK3_GENE_NAME <- "MAPK3"
 MAPK3_VARIANT_ID <- "chr16:30123335:T:C"
-mapk3_contexts <- names(SEURAT_CONTEXT_TO_DATASET_ID)
+mapk3_contexts <- c("Micro.Vasc", "Astro", "L2.3", "L4", "Inhb", "L5", "L6", "Oligo")
 mapk3_dataset_ids <- unname(SEURAT_CONTEXT_TO_DATASET_ID[mapk3_contexts])
 mapk3_plot_width <- publication_pdf_width * 4
 mapk3_plot_height <- publication_pdf_height * 2
