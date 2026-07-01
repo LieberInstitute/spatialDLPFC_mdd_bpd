@@ -16,8 +16,6 @@ here::i_am(".git/HEAD")
 repo_root <- here()
 code_dir <- here("code", "11_eQTL_coloc")
 source(file.path(code_dir, "utils.R"), chdir = FALSE)
-source(file.path(code_dir, "datatable_scope_conflicts.R"), chdir = FALSE)
-configure_datatable_scope_conflict_warnings()
 
 tqtl_in_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_in")
 tqtl_out_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_out")
@@ -224,19 +222,16 @@ residualize_expression <- function(expr_mat, covar_mat) {
   y <- t(expr_mat)
 
   fit <- lm.fit(x = x, y = y)
-  coef <- fit$coefficients
-  if (is.null(dim(coef))) {
-    coef <- matrix(coef, ncol = 1L, dimnames = list(colnames(x), rownames(expr_mat)))
-  }
-  coef[is.na(coef)] <- 0
   fit_resid <- fit$residuals
   if (is.null(dim(fit_resid))) {
     fit_resid <- matrix(fit_resid, ncol = 1L, dimnames = list(colnames(expr_mat), rownames(expr_mat)))
   }
 
-  ## preserve the intercept column, matching jaffelab::cleaningY(..., P = 1).
-  intercept <- x[, "(Intercept)", drop = FALSE] %*% coef["(Intercept)", , drop = FALSE]
-  adjusted <- t(fit_resid + intercept)
+  ## Plot pure residuals. Legacy plots added the fitted intercept
+  ## (`fit_resid + x[, "(Intercept)"] %*% coef["(Intercept)", ]`), matching
+  ## jaffelab::cleaningY(..., P = 1), but that offset is a model-reference
+  ## baseline rather than a biologically interpretable domain mean.
+  adjusted <- t(fit_resid)
   rownames(adjusted) <- rownames(expr_mat)
   colnames(adjusted) <- colnames(expr_mat)
   adjusted
@@ -841,6 +836,170 @@ for (ds in unique(examples$dataset_id)) {
 }
 
 message("Wrote examples: ", examples_file)
+```
+
+```{r mapk3-all-clusters-fixed-axis, fig.width=14, fig.height=10}
+MAPK3_GENE_ID <- "ENSG00000102882"
+MAPK3_GENE_NAME <- "MAPK3"
+MAPK3_VARIANT_ID <- "chr16:30123335:T:C"
+mapk3_contexts <- c("Micro.Vasc", "Astro", "L2.3", "L4", "Inhb", "L5", "L6", "Oligo")
+mapk3_dataset_ids <- unname(SEURAT_CONTEXT_TO_DATASET_ID[mapk3_contexts])
+mapk3_plot_width <- publication_pdf_width * 4
+mapk3_plot_height <- publication_pdf_height * 2
+mapk3_size_scale <- 1.35
+mapk3_table_file <- file.path(tables_dir, "MAPK3_chr16_30123335_all_clusters.csv")
+mapk3_pdf_file <- file.path(plots_dir, "MAPK3_chr16_30123335_all_clusters.pdf")
+mapk3_png_file <- file.path(plots_dir, "MAPK3_chr16_30123335_all_clusters.png")
+
+read_mapk3_nominal_row <- function(dataset_id) {
+  parquet_file <- file.path(tqtl_out_dir, paste0(dataset_id, ".gene.cis_qtl_pairs.chr16.parquet"))
+  assert_files(parquet_file)
+  cols <- c(
+    "phenotype_id", "variant_id", "start_distance", "af", "ma_samples",
+    "ma_count", "pval_nominal", "slope", "slope_se"
+  )
+  dt <- as.data.table(arrow::read_parquet(parquet_file, col_select = tidyselect::all_of(cols)))
+  assert_cols(dt, cols, basename(parquet_file))
+  out <- dt[phenotype_id == MAPK3_GENE_ID & variant_id == MAPK3_VARIANT_ID]
+  if (nrow(out) != 1L) {
+    stop("Expected exactly one MAPK3 row in ", basename(parquet_file), "; found ", nrow(out))
+  }
+  out[, dataset_id := dataset_id]
+  out[]
+}
+
+mapk3_nominal <- rbindlist(lapply(mapk3_dataset_ids, read_mapk3_nominal_row), use.names = TRUE)
+mapk3_meta <- manifest[split == "all" & dataset_id %chin% mapk3_dataset_ids,
+                       .(dataset_id, context, split)]
+if (nrow(mapk3_meta) != length(mapk3_dataset_ids)) {
+  stop("Missing all-donor manifest rows for MAPK3 plot.")
+}
+mapk3_nominal <- mapk3_meta[mapk3_nominal, on = "dataset_id"]
+mapk3_nominal[, `:=`(
+  gene_id = MAPK3_GENE_ID,
+  gene_name = MAPK3_GENE_NAME,
+  rsid = rsid_lut$rsid[match(variant_id, rsid_lut$variant_id)],
+  rsid_source = rsid_lut$rsid_source[match(variant_id, rsid_lut$variant_id)]
+)]
+mapk3_nominal[is.na(rsid), rsid := ""]
+mapk3_nominal[is.na(rsid_source), rsid_source := ""]
+
+mapk3_bh05 <- nominal[
+  split == "all" & gene_id == MAPK3_GENE_ID & variant_id == MAPK3_VARIANT_ID,
+  .(dataset_id, fdr)
+]
+mapk3_nominal <- mapk3_bh05[mapk3_nominal, on = "dataset_id"]
+mapk3_nominal[, fdr_source := fifelse(is.na(fdr), "not_in_nominal_BH05", "nominal_BH05")]
+mapk3_nominal[, context_order_rank := match(context, mapk3_contexts)]
+setorder(mapk3_nominal, context_order_rank)
+mapk3_nominal[, context_order_rank := NULL]
+
+if (!identical(mapk3_nominal$dataset_id, mapk3_dataset_ids)) {
+  stop("MAPK3 nominal rows are not in expected Seurat context order.")
+}
+if (any(!nzchar(mapk3_nominal$rsid))) {
+  stop("Missing rsID for MAPK3 variant: ", MAPK3_VARIANT_ID)
+}
+missing_mapk3_pvar <- setdiff(MAPK3_VARIANT_ID, pvar$ID)
+if (length(missing_mapk3_pvar) > 0L) {
+  stop("MAPK3 variant missing from pvar: ", paste(missing_mapk3_pvar, collapse = ", "))
+}
+
+mapk3_dosage <- load_pgen_dosage(MAPK3_VARIANT_ID)
+mapk3_orientation <- build_orientation_lut(MAPK3_VARIANT_ID)
+mapk3_plot_parts <- lapply(mapk3_dataset_ids, function(ds) {
+  pair <- mapk3_nominal[dataset_id == ds]
+  ctx <- load_plot_context(ds, gene_ids = MAPK3_GENE_ID)
+  pobj <- plot_eQTL_boxplots(
+    ds,
+    pair,
+    axis_mode = "ref",
+    title = "auto",
+    plot_style = "publication",
+    plot_context = ctx,
+    dosage_mat = mapk3_dosage,
+    orientation_lut = mapk3_orientation
+  )
+  out <- copy(pobj$data)
+  out[, context := pair$context[1]]
+  out[]
+})
+mapk3_plot_dt <- rbindlist(mapk3_plot_parts, use.names = TRUE, fill = TRUE)
+mapk3_plot_dt[, context := factor(context, levels = mapk3_contexts)]
+mapk3_plot_dt[, genotype := factor(as.character(genotype), levels = expected_ref_genotype_labels(MAPK3_VARIANT_ID))]
+mapk3_plot_dt <- mapk3_plot_dt[!is.na(genotype)]
+
+mapk3_counts <- mapk3_plot_dt[, .(
+  n_samples = .N,
+  n_NTC = sum(DX == "NTC"),
+  n_MDD = sum(DX == "MDD"),
+  n_BD = sum(DX == "BD"),
+  expression_min = min(expression, na.rm = TRUE),
+  expression_max = max(expression, na.rm = TRUE)
+), by = .(dataset_id, context)]
+mapk3_counts[, context := as.character(context)]
+mapk3_nominal <- mapk3_counts[mapk3_nominal, on = .(dataset_id, context)]
+fwrite(mapk3_nominal, mapk3_table_file)
+
+mapk3_annot <- unique(mapk3_nominal[, .(
+  context = factor(context, levels = mapk3_contexts),
+  slope,
+  pval_nominal
+)])
+mapk3_annot[, label := sprintf("beta = %.3g\np = %.2e", slope, pval_nominal)]
+
+mapk3_variant_label <- if (nzchar(mapk3_nominal$rsid[1])) {
+  sprintf("%s (%s)", MAPK3_VARIANT_ID, mapk3_nominal$rsid[1])
+} else {
+  MAPK3_VARIANT_ID
+}
+mapk3_y_range <- range(mapk3_plot_dt$expression, finite = TRUE)
+mapk3_y_pad <- diff(mapk3_y_range) * 0.08
+if (!is.finite(mapk3_y_pad) || mapk3_y_pad == 0) mapk3_y_pad <- 0.5
+mapk3_y_limits <- mapk3_y_range + c(-mapk3_y_pad, mapk3_y_pad)
+
+mapk3_plot <- ggplot(mapk3_plot_dt, aes(x = genotype, y = expression)) +
+  geom_boxplot(
+    outlier.shape = NA, alpha = 0.5, linewidth = 0.5 * mapk3_size_scale,
+    color = "gray70", fill = "gray90"
+  ) +
+  geom_jitter(aes(color = DX), width = 0.2, height = 0, size = 2 * mapk3_size_scale, alpha = 0.8) +
+  geom_text(
+    data = mapk3_annot,
+    aes(x = Inf, y = -Inf, label = label),
+    hjust = 1.08, vjust = -0.25, size = 3 * mapk3_size_scale, inherit.aes = FALSE
+  ) +
+  facet_wrap(~ context, nrow = 2, scales = "fixed") +
+  scale_color_manual(values = dx_palette, drop = FALSE) +
+  scale_x_discrete(drop = FALSE) +
+  scale_y_continuous(limits = mapk3_y_limits, expand = expansion(mult = c(0, 0))) +
+  labs(
+    title = paste0(MAPK3_GENE_NAME, " ", mapk3_variant_label, " across Seurat clusters"),
+    x = "Genotype",
+    y = "Residualized Expression",
+    color = "Dx"
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(size = 10 * mapk3_size_scale, lineheight = 1.05),
+    axis.title = element_text(size = 11 * mapk3_size_scale),
+    axis.text = element_text(size = 9 * mapk3_size_scale),
+    legend.title = element_text(size = 10 * mapk3_size_scale),
+    legend.text = element_text(size = 9 * mapk3_size_scale),
+    strip.text = element_text(size = 9 * mapk3_size_scale)
+  )
+
+print(mapk3_plot)
+ggsave(mapk3_pdf_file, mapk3_plot, width = mapk3_plot_width, height = mapk3_plot_height, device = grDevices::cairo_pdf)
+ggsave(mapk3_png_file, mapk3_plot, width = mapk3_plot_width, height = mapk3_plot_height, dpi = 300)
+stopifnot(
+  file.exists(mapk3_table_file), file.info(mapk3_table_file)$size > 0L,
+  file.exists(mapk3_pdf_file), file.info(mapk3_pdf_file)$size > 0L,
+  file.exists(mapk3_png_file), file.info(mapk3_png_file)$size > 0L,
+  uniqueN(mapk3_plot_dt$context) == length(mapk3_contexts)
+)
+list(table = mapk3_table_file, pdf = mapk3_pdf_file, png = mapk3_png_file)
 ```
 
 ```{r prepare-deg-plot-pairs}
