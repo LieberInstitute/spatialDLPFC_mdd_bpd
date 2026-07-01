@@ -89,12 +89,15 @@ sp.upset = lapply(covars, function(x) {
 })
 names(sp.upset)[2] = "pc3_only"
 
+cat("\nNumber of DEGs (whole-tissue, domain-SP):\n")
+print(sapply(sp.upset, length))
+
 pdf(file="plots/publication/supp_covariate-selection/domain-SP_whole-tissue_F-sig-t-sig_upset-ordered.pdf")
 #print(upset(fromList(sp.upset), nsets=8, nintersects=100, mb.ratio=c(.5,.5), order.by="degree"))
 upset(fromList(sp.upset), sets=c("none","pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"), 
 	intersections=list(list("none","pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"),
 	list("pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"),
-	list("nspots"), list("chrM_ratio"), list("age"), list("BMI"), list("Smoking"), list("RIN")), keep.order=T)
+	list("nspots"), list("chrM_ratio"), list("age"), list("BMI"), list("Smoking"), list("RIN")), keep.order=T, mainbar.y.max=150)
 dev.off()
 
 ct.upset = lapply(covars, function(x) {
@@ -102,12 +105,15 @@ ct.upset = lapply(covars, function(x) {
 })
 names(ct.upset)[2] = "pc3_only"
 
+cat("\nNumber of DEGs (whole-tissue, domain-CT):\n")
+print(sapply(ct.upset, length))
+
 pdf(file="plots/publication/supp_covariate-selection/domain-CT_whole-tissue_F-sig-t-sig_upset-ordered.pdf")
 #print(upset(fromList(ct.upset), nsets=8, nintersects=100, mb.ratio=c(.5,.5), order.by="degree"))
 upset(fromList(ct.upset), sets=c("none","pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"), 
         intersections=list(list("none","pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"),
         list("pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"),
-        list("nspots"), list("chrM_ratio"), list("age"), list("BMI"), list("Smoking"), list("RIN")), keep.order=T)
+        list("nspots"), list("chrM_ratio"), list("age"), list("BMI"), list("Smoking"), list("RIN")), keep.order=T, mainbar.y.max=150)
 dev.off()
 
 
@@ -218,12 +224,15 @@ sp.upset = lapply(covars, function(x) {
 })
 names(sp.upset)[2] = "pc3_only"
 
+cat("\nNumber of DEGs (domain-restricted, domain-SP):\n")
+print(sapply(sp.upset, length))
+
 pdf(file="plots/publication/supp_covariate-selection/domain-SP_domain-restricted_F-sig-t-sig_upset-ordered.pdf")
 #print(upset(fromList(sp.upset), nsets=8, nintersects=100, mb.ratio=c(.5,.5), order.by="degree"))
 upset(fromList(sp.upset), sets=c("none","pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"), 
 	intersections=list(list("none","pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"),
 	list("pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"),
-	list("nspots"), list("chrM_ratio"), list("age"), list("BMI"), list("Smoking"), list("RIN")), keep.order=T)
+	list("nspots"), list("chrM_ratio"), list("age"), list("BMI"), list("Smoking"), list("RIN")), keep.order=T, mainbar.y.max=100)
 dev.off()
 
 ct.upset = lapply(covars, function(x) {
@@ -231,12 +240,15 @@ ct.upset = lapply(covars, function(x) {
 })
 names(ct.upset)[2] = "pc3_only"
 
+cat("\nNumber of DEGs (domain-restricted, domain-CT):\n")
+print(sapply(ct.upset, length))
+
 pdf(file="plots/publication/supp_covariate-selection/domain-CT_domain-restricted_F-sig-t-sig_upset-ordered.pdf")
 #print(upset(fromList(ct.upset), nsets=8, nintersects=100, mb.ratio=c(.5,.5), order.by="degree"))
 upset(fromList(ct.upset), sets=c("none","pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"), 
 	intersections=list(list("none","pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"),
 	list("pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"),
-	list("nspots"), list("chrM_ratio"), list("age"), list("BMI"), list("Smoking"), list("RIN")), keep.order=T)
+	list("nspots"), list("chrM_ratio"), list("age"), list("BMI"), list("Smoking"), list("RIN")), keep.order=T, mainbar.y.max=100)
 dev.off()
 
 
