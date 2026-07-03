@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=test_iSEE-plot_master-function
+#SBATCH --job-name=
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -20,7 +20,6 @@ module list
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/data_availability/save_example-spe.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/data_availability/add_modules-regulons_for-samui.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/data_availability/iSEE_app_datasets.r
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/data_availability/test_iSEE_plots.r
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/data_availability/merge_iSEE-datasets.r
 
 echo "**** Job ends ****"
