@@ -71,3 +71,25 @@ DR_SUMMARY <- function(se, ri, ci, annot_name = c("domain-SP","domain-CT")) {
   df1$gene_name = factor(df1$gene_name, levels=ri)
   return(df1[order(df1$gene_name),])
 }
+
+addDEGsToRowData <- function(spe_pseudo) {
+  l1 <- lapply(c("domain-SP","domain-CT"), function(annot_name) {
+    mdata = as.data.frame(metadata(spe_pseudo)[[paste0(annot_name, "_DE")]])
+    list("wt"=mdata[,5]<.05 & rowSums(mdata[, grep("whole.tissue_t", colnames(mdata))]<.05)>0,
+         "dr"=mdata[,13]<.05 & rowSums(mdata[,grep("domain.restricted_t", colnames(mdata))]<.05)>0)
+  })
+  stopifnot(identical(names(l1[[1]]$wt), names(l1[[2]]$wt)))
+  wt.deg = factor(paste(l1[[1]]$wt, l1[[2]]$wt), levels=c("FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE TRUE"),
+                  labels=c("none","domain-CT","domain-SP","domain-SP & domain-CT"))
+  stopifnot(identical(names(l1[[1]]$dr), names(l1[[2]]$dr)))
+  dr.deg = factor(paste(l1[[1]]$dr, l1[[2]]$dr), levels=c("FALSE FALSE","FALSE TRUE","TRUE FALSE","TRUE TRUE"),
+                  labels=c("none","domain-CT","domain-SP","domain-SP & domain-CT"))
+  
+  rdata = rowData(spe_pseudo)
+  stopifnot(identical(names(l1[[1]]$wt), rdata$gene_name))
+  rdata$whole.tissue_DEG = wt.deg
+  identical(names(l1[[1]]$dr), rdata$gene_name)
+  rdata$domain.restricted_DEG = dr.deg
+  
+  return(rdata)
+}

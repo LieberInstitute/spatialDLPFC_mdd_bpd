@@ -60,6 +60,8 @@ spe2 <- registerAppOptions(spe2, panel.color=c(RowDataTable="#000000",
                                                DomainRestrictedDE="#99999C",
                                                WholeTissueDE="#99999C"))
 
+rowData(spe2) <- addDEGsToRowData(spe2)
+
 iSEE(spe2, initial=initial, 
      colormap=ecm,
      appTitle = "pseudobulk dlPFC spatial data: NTC/MDD/BD",
