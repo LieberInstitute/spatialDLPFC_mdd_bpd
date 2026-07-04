@@ -53,16 +53,15 @@ tmp$variable_f = factor(tmp$variable, levels=rev(c("smoothed_k9_1663","detected"
                         labels=rev(c("domain","detected","nspots","sum","chrM_ratio","sample_id","slide","seq",
                                      "age","Smoking","RIN","condition","sex","BMI")))
 
+tmp$PC = factor(tmp$PC, levels=c("PC3","PC2","PC1"))
 
-p1 <- ggplot(tmp, aes(y=variable_f, x=variance))+
-  geom_bar(stat="identity", width=.9)+
-  #scale_fill_manual(values=c(bio.colors, exp.colors, donor.colors), guide="none")+
-  facet_wrap(vars(PC), ncol=3)+
+p1 <- ggplot(tmp, aes(y=variable_f, x=variance, fill=PC))+
+  geom_bar(stat="identity", position="dodge", width=.9)+
+  scale_fill_manual(values=c("#e41a1c","#377eb8","#a65628"))+
   coord_cartesian(xlim=c(0,100))+
   labs(x="variance explained", y="experimental variables", title="domain-SP")+
-  theme_minimal()+theme(panel.grid.minor=element_blank(), #panel.grid.major.y=element_blank(),
-                        text=element_text(size=6), #plot.margin = margin(.5,1,.5,.5, "cm"), 
-                        panel.spacing = unit(.5, "cm"))
+  theme_minimal()+theme(panel.grid.minor=element_blank(), panel.grid.major.y=element_blank(),
+                        text=element_text(size=6), legend.key.size = unit(6,"pt"))
 
 # now domain-CT
 var.pcs2 <- getExplanatoryPCs(spe_se, dimred="PCA_1663", variables= c("seurat_label", core.vars, 
@@ -76,17 +75,20 @@ tmp2$variable_f = factor(tmp2$variable, levels=rev(c("seurat_label","detected","
                          labels=rev(c("domain","detected","nspots","sum","chrM_ratio","sample_id","slide","seq",
                                       "age","Smoking","RIN","condition","sex","BMI")))
 
+tmp2$PC = factor(tmp2$PC, levels=c("PC3","PC2","PC1"))
 
-p2 <- ggplot(tmp2, aes(y=variable_f, x=variance))+
-  geom_bar(stat="identity", width=.9)+
-  facet_wrap(vars(PC), ncol=3)+
+p2 <- ggplot(tmp2, aes(y=variable_f, x=variance, fill=PC))+
+  geom_bar(stat="identity", position="dodge", width=.9)+
+  scale_fill_manual(values=c("#e41a1c","#377eb8","#a65628"))+
   coord_cartesian(xlim=c(0,100))+
   labs(x="variance explained", y="experimental variables", title="domain-CT")+
-  theme_minimal()+theme(panel.grid.minor=element_blank(), #panel.grid.major.y=element_blank(),
-                        text=element_text(size=6), #plot.margin = margin(.5,1,.5,.5, "cm"), 
-                        panel.spacing = unit(.5, "cm"))
+  theme_minimal()+theme(panel.grid.minor=element_blank(), panel.grid.major.y=element_blank(),
+                        text=element_text(size=6), legend.key.size = unit(6,"pt"))
 
-ggsave(file="plots/publication/supp_covariate-selection/top3-pcs_bar-plots.pdf", grid.arrange(p1, p2, ncol=2), height=4, width=6.5)
+pdf(file="plots/publication/supp_covariate-selection/top3-pcs_bar-plots.pdf", height=3, width=3)
+grid.arrange(p1+theme(legend.position="none"), p2+theme(legend.position="none"), ncol=2)
+grid.arrange(p1, p2, ncol=2)
+dev.off()
 
 cat("\n\nReproducibility information:\n")
 Sys.time()
