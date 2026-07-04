@@ -243,7 +243,7 @@ names(ct.upset)[2] = "pc3_only"
 cat("\nNumber of DEGs (domain-restricted, domain-CT):\n")
 print(sapply(ct.upset, length))
 
-pdf(file="plots/publication/supp_covariate-selection/domain-CT_domain-restricted_F-sig-t-sig_upset-ordered.pdf")
+pdf(file="plots/publication/supp_covariate-selection/domain-CT_domain-restricted_F-sig-t-sig_upset-ordered.pdf", width=3, height=3)
 #print(upset(fromList(ct.upset), nsets=8, nintersects=100, mb.ratio=c(.5,.5), order.by="degree"))
 upset(fromList(ct.upset), sets=c("none","pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"), 
 	intersections=list(list("none","pc3_only","nspots","chrM_ratio","age","BMI","Smoking","RIN"),
@@ -262,9 +262,9 @@ p2 <- ggplot(deg.df, aes(x=covar, y=n, fill=annotation))+
         geom_bar(stat="identity", position="dodge")+
         scale_fill_manual(values=c("domain-SP"="black", "domain-CT"="grey50"))+
         facet_wrap(vars(model), ncol=1)+
-        theme_bw()
+        theme_bw()+theme(text=element_text(size=6), legend.position="bottom")
 
-ggsave(file="plots/publication/supp_covariate-selection/number-F-sig-t-sig.pdf", p2)
+ggsave(file="plots/publication/supp_covariate-selection/number-F-sig-t-sig.pdf", p2, width=3, height=3)
 
 #plot.df2 = filter(la.all, adj.P.Val<.05) %>% group_by(covar, annotation) %>% tally()
 ## combine all results for L-R

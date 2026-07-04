@@ -5,18 +5,21 @@ suppressPackageStartupMessages({
 	library(scater)
 	library(dplyr)
 	library(ggplot2)
+	library(gridExtra)
 })
-
+set.seed(123)
 
 load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
 colnames(colData(spe_pseudo))[grep("subsets_mito_percent", colnames(colData(spe_pseudo)))] = "chrM_ratio"
 spe_pseudo$pc3 = reducedDim(spe_pseudo, "PCA_1663")[,3]
 spe_sm <- spe_pseudo
 
-#need to remove age from colData because of significant digits change
-demo = read.csv("processed-data/publication/demographics.csv")
-new.cdata = merge(colData(spe_sm)[,setdiff(colnames(colData(spe_sm)), c("age","RIN"))], demo, sort=F)
-stopifnot(identical(spe_sm$total, new.cdata$total))
+#add additional covars
+demo = read.csv("processed-data/publication/supp_tables/demographics.csv")
+
+new.cdata = merge(colData(spe_sm)[,c("sample_id","brnum","condition","sex","smoothed_k9_1663","nspots","chrM_ratio","pc3","detected","sum","slide","seq")],
+        demo[,c("sample_id","brnum","sex","age","RIN","BMI","Smoking")], sort=F)
+stopifnot(identical(spe_sm$pc3, new.cdata$pc3))
 colData(spe_sm) <- new.cdata
 
 
@@ -26,14 +29,16 @@ load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_nor
 colnames(colData(spe_pseudo))[grep("subsets_mito_percent", colnames(colData(spe_pseudo)))] = "chrM_ratio"
 spe_pseudo$pc3 = reducedDim(spe_pseudo, "PCA_1663")[,3]
 spe_se <- spe_pseudo
-new.cdata = merge(colData(spe_se)[,setdiff(colnames(colData(spe_se)), c("age","RIN"))], demo, sort=F)
-stopifnot(identical(spe_se$total, new.cdata$total))
+
+new.cdata = merge(colData(spe_se)[,c("sample_id","brnum","condition","sex","seurat_label","nspots","chrM_ratio","pc3","detected","sum","slide","seq")],
+        demo[,c("sample_id","brnum","sex","age","RIN","BMI","Smoking")], sort=F)
+stopifnot(identical(spe_se$pc3, new.cdata$pc3))
 colData(spe_se) <- new.cdata
 
 
 # define variable groups
 core.vars = c("condition", "sex", "sample_id")
-other.vars = c("nspots", "chrM_ratio", "pc3","age", "BMI", "RIN", "Smoking", "slide", "seq")
+other.vars = c("nspots", "chrM_ratio","age", "BMI", "RIN", "Smoking", "slide", "seq")
 
 
 # PC variance explained
@@ -44,22 +49,22 @@ tmp = rbind(cbind.data.frame("PC"=rep("PC1", ncol(var.pcs)), variance=var.pcs["P
             cbind.data.frame("PC"=rep("PC3", ncol(var.pcs)), variance=var.pcs["PC3",]))
 tmp$variable = rep(colnames(var.pcs), 3)
 tmp$variable_f = factor(tmp$variable, levels=rev(c("smoothed_k9_1663","detected","nspots","sum","chrM_ratio","sample_id","slide","seq",
-                                                   "age","Smoking","RIN","condition","sex","BMI","pc3")),
+                                                   "age","Smoking","RIN","condition","sex","BMI")),
                         labels=rev(c("domain","detected","nspots","sum","chrM_ratio","sample_id","slide","seq",
-                                     "age","Smoking","RIN","condition","sex","BMI","pc3")))
+                                     "age","Smoking","RIN","condition","sex","BMI")))
 
 
-p1 <- ggplot(filter(tmp, variable_f!="pc3"), aes(y=variable_f, x=variance))+
-  geom_bar(stat="identity")+
+p1 <- ggplot(tmp, aes(y=variable_f, x=variance))+
+  geom_bar(stat="identity", width=.9)+
   #scale_fill_manual(values=c(bio.colors, exp.colors, donor.colors), guide="none")+
   facet_wrap(vars(PC), ncol=3)+
   coord_cartesian(xlim=c(0,100))+
-  labs(x="variance explained", y="experimental variables", title="PC3: PRECAST (smoothed)")+
-  theme_minimal()+theme(panel.grid.minor=element_blank(), panel.grid.major.y=element_blank(),
-                        axis.text.x=element_text(size=8), plot.margin = margin(.5,1,.5,.5, "cm"), 
+  labs(x="variance explained", y="experimental variables", title="domain-SP")+
+  theme_minimal()+theme(panel.grid.minor=element_blank(), #panel.grid.major.y=element_blank(),
+                        text=element_text(size=6), #plot.margin = margin(.5,1,.5,.5, "cm"), 
                         panel.spacing = unit(.5, "cm"))
 
-
+# now domain-CT
 var.pcs2 <- getExplanatoryPCs(spe_se, dimred="PCA_1663", variables= c("seurat_label", core.vars, 
                                                                       "detected","sum", other.vars))
 tmp2 = rbind(cbind.data.frame("PC"=rep("PC1", ncol(var.pcs2)), variance=var.pcs2["PC1",]),
@@ -67,24 +72,21 @@ tmp2 = rbind(cbind.data.frame("PC"=rep("PC1", ncol(var.pcs2)), variance=var.pcs2
              cbind.data.frame("PC"=rep("PC3", ncol(var.pcs2)), variance=var.pcs2["PC3",]))
 tmp2$variable = rep(colnames(var.pcs2), 3)
 tmp2$variable_f = factor(tmp2$variable, levels=rev(c("seurat_label","detected","nspots","sum","chrM_ratio","sample_id","slide","seq",
-                                                     "age","Smoking","RIN","condition","sex","BMI","pc3")),
+                                                     "age","Smoking","RIN","condition","sex","BMI")),
                          labels=rev(c("domain","detected","nspots","sum","chrM_ratio","sample_id","slide","seq",
-                                      "age","Smoking","RIN","condition","sex","BMI","pc3")))
+                                      "age","Smoking","RIN","condition","sex","BMI")))
 
 
-p2 <- ggplot(filter(tmp2, variable_f!="pc3"), aes(y=variable_f, x=variance))+
-  geom_bar(stat="identity")+
+p2 <- ggplot(tmp2, aes(y=variable_f, x=variance))+
+  geom_bar(stat="identity", width=.9)+
   facet_wrap(vars(PC), ncol=3)+
   coord_cartesian(xlim=c(0,100))+
-  labs(x="variance explained", y="experimental variables", title="PC3: Seurat label")+
-  theme_minimal()+theme(panel.grid.minor=element_blank(), panel.grid.major.y=element_blank(),
-                        axis.text.x=element_text(size=8), plot.margin = margin(.5,1,.5,.5, "cm"), 
+  labs(x="variance explained", y="experimental variables", title="domain-CT")+
+  theme_minimal()+theme(panel.grid.minor=element_blank(), #panel.grid.major.y=element_blank(),
+                        text=element_text(size=6), #plot.margin = margin(.5,1,.5,.5, "cm"), 
                         panel.spacing = unit(.5, "cm"))
 
-pdf(file="plots/publication/supp_covariate-selection/top3-pc3_bar-plots.pdf")
-p1
-p2
-dev.off()
+ggsave(file="plots/publication/supp_covariate-selection/top3-pcs_bar-plots.pdf", grid.arrange(p1, p2, ncol=2), height=4, width=6.5)
 
 cat("\n\nReproducibility information:\n")
 Sys.time()
