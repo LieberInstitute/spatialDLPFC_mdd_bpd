@@ -86,10 +86,10 @@ outdir <- "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_md
 dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
 
 ggsave(
-  filename = file.path(outdir, "PCP4_TAC1_density.png"),
+  filename = file.path(outdir, "PCP4_TAC1_density.pdf"),
   plot = p_density,
   width = 6,
-  height = 10,
-  dpi = 300
+  height = 10#,
+#  dpi = 300
 )
 
