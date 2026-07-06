@@ -65,7 +65,7 @@ DR_SUMMARY <- function(se, ri, ci, annot_name = c("domain-SP","domain-CT")) {
     return(r_sub)
   }))
   df1$annotation = annot_name
-  df1 = df1[,c("gene_name","annotation","domain","dx-sex-domain_F_stat","dx-sex-domain_F_adjp","F_NTC.MDD","F_NTC.BPD","F_MDD.BPD","M_NTC.MDD","M_NTC.BPD","M_MDD.BPD")]
+  df1 = df1[,c("gene_name","annotation","dx-sex-domain_F_stat","dx-sex-domain_F_adjp","domain","F_NTC.MDD","F_NTC.BPD","F_MDD.BPD","M_NTC.MDD","M_NTC.BPD","M_MDD.BPD")]
   
   rownames(df1) <- NULL
   df1$gene_name = factor(df1$gene_name, levels=ri)

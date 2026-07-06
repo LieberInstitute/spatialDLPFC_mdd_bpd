@@ -1,5 +1,4 @@
 # initial files
-source("custom_functions.r")
 
 WT_GENERATOR <- createCustomTable(WT_SUMMARY, className = "WholeTissueDE", fullName="Whole-tissue DE results")
 DR_GENERATOR <- createCustomTable(DR_SUMMARY, className = "DomainRestrictedDE", fullName="Domain-restricted DE results")
