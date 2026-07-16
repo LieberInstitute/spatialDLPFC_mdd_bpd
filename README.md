@@ -3,7 +3,7 @@
 
 ## Goal: [goal statement]
 
-![Experimental Overview](https://github.com/LieberInstitute/spatialDLPFC_SCZ/blob/gh-pages/img/overview.png?raw=true)  
+![Experimental Overview](https://github.com/LieberInstitute/spatialDLPFC_mdd_bpd/blob/gh-pages/images/graphical_abstract.png?raw=true)  
 
 ## Study Design  
 
