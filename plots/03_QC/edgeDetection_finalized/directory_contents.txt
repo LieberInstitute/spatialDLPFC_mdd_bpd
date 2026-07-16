@@ -1,8 +1,0 @@
-3MAD-outliers_genes.pdf #spot plots (all samples) of 3MAD outlier results from log10(# genes) metric with results from batch= sample_id and batch=slide
-3MAD-outliers_umi.pdf #spot plots (all samples) of 3MAD outlier results from log10(UMI) metric with results from batch= sample_id and batch=slide
-directory_contents.txt
-edges-detected_3MAD-genes.pdf #spot plots (all samples) of edges detected from 3MAD outliers based on log10(# genes) metric
-edges-detected_3MAD-genes-shifted.pdf #spot plots (all samples)	of edges detected from 3MAD outliers based on log10(# genes) metric where the spatial coords (array_col) were shifted so that the spatial coords are not a staggered array but a continuous square matrix
-problem-areas_3MAD-genes.pdf #spot plots (all samples) of problem areas detected from 3MAD outliers based on log10(# genes) metric, where color is a continuous indicator of the size of the clump
-problem_areas_size-grouped.pdf #spot plots (all samples) of problem areas detected from 3MAD outliers based on log10(# genes) metric, where color is a discrete indicator of binned clump/problem area size
-slide_edges_pngs/ #directory with single PNG images for each slide, containing spot plots of 3MAD results for UMI and # genes metrics, as well as the resulting edges identified after
