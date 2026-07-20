@@ -216,7 +216,7 @@ write_final_workbook <- function(sheets, out_file, apply_number_formats = FALSE)
   invisible(out_file)
 }
 
-verify_xlsx <- function(out_file, expected_sheets, expected_nrows) {
+verify_xlsx <- function(out_file, expected_sheets, expected_nrows, expected_columns) {
   actual_sheets <- openxlsx::getSheetNames(out_file)
   if (!identical(actual_sheets, expected_sheets)) {
     stop(
@@ -229,6 +229,13 @@ verify_xlsx <- function(out_file, expected_sheets, expected_nrows) {
   observed <- lapply(expected_sheets, function(sheet) {
     dt <- as.data.table(openxlsx::read.xlsx(out_file, sheet = sheet))
     if (ncol(dt) == 0L) stop("Sheet has no headers: ", sheet, " in ", out_file)
+    if (!identical(names(dt), expected_columns[[sheet]])) {
+      stop(
+        "Unexpected columns in ", sheet, " in ", out_file,
+        ". Expected: ", paste(expected_columns[[sheet]], collapse = ", "),
+        "; observed: ", paste(names(dt), collapse = ", ")
+      )
+    }
     if (nrow(dt) != expected_nrows[[sheet]]) {
       stop(
         "Unexpected row count for ", sheet, " in ", out_file,
@@ -258,6 +265,55 @@ paths <- list(
 
 cis_independent <- read_required(paths$cis_independent)
 nominal_BH05 <- read_required(paths$nominal_BH05)
+
+export_variant_ids <- unique(c(cis_independent$variant_id, nominal_BH05$variant_id))
+variant_info <- load_genotype_variant_info(
+  plink2_prefix = plink2_prefix,
+  use_cache = TRUE,
+  build_if_missing = FALSE
+)
+rsid_lut <- variant_info[
+  data.table(variant_id = export_variant_ids),
+  on = "variant_id",
+  nomatch = 0L,
+  .(variant_id, rsid, rsid_source)
+]
+if (uniqueN(rsid_lut$variant_id) != length(export_variant_ids)) {
+  missing_variant_ids <- setdiff(export_variant_ids, rsid_lut$variant_id)
+  stop(
+    "Genotype variant cache is missing exported eQTL variants: ",
+    paste(head(missing_variant_ids, 20L), collapse = ", "),
+    if (length(missing_variant_ids) > 20L) " ..." else ""
+  )
+}
+setkey(rsid_lut, variant_id)
+
+add_genotype_rsids <- function(dt, label) {
+  out <- copy(dt)
+  out[rsid_lut, on = "variant_id", `:=`(
+    rsid = i.rsid,
+    rsid_source = i.rsid_source
+  )]
+  if (anyNA(out$rsid) || anyNA(out$rsid_source)) {
+    stop(label, " has missing rsID annotations after joining the genotype variant cache")
+  }
+  bad_rsids <- unique(out[nzchar(rsid) & !grepl("^rs[0-9]+$", rsid), rsid])
+  if (length(bad_rsids) > 0L) {
+    stop(label, " has malformed rsIDs: ", paste(head(bad_rsids, 20L), collapse = ", "))
+  }
+  out
+}
+
+cis_independent <- add_genotype_rsids(cis_independent, "cis_independent")
+nominal_BH05 <- add_genotype_rsids(nominal_BH05, "nominal_BH05")
+
+rsid_qc <- unique(rbindlist(list(
+  cis_independent[, .(variant_id, rsid)],
+  nominal_BH05[, .(variant_id, rsid)]
+)))
+if (anyDuplicated(rsid_qc$variant_id)) {
+  stop("Exported eQTL variants have conflicting rsID annotations")
+}
 map_cis_summary <- read_required(paths$map_cis_summary)
 map_independent_summary <- read_required(paths$map_independent_summary)
 map_significant_summary <- read_required(paths$map_significant_summary)
@@ -291,19 +347,19 @@ names(gwas_gene_sets) <- disorders
 ```{r eqtl-final-sheets}
 assert_cols(
   cis_independent,
-  c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id"),
+  c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "rsid"),
   "cis_independent"
 )
 assert_cols(
   nominal_BH05,
-  c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "fdr"),
+  c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "rsid", "fdr"),
   "nominal_BH05"
 )
 
 front_order(
   cis_independent,
   c(
-    "dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id",
+    "dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "rsid",
     "source", "pair_provenance", "cis_supported", "indep_supported",
     "DEG", "MDD_DEG", "BD_DEG",
     "MDD_gwasVar_strict", "MDD_gwasVar_exp", "MDD_gwasGene", "MDD_gwas_strict", "MDD_gwas_exp",
@@ -314,7 +370,7 @@ front_order(
 front_order(
   nominal_BH05,
   c(
-    "dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id",
+    "dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "rsid",
     "DEG",
     "MDD_gwasVar_strict", "MDD_gwasGene", "MDD_gwas_strict",
     "BD_gwasVar_strict", "BD_gwasGene", "BD_gwas_strict",
@@ -673,7 +729,12 @@ if (coloc_check[expected != actual, .N] > 0L) {
 
 list(
   observed_counts = observed_counts,
-  n_intersecting_gene_rows = nrow(intersecting_genes)
+  n_intersecting_gene_rows = nrow(intersecting_genes),
+  rsid_qc = data.table(
+    n_unique_variants = nrow(rsid_qc),
+    n_variants_with_rsid = rsid_qc[nzchar(rsid), .N],
+    n_variants_without_rsid = rsid_qc[!nzchar(rsid), .N]
+  )
 )
 ```
 
@@ -694,7 +755,7 @@ make_cis_independent_public <- function(dt) {
   )]
 
   cols <- c(
-    "context", "gene_id", "gene_name", "variant_id", "eQTL_signal_class",
+    "context", "gene_id", "gene_name", "variant_id", "rsid", "eQTL_signal_class",
     "DEG", "MDD_DEG", "BD_DEG",
     "MDD_gwasVar_strict", "MDD_gwasVar_exp", "MDD_gwasGene", "MDD_gwas_strict", "MDD_gwas_exp",
     "BD_gwasVar_strict", "BD_gwasVar_exp", "BD_gwasGene", "BD_gwas_strict", "BD_gwas_exp",
@@ -709,7 +770,7 @@ make_cis_independent_public <- function(dt) {
 
 make_nominal_public <- function(dt) {
   cols <- c(
-    "context", "gene_id", "gene_name", "variant_id", "DEG",
+    "context", "gene_id", "gene_name", "variant_id", "rsid", "DEG",
     "MDD_gwasVar_strict", "MDD_gwasGene", "MDD_gwas_strict",
     "BD_gwasVar_strict", "BD_gwasGene", "BD_gwas_strict",
     "SCZD_gwasVar_strict", "SCZD_gwasGene", "SCZD_gwas_strict",
@@ -809,17 +870,24 @@ write_final_workbook(coloc_sheets, coloc_xlsx, apply_number_formats = TRUE)
 eqtl_verify <- verify_xlsx(
   eqtl_xlsx,
   expected_sheets = names(eqtl_sheets),
-  expected_nrows = lapply(eqtl_sheets, nrow)
+  expected_nrows = lapply(eqtl_sheets, nrow),
+  expected_columns = lapply(eqtl_sheets, names)
 )
 coloc_verify <- verify_xlsx(
   coloc_xlsx,
   expected_sheets = names(coloc_sheets),
-  expected_nrows = lapply(coloc_sheets, nrow)
+  expected_nrows = lapply(coloc_sheets, nrow),
+  expected_columns = lapply(coloc_sheets, names)
 )
 
 list(
   eqtl_results = eqtl_xlsx,
   coloc_results = coloc_xlsx,
+  rsid_qc = data.table(
+    n_unique_variants = nrow(rsid_qc),
+    n_variants_with_rsid = rsid_qc[nzchar(rsid), .N],
+    n_variants_without_rsid = rsid_qc[!nzchar(rsid), .N]
+  ),
   eqtl_verify = eqtl_verify,
   coloc_verify = coloc_verify
 )

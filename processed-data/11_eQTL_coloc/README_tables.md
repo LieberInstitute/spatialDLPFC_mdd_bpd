@@ -65,16 +65,18 @@ Sheets:
   `context`, `gene_id`, and `variant_id`. Lead cis rows use tensorQTL
   `map_cis` with `qval < 0.05`; independent rows require the parent lead cis
   result to have `qval_parent < 0.05` and the independent signal to have
-  `pval_perm < 0.05`. The public sheet keeps association statistics,
-  allele-frequency, distance, DEG/GWAS support, `lead_cis_qval`, and a compact
-  `eQTL_signal_class` field. TensorQTL beta-shape/DF internals, duplicate
-  identifiers, and source-support booleans remain in the source CSVs rather than
-  the published workbook.
+  `pval_perm < 0.05`. The public sheet reports the coordinate-and-allele
+  `variant_id` together with its genotype-VCF `rsid` annotation and keeps
+  association statistics, allele-frequency, distance, DEG/GWAS support,
+  `lead_cis_qval`, and a compact `eQTL_signal_class` field. TensorQTL
+  beta-shape/DF internals, duplicate identifiers, and source-support booleans
+  remain in the source CSVs rather than the published workbook.
 - `nominal_BH05`: one row per nominal eQTL gene-variant pair retained at
   BH-FDR `< 0.05` within dataset/context. The public sheet keeps `context`,
-  gene/variant identifiers, DEG and strict GWAS support flags, distance,
-  allele-frequency, nominal p-value, BH-FDR, slope, and slope standard error.
-  Redundant identifiers and allele-count QC columns remain in the source CSV.
+  gene identifiers, `variant_id`, `rsid`, DEG and strict GWAS support flags,
+  distance, allele-frequency, nominal p-value, BH-FDR, slope, and slope standard
+  error. Redundant identifiers and allele-count QC columns remain in the source
+  CSV.
 - `eQTL_summary`: one row per `eQTL_type`/`context`, with `n_samples`,
   `n_genes_tested`, and count-only summaries for significant pairs, independent
   signals, nominal pairs, eGenes, DEGs, GWAS support, and combined DEG+GWAS
@@ -89,6 +91,12 @@ The final eQTL workbook is curated for manuscript/package use and intentionally
 keeps fewer columns than the source CSV/TSV tables. This keeps the workbook
 readable and below common spreadsheet conversion limits while preserving full
 auditability in the processed source files listed above.
+
+For both row-level eQTL sheets, `variant_id` is the canonical genotype key and
+`rsid` is joined by exact chromosome, position, reference allele, and alternate
+allele from `processed-data/00_genotypes/plink2/merged_maf05_variant_info.csv.gz`.
+The `rsid` cell is blank when the exact genotype-VCF record has no dbSNP RS
+annotation; an rsID from another allele at the same position is never substituted.
 
 DEG annotations:
 
