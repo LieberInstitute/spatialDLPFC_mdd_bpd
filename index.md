@@ -1,8 +1,6 @@
 # spatialDLPFC_mdd_bpd
 
 
-## Goal: [goal statement]
-
 ![Experimental Overview](./images/graphical_abstract.png)  
 
 ## Study Design  
