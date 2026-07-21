@@ -7,7 +7,7 @@
 
 ## Study Design  
 
-[Study appropriate]
+Major depressive disorder (MDD) and bipolar disorder (BD) are common neuropsychiatric conditions with complex etiology and heterogenous presentation, and dysregulated circuit activity in the dorsolateral prefrontal cortex (dlPFC) is linked to both MDD and BPD. The laminar organization of dlPFC circuits was captured in this study using the 10x Genomics Visium platform to generate spatial RNA-sequencing data in postmortem tissue from adult human brain donors (N=119). We investigated sex-specific gene expression changes associated with MDD and BPD in the context of the dlPFC cortical layers to identify converging and unique molecular signatures of each disorder.
 
 ## Interactive Websites
 
@@ -31,8 +31,6 @@ Public [globus endpoint](https://research.libd.org/globus/) to access R objects 
 SpaceRanger processed data outputs, can be accessed via Gene Expression Omnibus (GEO) under accessions [GSE333974](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE333974). 
 Zenodo Archive for this project can be found at [link](link). Project data was also uploaded to the National Institute of Mental Health Data Archive (NDA) and can be found at [10.15154/m7k5-3z24](https://dx.doi.org/10.15154/m7k5-3z24).
 
-## Background:  
-[if desired] 
 
 ## Contact
 
@@ -42,11 +40,3 @@ answers. If you have any questions, please ask them at
 and refrain from emailing us. Thank you again for your interest in our
 work!
 
-
-
-# spatialDLPFC_mdd_bpd
-spatialDLPFC_mdd_bpd
-
-## Internal:
-
-JHPCE location: /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/
