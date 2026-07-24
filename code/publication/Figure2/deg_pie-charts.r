@@ -39,7 +39,8 @@ plot.df = left_join(plot.df, mratio.sn[,c("gene_name","gene","MeanRatio","cellTy
 colSums(is.na(plot.df))
 
 
-plot.df = group_by(plot.df, facet_group, cellType.target) %>% tally()
+plot.df = distinct(plot.df, facet_group, cellType.target, gene_name) %>% 
+	group_by(facet_group, cellType.target) %>% tally()
 
 # plot
 pbase <- ggplot(plot.df, aes(x=facet_group, y=n, fill=cellType.target))+
