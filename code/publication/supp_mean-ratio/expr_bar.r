@@ -69,9 +69,18 @@ plot.df = left_join(plot.df, mratio.sn[,c("gene_name","gene","MeanRatio","cellTy
 
 tally.df = group_by(plot.df, consensus_group, source, cluster_source, cellType.target) %>% tally()
 
+#use darker oligo color palette because of white outline (consistent with Fig2)
+color.palette = c("Vasc"=cpList$low.res.light[["Micro.Vasc"]],
+            "Micro"="#C28658",
+            cpList$low.res.light[c("Astro")], cpList$low.res.bright["Oligo"],
+            "InhN"=cpList$low.res.light[["Inhb"]],
+            "ExcN"=cpList$low.res.light[["L2"]],
+            "multi"="grey"
+)
+
 p1 <- ggplot(tally.df, aes(x=cluster_source, y=n, fill=cellType.target))+
   geom_bar(stat="identity", position="fill", color="white", linewidth=.3)+
-  scale_fill_manual(values=c(sn.col.pal, "multi"="grey"))+
+  scale_fill_manual(values=color.palette)+
   facet_wrap(vars(consensus_group), scales="free_x")+
   theme_minimal()+theme(text=element_text(size=6), axis.text.x=element_text(angle=90, hjust=1, vjust=.5),
                         legend.position="none")
