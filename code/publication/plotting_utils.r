@@ -70,7 +70,7 @@ getDotplot <- function(ordered_genes, de.df, color_scale_limits=c(-2.5,2.5)) {
                                   "L5","L5","L6","L6","WM/O","WM/O"))
 	dot.df$size2 = as.numeric(as.character(factor(paste(dot.df$source, dot.df$is_sig), 
                                               levels=c("sm FALSE","se FALSE","sm TRUE","se TRUE"),
-                                              labels=c(1,1,4,3))))
+                                              labels=c(1,1,3,2))))
 	p1 <- ggplot(dot.df, aes(x=x_labels, y=gene_name, fill=logFC, size=size2))+
 	  geom_count(aes(shape=source, color=is_sig))+
 	  scale_shape_manual(values=c("sm"=23, "se"=21))+
