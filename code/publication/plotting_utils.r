@@ -64,6 +64,12 @@ getConsensus <- function(module_genes, sig.df, return_DF=FALSE) {
 
 getDotplot <- function(ordered_genes, de.df, color_scale_limits=c(-2.5,2.5)) {
 	dot.df = filter(de.df, gene_name %in% ordered_genes) %>% mutate(source=factor(source, levels=c("sm","se"))) 
+
+        # add some rows with x_label empty
+        dot.df2 = dot.df[1:2,]
+        dot.df2$cluster_source = "empty"
+        dot.df = bind_rows(dot.df, dot.df2)
+
 	dot.df$is_sig = dot.df$adj.P.Val2<.05
 	dot.df$gene_name = factor(dot.df$gene_name, levels=rev(ordered_genes))
 	dot.df$x_labels = factor(dot.df$cluster_source, levels=all_clusters_empty,
@@ -74,11 +80,6 @@ getDotplot <- function(ordered_genes, de.df, color_scale_limits=c(-2.5,2.5)) {
 	dot.df$size2 = as.numeric(as.character(factor(paste(dot.df$source, dot.df$is_sig), 
                                               levels=c("sm FALSE","se FALSE","sm TRUE","se TRUE"),
                                               labels=c(1,1,3,2))))
-
-	# add some rows with x_label empty
-	dot.df2 = dot.df[1:2,]
-	dot.df2$x_labels = "empty"
-	dot.df = bind_rows(dot.df, dot.df2)
 
 	p1 <- ggplot(dot.df, aes(x=x_labels, y=gene_name, fill=logFC, size=size2))+
 	  geom_count(aes(shape=source, color=is_sig))+
