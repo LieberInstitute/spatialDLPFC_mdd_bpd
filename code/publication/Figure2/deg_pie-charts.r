@@ -10,14 +10,18 @@ cpList <- readRDS("plots/colorPalettes.rds")
 # load DEGs
 source("code/09_DEG_GRN/load_DEGs.r")
 
-# facet by consensus clusters
-all_clusters = c("L-A sm","L-A se","Micro.Vasc se","Astro se","L1 sm",
-                 "L2 sm","L2.3 se","L3.4 sm","L4 se",
-                 "Inhb se","L5 sm","L5 se","L6 sm","L6 se","WM sm","Oligo se")
-plot.df = mutate(sig.df, facet_group=factor(cluster_source, levels=all_clusters, 
-	labels=c("L-A","L-A","M.V","Ast","L1",
-		"L2/3","L2/3","L3/4","L3/4",
-		"Inb","L5","L5","L6","L6","WM/O","WM/O")))
+## facet by consensus clusters
+#all_clusters = c("L-A sm","L-A se","Micro.Vasc se","Astro se","L1 sm",
+#                 "L2 sm","L2.3 se","L3.4 sm","L4 se",
+#                 "Inhb se","L5 sm","L5 se","L6 sm","L6 se","WM sm","Oligo se")
+#plot.df = mutate(sig.df, facet_group=factor(cluster_source, levels=all_clusters, 
+#	labels=c("L-A","L-A","M.V","Ast","L1",
+#		"L2/3","L2/3","L3/4","L3/4",
+#		"Inb","L5","L5","L6","L6","WM/O","WM/O")))
+
+plot.df = filter(sig.df, source=="se") %>%
+	mutate(facet_group=factor(cluster, levels=c("L-A", "Micro.Vasc", "Astro", "L2.3", "L4", "Inhb", "L5", "L6", "Oligo"),
+	labels=c("all","M/V","Ast","L2/3","L4","Inb","L5","L6","Olg")))
 
 # load mean ratio results
 mratio.sn = read.csv("processed-data/06_pseudobulk/SZBDMulti-seq/SZBD-control_azimuth-super-broad_mean-ratio.csv") %>%
@@ -66,7 +70,7 @@ p2 <- ggplot(plot.df, aes(x=facet_group, y=n, fill=cellType.target))+
         theme_minimal()+theme(text=element_text(size=6), axis.text.x=element_text(angle=90, hjust=1, vjust=.5),
 		legend.position="none")
 
-ggsave(file="plots/publication/Figure2/deg_pie-charts_bar-style.pdf", p2,
+ggsave(file="plots/publication/Figure2/deg_pie-charts_bar-style_domain-CT.pdf", p2,
 	height=3, width=5)
 
 ## Reproducibility information
