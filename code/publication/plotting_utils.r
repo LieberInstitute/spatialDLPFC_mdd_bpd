@@ -10,6 +10,10 @@ all_clusters = c("L-A sm","L-A se","Micro.Vasc se","Astro se","L1 sm",
                  "L2 sm","L2.3 se","L3.4 sm","L4 se",
                  "Inhb se","L5 sm","L5 se","L6 sm","L6 se","WM sm","Oligo se")
 
+all_clusters_empty = c("L-A sm","L-A se","empty","Micro.Vasc se","Astro se","L1 sm",
+                 "L2 sm","L2.3 se","L3.4 sm","L4 se",
+                 "Inhb se","L5 sm","L5 se","L6 sm","L6 se","WM sm","Oligo se")
+
 # pre-reqs for prop detected boxplot
 load("processed-data/06_pseudobulk/spe_n119_pseudo-dotplot_sample-id.Rdata")
 
@@ -62,15 +66,20 @@ getDotplot <- function(ordered_genes, de.df, color_scale_limits=c(-2.5,2.5)) {
 	dot.df = filter(de.df, gene_name %in% ordered_genes) %>% mutate(source=factor(source, levels=c("sm","se"))) 
 	dot.df$is_sig = dot.df$adj.P.Val2<.05
 	dot.df$gene_name = factor(dot.df$gene_name, levels=rev(ordered_genes))
-	dot.df$x_labels = factor(dot.df$cluster_source, levels=all_clusters,
-                         labels=c("L-A","L-A","M.V","Ast","L1",
-                                  #"L2","L2.3","L3.4","L4",
+	dot.df$x_labels = factor(dot.df$cluster_source, levels=all_clusters_empty,
+                         labels=c("L-A","L-A","empty","M.V","Ast","L1",
                                   "L2/3","L2/3","L3/4","L3/4",
                                   "Inb",
                                   "L5","L5","L6","L6","WM/O","WM/O"))
 	dot.df$size2 = as.numeric(as.character(factor(paste(dot.df$source, dot.df$is_sig), 
                                               levels=c("sm FALSE","se FALSE","sm TRUE","se TRUE"),
                                               labels=c(1,1,3,2))))
+
+	# add some rows with x_label empty
+	dot.df2 = dot.df[1:2,]
+	dot.df2$x_labels = "empty"
+	dot.df = bind_rows(dot.df, dot.df2)
+
 	p1 <- ggplot(dot.df, aes(x=x_labels, y=gene_name, fill=logFC, size=size2))+
 	  geom_count(aes(shape=source, color=is_sig))+
 	  scale_shape_manual(values=c("sm"=23, "se"=21))+
