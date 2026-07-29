@@ -1,6 +1,6 @@
 # GWAS Gene and Variant List Provenance
 
-This file documents the paper-derived gene and variant lists staged beside the BPD, MDD, and SCZD GWAS summary statistics. The goal is to make the eQTL/GWAS overlap terminology explicit and to prevent broad method-specific gene lists from being mistaken for high-confidence GWAS gene lists.
+This file documents the paper-derived gene and variant lists staged beside the BD, MDD, and SCZD GWAS summary statistics. The goal is to make the eQTL/GWAS overlap terminology explicit and to prevent broad method-specific gene lists from being mistaken for high-confidence GWAS gene lists.
 
 Exact variant overlap remains the most precise GWAS evidence. The `GWASg` gene-list overlap is a complementary gene-level bridge for eGenes and DEG overlaps when the eQTL gene is named by a paper-derived high-confidence or prioritized GWAS gene list.
 
@@ -8,9 +8,9 @@ Exact variant overlap remains the most precise GWAS evidence. The `GWASg` gene-l
 
 | Disorder | Recommended high-confidence/prioritized gene list | Rows | Unique gene symbols | Why this list |
 |---|---|---:|---:|---|
-| BPD | `BPD/bpd2024_prioritized_credible_genes.tsv` or identical-source `BPD/bpd2024_gene_lists.tsv` | 116 | 116 | Paper-derived credible/prioritized genes from Table S31; compact enough for direct eGene overlap. |
+| BD | `BD/bpd2024_prioritized_credible_genes.tsv` or identical-source `BD/bpd2024_gene_lists.tsv` | 116 | 116 | Paper-derived credible/prioritized genes from Table S31; compact enough for direct eGene overlap. |
 | MDD | `MDD/mdd2025_high_confidence_genes.tsv` | 296 | 295 | Cell Table S8B high-confidence genes; this is the accepted default and the only MDD list that should be treated as high-confidence here. |
-| SCZD | `SCZD/sczd2022_prioritized_genes.tsv` | 120 | 120 | Focused Table S12 `Prioritised` list; restrictive, but closest analogue to BPD credible/prioritized and MDD high-confidence genes. |
+| SCZD | `SCZD/sczd2022_prioritized_genes.tsv` | 120 | 120 | Focused Table S12 `Prioritised` list; restrictive, but closest analogue to BD credible/prioritized and MDD high-confidence genes. |
 
 Use these recommended lists when the analysis question is: "Does this eGene match a GWAS high-confidence/prioritized disease gene?" Use exact variant overlap separately when the analysis question is: "Does this eQTL variant itself match a significant GWAS variant?"
 
@@ -32,7 +32,7 @@ The selection rule is:
 3. Keep broad lists documented for provenance and sensitivity checks, but do not call them "high-confidence" unless the paper does.
 4. If a disorder has both broad and focused lists, use the focused list as the high-confidence analogue unless the analysis is explicitly a sensitivity analysis.
 
-For SCZD, this means the 120-gene `Prioritised` list is recommended for high-confidence eGene overlap. It is restrictive, but it is the best terminology/method analogue to BPD credible/prioritized genes and MDD high-confidence genes. The broader SCZD all-criteria and combined transcriptomic lists remain useful for sensitivity/provenance, not as the default high-confidence list.
+For SCZD, this means the 120-gene `Prioritised` list is recommended for high-confidence eGene overlap. It is restrictive, but it is the best terminology/method analogue to BD credible/prioritized genes and MDD high-confidence genes. The broader SCZD all-criteria and combined transcriptomic lists remain useful for sensitivity/provenance, not as the default high-confidence list.
 
 ## MDD Failure Mode to Avoid
 
@@ -51,26 +51,26 @@ This documentation does not change code behavior.
 
 Current constants in `code/11_eQTL_coloc/utils.R` define both source and standardized gene-list roles:
 
-- BPD source `broad`: `BPD/bpd2024_gene_lists.tsv`
-- BPD source `prio`: `BPD/bpd2024_prioritized_credible_genes.tsv`
+- BD source `broad`: `BD/bpd2024_gene_lists.tsv`
+- BD source `prio`: `BD/bpd2024_prioritized_credible_genes.tsv`
 - MDD source `broad`: `MDD/mdd2025_high_confidence_genes.tsv`
 - MDD source `prio`: `MDD/mdd2025_high_confidence_genes.tsv`
 - SCZD source `broad`: `SCZD/sczd2022_gene_lists.tsv`
 - SCZD source `prio`: `SCZD/sczd2022_prioritized_genes.tsv`
 
-`loadGWASGeneList(..., use_prio = FALSE)` currently loads the configured `broad` role. For MDD, `broad` and `prio` both point to the high-confidence list. For BPD, the `broad` and `prio` source files are effectively the same 116-row credible/prioritized list. For SCZD, `broad` and `prio` differ substantially; this README recommends the 120-gene `prio` file for the high-confidence analogue, but no code default is changed here.
+`loadGWASGeneList(..., use_prio = FALSE)` currently loads the configured `broad` role. For MDD, `broad` and `prio` both point to the high-confidence list. For BD, the `broad` and `prio` source files are effectively the same 116-row credible/prioritized list. For SCZD, `broad` and `prio` differ substantially; this README recommends the 120-gene `prio` file for the high-confidence analogue, but no code default is changed here.
 
 ## Shared Extraction Rules
 
 - Gene files use the common schema in `*_gene_lists.tsv` and related focused files.
 - Variant files use the common schema in `*_variant_lists.tsv` and related split files.
-- Source coordinates were preserved as published. For BPD and MDD, source variant coordinates are hg19 where present. For SCZD, prioritized FINEMAP variant coordinates are GRCh37/hg19.
+- Source coordinates were preserved as published. For BD and MDD, source variant coordinates are hg19 where present. For SCZD, prioritized FINEMAP variant coordinates are GRCh37/hg19.
 - `hg38_*` fields were filled by matching source rsIDs to the local GRCh38 BCFs with `bcftools query`; allele matching was used when source alleles were available.
 - `primary_list=yes` marks a source list that was central/broad in extraction. It does not automatically mean the list is the recommended high-confidence eGene-overlap list.
 
 ## Available Gene Lists
 
-### BPD 2024/2025
+### BD 2024/2025
 
 Source paper: O'Connell et al., Nature, doi:10.1038/s41586-024-08468-9.
 
@@ -79,14 +79,19 @@ URL: `https://static-content.springer.com/esm/art%3A10.1038%2Fs41586-024-08468-9
 
 | File | Source table/list | Method label | Rows | Unique gene symbols | Role | Recommendation |
 |---|---|---|---:|---:|---|---|
-| `BPD/bpd2024_gene_lists.tsv` | Table S31, multi-ancestry prioritized credible genes | credible gene prioritization | 116 | 116 | configured source `broad`; same source as focused file | Recommended BPD high-confidence/prioritized overlap list. |
-| `BPD/bpd2024_prioritized_credible_genes.tsv` | Table S31, same rows as above | credible gene prioritization | 116 | 116 | configured source `prio` | Recommended BPD high-confidence/prioritized overlap list. |
+| `BD/bpd2024_gene_lists.tsv` | Table S31, multi-ancestry prioritized credible genes | credible gene prioritization | 116 | 116 | configured source `broad`; same source as focused file | Recommended BD high-confidence/prioritized overlap list. |
+| `BD/bpd2024_prioritized_credible_genes.tsv` | Table S31, same rows as above | credible gene prioritization | 116 | 116 | configured source `prio` | Recommended BD high-confidence/prioritized overlap list. |
 
-BPD caveats:
+BD caveats:
 
-- The local public BPD summary statistics BCF is `BPD/bip2024_eur_no23andMe.hg38.bcf`, so exact variant matching excludes 23andMe/self-report data.
-- The paper supplement is not limited to the public no23andMe file. It contains including-self-report/23andMe and excluding-self-report/23andMe lists.
-- For direct eGene overlap, the 116-row credible/prioritized gene list is appropriately compact; no larger BPD gene-list alternative is currently staged.
+- Current exact-variant matching uses the reconstructed integrated European
+  `BD/bip2024_eur.hg38.bcf`, including the supplied 23andMe component.
+- The integrated BD BCF remains pre-DENTIST and is not the exact final paper
+  file. The public `BD/bip2024_eur_no23andMe.hg38.bcf` remains available for
+  sensitivity comparisons.
+- The paper supplement contains including-self-report/23andMe and
+  excluding-self-report/23andMe lists.
+- For direct eGene overlap, the 116-row credible/prioritized gene list is appropriately compact; no larger BD gene-list alternative is currently staged.
 
 ### MDD 2025
 
@@ -106,7 +111,10 @@ Source downstream results Figshare: `https://doi.org/10.6084/m9.figshare.2708961
 
 MDD caveats:
 
-- The local public MDD BCF is based on `MDD/pgc-mdd2025_no23andMe_eur_v3-49-24-11.tsv.gz`, so exact variant matching excludes 23andMe.
+- Current exact-variant matching uses the reconstructed integrated European
+  `MDD/pgc-mdd2025_eur_v3-49-24-11.hg38.bcf`, including the supplied 23andMe
+  component. The public no-23andMe BCF remains available for sensitivity
+  comparisons.
 - The gene and variant lists here were extracted from paper-level downstream Figshare/supplement results, not derived from the local public no23andMe BCF.
 - Preserve the source labels (`multi-ancestry`, `European ancestry`, `full_div`, `full_eur`) rather than relabeling downstream lists as with23andMe/no23andMe.
 
@@ -134,8 +142,8 @@ Variant files complement gene-list overlaps but serve a different purpose. They 
 
 | File | Rows | Description |
 |---|---:|---|
-| `BPD/bpd2024_variant_lists.tsv` | 934 | Published locus/signal rows from Tables S5, S6, S8, S11, and S12. |
-| `BPD/bpd2024_finemapped_credible_variants.tsv` | 295 | Fine-mapped credible variant rows from Tables S28 and S29. |
+| `BD/bpd2024_variant_lists.tsv` | 934 | Published locus/signal rows from Tables S5, S6, S8, S11, and S12. |
+| `BD/bpd2024_finemapped_credible_variants.tsv` | 295 | Fine-mapped credible variant rows from Tables S28 and S29. |
 | `MDD/mdd2025_variant_lists.tsv` | 31,588 | COJO independent signals and fine-mapped credible causal variants. |
 | `MDD/mdd2025_cojo_independent_signals.tsv` | 1,319 | COJO selected independent signals from multi-ancestry and European ancestry sheets. |
 | `MDD/mdd2025_finemap_credible_causal_variants.tsv` | 30,269 | Fine-mapped credible-causal variants from diverse and EUR analyses. |
@@ -145,7 +153,7 @@ GRCh38 matching status for split variant files:
 
 | File | Match summary |
 |---|---|
-| `BPD/bpd2024_finemapped_credible_variants.tsv` | 289 rsIDs found, alleles not checked; 6 rsIDs not found in local BCF |
+| `BD/bpd2024_finemapped_credible_variants.tsv` | 289 rsIDs found, alleles not checked; 6 rsIDs not found in local BCF |
 | `MDD/mdd2025_cojo_independent_signals.tsv` | 1,311 rsID+allele matches; 8 rsIDs not found in local BCF |
 | `MDD/mdd2025_finemap_credible_causal_variants.tsv` | 30,128 rsID+allele matches; 141 rsIDs not found in local BCF |
 | `SCZD/sczd2022_prioritized_variants.tsv` | 1,623 rsID+allele matches; 54 rsIDs not found in local BCF; 1 row without rsID |
@@ -162,8 +170,8 @@ Data row counts, excluding the header row:
 
 ```bash
 for f in \
-  BPD/bpd2024_gene_lists.tsv \
-  BPD/bpd2024_prioritized_credible_genes.tsv \
+  BD/bpd2024_gene_lists.tsv \
+  BD/bpd2024_prioritized_credible_genes.tsv \
   MDD/mdd2025_high_confidence_genes.tsv \
   MDD/mdd2025_gene_lists.tsv \
   SCZD/sczd2022_gene_lists.tsv \
@@ -177,8 +185,8 @@ Unique nonblank `gene_symbol` counts:
 
 ```bash
 for f in \
-  BPD/bpd2024_gene_lists.tsv \
-  BPD/bpd2024_prioritized_credible_genes.tsv \
+  BD/bpd2024_gene_lists.tsv \
+  BD/bpd2024_prioritized_credible_genes.tsv \
   MDD/mdd2025_high_confidence_genes.tsv \
   MDD/mdd2025_gene_lists.tsv \
   SCZD/sczd2022_gene_lists.tsv \
@@ -199,7 +207,7 @@ done
 List names, method labels, and `primary_list` values:
 
 ```bash
-for f in BPD/bpd2024_gene_lists.tsv MDD/mdd2025_high_confidence_genes.tsv \
+for f in BD/bpd2024_gene_lists.tsv MDD/mdd2025_high_confidence_genes.tsv \
   MDD/mdd2025_gene_lists.tsv SCZD/sczd2022_gene_lists.tsv SCZD/sczd2022_prioritized_genes.tsv
 do
   echo "## $f"

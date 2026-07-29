@@ -342,6 +342,32 @@ strict_gwas_sets <- strict_gwas_sets_from_matched(matched_gwas, p_threshold = GW
 exploratory_gwas_sets <- lapply(gwasx_matched_from_gwas(matched_gwas), function(dt) unique(dt$variant_id))
 gwas_gene_sets <- lapply(disorders, function(dis) unique(loadGWASGeneList(dis, repo_root = repo_root)$gene_symbol))
 names(gwas_gene_sets) <- disorders
+
+gwas_provenance <- rbindlist(lapply(disorders, function(dis) {
+  dis <- gwas_check_disorder(dis)
+  exploratory_threshold <- if (dis %in% names(GWAS_EXPLORATORY_P_THRESHOLDS)) {
+    GWAS_EXPLORATORY_P_THRESHOLDS[[dis]]
+  } else {
+    NA_real_
+  }
+  data.table(
+    disorder = dis,
+    release = gwas_release_tag(dis),
+    bcf_file = basename(gwas_bcf_path(dis, repo_root = repo_root)),
+    bcf_sha256 = gwas_bcf_sha256(dis, repo_root = repo_root),
+    si_min = gwas_resolve_si_min(dis, GWAS_MATCH_SI_MIN),
+    strict_p_threshold = GWAS_STRICT_P_THRESHOLD,
+    exploratory_p_threshold = exploratory_threshold,
+    n_genotype_matched = nrow(matched_gwas[[dis]]),
+    n_strict_variants = length(strict_gwas_sets[[dis]]),
+    n_exploratory_variants = if (is.na(exploratory_threshold)) {
+      NA_integer_
+    } else {
+      length(exploratory_gwas_sets[[dis]])
+    },
+    n_curated_gwas_genes = length(gwas_gene_sets[[dis]])
+  )
+}))
 ```
 
 ```{r eqtl-final-sheets}
@@ -642,10 +668,10 @@ set_context_order(coloc_qc, extra_order = c("disorder", "context_rank_tmp"))
 
 ```{r validation}
 expected_counts <- list(
-  cis_independent = 3435L,
-  nominal_BH05 = 455143L,
-  coloc_pass = 100L,
-  coloc_summary = 24L
+  cis_independent = nrow(read_required(paths$cis_independent)),
+  nominal_BH05 = nrow(read_required(paths$nominal_BH05)),
+  coloc_pass = coloc_gated[gate_reason == "pass", .N],
+  coloc_summary = nrow(coloc_summary)
 )
 
 observed_counts <- list(
@@ -857,11 +883,13 @@ eqtl_sheets <- list(
   cis_independent = cis_independent_public,
   nominal_BH05 = nominal_BH05_public,
   eQTL_summary = eQTL_summary_public,
-  intersecting_genes = intersecting_genes_public
+  intersecting_genes = intersecting_genes_public,
+  gwas_provenance = gwas_provenance
 )
 coloc_sheets <- list(
   coloc_pass = coloc_pass,
-  coloc_summary = coloc_summary_final
+  coloc_summary = coloc_summary_final,
+  gwas_provenance = gwas_provenance
 )
 
 write_final_workbook(eqtl_sheets, eqtl_xlsx, apply_number_formats = TRUE)

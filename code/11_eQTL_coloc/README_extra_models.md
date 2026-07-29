@@ -8,6 +8,10 @@ Default workflow remains Seurat clusters, all donors, and the `broad_interaction
 
 The MBv project studies sex-specific gene expression changes associated with MDD and BPD across dlPFC cortical layers.
 
+`BPD` is retained here only where it is the literal diagnosis label in source
+expression-model files and contrast names. GWAS traits and newly generated
+overlap outputs use the standardized abbreviation `BD`.
+
 Data summary:
 
 - 119 adult postmortem human brain donors.

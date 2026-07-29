@@ -3,6 +3,11 @@
 This note documents how exploratory MDD and BD GWAS exact-variant overlaps are
 represented in the current Seurat eQTL tables.
 
+Current MDD and BD exact-variant statistics use the integrated European BCFs
+containing the supplied 23andMe component. The BD reconstruction remains
+pre-DENTIST. Paper-derived curated gene lists are unchanged by this GWAS
+summary-statistics update.
+
 The authoritative downstream tables are under
 `processed-data/11_eQTL_coloc/seurat/tables/`:
 
@@ -67,17 +72,17 @@ contexts from this study, not to GWAS cohort strata.
 | ARL17B | Inhb | gene-list-only eQTL variant | `chr17:46025316:C:CT` |  |  |  |  |  |  |  |  |  |  |
 | ATF4 | Oligo | gene-list-only eQTL variant | `chr22:39530856:G:A` |  |  |  |  |  |  |  |  |  |  |
 | ATF4 | Astro;Inhb;L2.3;L5 | gene-list-only eQTL variant | `chr22:39544222:G:A` |  |  |  |  |  |  |  |  |  |  |
-| MAPK3 | Astro;L2.3;L4;L5 | exact eQTL=SCZD GWAS variant | `chr16:30123335:T:C` | rs28529403 | 4.106956e-10 |  |  |  |  | Astro;L2.3;L4;L5 | `chr16:30123335:T:C` | rs28529403 | 7.313917e-08 |
-| MAPK3 | Inhb | gene-list-only eQTL variant | `chr16:30311847:G:C` |  |  | Inhb | `chr16:30311847:G:C` | rs148788997 | 5.908946e-07 |  |  |  |  |
+| MAPK3 | Astro;L2.3;L4;L5 | exact eQTL=SCZD GWAS variant | `chr16:30123335:T:C` | rs28529403 | 4.106956e-10 |  |  |  |  |  |  |  |  |
+| MAPK3 | Inhb | gene-list-only eQTL variant | `chr16:30311847:G:C` |  |  | Inhb | `chr16:30311847:G:C` | rs148788997 | 1.825744e-06 |  |  |  |  |
 
 ## Main Interpretation
 
-The exact SCZD eQTL/GWAS variant overlap that also appears in an exploratory
-mood-disorder match is MAPK3 `rs28529403` / `chr16:30123335:T:C`, which appears
-in BD at `p = 7.313917e-08` and in the same Seurat contexts as the SCZD row:
-Astro, L2.3, L4, and L5.
+No exact SCZD eQTL/GWAS variant in this simplified table also has an integrated
+MDD or BD same-variant match at `p < 1e-5`. The prior no-23andMe BD match for
+MAPK3 `rs28529403` / `chr16:30123335:T:C` is absent from the integrated BD
+cache.
 
-The MAPK3 Inhb variant `rs148788997` / `chr16:30311847:G:C` appears in MDD at
-`p = 5.908946e-07`, but that SCZD row is gene-list support rather than an exact
-SCZD variant overlap. ARL17B and ATF4 do not have matching MDD or BD variant
-overlaps in the available `p < 1e-5` caches.
+The MAPK3 Inhb variant `rs148788997` / `chr16:30311847:G:C` appears in the
+integrated MDD results at `p = 1.825744e-06`, but that SCZD row is gene-list
+support rather than an exact SCZD variant overlap. ARL17B and ATF4 do not have
+matching integrated MDD or BD variant overlaps in the `p < 1e-5` caches.

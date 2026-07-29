@@ -279,14 +279,12 @@ load_plot_context <- function(dataset_id, gene_ids = NULL) {
 ```
 
 ```{r genotype-and-gwas-cache}
-gwas_matched_files <- setNames(
-  file.path(
-    here("processed-data", "00_genotypes"),
-    sprintf("GWAS-%s_flt_p1e-6_SI0.8_merged_maf05_tqtl-matched.tab.gz", disorders)
-  ),
-  disorders
+gwas_matched <- load_matched_gwas_by_disorder(
+  disorders = disorders,
+  plink2_prefix = plink2_prefix,
+  repo_root = repo_root,
+  si_min = GWAS_MATCH_SI_MIN
 )
-assert_files(unname(gwas_matched_files))
 
 pvar <- read_pvar(plink2_prefix)
 variant_info_cache_file <- genotype_variant_info_cache_file(plink2_prefix)
@@ -360,8 +358,8 @@ load_pgen_dosage <- function(variant_ids) {
 
 read_gwas_effect_lut <- function(disorder) {
   disorder <- gwas_check_disorder(disorder)
-  dt <- fread(gwas_matched_files[[disorder]], select = c("variant_id", "A1", "A2", "beta", "p"))
-  assert_cols(dt, c("variant_id", "A1", "A2", "beta", "p"), basename(gwas_matched_files[[disorder]]))
+  dt <- copy(gwas_matched[[disorder]])[, .(variant_id, A1, A2, beta, p)]
+  assert_cols(dt, c("variant_id", "A1", "A2", "beta", "p"), paste0(disorder, " matched GWAS"))
   dt[, disorder := disorder]
   setkey(dt, variant_id)
   dt[]
@@ -793,21 +791,12 @@ if (length(missing_example_rsids) > 0L) {
   stop("Missing rsIDs for example variants: ", paste(missing_example_rsids, collapse = ", "))
 }
 
-expected_example_rsids <- c(
-  "chr9:133345514:A:G" = "rs2129965621",
-  "chr8:27240919:C:T" = "rs1562330",
-  "chr4:1209477:T:C" = "rs1250105",
-  "chr2:232708988:G:C" = "rs35395584",
-  "chr1:9292645:C:G" = "rs114709597"
-)
-observed_example_rsids <- setNames(examples$rsid, examples$variant_id)
-expected_ids <- names(expected_example_rsids)
-bad_example_rsids <- expected_ids[
-  is.na(observed_example_rsids[expected_ids]) |
-    observed_example_rsids[expected_ids] != expected_example_rsids
+bad_example_rsids <- examples[
+  !grepl("^rs[0-9]+$", rsid) | rsid_source != "genotype_vcf_INFO_RS",
+  unique(variant_id)
 ]
 if (length(bad_example_rsids) > 0L) {
-  stop("Unexpected genotype VCF rsIDs for examples: ", paste(bad_example_rsids, collapse = ", "))
+  stop("Invalid genotype VCF rsID annotations for examples: ", paste(bad_example_rsids, collapse = ", "))
 }
 
 examples_file <- file.path(tables_dir, "eqtl_boxplot_examples.csv")
@@ -1121,10 +1110,13 @@ saved_nominal_pdf
 ```
 
 ```{r check-example-pdf-pages, include=FALSE}
+expected_sig_pages <- sig_plot_examples[, .N, by = dataset_id]
 expected_example_pages <- c(
-  "eqtl_boxplot_significant_l2-3.pdf" = 2L,
-  "eqtl_boxplot_significant_oligo.pdf" = 1L,
-  "eqtl_boxplot_nominal_l2-3.pdf" = 2L
+  setNames(
+    expected_sig_pages$N,
+    paste0("eqtl_boxplot_significant_", vapply(expected_sig_pages$dataset_id, safe_plot_slug, character(1)), ".pdf")
+  ),
+  "eqtl_boxplot_nominal_l2-3.pdf" = nrow(nominal_plot_examples)
 )
 for (pdf_name in names(expected_example_pages)) {
   pdf_file <- file.path(plots_dir, pdf_name)

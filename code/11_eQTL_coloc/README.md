@@ -32,6 +32,19 @@ Canonical inputs:
 - `processed-data/ref/granges.qs2`
 - `processed-data/ref/GWAS/{BD,MDD,SCZD}`
 
+Current mood-disorder GWAS inputs include the supplied European 23andMe
+component:
+
+- BD: `processed-data/ref/GWAS/BD/bip2024_eur.hg38.bcf`, release tag
+  `full23andMe_preDENTIST`.
+- MDD: `processed-data/ref/GWAS/MDD/pgc-mdd2025_eur_v3-49-24-11.hg38.bcf`,
+  release tag `full23andMe`.
+
+The integrated BD and MDD BCFs have no combined imputation-quality statistic.
+Their cache names therefore use `SInone`; `SI >= 0.8` remains active for SCZD.
+The reconstructed BD file remains pre-DENTIST and is not the exact final paper
+summary-statistics file.
+
 Canonical Seurat eQTL paths:
 
 - `processed-data/11_eQTL_coloc/seurat/tqtl_in`
@@ -63,6 +76,7 @@ Major workflow files:
 - `03_eqtl_explore.Rmd`: build primary cis, independent, and significant-pair eQTL summary tables.
 - `03a_nominal_eQTLs.Rmd`: gather nominal all-donor Seurat eQTLs.
 - `03b_eQTL_boxplots.Rmd`: select example eQTL pairs and render genotype boxplots.
+- `03c_GWAS_relaxed_eQTLs.R`: rebuild exploratory MDD/BD `p < 1e-5` exact-variant overlap tables.
 - `04_run_coloc.R`: run coloc ABF and sensitivity checks from full tensorQTL nominal parquet.
 - `05_coloc_explore.Rmd`: flatten coloc outputs, apply sensitivity gates, write tables, and plot strong coloc counts.
 - `check_datatable_scoping.R`: heuristic scan for risky bare-symbol data.table joins.
@@ -194,7 +208,8 @@ Coloc defaults:
 - SNPs: all overlapping nominal cis SNPs within the 1 Mb tensorQTL window
 - minimum overlap: 10 SNPs per locus
 - minimum eQTL evidence: at least one finite `abs(slope / slope_se) >= 2`
-- GWAS filter: `SI >= 0.8`, no p-value cutoff
+- GWAS filter: no p-value cutoff; `SI >= 0.8` where SI is available, and no SI
+  filter for integrated BD/MDD because combined SI is unavailable
 - method: `coloc.abf` plus `coloc::sensitivity`, not SuSiE
 - parallelism: default `--n-cores 4`; set explicitly with `--n-cores N`
 
@@ -206,11 +221,14 @@ those library threads to 1 before package loading so a run such as
 Per-disorder outputs are written under:
 
 ```text
-processed-data/11_eQTL_coloc/seurat/coloc/<DIS>/coloc_<dataset_id>.qs2
 processed-data/11_eQTL_coloc/seurat/coloc/<DIS>/coloc_<dataset_id>.runmeta.tsv.gz
 processed-data/11_eQTL_coloc/seurat/coloc/<DIS>/coloc_<dataset_id>.sensitivity.tsv.gz
+processed-data/11_eQTL_coloc/seurat/coloc/<DIS>/coloc_<dataset_id>.flat.tsv.gz
+processed-data/11_eQTL_coloc/seurat/coloc/<DIS>/coloc_<dataset_id>.errors.tsv.gz
 processed-data/11_eQTL_coloc/seurat/coloc/<DIS>/coloc_<dataset_id>.complete
 ```
+
+Full `coloc_<dataset_id>.qs2` objects are written only with `--write-full-qs2`.
 
 Completed datasets are skipped only when the result, metadata, sensitivity, and
 `.complete` marker all exist. If the marker is missing but the three primary
@@ -241,7 +259,8 @@ Default outputs are written under:
 - `processed-data/11_eQTL_coloc/seurat/coloc/tables`
 - `plots/11_eQTL_coloc`
 
-GWAS mixed-overlap details are documented in `README_GWAS-gene-lists.md`.
+GWAS mixed-overlap details are documented in `README_GWAS_exploratory.md` and
+`processed-data/ref/GWAS/README_genes_variants_lists.md`.
 
 ## DEG Support
 

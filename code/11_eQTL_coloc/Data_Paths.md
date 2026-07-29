@@ -2,7 +2,7 @@
   *   The SpatialExperiment object containing expression data used for Differential Gene Expression (DGE), specifically *before* applying any `filterByExpr` filter.
   *   Genotype data, if available in the project tree.
   *   The final DEG summary files and author DEG union list used to compare eQTL findings with DEGs.
-  *   GWAS summary statistics for MDD and BPD (for eventual colocalization analysis).
+  *   GWAS summary statistics for MDD and BD colocalization.
 
 ## Data locations provided
 
@@ -52,5 +52,10 @@ Use `gene_id` as the primary overlap key against tensorQTL phenotype IDs, with `
 
 4. GWAS Summary Statistics (for Colocalization)
 GWAS reference files are staged under `processed-data/ref/GWAS`.
-Details: the current eQTL/GWAS overlap and planned colocalization steps use European-ancestry BPD, MDD, and SCZD `.hg38.bcf` files with matching `.bcf.csi` indexes and paper-derived GWAS gene-list TSVs.
+Details: the current eQTL/GWAS overlap and colocalization steps use
+European-ancestry BD, MDD, and SCZD `.hg38.bcf` files with matching `.bcf.csi`
+indexes and paper-derived GWAS gene-list TSVs. BD and MDD use the integrated
+European files containing the supplied 23andMe component. The BD reconstruction
+is pre-DENTIST. Combined imputation quality is unavailable for the integrated
+BD and MDD files, so their project cache tag is `SInone`.
 Future analyses may also evaluate a newer multivariate/cross-disorder psychiatric GWAS from the Psychiatric Genomics Consortium (PGC).

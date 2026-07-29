@@ -53,16 +53,23 @@ AUTHOR_UNION_REL_PATH <- file.path(
 GENE_RANGES_REL_PATH <- file.path("processed-data", "ref", "granges.qs2")
 
 GWAS_BCF_FILES <- c(
-  BD = file.path("BD", "bip2024_eur_no23andMe.hg38.bcf"),
-  MDD = file.path("MDD", "pgc-mdd2025_no23andMe_eur_v3-49-24-11.hg38.bcf"),
+  BD = file.path("BD", "bip2024_eur.hg38.bcf"),
+  MDD = file.path("MDD", "pgc-mdd2025_eur_v3-49-24-11.hg38.bcf"),
   SCZD = file.path("SCZD", "PGC3_SCZ_wave3.european.autosome.public.v3.hg38.bcf")
+)
+
+GWAS_RELEASE_TAGS <- c(
+  BD = "full23andMe_preDENTIST",
+  MDD = "full23andMe",
+  SCZD = "public"
 )
 
 DEFAULT_GWAS_OVERLAP_DISORDERS <- c("SCZD", "MDD", "BD")
 
 GWAS_STRICT_P_THRESHOLD <- 5e-8
 
-GWAS_MATCH_SI_MIN <- 0.8
+## integrated BD/MDD statistics have no combined imputation-quality field.
+GWAS_MATCH_SI_MIN <- c(BD = NA_real_, MDD = NA_real_, SCZD = 0.8)
 
 ## GWASx is the suggestive/exploratory mood-disorder overlap threshold.
 ## It is relaxed relative to strict genome-wide significance.
@@ -72,8 +79,8 @@ DEFAULT_GWASX_DISORDERS <- names(GWAS_EXPLORATORY_P_THRESHOLDS)
 
 GWAS_GENE_LIST_FILES <- list(
   BD = list(
-    broad = file.path("BD", "bd2024_gene_lists.tsv"),
-    prio = file.path("BD", "bd2024_prioritized_credible_genes.tsv")
+    broad = file.path("BD", "bpd2024_gene_lists.tsv"),
+    prio = file.path("BD", "bpd2024_prioritized_credible_genes.tsv")
   ),
   MDD = list(
     broad = file.path("MDD", "mdd2025_high_confidence_genes.tsv"),
@@ -188,10 +195,33 @@ gwas_pval_tag <- function(pval) {
   tag
 }
 
-gwas_si_tag <- function(si_min) {
-  if (length(si_min) != 1 || is.na(si_min) || !is.finite(si_min)) {
-    stop("si_min must be one finite value")
+gwas_release_tag <- function(dis) {
+  dis <- gwas_check_disorder(dis)
+  tag <- unname(GWAS_RELEASE_TAGS[[dis]])
+  if (is.null(tag) || !nzchar(tag)) stop("Missing GWAS release tag for ", dis)
+  tag
+}
+
+gwas_resolve_si_min <- function(dis, si_min = GWAS_MATCH_SI_MIN) {
+  dis <- gwas_check_disorder(dis)
+  if (is.null(si_min) || length(si_min) == 0L) si_min <- GWAS_MATCH_SI_MIN
+  if (length(si_min) > 1L) {
+    if (is.null(names(si_min)) || !dis %in% names(si_min)) {
+      stop("Named si_min is missing disorder ", dis)
+    }
+    si_min <- unname(si_min[[dis]])
   }
+  if (length(si_min) != 1L) stop("si_min must resolve to one value for ", dis)
+  si_min <- as.numeric(si_min)
+  if (is.na(si_min)) return(NA_real_)
+  if (!is.finite(si_min) || si_min < 0) stop("si_min must be NA or a finite nonnegative value")
+  si_min
+}
+
+gwas_si_tag <- function(si_min) {
+  if (length(si_min) != 1L) stop("si_min must be one value")
+  if (is.na(si_min)) return("none")
+  if (!is.finite(si_min) || si_min < 0) stop("si_min must be NA or a finite nonnegative value")
   format(si_min, scientific = FALSE, trim = TRUE)
 }
 
@@ -207,11 +237,35 @@ gwas_bcf_path <- function(dis, repo_root = NULL, genotype_dir = NULL) {
   normalizePath(bcf_file, mustWork = TRUE)
 }
 
-gwas_cache_file <- function(dis, pval, repo_root = NULL, genotype_dir = NULL, si_min = 0.8) {
+.gwas_sha256_cache <- new.env(parent = emptyenv())
+
+gwas_bcf_sha256 <- function(dis, repo_root = NULL, genotype_dir = NULL) {
+  path <- gwas_bcf_path(dis, repo_root = repo_root, genotype_dir = genotype_dir)
+  info <- file.info(path)
+  key <- paste(path, info$size, as.numeric(info$mtime), sep = "|")
+  if (exists(key, envir = .gwas_sha256_cache, inherits = FALSE)) {
+    return(get(key, envir = .gwas_sha256_cache, inherits = FALSE))
+  }
+  if (!nzchar(Sys.which("sha256sum"))) stop("sha256sum is required for GWAS provenance")
+  output <- system2("sha256sum", shQuote(path), stdout = TRUE, stderr = TRUE)
+  status <- attr(output, "status")
+  if (!is.null(status) && status != 0L) stop("sha256sum failed for ", path)
+  value <- strsplit(output[[1]], "[[:space:]]+")[[1]][[1]]
+  assign(key, value, envir = .gwas_sha256_cache)
+  value
+}
+
+gwas_cache_file <- function(dis, pval, repo_root = NULL, genotype_dir = NULL,
+                            si_min = GWAS_MATCH_SI_MIN) {
   dis <- gwas_check_disorder(dis)
+  si_min <- gwas_resolve_si_min(dis, si_min)
+  release_part <- if (identical(gwas_release_tag(dis), "public")) "" else paste0("_", gwas_release_tag(dis))
   file.path(
     gwas_genotype_dir(repo_root, genotype_dir),
-    sprintf("GWAS-%s_flt_p%s_SI%s.hg38.tab.gz", dis, gwas_pval_tag(pval), gwas_si_tag(si_min))
+    sprintf(
+      "GWAS-%s%s_flt_p%s_SI%s.hg38.tab.gz",
+      dis, release_part, gwas_pval_tag(pval), gwas_si_tag(si_min)
+    )
   )
 }
 
@@ -321,8 +375,10 @@ loadGWASGeneList <- function(dis, use_prio = FALSE, repo_root = NULL,
   dt[!is.na(gene_symbol) & nzchar(gene_symbol)]
 }
 
-normalize_gwas_query_table <- function(dt, dis, pval, cache_file = NULL, si_min = 0.8) {
+normalize_gwas_query_table <- function(dt, dis, pval, cache_file = NULL,
+                                       si_min = GWAS_MATCH_SI_MIN) {
   dis <- gwas_check_disorder(dis)
+  si_min <- gwas_resolve_si_min(dis, si_min)
   query_cols <- c("chr", "pos", "rsid", "a0", "a1", "beta", "beta_se", "lp", "N", "ns", "ncas", "impinfo")
 
   if (nrow(dt) == 0) {
@@ -362,8 +418,12 @@ normalize_gwas_query_table <- function(dt, dis, pval, cache_file = NULL, si_min 
   dt
 }
 
-annotate_gwas_table <- function(dt, dis, pval, cache_file, si_min = 0.8) {
-  attr(dt, "gwas_dis") <- gwas_check_disorder(dis)
+annotate_gwas_table <- function(dt, dis, pval, cache_file,
+                                si_min = GWAS_MATCH_SI_MIN) {
+  dis <- gwas_check_disorder(dis)
+  si_min <- gwas_resolve_si_min(dis, si_min)
+  attr(dt, "gwas_dis") <- dis
+  attr(dt, "gwas_release") <- gwas_release_tag(dis)
   attr(dt, "gwas_pval") <- pval
   attr(dt, "gwas_si_min") <- si_min
   attr(dt, "gwas_cache_file") <- cache_file
@@ -372,8 +432,10 @@ annotate_gwas_table <- function(dt, dis, pval, cache_file, si_min = 0.8) {
 }
 
 loadGWAS <- function(dis, pval, repo_root = NULL, genotype_dir = NULL,
-                     si_min = 0.8, bcftools = "bcftools", use_cache = TRUE) {
+                     si_min = GWAS_MATCH_SI_MIN, bcftools = "bcftools",
+                     use_cache = TRUE) {
   dis <- gwas_check_disorder(dis)
+  si_min <- gwas_resolve_si_min(dis, si_min)
   cache_file <- gwas_cache_file(dis, pval, repo_root = repo_root, genotype_dir = genotype_dir, si_min = si_min)
   if (use_cache && file.exists(cache_file)) {
     return(annotate_gwas_table(data.table::fread(cache_file), dis, pval, cache_file, si_min))
@@ -386,11 +448,16 @@ loadGWAS <- function(dis, pval, repo_root = NULL, genotype_dir = NULL,
   on.exit(unlink(c(query_file, err_file)), add = TRUE)
 
   ## query only the fields required by downstream eQTL and coloc steps.
+  filter_expr <- sprintf("FORMAT/LP>=%s", format(lp_min, scientific = FALSE))
+  if (!is.na(si_min)) {
+    filter_expr <- sprintf("%s && FORMAT/SI>=%s", filter_expr, gwas_si_tag(si_min))
+  }
+
   status <- system2(
     bcftools,
     args = c(
       "query",
-      "-i", shQuote(sprintf("FORMAT/LP>=%s && FORMAT/SI>=%s", format(lp_min, scientific = FALSE), gwas_si_tag(si_min))),
+      "-i", shQuote(filter_expr),
       "-f", shQuote("%CHROM\t%POS\t%ID\t%REF\t%ALT[\t%ES\t%SE\t%LP\t%NE\t%NS\t%NC\t%SI]\n"),
       shQuote(bcf_file)
     ),
@@ -428,8 +495,10 @@ gwas_tqtl_cache_file <- function(gwas, plink2_prefix) {
   file.path(
     cache_dir,
     sprintf(
-      "GWAS-%s_flt_p%s_SI%s_%s_tqtl-matched.tab.gz",
-      dis, gwas_pval_tag(pval), gwas_si_tag(si_min), basename(plink2_prefix)
+      "GWAS-%s%s_flt_p%s_SI%s_%s_tqtl-matched.tab.gz",
+      dis,
+      if (identical(gwas_release_tag(dis), "public")) "" else paste0("_", gwas_release_tag(dis)),
+      gwas_pval_tag(pval), gwas_si_tag(si_min), basename(plink2_prefix)
     )
   )
 }
@@ -1669,8 +1738,14 @@ load_matched_gwas_by_disorder <- function(disorders = DEFAULT_GWAS_OVERLAP_DISOR
                                           si_min = GWAS_MATCH_SI_MIN) {
   out <- lapply(disorders, function(dis) {
     dis <- gwas_check_disorder(dis)
+    disorder_si_min <- gwas_resolve_si_min(dis, si_min)
     ## query broad enough for strict GWAS and any GWASx reuse.
-    gwas <- loadGWAS(dis, gwas_threshold_from_cache(dis), repo_root = repo_root, si_min = si_min)
+    gwas <- loadGWAS(
+      dis,
+      gwas_threshold_from_cache(dis),
+      repo_root = repo_root,
+      si_min = disorder_si_min
+    )
     matched <- matchGwasGeno(gwas, plink2_prefix = plink2_prefix)
     missing_cols <- setdiff(c("variant_id", "p", "beta", "beta_se"), names(matched))
     if (length(missing_cols) > 0) {
@@ -2824,13 +2899,18 @@ read_coloc_nominal_dataset <- function(dataset_id, tqtl_out_dir, cis_window = 10
   dt[]
 }
 
-coloc_gwas_dataset_cache_file <- function(dis, dataset_id, coloc_dir, si_min = 0.8) {
+coloc_gwas_dataset_cache_file <- function(dis, dataset_id, coloc_dir,
+                                          si_min = GWAS_MATCH_SI_MIN) {
   dis <- gwas_check_disorder(dis)
+  si_min <- gwas_resolve_si_min(dis, si_min)
   file.path(
     coloc_dir,
     dis,
     "cache",
-    sprintf("gwas_%s_nominal-variants_SI%s.tsv.gz", dataset_id, gwas_si_tag(si_min))
+    sprintf(
+      "gwas_%s_%s_nominal-variants_SI%s.tsv.gz",
+      dataset_id, gwas_release_tag(dis), gwas_si_tag(si_min)
+    )
   )
 }
 
@@ -2850,8 +2930,9 @@ coloc_regions_from_variants <- function(variant_ids, plink2_prefix) {
 ## ES/SE/LP/NE/NS/NC/SI become beta, beta_se, p, N, ns, ncas, and impinfo.
 ## this function applies the INFO score threshold only; coloc inputs must keep
 ## dense regional summary statistics without a GWAS p-value cutoff.
-normalize_coloc_gwas_query_table <- function(dt, dis, si_min = 0.8) {
+normalize_coloc_gwas_query_table <- function(dt, dis, si_min = GWAS_MATCH_SI_MIN) {
   dis <- gwas_check_disorder(dis)
+  si_min <- gwas_resolve_si_min(dis, si_min)
   query_cols <- c("chr", "pos", "rsid", "a0", "a1", "beta", "beta_se", "lp", "N", "ns", "ncas", "impinfo")
 
   if (nrow(dt) == 0L) {
@@ -2879,7 +2960,7 @@ normalize_coloc_gwas_query_table <- function(dt, dis, si_min = 0.8) {
   )]
   dt[, p := 10^(-lp)]
   dt[, variant_id := sprintf("%s:%s:%s:%s", chr, pos, a0, a1)]
-  dt <- dt[is.na(impinfo) | impinfo >= si_min]
+  if (!is.na(si_min)) dt <- dt[is.finite(impinfo) & impinfo >= si_min]
   data.table::setcolorder(dt, c(
     "rsid", "chr", "pos", "a0", "a1", "beta", "beta_se", "N",
     "ns", "ncas", "p", "impinfo", "lp", "variant_id"
@@ -2893,9 +2974,10 @@ normalize_coloc_gwas_query_table <- function(dt, dis, si_min = 0.8) {
 ## alleles, writes a per-domainCT cache, and returns only matched variants.
 extract_coloc_gwas_for_variants <- function(dis, variant_ids, plink2_prefix, out_file,
                                             repo_root = NULL, genotype_dir = NULL,
-                                            si_min = 0.8, bcftools = "bcftools",
+                                            si_min = GWAS_MATCH_SI_MIN, bcftools = "bcftools",
                                             use_cache = TRUE) {
   dis <- gwas_check_disorder(dis)
+  si_min <- gwas_resolve_si_min(dis, si_min)
   if (isTRUE(use_cache) && file.exists(out_file)) return(data.table::fread(out_file))
   if (!nzchar(Sys.which(bcftools))) stop("Missing bcftools executable: ", bcftools)
 

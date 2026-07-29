@@ -1,6 +1,6 @@
 # Disorder-Related DEG Lists
 
-This note documents the MDD-related and BPD-related DEG lists used for targeted
+This note documents the MDD-related and BD-related DEG lists used for targeted
 eQTL-DEG-GWAS overlap summaries.
 
 ## Source Files
@@ -26,7 +26,7 @@ matching diagnosis-vs-control contrast:
 
 - MDD-related DEG: F-test significant and `F_NTC.MDD_ttest` or
   `M_NTC.MDD_ttest` is significant.
-- BPD-related DEG: F-test significant and `F_NTC.BPD_ttest` or
+- BD-related DEG: F-test significant and legacy source column `F_NTC.BPD_ttest` or
   `M_NTC.BPD_ttest` is significant.
 
 The t-test columns store adjusted p-value bins as text. The workflow treats
@@ -38,19 +38,19 @@ Use F-test only for the broad DEG universe because the omnibus F-test asks
 whether a gene has any diagnosis/sex-related signal across the tested contrast
 family. This preserves genes with broad, diffuse, or multi-contrast evidence.
 
-Do not use F-test only for MDD-related or BPD-related labels because the F-test
+Do not use F-test only for MDD-related or BD-related labels because the F-test
 does not identify which disorder contrast drove the signal. A gene can pass the
-omnibus F-test because of MDD-vs-NTC, BPD-vs-NTC, MDD-vs-BPD, sex-specific
+omnibus F-test because of MDD-vs-NTC, BD-vs-NTC, MDD-vs-BD, sex-specific
 effects, or combinations.
 
 Use F-test plus contrast t-test for disorder-related lists. This localizes an
-already F-test significant gene to MDD-vs-NTC or BPD-vs-NTC evidence.
+already F-test significant gene to MDD-vs-NTC or BD-vs-NTC evidence.
 
 ## Caveats
 
 - F-test only is more sensitive but less specific for disorder labels.
 - F-test plus t-test is more specific and better aligned with disorder-specific
   GWAS overlap, but may omit genes where the omnibus F-test is significant and
-  no single MDD/BPD post-hoc contrast passes correction.
+  no single MDD/BD post-hoc contrast passes correction.
 - These are disorder-related lists, not formal disorder-specific-only lists.
-  A gene can be both MDD-related and BPD-related.
+  A gene can be both MDD-related and BD-related.

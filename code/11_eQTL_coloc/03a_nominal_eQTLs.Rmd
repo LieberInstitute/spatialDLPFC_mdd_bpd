@@ -183,7 +183,7 @@ manifest <- load_eqtl_manifest(
 )
 
 gwas_matched <- lapply(gwas_disorders, function(dis) {
-  gwas <- loadGWAS(dis, 1e-6, repo_root = repo_root, si_min = 0.8)
+  gwas <- loadGWAS(dis, 1e-6, repo_root = repo_root, si_min = GWAS_MATCH_SI_MIN)
   matched <- matchGwasGeno(gwas, plink2_prefix = plink2_prefix)
   missing_cols <- setdiff(c("variant_id", "p"), names(matched))
   if (length(missing_cols) > 0) {

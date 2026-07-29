@@ -85,9 +85,9 @@ plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05"
 
 ## coloc GWAS slices are built on demand from the disorder-specific full BCF.
 ## each slice is dense over nominal eQTL variant positions and cached per
-## disorder/domainCT. SI is the only GWAS row filter; no p-value filter is used.
+## disorder/domainCT. no GWAS p-value filter is used; SI is applied only for
+## releases where a combined imputation-quality statistic is available.
 cis_window <- 1000000L
-si_min <- 0.8
 min_snps <- 10L
 min_abs_eqtl_z <- 2
 sensitivity_rule <- "H4 > 0.8"
@@ -368,6 +368,7 @@ run_gene_workers <- function(genes, coloc_dt, n_eqtl, s_gwas, dis, dataset_id,
 
 run_coloc_dataset <- function(row, dis) {
   dataset_id <- row$dataset_id
+  disorder_si_min <- gwas_resolve_si_min(dis, GWAS_MATCH_SI_MIN)
   out_path <- result_path(dis, dataset_id)
   runmeta_path <- meta_path(dis, dataset_id)
   sens_path <- sensitivity_path(dis, dataset_id)
@@ -444,7 +445,7 @@ run_coloc_dataset <- function(row, dis) {
     dis = dis,
     dataset_id = dataset_id,
     coloc_dir = run_coloc_dir,
-    si_min = si_min
+    si_min = disorder_si_min
   )
   message(Sys.time(), " | ", dis, " | ", dataset_id, " | extracting dense GWAS")
   gwas_dt <- extract_coloc_gwas_for_variants(
@@ -453,7 +454,7 @@ run_coloc_dataset <- function(row, dis) {
     plink2_prefix = plink2_prefix,
     out_file = gwas_cache,
     repo_root = repo_root,
-    si_min = si_min
+    si_min = disorder_si_min
   )
 
   s_gwas <- coloc_case_fraction(gwas_dt)
@@ -511,7 +512,10 @@ run_coloc_dataset <- function(row, dis) {
     split = row$split,
     cis_window = cis_window,
     chromosomes = if (is.null(chromosomes)) "" else paste(chromosomes, collapse = ","),
-    gwas_si_min = si_min,
+    gwas_release = gwas_release_tag(dis),
+    gwas_bcf = gwas_bcf_path(dis, repo_root = repo_root),
+    gwas_bcf_sha256 = gwas_bcf_sha256(dis, repo_root = repo_root),
+    gwas_si_min = disorder_si_min,
     gwas_cache = gwas_cache,
     flat_path = candidate_path,
     out_path = if (isTRUE(write_full_qs2)) out_path else "",
