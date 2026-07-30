@@ -230,6 +230,46 @@ processed-data/11_eQTL_coloc/seurat/coloc/<DIS>/coloc_<dataset_id>.complete
 
 Full `coloc_<dataset_id>.qs2` objects are written only with `--write-full-qs2`.
 
+### 2026-07-28 integrated-GWAS rerun
+
+The `new-gwas` branch contains a complete local rerun of `coloc::coloc.abf`
+and `coloc::sensitivity` for all eight BD and MDD cell contexts using the
+23andMe-inclusive GWAS inputs above. SCZD was not rerun. The new per-context
+outputs and release-specific dense GWAS caches are under:
+
+```text
+processed-data/11_eQTL_coloc/seurat/coloc/{BD,MDD}/
+```
+
+The rerun used the lean default output mode, so it wrote candidate summaries,
+sensitivity results, error tables, run metadata, and completion markers, but
+not full `.qs2` result objects. Aggregate and final outputs are under:
+
+```text
+processed-data/11_eQTL_coloc/seurat/coloc/tables/
+processed-data/11_eQTL_coloc/seurat/final/
+```
+
+Execution logs, the frozen no-23andMe results, and machine-readable comparison
+tables are under:
+
+```text
+processed-data/11_eQTL_coloc/seurat/run_logs/23andMe_2026-07-28/
+processed-data/11_eQTL_coloc/seurat/archive/no23andMe_2026-07-28/
+processed-data/11_eQTL_coloc/seurat/comparison/23andMe_2026-07-28/
+```
+
+The comparison and GWAS provenance are documented in
+`GWAS-23andMe-MDD-BD-impact-on-tables.md`.
+
+Generated files retain their canonical names on both `devel` and `new-gwas`.
+The branch is the version identifier: `devel` contains the prior tracked
+workbooks and figures, while `new-gwas` contains their regenerated versions at
+the same paths. Temporary `*-new-gwas.<ext>` copies were moved back to those
+canonical paths before commit and therefore no longer exist. Use the dated
+archive and comparison directories for side-by-side local files rather than
+adding filename suffixes to workflow outputs.
+
 Completed datasets are skipped only when the result, metadata, sensitivity, and
 `.complete` marker all exist. If the marker is missing but the three primary
 files exist, the script validates them and writes the marker before skipping. To
