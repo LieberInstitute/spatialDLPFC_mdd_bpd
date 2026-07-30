@@ -366,6 +366,32 @@ strong_change_summary <- strong_changes[, .(
   genes = collapse_values(gene_name)
 ), by = .(disorder, status)]
 
+## final report sets contain only strong coloc results that passed sensitivity.
+final_coloc_sets <- rbindlist(list(
+  old_coloc[cat_gated == "strong_coloc", .(
+    version = "no23",
+    n_results = .N,
+    n_genes = uniqueN(gene_id),
+    genes = collapse_values(gene_name)
+  ), by = disorder],
+  new_coloc[cat_gated == "strong_coloc", .(
+    version = "full",
+    n_results = .N,
+    n_genes = uniqueN(gene_id),
+    genes = collapse_values(gene_name)
+  ), by = disorder]
+))
+final_coloc_wide <- dcast(
+  final_coloc_sets,
+  disorder ~ version,
+  value.var = c("n_results", "n_genes"),
+  fill = 0L
+)
+final_coloc_wide[, `:=`(
+  result_delta = n_results_full - n_results_no23,
+  gene_delta = n_genes_full - n_genes_no23
+)]
+
 ## quantify posterior changes only for loci present in both candidate tables.
 shared <- merge(
   old_coloc[, c(coloc_key, "PP4", "cat_raw", "cat_gated", "lead_snp"), with = FALSE],
@@ -480,38 +506,36 @@ deg_overlap_report <- overlap_wide[
   )
 ]
 
-coloc_report <- coloc_total_wide[, .(
+coloc_report <- final_coloc_wide[, .(
   disorder,
-  candidates_no23 = fmt_int(n_candidate_loci_no23andMe),
-  candidates_full = fmt_int(n_candidate_loci_full23andMe),
-  candidate_delta = vapply(n_candidate_loci_delta, fmt_delta, character(1)),
-  raw_strong_no23 = fmt_int(n_raw_strong_no23andMe),
-  raw_strong_full = fmt_int(n_raw_strong_full23andMe),
-  gated_strong_no23 = fmt_int(n_gated_strong_no23andMe),
-  gated_strong_full = fmt_int(n_gated_strong_full23andMe),
-  gated_delta = vapply(n_gated_strong_delta, fmt_delta, character(1))
+  final_results_no23 = fmt_int(n_results_no23),
+  final_results_full = fmt_int(n_results_full),
+  result_delta = vapply(result_delta, fmt_delta, character(1)),
+  distinct_genes_no23 = fmt_int(n_genes_no23),
+  distinct_genes_full = fmt_int(n_genes_full),
+  gene_delta = vapply(gene_delta, fmt_delta, character(1))
+)]
+
+short_final_gene_sets_report <- final_coloc_sets[n_genes < 20L, .(
+  disorder,
+  version,
+  final_results = fmt_int(n_results),
+  distinct_genes = fmt_int(n_genes),
+  gene_symbols = genes
 )]
 
 coloc_context_report <- coloc_context_wide[, .(
   disorder, context,
-  gated_no23 = fmt_int(n_gated_strong_no23andMe),
-  gated_full = fmt_int(n_gated_strong_full23andMe),
+  final_no23 = fmt_int(n_gated_strong_no23andMe),
+  final_full = fmt_int(n_gated_strong_full23andMe),
   delta = vapply(n_gated_strong_delta, fmt_delta, character(1))
 )][delta != "0"]
 
 strong_change_report <- strong_change_summary[, .(
   disorder, status,
-  loci = fmt_int(n_loci),
-  genes = genes
-)]
-
-pp_report <- shared_pp[, .(
-  disorder,
-  shared_candidates = fmt_int(n_shared_candidates),
-  PP4_pearson = fmt_num(pearson_PP4),
-  median_abs_PP4_change = fmt_num(median_abs_PP4_change),
-  max_abs_PP4_change = fmt_num(max_abs_PP4_change),
-  lead_SNP_unchanged_pct = fmt_num(lead_snp_unchanged_pct, 1L)
+  results = fmt_int(n_loci),
+  distinct_genes = fmt_int(n_genes),
+  gene_symbols = genes
 )]
 
 ## report caveats are factual properties of the supplied integrated releases.
@@ -523,7 +547,7 @@ report <- c(
   "",
   "## Scope",
   "",
-  "This comparison holds the 119-donor genotype data, tensorQTL eQTL results, DEG definitions, curated GWAS gene lists, coloc priors, and sensitivity gate fixed. It changes only the MDD and BD GWAS inputs from public European no-23andMe statistics to reconstructed European statistics that include 23andMe.",
+  "This comparison holds the 119-donor genotype data, tensorQTL eQTL results, DEG definitions, curated GWAS gene lists, coloc priors, and sensitivity criteria fixed. It changes only the MDD and BD GWAS inputs from public European no-23andMe statistics to reconstructed European statistics that include 23andMe.",
   "",
   "The deltas therefore measure the effect of switching supplied GWAS files, not an isolated marginal effect of the 23andMe cohorts. The integrated meta-analysis statistics and available row-level QC fields also differ from the public files; in particular, integrated MDD/BD has no combined imputation-quality (`SI`) field.",
   "",
@@ -573,23 +597,23 @@ report <- c(
   "",
   "Exact gained/lost row and gene lists are in `processed-data/11_eQTL_coloc/seurat/comparison/23andMe_2026-07-28/03_exact_variant_annotation_changes.tsv`. Combined variant-or-curated-gene and DEG-scope counts are in `03_overlap_metrics_comparison.tsv` in the same directory.",
   "",
-  "## Colocalization changes",
+  "## Final colocalization changes",
+  "",
+  "Only final strong-coloc results that passed sensitivity testing are shown. One result is one disorder-by-cell-context-by-eGene combination, so result counts can exceed distinct-gene counts.",
   "",
   md_table(coloc_report),
   "",
-  "Cell contexts with a changed sensitivity-gated strong-coloc count:",
+  "Complete gene-symbol lists are shown below for final sets containing fewer than 20 distinct genes:",
+  "",
+  md_table(short_final_gene_sets_report),
+  "",
+  "Cell contexts with a changed final strong-coloc result count:",
   "",
   md_table(coloc_context_report),
   "",
-  "Sensitivity-gated strong-coloc gains and losses:",
+  "Final strong-coloc gains and losses are shown with complete gene-symbol lists because every changed set contains fewer than 20 distinct genes:",
   "",
   md_table(strong_change_report),
-  "",
-  "Posterior agreement for candidate loci present in both runs:",
-  "",
-  md_table(pp_report),
-  "",
-  "Candidate-row totals are screening categories, not counts of independent GWAS loci. The sensitivity-gated strong calls are the appropriate primary comparison for the final coloc tables.",
   "",
   "## Reproducibility",
   "",
@@ -601,8 +625,7 @@ report <- c(
   "",
   "```bash",
   "Rscript code/11_eQTL_coloc/07_compare_23andme_impact.R",
-  "```",
-  ""
+  "```"
 )
 
 dir.create(dirname(report_file), recursive = TRUE, showWarnings = FALSE)

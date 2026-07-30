@@ -1,10 +1,10 @@
 # Impact of 23andMe-inclusive MDD and BD GWAS on eQTL/DEG tables
 
-Generated: 2026-07-29 01:57:16 EDT
+Generated: 2026-07-30 13:01:22 EDT
 
 ## Scope
 
-This comparison holds the 119-donor genotype data, tensorQTL eQTL results, DEG definitions, curated GWAS gene lists, coloc priors, and sensitivity gate fixed. It changes only the MDD and BD GWAS inputs from public European no-23andMe statistics to reconstructed European statistics that include 23andMe.
+This comparison holds the 119-donor genotype data, tensorQTL eQTL results, DEG definitions, curated GWAS gene lists, coloc priors, and sensitivity criteria fixed. It changes only the MDD and BD GWAS inputs from public European no-23andMe statistics to reconstructed European statistics that include 23andMe.
 
 The deltas therefore measure the effect of switching supplied GWAS files, not an isolated marginal effect of the 23andMe cohorts. The integrated meta-analysis statistics and available row-level QC fields also differ from the public files; in particular, integrated MDD/BD has no combined imputation-quality (`SI`) field.
 
@@ -87,16 +87,25 @@ This table restricts significant eQTL rows by DEG status: `exact_variant` with `
 
 Exact gained/lost row and gene lists are in `processed-data/11_eQTL_coloc/seurat/comparison/23andMe_2026-07-28/03_exact_variant_annotation_changes.tsv`. Combined variant-or-curated-gene and DEG-scope counts are in `03_overlap_metrics_comparison.tsv` in the same directory.
 
-## Colocalization changes
+## Final colocalization changes
 
-| disorder | candidates_no23 | candidates_full | candidate_delta | raw_strong_no23 | raw_strong_full | gated_strong_no23 | gated_strong_full | gated_delta |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| BD | 584 | 679 | +95 | 35 | 22 | 35 | 22 | -13 |
-| MDD | 769 | 1,280 | +511 | 28 | 46 | 26 | 46 | +20 |
+Only final strong-coloc results that passed sensitivity testing are shown. One result is one disorder-by-cell-context-by-eGene combination, so result counts can exceed distinct-gene counts.
 
-Cell contexts with a changed sensitivity-gated strong-coloc count:
+| disorder | final_results_no23 | final_results_full | result_delta | distinct_genes_no23 | distinct_genes_full | gene_delta |
+| --- | --- | --- | --- | --- | --- | --- |
+| BD | 35 | 22 | -13 | 17 | 13 | -4 |
+| MDD | 26 | 46 | +20 | 21 | 30 | +9 |
 
-| disorder | context | gated_no23 | gated_full | delta |
+Complete gene-symbol lists are shown below for final sets containing fewer than 20 distinct genes:
+
+| disorder | version | final_results | distinct_genes | gene_symbols |
+| --- | --- | --- | --- | --- |
+| BD | no23 | 35 | 17 | AC012213.4, AP001505.1, ASPDH, CCS, CDHR1, FADS1, HCG17, MAPK3, METTL21C, MMD, NTSR1, RMI2, RPRD2, SERPINI1, TMEM258, VWA5B2, WAC-AS1 |
+| BD | full | 22 | 13 | AL049840.5, AL645608.7, ASPDH, CACNA1B, FADS1, HLA-DMA, LINC01954, LRRC37A2, MED24, METTL21C, PPFIA1, TMEM106B, TMEM258 |
+
+Cell contexts with a changed final strong-coloc result count:
+
+| disorder | context | final_no23 | final_full | delta |
 | --- | --- | --- | --- | --- |
 | BD | Astro | 7 | 2 | -5 |
 | BD | Inhb | 4 | 3 | -1 |
@@ -109,23 +118,14 @@ Cell contexts with a changed sensitivity-gated strong-coloc count:
 | MDD | L5 | 5 | 12 | +7 |
 | MDD | L6 | 2 | 7 | +5 |
 
-Sensitivity-gated strong-coloc gains and losses:
+Final strong-coloc gains and losses are shown with complete gene-symbol lists because every changed set contains fewer than 20 distinct genes:
 
-| disorder | status | loci | genes |
-| --- | --- | --- | --- |
-| BD | gained | 17 | AL049840.5, AL645608.7, ASPDH, CACNA1B, FADS1, HLA-DMA, LINC01954, LRRC37A2, MED24, PPFIA1, TMEM106B, TMEM258 |
-| BD | lost | 30 | AC012213.4, AP001505.1, CCS, CDHR1, HCG17, MAPK3, MMD, NTSR1, RMI2, RPRD2, SERPINI1, VWA5B2, WAC-AS1 |
-| MDD | gained | 28 | AL049840.5, AL596257.1, CKS2, IQCB1, MAEL, MGLL, MGMT, MYOM2, PPFIA1, PTP4A3, RBM23, RETREG2, SCLY, SLC25A12, SLC2A11, SPON2, TSFM, TUBGCP6 |
-| MDD | lost | 8 | AC010857.1, FBLN7, MAP3K7, PNMA8A, SPATA20, SPSB2 |
-
-Posterior agreement for candidate loci present in both runs:
-
-| disorder | shared_candidates | PP4_pearson | median_abs_PP4_change | max_abs_PP4_change | lead_SNP_unchanged_pct |
-| --- | --- | --- | --- | --- | --- |
-| BD | 312 | 0.766 | 0.000 | 0.886 | 25.3 |
-| MDD | 628 | 0.897 | 0.000 | 0.798 | 47.1 |
-
-Candidate-row totals are screening categories, not counts of independent GWAS loci. The sensitivity-gated strong calls are the appropriate primary comparison for the final coloc tables.
+| disorder | status | results | distinct_genes | gene_symbols |
+| --- | --- | --- | --- | --- |
+| BD | gained | 17 | 12 | AL049840.5, AL645608.7, ASPDH, CACNA1B, FADS1, HLA-DMA, LINC01954, LRRC37A2, MED24, PPFIA1, TMEM106B, TMEM258 |
+| BD | lost | 30 | 13 | AC012213.4, AP001505.1, CCS, CDHR1, HCG17, MAPK3, MMD, NTSR1, RMI2, RPRD2, SERPINI1, VWA5B2, WAC-AS1 |
+| MDD | gained | 28 | 18 | AL049840.5, AL596257.1, CKS2, IQCB1, MAEL, MGLL, MGMT, MYOM2, PPFIA1, PTP4A3, RBM23, RETREG2, SCLY, SLC25A12, SLC2A11, SPON2, TSFM, TUBGCP6 |
+| MDD | lost | 8 | 6 | AC010857.1, FBLN7, MAP3K7, PNMA8A, SPATA20, SPSB2 |
 
 ## Reproducibility
 
