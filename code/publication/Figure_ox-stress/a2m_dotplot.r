@@ -9,6 +9,7 @@ set.seed(123)
 refined.modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules-subset-refined.csv")
 
 source("code/publication/plotting_utils.r")
+de.df2 = filter(de.df, group!="MDD.BPD")
 
 mod_gene="A2M"
 plot.genes = c("A2M","TNFSF10","LMO2","RAMP2","ABCG2","SLC38A5")
@@ -23,7 +24,7 @@ plot.genes = c("A2M","TNFSF10","LMO2","RAMP2","ABCG2","SLC38A5")
 #plot.genes = imp.df$target
 #length(plot.genes) #28
 
-p3 <- getDotplot(plot.genes, de.df)
+p3 <- getDotplot(plot.genes, de.df2)+theme(axis.text.y=element_text(size=6))
 p3.1 <- getMeanRatioBar(plot.genes, sce_summ)
 #p3.2 <- getDetectedBoxplot(plot.genes, spe_summ)
 #p3.3 <- ggplot(mutate(imp.df, y_lab=factor(y_lab, levels=rev(plot.genes))), 
@@ -39,9 +40,9 @@ p3.1 <- getMeanRatioBar(plot.genes, sce_summ)
 #                        panel.grid.minor=element_blank(), #panel.grid.major.y=element_blank(),
 #                        plot.margin = margin(.2,.0,1.8,0, unit="cm"))
 
-ggsave(file=paste0("plots/publication/Figure_ox-stress/",mod_gene,"_dotplot.pdf"), 
-       arrangeGrob(grobs=list(p3, p3.1), layout_matrix=matrix(c(1,1,1,1,1,1,1,2), ncol=8)),
-       height=2.5, width=6.5)
+ggsave(file=paste0("plots/publication/Figure_ox-stress/",mod_gene,"_dotplot-half.pdf"), 
+       arrangeGrob(grobs=list(p3, p3.1), layout_matrix=matrix(c(1,1,1,1,1,2), ncol=6)),
+       height=2.5, width=4)
 
 ## Reproducibility information
 print("Reproducibility information:")

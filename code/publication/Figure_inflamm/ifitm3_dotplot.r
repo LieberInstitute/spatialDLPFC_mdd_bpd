@@ -11,12 +11,9 @@ refined.modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_a
 source("code/publication/plotting_utils.r")
 de.df2 = filter(de.df, group!="MDD.BPD")
 
-mod_gene="GLUL"
-#plot.genes = c("APOLD1","ANGPTL4","PFKFB3","TIPARP","VEGFA","DDIT4",
-#	"VASN","ITPKC","PDLIM4","EDN1")
-plot.genes = c("PFKFB3","TIPARP","VEGFA","DDIT4",
-	"APOLD1","ANGPTL4",
-	"EDN1","VASN","ITPKC","PDLIM4")
+mod_gene="IFITM3"
+plot.genes = c("IFITM3", "CEBPD", "SRGN", "SLCO4A1", "OSMR", "IL1R1", "YBX3")
+
 #o1 = filter(refined.modules, TF==mod_gene, target %in% plot.genes) %>% arrange(desc(importance))
 #o2 = filter(refined.modules, TF==mod_gene) %>% slice_max(n=1, importance) %>%
 #  mutate(target=mod_gene)
@@ -25,7 +22,7 @@ plot.genes = c("PFKFB3","TIPARP","VEGFA","DDIT4",
 #         bar_format= factor(ifelse(target==mod_gene, "self", "normal"), levels=c("self","normal")))
 #
 #plot.genes = imp.df$target
-#length(plot.genes) #28
+#length(plot.genes) 
 
 p3 <- getDotplot(plot.genes, de.df2)+theme(axis.text.y=element_text(size=6))
 p3.1 <- getMeanRatioBar(plot.genes, sce_summ)
@@ -43,9 +40,10 @@ p3.1 <- getMeanRatioBar(plot.genes, sce_summ)
 #                        panel.grid.minor=element_blank(), #panel.grid.major.y=element_blank(),
 #                        plot.margin = margin(.2,.0,1.8,0, unit="cm"))
 
-ggsave(file=paste0("plots/publication/Figure_ox-stress/",mod_gene,"_dotplot-half.pdf"), 
+ggsave(file=paste0("plots/publication/Figure_inflamm/",mod_gene,"_dotplot-half.pdf"), 
        arrangeGrob(grobs=list(p3, p3.1), layout_matrix=matrix(c(1,1,1,1,1,2), ncol=6)),
-       height=2.8, width=4)
+       height=2.5, width=4)
+
 
 ## Reproducibility information
 print("Reproducibility information:")
