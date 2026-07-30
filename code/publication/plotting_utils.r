@@ -4,6 +4,9 @@ suppressPackageStartupMessages({
 	library(ggplot2)
 })
 
+# calculate pdf height for dotplot based on ngenes
+calcHeight <- function(ngenes) round(0.08*ngenes+2.7, 1)
+
 # pre-reqs for dotplot, consensus, and violin
 source("code/09_DEG_GRN/load_DEGs.r")
 all_clusters = c("L-A sm","L-A se","Micro.Vasc se","Astro se","L1 sm",
