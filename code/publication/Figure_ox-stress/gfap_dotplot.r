@@ -63,7 +63,7 @@ p3.1 <- getMeanRatioBar(plot.genes, sce_summ)
 
 ggsave(file=paste0("plots/publication/Figure_ox-stress/",mod_gene,"_dotplot.pdf"), 
        arrangeGrob(grobs=list(p3, p3.1), layout_matrix=matrix(c(1,1,1,1,1,1,1,2), ncol=8)),
-       height=calcHeight(length(plot.genes)), width=6.5)
+       height=3, width=6.5)
 
 ## Reproducibility information
 print("Reproducibility information:")
