@@ -35,17 +35,6 @@ The integrated MDD file is the 23andMe-inclusive European meta-analysis. The int
 | nominal_BH05 | 455,143 | 455,143 | 0 | yes | 1e-12 |
 | map_GWASx | 3,435 | 3,435 | 0 | yes | 1e-12 |
 
-Stable non-GWAS eQTL and DEG columns were equal across all compared 03-series row tables at the documented 1e-12 numeric tolerance: yes.
-
-Curated broad and prioritized GWAS gene-list files were byte-identical between runs:
-
-| disorder | list | n_genes_no23 | n_genes_full | sha256_identical |
-| --- | --- | --- | --- | --- |
-| BD | gene_list | 116 | 116 | TRUE |
-| BD | prio_gene_list | 116 | 116 | TRUE |
-| MDD | gene_list | 295 | 295 | TRUE |
-| MDD | prio_gene_list | 295 | 295 | TRUE |
-
 Matched variants in the fixed 119-donor PLINK2 target:
 
 | disorder | p1e5_no23 | p1e5_full | p1e5_delta | p5e8_no23 | p5e8_full | p5e8_delta |
@@ -127,14 +116,4 @@ Final strong-coloc gains and losses are shown with complete gene-symbol lists be
 | MDD | gained | 28 | 18 | AL049840.5, AL596257.1, CKS2, IQCB1, MAEL, MGLL, MGMT, MYOM2, PPFIA1, PTP4A3, RBM23, RETREG2, SCLY, SLC25A12, SLC2A11, SPON2, TSFM, TUBGCP6 |
 | MDD | lost | 8 | 6 | AC010857.1, FBLN7, MAP3K7, PNMA8A, SPATA20, SPSB2 |
 
-## Reproducibility
 
-Frozen archive: `/home/gpertea/work/R/spatialDLPFC_mdd_bpd/processed-data/11_eQTL_coloc/seurat/archive/no23andMe_2026-07-28`
-
-Machine-readable comparison tables: `/home/gpertea/work/R/spatialDLPFC_mdd_bpd/processed-data/11_eQTL_coloc/seurat/comparison/23andMe_2026-07-28`
-
-Regenerate this report after rerunning 03-05 with:
-
-```bash
-Rscript code/11_eQTL_coloc/07_compare_23andme_impact.R
-```
