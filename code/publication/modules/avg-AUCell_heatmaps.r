@@ -25,12 +25,16 @@ aucell$clus_groups= factor(paste(aucell$sex.group, aucell$seurat_label),
 	levels=as.character(outer(cond_sex, seurat_levels, paste)))
 
 # calculate averages per dx*sex*cluster
-avg.df = group_by(aucell, clus_groups) %>% summarise_at(mod_subset, mean)
+#avg.df = group_by(aucell, clus_groups) %>% summarise_at(mod_subset, mean)
+avg.df = group_by(aucell, seurat_label) %>% summarise_at(mod_subset, mean)
 avg.mtx = as.matrix(avg.df[,-1])
-rownames(avg.mtx) = avg.df$clus_groups
+#rownames(avg.mtx) = avg.df$clus_groups
+rownames(avg.mtx) = avg.df$seurat_label
 
 # annotate columns by cluster
-col_annot = data.frame("cluster"=unlist(lapply(strsplit(as.character(avg.df$clus_groups), split = " "), function(x) x[[3]])), row.names = avg.df$clus_groups)
+#col_annot = data.frame("cluster"=unlist(lapply(strsplit(as.character(avg.df$clus_groups), split = " "), function(x) x[[3]])), row.names = avg.df$clus_groups)
+col_annot = data.frame("cluster"=seurat_levels, row.names=seurat_levels)
+
 cpList <- readRDS("plots/colorPalettes.rds")
 annot_colors = list("cluster"=cpList$transfer.bright[c(1:4,8,5:7)])
 names(annot_colors$cluster) = seurat_levels
@@ -40,7 +44,8 @@ phm3 = pheatmap(t(avg.mtx), cluster_rows=T, cluster_cols=F, border_color=NA,
          color = colorRampPalette(RColorBrewer::brewer.pal(n = 7, name ="Greys"))(100),
          annotation_col=col_annot, annotation_colors=annot_colors,
          annotation_legend=F, annotation_names_row=F, annotation_names_col=F,
-         angle_col=90, fontsize_col = 6, scale="row",
+         #angle_col=90, 
+	angle_col=0, fontsize_col = 6, scale="row",
          breaks= seq(from = -1, to = 3, length.out = 101))
 
 # and now plot by smoothed domain for supplement
@@ -50,11 +55,16 @@ avg.df2 = filter(aucell, smoothed_k9_1663 %in% precast_levels) %>%
   mutate(smoothed_k9_1663=factor(smoothed_k9_1663, levels=precast_levels),
                 clus_groups= factor(paste(sex.group, smoothed_k9_1663),
                                     levels=as.character(outer(cond_sex, precast_levels, paste)))) %>%
-  group_by(clus_groups) %>% summarise_at(mod_subset, mean)
+  #group_by(clus_groups) %>% 
+  group_by(smoothed_k9_1663) %>%
+  summarise_at(mod_subset, mean)
 
 avg.mtx2 = as.matrix(avg.df2[,-1])
-rownames(avg.mtx2) = avg.df2$clus_groups
-col_annot2 = data.frame("cluster"=unlist(lapply(strsplit(as.character(avg.df2$clus_groups), split = " "), function(x) x[[3]])), row.names = avg.df2$clus_groups)
+#rownames(avg.mtx2) = avg.df2$clus_groups
+rownames(avg.mtx2) = avg.df2$smoothed_k9_1663
+
+#col_annot2 = data.frame("cluster"=unlist(lapply(strsplit(as.character(avg.df2$clus_groups), split = " "), function(x) x[[3]])), row.names = avg.df2$clus_groups)
+col_annot2 = data.frame("cluster"=precast_levels, row.names=precast_levels)
 annot_colors = list("cluster"=cpList$smoothed.bright)
 
 phm4 = pheatmap(t(avg.mtx2), cluster_rows=T, cluster_cols=F, border_color=NA,
@@ -62,7 +72,8 @@ phm4 = pheatmap(t(avg.mtx2), cluster_rows=T, cluster_cols=F, border_color=NA,
          color = colorRampPalette(RColorBrewer::brewer.pal(n = 7, name ="Greys"))(100),
          annotation_col=col_annot2, annotation_colors=annot_colors,
          annotation_legend=F, annotation_names_row=F, annotation_names_col=F,
-         angle_col=90, fontsize_col = 6, scale="row",
+         #angle_col=90, 
+	angle_col=0, fontsize_col = 6, scale="row",
          breaks= seq(from = -1, to = 3, length.out = 101))
 
 
