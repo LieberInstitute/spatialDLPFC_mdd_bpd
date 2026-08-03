@@ -38,12 +38,12 @@ order4 = rev(c(setdiff(missing.degs, order3), order3))
 
 
 # plot missing DEGs
-p0 <- getDotplot(order4, de.df)
+p0 <- getDotplot(order4, de.df)+theme(axis.text.y=element_text(size=6))
 p1 <- getMeanRatioBar(order4, sce_summ)
-p2 <- getDetectedBoxplot(order4, spe_summ)
+#p2 <- getDetectedBoxplot(order4, spe_summ)
 
 ggsave(file="plots/publication/modules/supp_missing-degs_dotplot.pdf",
-       arrangeGrob(grobs=list(p0,p1,p2), layout_matrix=matrix(c(1,1,1,1,1,2,3), ncol=7), top=NULL),
+       arrangeGrob(grobs=list(p0,p1), layout_matrix=matrix(c(1,1,1,1,1,1,1,2), ncol=8), top=NULL),
        height=7, width=6.5)
 
 
