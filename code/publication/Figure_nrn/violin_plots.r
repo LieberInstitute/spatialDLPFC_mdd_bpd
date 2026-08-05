@@ -26,11 +26,11 @@ source("code/publication/plotting_utils.r")
 #p3 <- getViolin(c("SST","CORT","CRH","VGF"), version="seurat")
 #ggsave(file="plots/publication/Figure_nrn/SST-CORT-CRH-VGF_violin.pdf", p3, width=3.5, height=6)
 
-p1 <- getViolin(c("SST"), .y.upper.bound=13, .y.breaks=c(0,3,6,9,12), version="seurat")
-ggsave(file="plots/publication/Figure_nrn/SST_violin.pdf", p1, width=3.5, height=1.7)
+#p1 <- getViolin(c("SST"), .y.upper.bound=13, .y.breaks=c(0,3,6,9,12), version="seurat")
+#ggsave(file="plots/publication/Figure_nrn/SST_violin.pdf", p1, width=3.5, height=1.7)
 
-p2 <- getViolin(c("CORT"), version="seurat")
-ggsave(file="plots/publication/Figure_nrn/CORT_violin.pdf", p2, width=3.5, height=1.7)
+#p2 <- getViolin(c("CORT"), version="seurat")
+#ggsave(file="plots/publication/Figure_nrn/CORT_violin.pdf", p2, width=3.5, height=1.7)
 
 #p4 <- getViolin(c("PVALB","TAC1"), version="seurat")
 #p5 <- getViolin(c("PVALB","TAC1"), version="precast")
@@ -38,6 +38,9 @@ ggsave(file="plots/publication/Figure_nrn/CORT_violin.pdf", p2, width=3.5, heigh
 #	marrangeGrob(grobs=list(p4, p5), ncol=1, nrow=1, top=NULL),
 #	width=3.5, height=3.2)
 
+plist1 <- getViolin(c("GAD1","GAD2","SLC32A1","SLC6A1"), version="precast", whole.tissue_only=T)
+ggsave(file="plots/publication/Figure_nrn/GAD1-GAD2-SLC23A1-SLC6A1_whole-tissue-only-precast_violins.pdf", 
+	marrangeGrob(grobs=plist1, top=NULL, ncol=2, nrow=1), width=2, height=1.7)
 
 ## Reproducibility information
 print("Reproducibility information:")
