@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=1G
-#SBATCH --job-name=save_module-regulon-tables
+#SBATCH --mem=3G
+#SBATCH --job-name=save_DE-tables
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -18,8 +18,8 @@ module load conda_R/4.4.x
 module list
 
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/tables/build_demographics_table.r
-#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/tables/DE_tables.r
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/tables/clean_module-regulon_tables.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/tables/DE_tables.r
+#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/tables/clean_module-regulon_tables.r
 
 echo "**** Job ends ****"
 date

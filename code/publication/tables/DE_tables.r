@@ -10,9 +10,11 @@ for(results_set in c("smoothed-k9-1663","seurat-pc30")) {
 
   la.degs = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_", results_set,
                             "_dx-sex_degs-F-test-t-test.csv"))
+  la.degs = la.degs[,-grep("df\\.prior", colnames(la.degs))]
 
   lr.degs = read.csv(paste0("processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_", results_set,
                             "_dx-sex_degs-F-test-t-test.csv"))
+  lr.degs = lr.degs[,-grep("df\\.prior", colnames(lr.degs))]
 
   lat = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_",
                         results_set, "_rev-gene-input_moderated-t-test.csv")) %>%
