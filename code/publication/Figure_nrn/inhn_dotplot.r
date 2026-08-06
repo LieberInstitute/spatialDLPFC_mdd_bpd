@@ -19,6 +19,7 @@ de.df2 = filter(de.df, group!="MDD.BPD")
 #         bar_format= factor(ifelse(target==mod_gene, "self", "normal"), levels=c("self","normal")))
 
 plot.genes = c("CORT","SST","CRH","VGF",
+	"GAD1","SLC32A1","GAD2","SLC6A1",
 	"PVALB","DLX6-AS1","TAC1","TRBC2")
 length(plot.genes)
 
@@ -40,7 +41,7 @@ p3.1 <- getMeanRatioBar(plot.genes, sce_summ)
 
 ggsave(file="plots/publication/Figure_nrn/InhN_dotplot.pdf", 
        arrangeGrob(grobs=list(p3, p3.1), layout_matrix=matrix(c(1,1,1,1,1,2), ncol=6)),
-       height=2.7, width=4)
+       height=3, width=4)
 
 ## Reproducibility information
 print("Reproducibility information:")
