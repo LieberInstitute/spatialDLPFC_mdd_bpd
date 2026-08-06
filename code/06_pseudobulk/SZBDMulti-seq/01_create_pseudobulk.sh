@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=100G
-#SBATCH --job-name=pseudobulk_control_save-full-size
+#SBATCH --job-name=pseudobulk_control_InhN-only
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/06_pseudobulk/SZBDMulti-seq/logs/%x_%j.log
 
 echo "**** Job starts ****"
