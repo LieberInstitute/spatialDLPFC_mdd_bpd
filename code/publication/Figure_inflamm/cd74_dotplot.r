@@ -55,6 +55,31 @@ ggsave(file=paste0("plots/publication/Figure_inflamm/",mod_gene,"_dotplot.pdf"),
 ggsave(file=paste0("plots/publication/Figure_inflamm/",mod_gene,"_prop-detected.pdf"),
 	p3.2, 
 	height=2, width=6.5)
+
+# just do median spots detected
+ordered_genes = plot.genes
+gids = rownames(spe_summ)[rowData(spe_summ)$gene_name %in% ordered_genes]
+names(gids) = rowData(spe_summ)[gids,"gene_name"]
+stopifnot(length(ordered_genes)==length(gids))
+
+df1 = as.data.frame(assay(spe_summ, "logcounts.prop.detected")[gids,])
+df2 = tidyr::pivot_longer(tibble::rownames_to_column(df1, var="gene_id"), all_of(colnames(df1)), names_to="sample", values_to="prop.spots.detected") %>%
+	left_join(as.data.frame(rowData(spe_summ)[gids,c("gene_id","gene_name")])) %>%
+        mutate(gene_name= factor(gene_name, levels=ordered_genes))
+tmp = group_by(df2, gene_name) %>% summarise(med_prop.spots = median(prop.spots.detected))
+p3.3 <- ggplot(tmp, aes(x=gene_name, y=med_prop.spots))+
+	geom_bar(stat="identity", width=.8)+ylim(0,.15)+
+	geom_hline(aes(yintercept=.01), color="red")+
+	labs(title="", y="med. prop. spots")+
+	theme_minimal()+theme(axis.text.y=element_text(size=6), axis.title.x=element_blank(),
+                        panel.grid.minor=element_blank(),
+                        axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=6),
+                        plot.margin = margin(.2,.2,1.5,.2,"cm"))
+
+ggsave(file=paste0("plots/publication/Figure_inflamm/",mod_gene,"_median-prop-detected.pdf"),
+        p3.3,
+        height=2, width=6.5)
+
 ## Reproducibility information
 print("Reproducibility information:")
 format(Sys.time(), tz="EST")
