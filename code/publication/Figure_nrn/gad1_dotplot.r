@@ -62,9 +62,11 @@ bar.df = tidyr::pivot_longer(df2, all_of(levels(colData(sce_summ)$inhn_type)),
 bar.df$cellType = factor(bar.df$cellType, levels=levels(sce_summ$inhn_type))
 bar.df$gene_name = factor(bar.df$gene_name, levels=rev(ordered_genes))
 
+inhn.col.pal = c("CGE CNR1"="#5E646E","CGE LAMP5"="grey70","MGE PV"="#897d74","MGE SST"="#d6cac0")
+
 p3.2 = ggplot(bar.df, aes(y=gene_name, x=mean.expr, fill=cellType))+
   geom_bar(stat="identity", position="fill")+
-  scale_fill_manual(values=RColorBrewer::brewer.pal("Paired", n=4))+scale_y_discrete(position="right")+
+  scale_fill_manual(values=inhn.col.pal)+scale_y_discrete(position="right")+
   labs(title=" ", x="mean\nexpr")+guides(fill = guide_legend(nrow = 2, byrow = TRUE, position="bottom"))+
   theme_minimal()+theme(axis.text.x=element_blank(), axis.text.y=element_blank(),
                         axis.title.y=element_blank(), panel.grid.minor=element_blank(),

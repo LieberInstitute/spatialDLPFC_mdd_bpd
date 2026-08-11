@@ -22,18 +22,21 @@ x = cpm(tmp, log=T, prior.count=4)
 dimnames(x) <- dimnames(sce_pseudo)
 logcounts(sce_pseudo) <- x
 
-sub_markers = c("ADARB2","CNR1","LAMP5","LHX6","SST","PVALB","DLX1","ARX")
+sub_markers = c("ADARB2","CNR1","LAMP5","LHX6","SST","PVALB")#,"DLX1","ARX")
 for(i in sub_markers) colData(sce_pseudo)[[i]] = logcounts(sce_pseudo)[rowData(sce_pseudo)$gene_name==i,]
 
 cdata = as.data.frame(colData(sce_pseudo))
 cdata2 = tidyr::pivot_longer(cdata, all_of(sub_markers), names_to="gene_name", values_to="logcounts")
 cdata2$gene_name = factor(cdata2$gene_name, levels=sub_markers)
 
+inhn.col.pal = c("CGE CNR1"="#5E646E","CGE LAMP5"="grey70","MGE PV"="#897d74","MGE SST"="#d6cac0")
+
 p1 <- ggplot(cdata2, aes(x=inhn_type, y=logcounts, color=inhn_type))+
-  ggbeeswarm::geom_quasirandom()+
+  ggbeeswarm::geom_quasirandom(size=.5)+
   facet_wrap(vars(gene_name))+ylim(0,15)+
-  scale_color_manual(values=RColorBrewer::brewer.pal("Paired", n=4))+
-  theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.5), legend.position="bottom", text=element_text(size=6))
+  scale_color_manual(values=inhn.col.pal)+
+  theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.5), legend.position="none", text=element_text(size=6),
+	panel.grid.minor=element_blank())
 
 # azimuth collapse
 load("processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_InhN-only.Rdata")
@@ -44,12 +47,15 @@ tmp = group_by(cdata, azimuth, inhn_type) %>% tally()
 tmp$azimuth = factor(tmp$azimuth, levels=c("Vip","Sncg","Pax6","Lamp5","Lamp5 Lhx6","Sst","Sst Chodl","Pvalb","Chandelier"))
 
 p2 <- ggplot(tmp, aes(x=azimuth, y=n, fill=inhn_type))+
-  geom_bar(stat="identity")+labs(y="# nuclei")+
-  scale_fill_manual(values=RColorBrewer::brewer.pal("Paired", n=4))+
-  theme_bw()+theme(legend.position="none", text=element_text(size=6))
+  geom_bar(stat="identity", color="black")+labs(y="# nuclei")+
+  scale_fill_manual(values=inhn.col.pal)+
+  theme_bw()+theme(legend.position="none", text=element_text(size=6), panel.grid.minor=element_blank(),
+	panel.grid.major.x=element_blank())
 
 ggsave(file="plots/publication/Figure_nrn/InhN-subtypes_lineage-groups.pdf", 
-	grid.arrange(p2, p1, layout_matrix=matrix(c(1,2,2,2,2))), width=5, height=8)
+	grid.arrange(p2, p1, layout_matrix=matrix(c(1,2,2))), width=3.5, height=5)
+
+stop("First plot only")
 
 # aggregate for mean ratio bar
 sce_summ = aggregateAcrossCells(sce_con, ids=colData(sce_con)[,c("inhn_type")],
