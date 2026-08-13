@@ -9,18 +9,19 @@ set.seed(123)
 refined.modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_adj_with-logcounts-corr_DEG-modules-subset-refined.csv")
 
 source("code/publication/plotting_utils.r")
-de.df2 = filter(de.df, group!="MDD.BPD")
 
-plot.genes = c("MAPK3","DUSP4","DUSP6","ELK1","TEF","RASD1")#,
-#	"FABP3","SURF1","ATP6V0E2",
-#	"SPON2","BAIAP3")
+mod_gene="COX4I1"
+plot.genes = c("ATP5F1E","NEDD8","COX7A1","SLC35E2B","TOMM7",
+  "FABP3","PCP4","SURF1",
+  "ATP6V0E2","NBL1",
+  "ATF4","MAPK3")
 
-p3 <- getDotplot(plot.genes, de.df2)+theme(axis.text.y=element_text(size=7))
+p3 <- getDotplot(plot.genes, de.df)
 p3.1 <- getMeanRatioBar(plot.genes, sce_summ)
 
-ggsave(file="plots/publication/Figure_eQTL/ERK_dotplot.pdf", 
-       arrangeGrob(grobs=list(p3, p3.1), layout_matrix=matrix(c(1,1,1,1,1,2), ncol=6)),
-       height=2, width=4)
+ggsave(file=paste0("plots/publication/Figure_eQTL/",mod_gene,"_dotplot.pdf"), 
+       arrangeGrob(grobs=list(p3, p3.1), layout_matrix=matrix(c(1,1,1,1,1,1,1,2), ncol=8)),
+       height=3.2, width=6.5)
 
 ## Reproducibility information
 print("Reproducibility information:")
@@ -28,3 +29,4 @@ format(Sys.time(), tz="EST")
 proc.time()
 options(width = 120)
 sessionInfo()
+
