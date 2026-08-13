@@ -13,6 +13,11 @@ if(sum(c("row","col") %in% colnames(colData(spe)))!=2) {
 	spe$col <- spe$array_col
 }
 
+## -- 2026-08-13 update --
+## Note that the spatial coordinates were not offset and should have been.
+## See http://edward130603.github.io/BayesSpace/articles/joint_clustering.html#clustering-1
+## for more details.
+
 #temporary code while PCs finish running
 #load("processed-data/05_clustering/BayesSpace/spe_PCA_MNN_empty-assays.Rdata")
 #reducedDim(spe, "PCA_1079") <- reducedDim(dummy_spe, "PCA_1079")
