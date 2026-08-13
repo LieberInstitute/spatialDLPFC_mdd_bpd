@@ -13,6 +13,11 @@ if(sum(c("row","col") %in% colnames(colData(spe)))!=2) {
 	spe$col <- spe$array_col
 }
 
+## -- 2026-08-13 update --
+## Note that the spatial coordinates were not offset and should have been.
+## See http://edward130603.github.io/BayesSpace/articles/joint_clustering.html#clustering-1
+## for more details.
+
 load("processed-data/05_clustering/BayesSpace/spe_fastMNN_n1079-k10-ordered-merge.Rdata")
 stopifnot(identical(rownames(mnn), rownames(colData(spe))))
 reducedDim(spe, "MNN_1079") <- mnn$corrected
