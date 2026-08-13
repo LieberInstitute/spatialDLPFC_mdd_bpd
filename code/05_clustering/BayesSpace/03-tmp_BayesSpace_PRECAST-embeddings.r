@@ -14,6 +14,11 @@ if(sum(c("row","col") %in% colnames(colData(spe)))!=2) {
 	spe$col <- spe$array_col
 }
 
+## -- 2026-08-13 update --
+## Note that the spatial coordinates were not offset and should have been.
+## See http://edward130603.github.io/BayesSpace/articles/joint_clustering.html#clustering-1
+## for more details.
+
 load("processed-data/05_clustering/PRECAST/srt_precast_k-9_n1079.Rdata")
 reddim = seuInt@reductions$PRECAST@cell.embeddings
 reducedDim(spe, "PRECAST_1079", withDimnames=F) = reddim[spe$seurat_key,]
