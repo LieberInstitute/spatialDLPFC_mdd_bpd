@@ -7,8 +7,10 @@ outputs in `processed-data/11_eQTL_coloc/seurat/tables/`.
 
 - Use `map_significant_summary.csv` for integrated eGene-centered counts by
   context and GWAS set.
-- Use `map_significant_pairs.csv.gz` when one row per significant
-  gene-variant pair is needed.
+- Use `map_significant_pairs.csv.gz` when all verified exact-dosage members of
+  each significant lead-cis or conditionally independent eQTL signal are
+  needed. Rows enumerate gene-variant signal memberships, not additional
+  independent signals.
 - Use `map_significant_unified.csv.gz` when source-specific lead-cis versus
   independent tensorQTL statistics must be audited.
 - Use `eQTL_boxplot_deg_pairs.csv` only as genotype-boxplot metadata for
@@ -38,10 +40,10 @@ all-donor `split == "all"` results.
 Caption-ready placeholder text:
 
 - Supplementary Table Sx. Manuscript-ready Seurat/domainCT eQTL results for
-  MBv. The workbook contains one-row-per-significant cis/independent eQTL
-  pairs, one-row-per-BH-significant nominal eQTL pairs, context-level summaries,
-  and compact eGene intersection lists with DEG and psychiatric GWAS support
-  annotations.
+  MBv. The workbook enumerates all exact-dosage members of significant
+  cis/independent eQTL signals, one-row-per-BH-significant nominal eQTL pairs,
+  context-level summaries, and compact eGene intersection lists with DEG and
+  psychiatric GWAS support annotations.
 - Supplementary Table Sy. Manuscript-ready colocalization results for MBv.
   The workbook contains final strong colocalization loci for MDD, BD, and SCZD
   GWAS plus disorder-by-domainCT summaries.
@@ -60,15 +62,17 @@ Source files:
 
 Sheets:
 
-- `cis_independent`: one row per unique significant gene-variant pair from the
-  integrated lead-cis plus independent eQTL table. Rows are unique by
+- `cis_independent`: one row per unique significant gene-variant signal member
+  from the integrated lead-cis plus independent eQTL table, including all
+  variants verified to have exactly equivalent donor-level dosages. Rows are unique by
   `context`, `gene_id`, and `variant_id`. Lead cis rows use tensorQTL
   `map_cis` with `qval < 0.05`; independent rows require the parent lead cis
   result to have `qval_parent < 0.05` and the independent signal to have
   `pval_perm < 0.05`. The public sheet reports the coordinate-and-allele
   `variant_id` together with its genotype-VCF `rsid` annotation and keeps
   association statistics, allele-frequency, distance, DEG/GWAS support,
-  `lead_cis_qval`, and a compact `eQTL_signal_class` field. TensorQTL
+  `lead_cis_qval`, `eQTL_signal_id`, and a compact `eQTL_signal_class` field.
+  TensorQTL
   beta-shape/DF internals, duplicate identifiers, and source-support booleans
   remain in the source CSVs rather than the published workbook.
 - `nominal_BH05`: one row per nominal eQTL gene-variant pair retained at
@@ -258,14 +262,18 @@ Common columns:
 
 ### `map_significant_summary.csv`
 
-Context/split summary of `map_significant_pairs.csv.gz`, the simplified
-one-row-per-significant-pair eQTL table. This is the recommended integrated
-summary for eGene-centered downstream reporting.
+Context/split summary of the exact-tie-expanded
+`map_significant_pairs.csv.gz`. This is the recommended integrated summary for
+eGene-centered downstream reporting and exact-variant intersections.
 
 Rows are context/split summaries, not row-level eQTL pairs.
 
 Columns:
 
+- `n_eQTL_signals`: number of distinct reported lead-cis or conditionally
+  independent eQTL signals.
+- `n_signal_member_pairs`: number of enumerated gene-variant signal
+  memberships after exact-tie recovery.
 - `n_significant_pairs`: number of retained unique gene-variant pairs.
 - `n_cis_supported_pairs`: number of retained pairs present in
   `map_cis_significant.csv.gz`.
@@ -351,7 +359,12 @@ Added columns:
 
 ### `map_significant_pairs.csv.gz`
 
-Simplified one-row-per-pair table derived from `map_significant_unified.csv.gz`.
+Canonical exact-tie-expanded signal-member table. It starts from the
+single-variant-per-signal
+significant-pair union derived from `map_significant_unified.csv.gz` and adds
+every variant verified to have donor-level dosages identical to the reported
+representative, up to allele orientation. The original input is preserved
+separately.
 
 Rows are unique by `dataset_id`, `context`, `split`, `gene_id`, `gene_name`, and
 `variant_id`. The `source` column identifies which source row supplied the
@@ -363,6 +376,8 @@ retained tensorQTL statistics:
 
 Support/provenance columns:
 
+- `signal_id`, `signal_kind`, and `signal_rank`: identity and class of the
+  lead-cis or conditionally independent eQTL signal.
 - `pair_provenance`: `cis_only`, `independent_only`, or `cis_and_independent`.
 - `cis_supported`: `TRUE` if the pair was present in `map_cis_significant.csv.gz`.
 - `indep_supported`: `TRUE` if the pair was present in

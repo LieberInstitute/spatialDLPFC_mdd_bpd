@@ -2422,7 +2422,8 @@ order_significant_summary_cols <- function(dt) {
   by_dis <- function(tpl) unlist(lapply(disorders, function(d) sprintf(tpl, d, c("strict", "exp"))))
   front <- c(
     "split", "context",
-    intersect(c("n_independent_signals", "n_significant_pairs", "n_cis_supported_pairs",
+    intersect(c("n_eQTL_signals", "n_signal_member_pairs", "n_independent_signals",
+                "n_significant_pairs", "n_cis_supported_pairs",
                 "n_indep_supported_pairs", "n_shared_pairs", "n_cis_only_pairs",
                 "n_indep_only_pairs", "n_nominal_pairs"), names(dt)),
     "n_eGenes", "n_DEG",

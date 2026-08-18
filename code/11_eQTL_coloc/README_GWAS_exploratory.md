@@ -8,7 +8,11 @@ The authoritative downstream tables are under
 
 - `map_significant_summary.csv`
 - `map_significant_pairs.csv.gz`
-- `map_significant_unified.csv.gz`
+
+The promoted `map_significant_pairs.csv.gz` table enumerates all verified exact
+dosage ties. Its original single-variant-per-signal input is preserved
+separately; `map_significant_unified.csv.gz` also remains a provenance input
+and is not an exhaustive exact-variant membership list.
 
 The companion SCZD-focused example table in this directory is:
 
@@ -38,14 +42,22 @@ Row-level tables use the cleaned GWAS overlap convention:
 - `DIS_gwasP`, `DIS_gwasBeta`, `DIS_gwasBetaSE`: exploratory exact-variant
   GWAS statistics for MDD/BD variant matches.
 
-`map_significant_summary.csv` reports combined eGene counts:
+`map_significant_summary.csv` reports both signal/member counts and overlap
+counts:
+
+- `n_eQTL_signals`: distinct reported lead-cis or conditionally independent
+  signals.
+- `n_signal_member_pairs`: enumerated variant-gene memberships after exact-tie
+  recovery.
+- `n_DIS_gwasVar_strict` and `n_DIS_gwasVar_exp`: unique eGenes with exact GWAS
+  variant matches at each available threshold.
 
 - `n_DIS_gwas_strict`: unique eGenes with strict variant or gene-list support.
 - `n_DIS_gwas_exp`: unique eGenes with exploratory variant or gene-list support;
   present for MDD and BD.
 
-Variant-only counts are not separate summary columns; use the row-level
-`DIS_gwasVar_*` flags when exact variant support is needed.
+The final `intersecting_genes` worksheet enumerates the corresponding gene
+lists, and the row-level `DIS_gwasVar_*` flags identify the exact variants.
 
 ## Context Columns In The Example Table
 

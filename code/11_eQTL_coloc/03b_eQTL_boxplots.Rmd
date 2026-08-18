@@ -816,7 +816,16 @@ manifest <- load_eqtl_manifest(
   split_order = "all"
 )
 
-sig_file <- file.path(tables_dir, "map_significant_unified.csv.gz")
+sig_file <- file.path(tables_dir, "map_significant_pairs.csv.gz")
+if (!file.exists(sig_file)) {
+  sig_file <- file.path(tables_dir, "map_significant_pairs_tie_recovered.csv.gz")
+}
+if (!file.exists(sig_file)) {
+  sig_file <- file.path(tables_dir, "map_significant_unified.csv.gz")
+}
+if (!file.exists(sig_file)) {
+  sig_file <- file.path(tables_dir, "map_independent_significant_tie_recovered.csv.gz")
+}
 if (!file.exists(sig_file)) {
   sig_file <- file.path(tables_dir, "map_independent_significant.csv.gz")
 }

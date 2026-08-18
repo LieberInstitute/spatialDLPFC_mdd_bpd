@@ -16,7 +16,8 @@ source(file.path(code_dir, "utils.R"), chdir = FALSE)
 
 ## recover variants that are statistically indistinguishable from the single
 ## index variant emitted for each lead or conditionally independent eQTL signal.
-## existing tables are inputs only; every output uses a separate filename.
+## outputs use separate filenames unless --promote-current-pairs explicitly
+## replaces the canonical pairs table after preserving its one-index input.
 
 parse_cli <- function(args) {
   out <- list(
@@ -26,6 +27,7 @@ parse_cli <- function(args) {
     current_pairs = NULL,
     independent = NULL,
     coloc_gated = NULL,
+    promote_current_pairs = FALSE,
     dosage_r_tolerance = 1e-12
   )
   for (arg in args) {
@@ -41,6 +43,8 @@ parse_cli <- function(args) {
       out$independent <- sub("^--independent=", "", arg)
     } else if (startsWith(arg, "--coloc-gated=")) {
       out$coloc_gated <- sub("^--coloc-gated=", "", arg)
+    } else if (identical(arg, "--promote-current-pairs")) {
+      out$promote_current_pairs <- TRUE
     } else if (startsWith(arg, "--dosage-r-tolerance=")) {
       out$dosage_r_tolerance <- as.numeric(sub("^--dosage-r-tolerance=", "", arg))
     } else {
@@ -163,6 +167,22 @@ front_order <- function(dt, cols) {
 current_pairs <- fread(input_paths$current_pairs)
 independent <- fread(input_paths$independent)
 manifest <- fread(input_paths$manifest)
+
+recovery_metadata_cols <- c(
+  "signal_id", "signal_kind", "signal_rank", "index_variant_id",
+  "is_index_variant", "was_in_current_pairs", "recovery_status",
+  "n_signal_members", "tie_orientation", "dosage_r", "dosage_r2",
+  "signal_chr", "signal_rank_label", "n_samples", "slope_scale",
+  "member_raw_start_distance", "member_raw_af", "member_raw_ma_samples",
+  "member_raw_ma_count", "member_raw_pval_nominal", "member_raw_slope",
+  "member_raw_slope_se", "index_raw_start_distance",
+  "index_raw_pval_nominal", "index_raw_slope", "index_raw_slope_se"
+)
+if (all(c("signal_id", "is_index_variant", "recovery_status") %in% names(current_pairs))) {
+  message("Current-pairs input is already tie-expanded; using its reported-index rows as the recovery baseline")
+  current_pairs <- current_pairs[is_index_variant == TRUE]
+  current_pairs[, (intersect(recovery_metadata_cols, names(current_pairs))) := NULL]
+}
 
 pair_keys <- c("dataset_id", "context", "split", "gene_id", "variant_id")
 assert_required_cols(
@@ -692,6 +712,17 @@ fwrite(new_gwas_matches, output_paths$new_gwas)
 fwrite(coloc_summary, output_paths$coloc_summary)
 fwrite(new_coloc_matches, output_paths$new_coloc)
 fwrite(rejected_same_p, output_paths$rejected)
+
+if (isTRUE(opts$promote_current_pairs)) {
+  index_backup <- sub("[.]csv[.]gz$", "_index_only.csv.gz", input_paths$current_pairs)
+  if (identical(index_backup, input_paths$current_pairs)) {
+    index_backup <- paste0(input_paths$current_pairs, ".index_only.csv.gz")
+  }
+  fwrite(current_pairs, index_backup)
+  fwrite(expanded, input_paths$current_pairs)
+  message("Promoted recovered pairs to canonical current-pairs table: ", input_paths$current_pairs)
+  message("Preserved the one-index recovery baseline: ", index_backup)
+}
 
 message("Recovery complete. Outputs:")
 for (path in output_paths) message("  ", path)

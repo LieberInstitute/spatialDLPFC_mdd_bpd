@@ -2,8 +2,8 @@
 
 ## Technical summary
 
-The tensorQTL lead/independent tables retained one index variant per reported
-signal even when multiple variants had identical donor-level dosages. The
+The tensorQTL lead/independent tables retained one representative variant per
+reported signal even when multiple variants had identical donor-level dosages. The
 exact-tie recovery audit preserves the original 3,435 signal rows and adds
 12,242 previously unreported variant-gene memberships, producing 15,677 rows
 across the same signals.
@@ -24,12 +24,13 @@ are added, all for *SNORC* under exploratory MDD in L4, L5, and Oligo.
 Recovery also changes the exact eQTL-signal-member annotation for 11 strong
 coloc rows: 10 BD and 1 SCZ, with no MDD changes. These are not new
 colocalizations. They are strong colocalizations whose lead SNP was already in
-the coloc result but was absent from the one-index eQTL representation.
+the coloc result but was absent from the single-variant eQTL representation.
 
 ## Definitions and comparison basis
 
 - **Recovered exact tie:** a variant with the same raw nominal eQTL p-value as
-  the reported index and an identical donor-level dosage vector up to allele
+  the reported representative and an identical donor-level dosage vector up to
+  allele
   orientation (`abs(r) = 1` within a `1e-12` numerical tolerance).
 - **eGene-DEG difecta:** an eGene that is also in the broad DEG union. This is a
   gene-level overlap and is unchanged by variant recovery.
@@ -44,9 +45,12 @@ the coloc result but was absent from the one-index eQTL representation.
 - **Strong coloc lead match:** a gated strong-coloc row whose `lead_snp` exactly
   matches a member of the corresponding domain-CT eQTL signal.
 
-The baseline is `map_significant_pairs.csv.gz`. The comparison table is
-`map_significant_pairs_tie_recovered.csv.gz`. Both include all lead-cis and
-conditionally independent signal rows; no separate cis-only recovery is needed.
+The audit baseline was the original single-variant-per-signal
+`map_significant_pairs.csv.gz`, now preserved separately. The comparison
+table is `map_significant_pairs_tie_recovered.csv.gz`, and the recovered table
+has now also been promoted to the canonical `map_significant_pairs.csv.gz`.
+All three cover both lead-cis and conditionally independent signals; no
+separate cis-only recovery is needed.
 
 ## No eGene discovery counts changed
 
@@ -149,7 +153,7 @@ exact lead-SNP-to-eQTL-signal-member annotation.
 The recovery is implemented in [`03ab_recover_indepeQTLs.R`](03ab_recover_indepeQTLs.R).
 It runs after `03_eqtl_explore.Rmd`, reads the complete tensorQTL nominal
 parquets, and checks dosage equivalence in the correct per-dataset donor set.
-It preserves all 3,435 current index rows across all 52 original columns.
+It preserves all 3,435 originally reported rows across all 52 original columns.
 
 Of 15,686 same-p candidate memberships, 15,677 passed the exact-dosage gate.
 Nine candidates for one Astro chromosome 2 signal had `r2 = 0.9808` rather than
@@ -158,22 +162,31 @@ not accepted as exact ties.
 
 The full audit was run on rsrv16 using staged copies of the current local eQTL
 and gated coloc tables because rsrv16's pre-existing processed tables were an
-older snapshot. No primary current table was overwritten.
+older snapshot. The audit itself did not overwrite a primary table; after
+validation, the recovered table was promoted locally to the canonical pairs
+filename with the original input retained as a backup.
 
-## Interpretation and next use
+## Downstream integration
 
-The one-index tensorQTL tables remain valid summaries of independent eQTL
+The original tensorQTL tables remain valid summaries of independent eQTL
 signals, but they are not exhaustive variant-member lists. They should not be
 used directly as exhaustive exact-ID sets for GWAS, coloc-lead, or other
 variant-domain intersections.
 
-Use the recovered combined table before eQTL boxplot selection, exact GWAS
-overlap summaries, and final coloc lead-membership annotation. The coloc ABF
-calculation itself already uses the full nominal parquet data and does not need
-to be rerun because of this recovery.
+`06_eqtl_coloc_final_tables.Rmd` now uses the promoted canonical combined table to build
+the enumerated `cis_independent` worksheet, the eQTL summaries and exact GWAS
+overlap lists, and the final coloc lead/eQTL-membership flag. The worksheet
+retains signal IDs and signal classes so the 15,677 variant-gene memberships
+cannot be mistaken for 15,677 independent
+signals. `03b_eQTL_boxplots.Rmd` also selects future significant examples from
+the recovered table. Existing plots were not regenerated.
+
+The coloc ABF calculation itself already uses the full nominal parquet data and
+does not need to be rerun because of this recovery.
 
 ## Audit outputs
 
+- `map_significant_pairs.csv.gz`: promoted canonical recovered table.
 - `map_significant_pairs_tie_recovered.csv.gz`: recovered combined eQTL table.
 - `map_independent_significant_tie_recovered.csv.gz`: recovered independent-only table.
 - `independent_eqtl_tie_recovery_members.csv.gz`: compact signal-member audit.

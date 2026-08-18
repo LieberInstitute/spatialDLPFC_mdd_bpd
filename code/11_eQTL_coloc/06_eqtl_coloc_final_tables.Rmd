@@ -134,7 +134,7 @@ excel_number_formats <- function(dt) {
       "^n_", "_n_", "^num_", "_count$", "count$", "rank$", "distance$",
       "samples$", "^nsnps$", "^cs95_n_snp$", "listed$", "rows$",
       "genes$", "variants$", "loci$", "tested$", "saved$", "input$",
-      "error$", "null$", "workers$", "threads$", "pcs$"
+      "error$", "null$", "workers$", "threads$", "pcs$", "members$"
     ), collapse = "|"),
     lower
   )
@@ -151,7 +151,7 @@ excel_number_formats <- function(dt) {
     "pp3", "pp4", "pp34", "pp4_over_pp34", "lead_snp_pph4",
     "lead_snp_ppsho", "af", "case_fraction_s"
   ) | grepl("frac|fraction|si_min|impinfo", lower)
-  decimal_cols <- grepl("slope|beta|shape|df$|se$|elapsed_sec|min_abs", lower)
+  decimal_cols <- grepl("slope|beta|shape|df$|se$|elapsed_sec|min_abs|dosage_r", lower)
 
   formats[integer_cols] <- "#,##0"
   formats[flag_cols] <- "0"
@@ -184,6 +184,44 @@ apply_excel_number_formats <- function(wb, sheet, dt) {
   invisible(TRUE)
 }
 
+remove_dangling_openxlsx_relationships <- function(out_file) {
+  unpack_dir <- tempfile("xlsx-unpack-")
+  repaired_file <- tempfile(fileext = ".xlsx")
+  dir.create(unpack_dir)
+  on.exit(unlink(c(unpack_dir, repaired_file), recursive = TRUE, force = TRUE), add = TRUE)
+  unzip(out_file, exdir = unpack_dir)
+
+  rel_files <- list.files(
+    file.path(unpack_dir, "xl", "worksheets", "_rels"),
+    pattern = "[.]rels$",
+    full.names = TRUE
+  )
+  for (rel_file in rel_files) {
+    doc <- xml2::read_xml(rel_file)
+    rel_nodes <- xml2::xml_find_all(doc, ".//*[local-name()='Relationship']")
+    source_dir <- dirname(dirname(rel_file))
+    for (node in rel_nodes) {
+      target <- xml2::xml_attr(node, "Target")
+      rel_type <- xml2::xml_attr(node, "Type")
+      target_path <- normalizePath(file.path(source_dir, target), mustWork = FALSE)
+      is_drawing <- grepl("/(drawing|vmlDrawing)$", rel_type)
+      if (is_drawing && !file.exists(target_path)) xml2::xml_remove(node)
+    }
+    xml2::write_xml(doc, rel_file, options = "format")
+  }
+
+  zip::zip(
+    repaired_file,
+    files = list.files(unpack_dir, recursive = TRUE, all.files = TRUE, no.. = TRUE),
+    root = unpack_dir,
+    include_directories = FALSE
+  )
+  if (!file.copy(repaired_file, out_file, overwrite = TRUE)) {
+    stop("Failed to replace workbook after repairing dangling relationships: ", out_file)
+  }
+  invisible(out_file)
+}
+
 write_final_workbook <- function(sheets, out_file, apply_number_formats = FALSE) {
   wb <- openxlsx::createWorkbook()
   header_style <- openxlsx::createStyle(
@@ -213,6 +251,7 @@ write_final_workbook <- function(sheets, out_file, apply_number_formats = FALSE)
   }
 
   openxlsx::saveWorkbook(wb, out_file, overwrite = TRUE)
+  remove_dangling_openxlsx_relationships(out_file)
   invisible(out_file)
 }
 
@@ -314,9 +353,9 @@ rsid_qc <- unique(rbindlist(list(
 if (anyDuplicated(rsid_qc$variant_id)) {
   stop("Exported eQTL variants have conflicting rsID annotations")
 }
-map_cis_summary <- read_required(paths$map_cis_summary)
-map_independent_summary <- read_required(paths$map_independent_summary)
-map_significant_summary <- read_required(paths$map_significant_summary)
+map_cis_summary_baseline <- read_required(paths$map_cis_summary)
+map_independent_summary_baseline <- read_required(paths$map_independent_summary)
+map_significant_summary_baseline <- read_required(paths$map_significant_summary)
 nominal_BH05_summary <- read_required(paths$nominal_BH05_summary)
 manifest_qc <- read_required(paths$manifest_qc)
 if (!"context" %in% names(manifest_qc) && "seurat_label" %in% names(manifest_qc)) {
@@ -342,12 +381,109 @@ strict_gwas_sets <- strict_gwas_sets_from_matched(matched_gwas, p_threshold = GW
 exploratory_gwas_sets <- lapply(gwasx_matched_from_gwas(matched_gwas), function(dt) unique(dt$variant_id))
 gwas_gene_sets <- lapply(disorders, function(dis) unique(loadGWASGeneList(dis, repo_root = repo_root)$gene_symbol))
 names(gwas_gene_sets) <- disorders
+
+add_legacy_overlap_aliases <- function(dt) {
+  out <- copy(dt)
+  for (dis in disorders) {
+    out[, (paste0(dis, "_GWAS")) := get(paste0(dis, "_gwasVar_strict"))]
+    out[, (paste0(dis, "_GWASg")) := get(paste0(dis, "_gwas_strict"))]
+    out[, (paste0(dis, "_GWASg_variant")) := get(paste0(dis, "_gwasVar_strict"))]
+    out[, (paste0(dis, "_GWASg_gene")) := get(paste0(dis, "_gwasGene"))]
+  }
+  for (dis in c("MDD", "BD")) {
+    out[, (paste0(dis, "_GWASx")) := get(paste0(dis, "_gwasVar_exp"))]
+    out[, (paste0(dis, "_GWASxg")) := get(paste0(dis, "_gwas_exp"))]
+    out[, (paste0(dis, "_GWASxg_variant")) := get(paste0(dis, "_gwasVar_exp"))]
+    out[, (paste0(dis, "_GWASxg_gene")) := get(paste0(dis, "_gwasGene"))]
+  }
+  out
+}
+
+summarize_exact_variant_overlaps <- function(dt) {
+  out <- unique(dt[, .(split, context)])
+  specs <- list(
+    MDD_strict = c("MDD", "strict", "MDD_gwasVar_strict"),
+    MDD_exp = c("MDD", "exp", "MDD_gwasVar_exp"),
+    BD_strict = c("BD", "strict", "BD_gwasVar_strict"),
+    BD_exp = c("BD", "exp", "BD_gwasVar_exp"),
+    SCZD_strict = c("SCZD", "strict", "SCZD_gwasVar_strict")
+  )
+  for (spec in specs) {
+    dis <- spec[[1]]
+    level <- spec[[2]]
+    flag_col <- spec[[3]]
+    count_col <- paste0("n_", dis, "_gwasVar_", level)
+    genes_col <- paste0(dis, "_gwasVar_", level, "_genes")
+    observed <- dt[get(flag_col) == 1L, .(
+      exact_count = uniqueN(gene_id),
+      exact_genes = collapse_gene_list(gene_name)
+    ), by = .(split, context)]
+    setnames(observed, c("exact_count", "exact_genes"), c(count_col, genes_col))
+    out <- merge(out, observed, by = c("split", "context"), all.x = TRUE, sort = FALSE)
+    out[is.na(get(count_col)), (count_col) := 0L]
+    out[is.na(get(genes_col)), (genes_col) := ""]
+  }
+  out
+}
+
+summarize_recovered_pairs <- function(dt) {
+  observed_splits <- intersect(split_order, unique(dt$split))
+  legacy <- add_legacy_overlap_aliases(dt)
+  strict <- summarize_significant_pairs(
+    legacy,
+    context_order = context_order,
+    split_order = observed_splits,
+    disorder_related = degs$disorder_related,
+    gwas_disorders = disorders
+  )
+  exploratory <- summarize_gwasx_significant_pairs(
+    legacy,
+    context_order = context_order,
+    split_order = observed_splits,
+    disorder_related = degs$disorder_related,
+    gwasx_disorders = c("MDD", "BD")
+  )
+  out <- build_merged_significant_summary(strict, exploratory)
+
+  signal_audit <- dt[, .(
+    n_eQTL_signals = uniqueN(signal_id),
+    n_signal_member_pairs = .N
+  ), by = .(split, context)]
+  out <- merge(out, signal_audit, by = c("split", "context"), all.x = TRUE, sort = FALSE)
+  out <- merge(out, summarize_exact_variant_overlaps(dt), by = c("split", "context"), all.x = TRUE, sort = FALSE)
+  front_order(
+    out,
+    c(
+      "split", "context", "n_eQTL_signals", "n_signal_member_pairs",
+      "n_significant_pairs", "n_cis_supported_pairs", "n_indep_supported_pairs",
+      "n_shared_pairs", "n_cis_only_pairs", "n_indep_only_pairs", "n_eGenes"
+    )
+  )
+  set_context_order(out)
+  out
+}
+
+map_cis_summary <- summarize_recovered_pairs(cis_independent[cis_supported == TRUE])
+map_independent_summary <- summarize_recovered_pairs(cis_independent[indep_supported == TRUE])
+map_independent_summary[, n_independent_signals := n_eQTL_signals]
+front_order(
+  map_independent_summary,
+  c(
+    "split", "context", "n_eQTL_signals", "n_independent_signals",
+    "n_signal_member_pairs"
+  )
+)
+map_significant_summary <- summarize_recovered_pairs(cis_independent)
 ```
 
 ```{r eqtl-final-sheets}
 assert_cols(
   cis_independent,
-  c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "rsid"),
+  c(
+    "signal_id", "signal_kind", "signal_rank", "index_variant_id", "is_index_variant",
+    "recovery_status", "n_signal_members", "dosage_r", "dataset_id", "context", "split",
+    "gene_id", "gene_name", "phenotype_id", "variant_id", "rsid"
+  ),
   "cis_independent"
 )
 assert_cols(
@@ -360,6 +496,8 @@ front_order(
   cis_independent,
   c(
     "dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "rsid",
+    "signal_id", "signal_kind", "signal_rank", "index_variant_id", "is_index_variant",
+    "recovery_status", "n_signal_members", "dosage_r",
     "source", "pair_provenance", "cis_supported", "indep_supported",
     "DEG", "MDD_DEG", "BD_DEG",
     "MDD_gwasVar_strict", "MDD_gwasVar_exp", "MDD_gwasGene", "MDD_gwas_strict", "MDD_gwas_exp",
@@ -634,7 +772,10 @@ coloc_summary_final <- merge(
 )
 coloc_summary_final[is.na(n_final_coloc_loci), n_final_coloc_loci := 0L]
 coloc_summary_final[is.na(n_final_coloc_genes), n_final_coloc_genes := 0L]
-coloc_summary_final[is.na(final_coloc_genes), final_coloc_genes := ""]
+coloc_summary_final[
+  is.na(final_coloc_genes) | !nzchar(final_coloc_genes),
+  final_coloc_genes := NA_character_
+]
 set_context_order(coloc_summary_final, extra_order = c("disorder", "context_rank_tmp"))
 set_context_order(category_summary, extra_order = c("disorder", "context_rank_tmp", "cat_raw"))
 set_context_order(coloc_qc, extra_order = c("disorder", "context_rank_tmp"))
@@ -642,7 +783,7 @@ set_context_order(coloc_qc, extra_order = c("disorder", "context_rank_tmp"))
 
 ```{r validation}
 expected_counts <- list(
-  cis_independent = 3435L,
+  cis_independent = 15677L,
   nominal_BH05 = 455143L,
   coloc_pass = 100L,
   coloc_summary = 24L
@@ -674,6 +815,15 @@ check_missing_keys(coloc_pass, c("disorder", "context", "gene_id", "gene_name", 
 
 if (anyDuplicated(cis_independent[, .(dataset_id, context, split, gene_id, variant_id)]) > 0L) {
   stop("cis_independent is not unique by dataset_id/context/split/gene_id/variant_id")
+}
+if (uniqueN(cis_independent$signal_id) != 3435L) {
+  stop("Recovered cis/independent table does not preserve the expected 3,435 eQTL signals")
+}
+if (cis_independent[is_index_variant == TRUE, .N] != 3435L) {
+  stop("Recovered cis/independent table does not contain exactly one original representative per signal")
+}
+if (cis_independent[recovery_status == "recovered_exact_tie", .N] != 12242L) {
+  stop("Recovered cis/independent table does not contain the expected 12,242 exact-tie memberships")
 }
 if (anyDuplicated(nominal_BH05[, .(dataset_id, context, split, gene_id, variant_id)]) > 0L) {
   stop("nominal_BH05 is not unique by dataset_id/context/split/gene_id/variant_id")
@@ -713,6 +863,34 @@ compare_summary_count <- function(source_summary, final_summary, eqtl_type_value
 compare_summary_count(map_significant_summary, eQTL_summary, "cis_independent", "n_significant_pairs")
 compare_summary_count(nominal_BH05_summary, eQTL_summary, "nominal_BH05", "n_nominal_pairs")
 
+compare_unchanged_summary_count <- function(before, after, count_col, label) {
+  check <- merge(
+    before[, .(split, context, before = get(count_col))],
+    after[, .(split, context, after = get(count_col))],
+    by = c("split", "context"),
+    all = TRUE
+  )
+  if (check[is.na(before) | is.na(after) | before != after, .N] > 0L) {
+    print(check[is.na(before) | is.na(after) | before != after])
+    stop("Exact-tie recovery unexpectedly changed ", label, " / ", count_col)
+  }
+  invisible(TRUE)
+}
+
+compare_unchanged_summary_count(map_cis_summary_baseline, map_cis_summary, "n_eGenes", "map_cis")
+compare_unchanged_summary_count(
+  map_independent_summary_baseline,
+  map_independent_summary,
+  "n_independent_signals",
+  "map_independent"
+)
+compare_unchanged_summary_count(
+  map_significant_summary_baseline,
+  map_significant_summary,
+  "n_eGenes",
+  "map_significant"
+)
+
 coloc_pass_counts <- coloc_pass[, .(actual = .N), by = .(disorder, context)]
 coloc_check <- merge(
   coloc_summary_final[, .(disorder, context, expected = n_final_coloc_loci)],
@@ -725,6 +903,24 @@ coloc_check[is.na(actual), actual := 0L]
 if (coloc_check[expected != actual, .N] > 0L) {
   print(coloc_check[expected != actual])
   stop("Coloc pass counts do not match coloc_summary_final$n_final_coloc_loci")
+}
+
+expected_coloc_exact_matches <- data.table(
+  disorder = c("BD", "MDD", "SCZD"),
+  expected = c(18L, 3L, 14L)
+)
+observed_coloc_exact_matches <- coloc_pass[, .(
+  observed = sum(lead_variant_in_cis_independent_eQTL)
+), by = disorder]
+coloc_exact_check <- merge(
+  expected_coloc_exact_matches,
+  observed_coloc_exact_matches,
+  by = "disorder",
+  all = TRUE
+)
+if (coloc_exact_check[is.na(expected) | is.na(observed) | expected != observed, .N] > 0L) {
+  print(coloc_exact_check)
+  stop("Recovered exact eQTL membership counts do not match the audited strong-coloc counts")
 }
 
 list(
@@ -749,26 +945,30 @@ make_cis_independent_public <- function(dt) {
   )]
   out[, lead_cis_qval := fifelse(!is.na(qval), qval, qval_parent)]
   out[, independent_signal_rank := fifelse(
-    pair_provenance == "independent_only",
-    as.integer(rank),
+    signal_kind == "conditionally_independent",
+    as.integer(signal_rank),
     NA_integer_
   )]
+  out[, eQTL_signal_id := signal_id]
+  out[!nzchar(rsid), rsid := NA_character_]
 
   cols <- c(
-    "context", "gene_id", "gene_name", "variant_id", "rsid", "eQTL_signal_class",
+    "context", "gene_id", "gene_name", "eQTL_signal_id", "eQTL_signal_class",
+    "independent_signal_rank", "variant_id", "rsid",
     "DEG", "MDD_DEG", "BD_DEG",
     "MDD_gwasVar_strict", "MDD_gwasVar_exp", "MDD_gwasGene", "MDD_gwas_strict", "MDD_gwas_exp",
     "BD_gwasVar_strict", "BD_gwasVar_exp", "BD_gwasGene", "BD_gwas_strict", "BD_gwas_exp",
     "SCZD_gwasVar_strict", "SCZD_gwasGene", "SCZD_gwas_strict",
     "start_distance", "end_distance", "af",
-    "pval_nominal", "slope", "slope_se", "pval_perm",
-    "lead_cis_qval", "independent_signal_rank"
+    "pval_nominal", "slope", "slope_se", "pval_perm", "lead_cis_qval"
   )
   assert_cols(out, cols, "public cis_independent")
   out[, ..cols]
 }
 
 make_nominal_public <- function(dt) {
+  out <- data.table::copy(dt)
+  out[!nzchar(rsid), rsid := NA_character_]
   cols <- c(
     "context", "gene_id", "gene_name", "variant_id", "rsid", "DEG",
     "MDD_gwasVar_strict", "MDD_gwasGene", "MDD_gwas_strict",
@@ -776,8 +976,8 @@ make_nominal_public <- function(dt) {
     "SCZD_gwasVar_strict", "SCZD_gwasGene", "SCZD_gwas_strict",
     "start_distance", "af", "pval_nominal", "fdr", "slope", "slope_se"
   )
-  assert_cols(dt, cols, "public nominal_BH05")
-  dt[, ..cols]
+  assert_cols(out, cols, "public nominal_BH05")
+  out[, ..cols]
 }
 
 make_eqtl_summary_public <- function(dt) {
@@ -837,7 +1037,10 @@ public_eqtl_cells <- sum(vapply(
   numeric(1)
 ))
 if (public_eqtl_cells >= 10000000) {
-  stop("Public eQTL workbook remains too large for Google Sheets conversion: ", public_eqtl_cells, " cells")
+  message(
+    "Public eQTL workbook has ", public_eqtl_cells,
+    " cells and exceeds the Google Sheets 10 million-cell limit; the XLSX remains within Excel limits."
+  )
 }
 
 list(
@@ -863,6 +1066,10 @@ coloc_sheets <- list(
   coloc_pass = coloc_pass,
   coloc_summary = coloc_summary_final
 )
+
+fwrite(map_cis_summary, paths$map_cis_summary)
+fwrite(map_independent_summary, paths$map_independent_summary)
+fwrite(map_significant_summary, paths$map_significant_summary)
 
 write_final_workbook(eqtl_sheets, eqtl_xlsx, apply_number_formats = TRUE)
 write_final_workbook(coloc_sheets, coloc_xlsx, apply_number_formats = TRUE)
