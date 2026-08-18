@@ -29,6 +29,8 @@ disorders <- c("BD", "MDD", "SCZD")
 publication_pdf_width <- 3.5
 publication_pdf_height <- 5
 dx_palette <- c(NTC = "#7F7F7F", MDD = "#FB8861", BD = "#9260B2")
+sex_shape_values <- c(Male = 16, Female = 18)
+sex_point_size_values <- c(Male = 2, Female = 2.3)
 
 ## change to TRUE to run the full DEG boxplot PDF generation
 RUN_FULL_DEG_BOXPLOT_PDF <- FALSE
@@ -112,6 +114,7 @@ pdf_page_text <- function(pdf_file, page) {
 save_eQTL_boxplots <- function(eqtl_dt, filter_dataset_id = NULL, out_file,
                                axis_mode = "ref", plot_style = "publication",
                                gwas_disorder = "MDD",
+                               shape_by_sex = FALSE,
                                width = publication_pdf_width,
                                height = publication_pdf_height) {
   axis_mode <- match.arg(axis_mode, c("ref", "gwas_effect"))
@@ -159,6 +162,7 @@ save_eQTL_boxplots <- function(eqtl_dt, filter_dataset_id = NULL, out_file,
         gwas_disorder = gwas_disorder,
         title = eQTL_boxplot_title(row),
         plot_style = plot_style,
+        shape_by_sex = shape_by_sex,
         plot_context = ctx,
         dosage_mat = dosage,
         orientation_lut = ori,
@@ -214,6 +218,16 @@ infer_dx <- function(covar_mat) {
   if ("DXMDD" %in% colnames(covar_mat)) dx[covar_mat[, "DXMDD"] == 1] <- "MDD"
   if ("DXBD" %in% colnames(covar_mat)) dx[covar_mat[, "DXBD"] == 1] <- "BD"
   factor(dx, levels = c("NTC", "MDD", "BD"))
+}
+
+infer_sex <- function(covar_mat) {
+  if (!"sexF" %in% colnames(covar_mat)) {
+    return(factor(rep(NA_character_, nrow(covar_mat)), levels = names(sex_shape_values)))
+  }
+  sex <- rep(NA_character_, nrow(covar_mat))
+  sex[covar_mat[, "sexF"] == 0] <- "Male"
+  sex[covar_mat[, "sexF"] == 1] <- "Female"
+  factor(sex, levels = names(sex_shape_values))
 }
 
 residualize_expression <- function(expr_mat, covar_mat) {
@@ -272,7 +286,11 @@ load_plot_context <- function(dataset_id, gene_ids = NULL) {
     dataset_id = dataset_id,
     raw_expr = expr,
     resid_expr = resid,
-    sample_info = data.table(sample_id = common, DX = infer_dx(covars)),
+    sample_info = data.table(
+      sample_id = common,
+      DX = infer_dx(covars),
+      Sex = infer_sex(covars)
+    ),
     covariates = covars
   )
 }
@@ -491,6 +509,7 @@ plot_eQTL_boxplots <- function(plot_dataset_id, eqtl_pairs, axis_mode = c("ref",
                                gwas_disorder = "MDD", use_raw = FALSE,
                                title = "auto",
                                plot_style = c("publication", "current"),
+                               shape_by_sex = FALSE,
                                plot_context = NULL,
                                dosage_mat = NULL,
                                orientation_lut = NULL,
@@ -519,6 +538,12 @@ plot_eQTL_boxplots <- function(plot_dataset_id, eqtl_pairs, axis_mode = c("ref",
   expr <- expr[, common_samples, drop = FALSE]
   dosage <- dosage[common_samples, , drop = FALSE]
   sample_info <- ctx$sample_info[match(common_samples, sample_id)]
+  if (!"Sex" %in% names(sample_info)) {
+    sample_info[, Sex := factor(rep(NA_character_, .N), levels = names(sex_shape_values))]
+  }
+  if (isTRUE(shape_by_sex) && anyNA(sample_info$Sex)) {
+    stop("Cannot assign point shapes because sex metadata are missing or not encoded as sexF = 0/1.")
+  }
 
   missing_genes <- setdiff(eqtl_pairs$phenotype_id, rownames(expr))
   if (length(missing_genes) > 0L) {
@@ -600,6 +625,7 @@ plot_eQTL_boxplots <- function(plot_dataset_id, eqtl_pairs, axis_mode = c("ref",
       dosage = plot_dosage,
       dosage_raw = raw_dosage,
       DX = sample_info$DX,
+      Sex = sample_info$Sex,
       dataset_id = plot_dataset_id,
       gene_id = gene_id,
       gene_name = gene_name,
@@ -649,9 +675,21 @@ plot_eQTL_boxplots <- function(plot_dataset_id, eqtl_pairs, axis_mode = c("ref",
     y_label <- "Residualized Expression"
   }
 
+  point_layer <- if (isTRUE(shape_by_sex)) {
+    geom_jitter(
+      aes(color = DX, shape = Sex, size = Sex),
+      width = jitter_width, height = 0, alpha = jitter_alpha
+    )
+  } else {
+    geom_jitter(
+      aes(color = DX),
+      width = jitter_width, height = 0, size = 2, alpha = jitter_alpha
+    )
+  }
+
   p <- ggplot(plot_dt, aes(x = genotype, y = expression)) +
     geom_boxplot(outlier.shape = NA, alpha = box_alpha, linewidth = box_linewidth, color = box_color, fill = "gray90") +
-    geom_jitter(aes(color = DX), width = jitter_width, height = 0, size = 2, alpha = jitter_alpha) +
+    point_layer +
     geom_text(
       data = annot,
       aes(x = Inf, y = -Inf, label = label),
@@ -665,7 +703,8 @@ plot_eQTL_boxplots <- function(plot_dataset_id, eqtl_pairs, axis_mode = c("ref",
       title = title_to_use,
       x = x_label,
       y = y_label,
-      color = "Dx"
+      color = "Dx",
+      shape = "Sex"
     ) +
     theme_bw() +
     theme(
@@ -674,8 +713,100 @@ plot_eQTL_boxplots <- function(plot_dataset_id, eqtl_pairs, axis_mode = c("ref",
       strip.text = element_text(size = 9)
     )
 
+  if (isTRUE(shape_by_sex)) {
+    p <- p +
+      scale_shape_manual(values = sex_shape_values, drop = FALSE) +
+      scale_size_manual(values = sex_point_size_values, guide = "none", drop = FALSE) +
+      guides(
+        shape = guide_legend(order = 1, nrow = 1, byrow = TRUE),
+        color = guide_legend(order = 2, nrow = 1, byrow = TRUE)
+      ) +
+      theme(legend.box = "vertical", legend.box.just = "center")
+  }
+
   list(plot = p, data = plot_dt)
 }
+```
+
+```{r save-surf1-manuscript-pdf, include=FALSE}
+manifest <- load_eqtl_manifest(
+  tqtl_in_dir = tqtl_in_dir,
+  context_order = context_order,
+  split_order = "all"
+)
+
+surf1_sig_file <- file.path(tables_dir, "map_significant_pairs.csv.gz")
+if (!file.exists(surf1_sig_file)) {
+  surf1_sig_file <- file.path(tables_dir, "map_significant_pairs_tie_recovered.csv.gz")
+}
+if (!file.exists(surf1_sig_file)) {
+  surf1_sig_file <- file.path(tables_dir, "map_significant_unified.csv.gz")
+}
+if (!file.exists(surf1_sig_file)) {
+  surf1_sig_file <- file.path(tables_dir, "map_independent_significant_tie_recovered.csv.gz")
+}
+if (!file.exists(surf1_sig_file)) {
+  surf1_sig_file <- file.path(tables_dir, "map_independent_significant.csv.gz")
+}
+assert_files(surf1_sig_file)
+surf1_sig <- fread(surf1_sig_file)
+assert_cols(
+  surf1_sig,
+  c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "pval_nominal"),
+  basename(surf1_sig_file)
+)
+
+SURF1_GENE_ID <- "ENSG00000148290"
+surf1_manuscript_variants <- c(
+  astro = "chr9:133355635:G:A",
+  inhb = "chr9:133355635:G:A",
+  l4 = "chr9:133399364:T:C",
+  l5 = "chr9:133399364:T:C",
+  oligo = "chr9:133374318:T:C"
+)
+surf1_expected_rsids <- c(
+  "chr9:133355635:G:A" = "rs2130022241",
+  "chr9:133399364:T:C" = "rs3124752",
+  "chr9:133374318:T:C" = "rs1179038"
+)
+
+surf1_plot_pairs <- rbindlist(lapply(names(surf1_manuscript_variants), function(ds) {
+  variant <- unname(surf1_manuscript_variants[[ds]])
+  rows <- surf1_sig[
+    split == "all" & dataset_id == ds & gene_id == SURF1_GENE_ID & variant_id == variant
+  ]
+  if (nrow(rows) != 1L) {
+    stop("Expected one manuscript SURF1 row for ", ds, " / ", variant, "; found ", nrow(rows), ".")
+  }
+  rows
+}), use.names = TRUE, fill = TRUE)
+
+surf1_plot_pairs[, `:=`(
+  rsid = rsid_lut$rsid[match(variant_id, rsid_lut$variant_id)],
+  rsid_source = rsid_lut$rsid_source[match(variant_id, rsid_lut$variant_id)]
+)]
+observed_surf1_rsids <- setNames(surf1_plot_pairs$rsid, surf1_plot_pairs$variant_id)
+bad_surf1_rsids <- names(surf1_expected_rsids)[
+  is.na(observed_surf1_rsids[names(surf1_expected_rsids)]) |
+    observed_surf1_rsids[names(surf1_expected_rsids)] != surf1_expected_rsids
+]
+if (length(bad_surf1_rsids) > 0L) {
+  stop("Unexpected genotype VCF rsIDs for SURF1 variants: ", paste(bad_surf1_rsids, collapse = ", "))
+}
+
+surf1_pdf_file <- file.path(plots_dir, "eqtl_boxplot_surf1_manuscript_sex_shapes.pdf")
+saved_surf1_pdf <- save_eQTL_boxplots(
+  surf1_plot_pairs,
+  out_file = surf1_pdf_file,
+  axis_mode = "ref",
+  plot_style = "publication",
+  shape_by_sex = TRUE,
+  height = 5.75
+)
+stopifnot(file.exists(saved_surf1_pdf), file.info(saved_surf1_pdf)$size > 0L)
+surf1_page_count <- pdf_page_count(saved_surf1_pdf)
+if (!is.na(surf1_page_count)) stopifnot(surf1_page_count == nrow(surf1_plot_pairs))
+saved_surf1_pdf
 ```
 
 ```{r load-manifest-and-select-examples}
