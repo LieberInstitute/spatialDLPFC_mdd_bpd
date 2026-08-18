@@ -112,7 +112,7 @@ The only new formal eQTL-broad-DEG-GWAS memberships are:
 | MDD exploratory (`p < 1e-5`) | Oligo | *SNORC* |
 
 *SNORC* was already a trifecta gene in another context, so no gene is newly
-added to the globally collapsed trifecta union. No BD or SCZ formal trifecta
+added to the cross-domain trifecta union. No BD or SCZ formal trifecta
 membership changes occur. SCZ-*ARL17B* in Inhb is a broad-DEG exact-overlap
 strengthening, but it was already a formal trifecta membership because of its
 SCZ GWAS gene-list support.
