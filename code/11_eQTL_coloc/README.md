@@ -61,6 +61,8 @@ Major workflow files:
 - `02_run_tensorQTL.sh`: run tensorQTL for prepared datasets.
 - `02a_tensorQTL_cis.py`: tensorQTL cis wrapper called by the run script.
 - `03_eqtl_explore.Rmd`: build primary cis, independent, and significant-pair eQTL summary tables.
+- `03ab_recover_indepeQTLs.R`: recover every exact dosage-equivalent variant tied with a reported cis or conditionally independent index variant, and write alternative audit tables without replacing the primary tables.
+- `README_eQTL_exact_tie_recovery_impact.md`: document the recovery scale and its eGene, GWAS, trifecta, and strong-coloc effects by disorder and domain-CT.
 - `03a_nominal_eQTLs.Rmd`: gather nominal all-donor Seurat eQTLs.
 - `03b_eQTL_boxplots.Rmd`: select example eQTL pairs and render genotype boxplots.
 - `04_run_coloc.R`: run coloc ABF and sensitivity checks from full tensorQTL nominal parquet.
@@ -230,6 +232,28 @@ WRITE_DEG_VIEW_TABLES <- FALSE
 The `03*.Rmd` notebooks in this folder process only the `all` group by default.
 Nominal tables should also contain only `split == "all"` unless sex-stratified
 analysis is explicitly re-enabled in a separate workflow.
+
+Run the exact-tie recovery audit after `03_eqtl_explore.Rmd` and before using
+index-variant IDs for eQTL boxplots or GWAS/coloc overlap interpretation:
+
+```bash
+Rscript ./03ab_recover_indepeQTLs.R
+```
+
+The audit starts from `map_significant_pairs.csv.gz`, uses the full nominal
+parquet files to find variants with exactly equal nominal p-values, and then
+requires donor-level genotype dosages to be identical up to allele orientation
+(`abs(r) = 1` within numerical tolerance). This dosage check makes the recovery
+valid for conditionally independent signals too: equivalent dosage vectors
+remain equivalent after conditioning. The script preserves the reported index
+variant and signal rank, expands each signal to all verified tied variants,
+refreshes exact-variant GWAS annotations, and audits strong gated coloc lead-SNP
+matches. It does not overwrite the current primary tables. Its alternative
+tables and audit summaries use the `tie_recovered` and `tie_recovery` filename
+suffixes under `processed-data/11_eQTL_coloc/seurat/tables`.
+For an audit against staged snapshots, `--current-pairs=`, `--independent=`,
+`--coloc-gated=`, and `--output-dir=` override those four paths without
+modifying the primary files.
 
 `05_coloc_explore.Rmd` loads coloc result objects and sensitivity tables,
 writes flattened result, gated result, lead/SNP-level PP.H4, QC, and summary
