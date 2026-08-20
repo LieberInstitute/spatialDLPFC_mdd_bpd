@@ -1,0 +1,22 @@
+parameter	value
+gene_id	ENSG00000102882
+gene_name	MAPK3
+contexts	astro,inhb,l2-3,l4,l5,l6,uvasc,oligo
+disorders	BD,MDD,SCZD
+SI_min	0.8
+L	10
+scaled_prior_variance	0.2
+estimate_prior_variance	TRUE
+estimate_residual_variance_eQTL	TRUE
+estimate_residual_variance_GWAS	FALSE
+R_finite_eQTL	FALSE
+R_finite_GWAS	503
+coverage	0.95
+min_abs_corr	0.5
+max_iter	1000
+z_method	wald
+p1	1e-04
+p2	1e-04
+p12	1e-05
+eqtl_LD	rank-aware covariate-adjusted PGEN hardcalls
+eqtl_LD_sensitivities	raw donor LD; tensorQTL CPU-PyTorch QR LD
