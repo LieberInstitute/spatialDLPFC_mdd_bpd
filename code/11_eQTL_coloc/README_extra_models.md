@@ -2,7 +2,8 @@
 
 This file keeps secondary context for eQTL models that are not the default workflow in `README.md`.
 
-Default workflow remains Seurat clusters, all donors, and the `broad_interaction` DEG view.
+Default workflow remains Seurat clusters and all donors. Its `DEG` annotation is
+the authoritative 503-gene set from `code/09_DEG_GRN/load_DEGs.r::sig.df`.
 
 ## Project Context
 
@@ -42,18 +43,25 @@ In file names, `layer` should be read as annotation context:
 - PRECAST/smoothed runs use spatial domains.
 - Seurat runs use cell-type-like clusters.
 
-## Broad DEG Universe
+## Authoritative DEG Universe
 
-The broad project-level DEG universe is the union of F-test significant genes from:
+The primary project DEG universe is `unique(sig.df$gene_id)` after sourcing
+`code/09_DEG_GRN/load_DEGs.r`. The loader combines the following four omnibus
+F-test summaries with their matching `*_rev-gene-input_moderated-t-test.csv`
+files and retains `adj.P.Val2 < 0.05`:
 
 - PRECAST L-A: `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
 - PRECAST L-R: `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
 - Seurat L-A: `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
 - Seurat L-R: `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
 
-The text list at `raw-data/SCENIC_aux/tf_lists/MBv_PRECAST-Seurat_F-test-adjp-05.txt` can validate the reconstructed four-file union by `gene_name`.
+This produces exactly 503 one-to-one gene ID/name pairs. The earlier direct
+union of the four F-test summaries contains 817 genes and remains available only
+through `load_legacy_standard_DEGs()` for historical comparison.
 
-Historical project notes describe this broad union as useful because the Seurat eQTL pseudobulks are not identical to either PRECAST DGE inputs or Seurat DGE inputs:
+Historical project notes describe the legacy broad union as useful because the
+Seurat eQTL pseudobulks are not identical to either PRECAST DGE inputs or Seurat
+DGE inputs:
 
 - PRECAST excludes low-UMI spots.
 - Seurat DEG models include low-UMI cluster spots.
@@ -61,20 +69,23 @@ Historical project notes describe this broad union as useful because the Seurat 
 
 ## DEG Views
 
-The overlap code can report 4 DEG views. The primary README uses only `broad_interaction`.
+The overlap code can report four DEG views derived from authoritative `sig.df`.
+Normal final-table annotation uses the global 503-gene set and does not
+context-match or sex-match it.
 
 | DEG view | DEG files used | Extra DEG filter after `adj.P.Val < 0.05` | eQTL matching |
 | --- | --- | --- | --- |
-| `broad_interaction` | PRECAST L-A, PRECAST L-R, Seurat L-A, Seurat L-R | none | gene only |
-| `context_localized` | Seurat L-R only | `n_ttest_sig_<Seurat context> > 0` | gene and Seurat context |
-| `sex_specific` | PRECAST L-A, PRECAST L-R, Seurat L-A, Seurat L-R | same-sex post-hoc t-test flag, `F_*_ttest` or `M_*_ttest` | gene and sex |
-| `context_and_sex_specific` | Seurat L-R only | same-context and same-sex post-hoc t-test flag | gene, Seurat context, and sex |
+| `broad_interaction` | all authoritative `sig.df` rows | none | gene only |
+| `context_localized` | Seurat `L-A` plus matching Seurat context rows | significant `sig.df` rows | gene and Seurat context |
+| `sex_specific` | all authoritative `sig.df` rows | matching `F_` or `M_` contrast | gene and sex |
+| `context_and_sex_specific` | matching Seurat context rows | matching context and `F_` or `M_` contrast | gene, Seurat context, and sex |
 
-All views start from F-test significant rows. Post-hoc t-test columns localize already F-test significant DEG support by context and/or sex.
+All views start from significant `sig.df` rows, which already combine omnibus
+F-test eligibility with adjusted moderated t-test significance.
 
 ### broad_interaction
 
-Gene-level union of F-test significant genes from the 4 PRECAST/Seurat DEG files.
+Gene-level set of the 503 significant genes in `sig.df`.
 
 Matching:
 

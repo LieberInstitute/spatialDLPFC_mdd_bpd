@@ -104,8 +104,8 @@ annotation; an rsID from another allele at the same position is never substitute
 
 DEG annotations:
 
-- `DEG`: `1` when `gene_id` is in the broad PRECAST-or-Seurat DEG union used by
-  this MBv project.
+- `DEG`: `1` when `gene_id` is in the authoritative 503-gene significant DEG
+  set from `code/09_DEG_GRN/load_DEGs.r::sig.df`.
 - `MDD_DEG` and `BD_DEG`: `1` when `gene_id` is in the same-disorder
   contrast-supported DEG set for MDD or BD, respectively. The source DEG
   contrasts use the legacy `BPD` label internally for BD, but final tables use
@@ -229,8 +229,8 @@ Common columns:
 
 - `split`, `context`: grouping variables.
 - `n_eGenes`: number of significant lead cis-eQTL eGenes.
-- `n_DEG`: number of significant lead cis-eQTL eGenes in the broad
-  PRECAST-or-Seurat DEG union.
+- `n_DEG`: number of significant lead cis-eQTL eGenes in the authoritative
+  503-gene DEG set.
 - `n_DIS_gwas_strict`: unique significant lead cis-eQTL eGenes with combined
   strict GWAS support for `DIS`.
 - `n_trifecta_DIS_strict`: unique broad-DEG lead cis-eQTL eGenes with combined
@@ -251,8 +251,7 @@ Common columns:
 
 - `n_independent_signals`: number of retained independent signals.
 - `n_eGenes`: number of eGenes represented by those signals.
-- `n_DEG`: number of represented eGenes in the broad PRECAST-or-Seurat DEG
-  union.
+- `n_DEG`: number of represented eGenes in the authoritative 503-gene DEG set.
 - `n_DIS_gwas_strict`: unique independent-signal eGenes with combined strict
   GWAS support for `DIS`.
 - `n_trifecta_DIS_strict`: unique broad-DEG independent-signal eGenes with
@@ -285,7 +284,7 @@ Columns:
 - `n_indep_only_pairs`: number of retained pairs present only in
   `map_independent_significant.csv.gz`.
 - `n_eGenes`: number of unique eGenes represented by retained pairs.
-- `n_DEG`: number of retained eGenes in the broad PRECAST-or-Seurat DEG union.
+- `n_DEG`: number of retained eGenes in the authoritative 503-gene DEG set.
 - `n_MDD_DEG`, `n_BD_DEG`: retained eGenes in same-disorder contrast-supported
   DEG sets.
 - `n_DIS_gwas_strict`, `n_DIS_gwas_exp`: combined GWAS-supported eGene counts
@@ -309,8 +308,8 @@ The table preserves tensorQTL-native columns and adds project annotations:
 
 - `dataset_id`, `context`, `split`
 - `gene_id`, `gene_name`, `phenotype_id`, `variant_id`
-- `DEG`: `1` if `gene_id` is in the broad PRECAST-or-Seurat DEG union,
-  otherwise `0`.
+- `DEG`: `1` if `gene_id` is in the authoritative 503-gene DEG set, otherwise
+  `0`.
 - `MDD_DEG`, `BD_DEG`: same-disorder contrast-supported DEG flags.
 - GWAS overlap columns following "GWAS Overlap Conventions".
 
@@ -329,8 +328,8 @@ The table preserves tensorQTL-native columns and adds project annotations:
 - `dataset_id`, `context`, `split`
 - `gene_id`, `gene_name`, `phenotype_id`, `variant_id`
 - `qval_parent`: parent `map_cis` q-value for the eGene.
-- `DEG`: `1` if `gene_id` is in the broad PRECAST-or-Seurat DEG union,
-  otherwise `0`.
+- `DEG`: `1` if `gene_id` is in the authoritative 503-gene DEG set, otherwise
+  `0`.
 - `MDD_DEG`, `BD_DEG`: same-disorder contrast-supported DEG flags.
 - GWAS overlap columns following "GWAS Overlap Conventions".
 
@@ -391,11 +390,12 @@ trail.
 
 ### `eQTL_boxplot_deg_pairs.csv`
 
-Broad-DEG significant eQTL pair metadata used by `03b_eQTL_boxplots.Rmd` to make
-genotype boxplots.
+Broad-DEG reported-index eQTL pair metadata used by `03b_eQTL_boxplots.Rmd` to
+make genotype boxplots. This helper retains the reported representative for
+each plotted signal; it does not enumerate recovered exact-tie members.
 
 Rows are selected from significant eQTL pairs with `split == "all"` and
-`DEG == 1`. The current file has 263 rows and is unique by
+`DEG == 1`. The current file has 147 rows and is unique by
 `dataset_id + gene_id + variant_id`. It contains one retained plotting row per
 broad-DEG significant pair after ordering by context, gene, nominal p-value, and
 variant.
@@ -410,8 +410,7 @@ Important columns:
   Current rows are `broad_deg_significant` / `broad_DEG`.
 - `dataset_id`, `context`, `split`, `gene_id`, `gene_name`, `phenotype_id`,
   `variant_id`: dataset, context, and eQTL pair identifiers.
-- `DEG`: broad PRECAST-or-Seurat DEG union flag; all current rows have
-  `DEG == 1`.
+- `DEG`: authoritative 503-gene DEG-set flag; all current rows have `DEG == 1`.
 - `MDD_DEG`, `BD_DEG`: same-disorder contrast-supported DEG flags.
 - `result_source`, `pair_provenance`, `cis_supported`, `indep_supported`:
   significant-pair provenance inherited from the final eQTL union.
@@ -440,7 +439,7 @@ Columns:
   `variant_id`: dataset and pair identifiers.
 - `pval_nominal`, `fdr`, `slope`, `slope_se`, `start_distance`, `af`,
   `ma_samples`, `ma_count`: nominal eQTL statistics from tensorQTL.
-- `DEG`: broad PRECAST-or-Seurat DEG union flag.
+- `DEG`: authoritative 503-gene DEG-set flag.
 - Strict GWAS overlap columns following "GWAS Overlap Conventions".
 
 ### `nominal_BH05_summary.csv`
@@ -452,8 +451,7 @@ Columns:
 - `n_nominal_pairs`: number of retained BH-significant nominal gene-variant
   pairs.
 - `n_eGenes`: number of eGenes represented by those pairs.
-- `n_DEG`: number of represented eGenes in the broad PRECAST-or-Seurat DEG
-  union.
+- `n_DEG`: number of represented eGenes in the authoritative 503-gene DEG set.
 - `n_DIS_gwas_strict`: unique eGenes with combined strict GWAS support.
 - `n_trifecta_DIS_strict`: unique broad-DEG eGenes with combined strict GWAS
   support.

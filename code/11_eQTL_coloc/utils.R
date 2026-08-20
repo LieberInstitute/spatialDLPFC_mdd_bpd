@@ -13,8 +13,46 @@ get_script_path <- function() {
   stop("Cannot determine script path")
 }
 
-JHPCE_HOST <- "jh"
-JHPCE_REPO_ROOT <- "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd"
+JHPCE_HOST <- "jt"
+JHPCE_REPO_ROOT <- "~/work/R/spatialDLPFC_mdd_bpd"
+
+JACQUI_DEG_LOADER_REL_PATH <- file.path("code", "09_DEG_GRN", "load_DEGs.r")
+JACQUI_DEG_EXPECTED_GENE_COUNT <- 503L
+JACQUI_DEG_INPUT_FILE_SPECS <- c(
+  color_palettes = file.path("plots", "colorPalettes.rds"),
+  smoothed_layer_adjusted_ftest = file.path(
+    "processed-data", "07_dx_DE",
+    "layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv"
+  ),
+  smoothed_layer_restricted_ftest = file.path(
+    "processed-data", "07_dx_DE",
+    "layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv"
+  ),
+  seurat_layer_adjusted_ftest = file.path(
+    "processed-data", "07_dx_DE",
+    "layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv"
+  ),
+  seurat_layer_restricted_ftest = file.path(
+    "processed-data", "07_dx_DE",
+    "layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv"
+  ),
+  smoothed_layer_adjusted_moderated = file.path(
+    "processed-data", "07_dx_DE",
+    "layer-adjusted-pc3-age-nspots_smoothed-k9-1663_rev-gene-input_moderated-t-test.csv"
+  ),
+  smoothed_layer_restricted_moderated = file.path(
+    "processed-data", "07_dx_DE",
+    "layer-restricted-pc3-age-nspots_smoothed-k9-1663_rev-gene-input_moderated-t-test.csv"
+  ),
+  seurat_layer_adjusted_moderated = file.path(
+    "processed-data", "07_dx_DE",
+    "layer-adjusted-pc3-age-nspots_seurat-pc30_rev-gene-input_moderated-t-test.csv"
+  ),
+  seurat_layer_restricted_moderated = file.path(
+    "processed-data", "07_dx_DE",
+    "layer-restricted-pc3-age-nspots_seurat-pc30_rev-gene-input_moderated-t-test.csv"
+  )
+)
 
 DEG_FILE_SPECS <- list(
   smoothed_layer_adjusted = file.path(
@@ -1113,9 +1151,10 @@ build_custom_cluster_deg_views <- function(custom_by_context, splits = c("all"))
   )
 }
 
-load_standard_DEGs <- function(repo_root = NULL, verbose = TRUE,
-                      include_disorder_degs = TRUE,
-                      host = JHPCE_HOST, remote_root = JHPCE_REPO_ROOT) {
+load_legacy_standard_DEGs <- function(repo_root = NULL, verbose = TRUE,
+                                      include_disorder_degs = TRUE,
+                                      host = JHPCE_HOST,
+                                      remote_root = JHPCE_REPO_ROOT) {
   repo_root <- resolve_repo_root(repo_root)
 
   deg_file_paths <- lapply(DEG_FILE_SPECS, function(rel_path) {
@@ -1247,6 +1286,259 @@ load_standard_DEGs <- function(repo_root = NULL, verbose = TRUE,
     views = deg_views,
     validation = deg_validation,
     files = files
+  )
+}
+
+load_jacqui_deg_source <- function(repo_root = NULL, host = JHPCE_HOST,
+                                   remote_root = JHPCE_REPO_ROOT) {
+  repo_root <- resolve_repo_root(repo_root)
+  loader_file <- ensure_local_file(
+    repo_root = repo_root,
+    rel_path = JACQUI_DEG_LOADER_REL_PATH,
+    host = host,
+    remote_root = remote_root
+  )
+  input_files <- vapply(
+    JACQUI_DEG_INPUT_FILE_SPECS,
+    ensure_local_file,
+    character(1),
+    repo_root = repo_root,
+    host = host,
+    remote_root = remote_root
+  )
+
+  source_env <- new.env(parent = globalenv())
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+  setwd(repo_root)
+  sys.source(loader_file, envir = source_env)
+
+  if (!exists("sig.df", envir = source_env, inherits = FALSE)) {
+    stop("Jacqui DEG loader did not create sig.df: ", loader_file)
+  }
+  sig_df <- get("sig.df", envir = source_env, inherits = FALSE)
+  req <- c("gene_id", "gene_name", "sex.group", "cluster", "source")
+  missing_cols <- setdiff(req, names(sig_df))
+  if (length(missing_cols) > 0) {
+    stop("Jacqui DEG sig.df is missing columns: ", paste(missing_cols, collapse = ", "))
+  }
+
+  list(
+    sig_df = as.data.frame(sig_df, stringsAsFactors = FALSE),
+    loader_file = loader_file,
+    input_files = input_files
+  )
+}
+
+validate_jacqui_deg_global <- function(sig_df,
+                                       expected_gene_count = JACQUI_DEG_EXPECTED_GENE_COUNT) {
+  deg_global <- collapse_gene_table(sig_df, label = "Jacqui sig.df")
+  split_ids <- split(sig_df$gene_id, sig_df$gene_name)
+  bad_names <- names(split_ids)[vapply(split_ids, function(x) {
+    length(unique(x)) != 1L
+  }, logical(1))]
+  if (length(bad_names) > 0) {
+    stop(
+      "Inconsistent gene_id values for gene_name(s) in Jacqui sig.df: ",
+      paste(head(bad_names, 10), collapse = ", ")
+    )
+  }
+
+  gene_name_count <- length(unique(deg_global$gene_name))
+  if (nrow(deg_global) != expected_gene_count || gene_name_count != expected_gene_count) {
+    stop(
+      "Jacqui DEG loader must yield exactly ", expected_gene_count,
+      " unique gene IDs and names; observed ", nrow(deg_global),
+      " IDs and ", gene_name_count, " names"
+    )
+  }
+
+  deg_global
+}
+
+build_jacqui_disorder_related_degs <- function(sig_df,
+                                                disorder_contrasts = DEG_DISORDER_CONTRASTS) {
+  sex_group <- as.character(sig_df$sex.group)
+  disorder_sets <- lapply(names(disorder_contrasts), function(disorder) {
+    contrast <- unname(disorder_contrasts[[disorder]])
+    keep <- sex_group %in% paste(c("F", "M"), contrast, sep = "_")
+    collapse_gene_table(
+      sig_df[keep, c("gene_id", "gene_name"), drop = FALSE],
+      label = paste0("Jacqui ", disorder, " DEGs")
+    )
+  })
+  names(disorder_sets) <- names(disorder_contrasts)
+
+  all_gene_ids <- unique(sig_df$gene_id)
+  missing_from_global <- lapply(disorder_sets, function(df) {
+    setdiff(df$gene_id, all_gene_ids)
+  })
+  list(
+    global = disorder_sets,
+    validation = list(
+      global_gene_id_counts = vapply(disorder_sets, nrow, integer(1)),
+      subset_of_broad = vapply(missing_from_global, function(x) length(x) == 0L, logical(1)),
+      missing_from_broad = missing_from_global
+    )
+  )
+}
+
+build_jacqui_deg_views <- function(sig_df, deg_global, by_seurat_context,
+                                   contexts = names(SEURAT_CONTEXT_TO_DATASET_ID),
+                                   splits = DEG_SPLITS) {
+  rows <- list()
+  for (split_name in splits) {
+    for (context_name in contexts) {
+      rows[[length(rows) + 1L]] <- make_deg_view_rows(
+        deg_global,
+        deg_view = "broad_interaction",
+        context = context_name,
+        split = split_name
+      )
+      rows[[length(rows) + 1L]] <- make_deg_view_rows(
+        by_seurat_context[[context_name]],
+        deg_view = "context_localized",
+        context = context_name,
+        split = split_name
+      )
+    }
+  }
+
+  sex_group <- as.character(sig_df$sex.group)
+  sex_prefix <- c(female = "F_", male = "M_")
+  sex_sets <- lapply(sex_prefix, function(prefix) {
+    collapse_gene_table(
+      sig_df[startsWith(sex_group, prefix), c("gene_id", "gene_name"), drop = FALSE],
+      label = paste0("Jacqui sex-specific ", prefix)
+    )
+  })
+  for (context_name in contexts) {
+    for (sex in names(sex_sets)) {
+      for (split_name in c("all", sex)) {
+        rows[[length(rows) + 1L]] <- make_deg_view_rows(
+          sex_sets[[sex]],
+          deg_view = "sex_specific",
+          context = context_name,
+          split = split_name,
+          deg_sex = sex
+        )
+      }
+
+      context_keep <- sig_df$source == "se" &
+        as.character(sig_df$cluster) == context_name &
+        startsWith(sex_group, sex_prefix[[sex]])
+      context_sex <- sig_df[context_keep, c("gene_id", "gene_name"), drop = FALSE]
+      for (split_name in c("all", sex)) {
+        rows[[length(rows) + 1L]] <- make_deg_view_rows(
+          context_sex,
+          deg_view = "context_and_sex_specific",
+          context = context_name,
+          split = split_name,
+          deg_sex = sex
+        )
+      }
+    }
+  }
+
+  long <- do.call(rbind, rows)
+  rownames(long) <- NULL
+  counts <- aggregate(
+    gene_id ~ deg_view + context + split + deg_sex,
+    data = long,
+    FUN = function(x) length(unique(x)),
+    na.action = NULL
+  )
+  names(counts)[names(counts) == "gene_id"] <- "n_genes"
+  rownames(counts) <- NULL
+
+  list(long = long, counts = counts, sex_sets = sex_sets)
+}
+
+load_jacqui_DEGs <- function(repo_root = NULL, verbose = TRUE,
+                             include_disorder_degs = TRUE,
+                             host = JHPCE_HOST,
+                             remote_root = JHPCE_REPO_ROOT) {
+  repo_root <- resolve_repo_root(repo_root)
+  source_result <- load_jacqui_deg_source(
+    repo_root = repo_root,
+    host = host,
+    remote_root = remote_root
+  )
+  sig_df <- source_result$sig_df
+  deg_global <- validate_jacqui_deg_global(sig_df)
+
+  deg_by_seurat_context <- lapply(names(SEURAT_CONTEXT_TO_DATASET_ID), function(context_name) {
+    keep <- sig_df$source == "se" &
+      as.character(sig_df$cluster) %in% c("L-A", context_name)
+    collapse_gene_table(
+      sig_df[keep, c("gene_id", "gene_name"), drop = FALSE],
+      label = paste0("Jacqui Seurat DEG context: ", context_name)
+    )
+  })
+  names(deg_by_seurat_context) <- names(SEURAT_CONTEXT_TO_DATASET_ID)
+  deg_by_dataset_id <- dataset_id_map_from_context_sets(deg_by_seurat_context)
+  disorder_related <- if (isTRUE(include_disorder_degs)) {
+    build_jacqui_disorder_related_degs(sig_df)
+  } else {
+    list(global = list(), validation = list())
+  }
+  deg_views <- build_jacqui_deg_views(
+    sig_df = sig_df,
+    deg_global = deg_global,
+    by_seurat_context = deg_by_seurat_context
+  )
+
+  validation <- list(
+    source = "code/09_DEG_GRN/load_DEGs.r::sig.df",
+    sig_row_count = nrow(sig_df),
+    global_gene_id_count = nrow(deg_global),
+    global_gene_name_count = length(unique(deg_global$gene_name)),
+    seurat_context_gene_name_counts = vapply(
+      deg_by_seurat_context,
+      function(df) length(unique(df$gene_name)),
+      integer(1)
+    ),
+    deg_view_gene_counts = deg_views$counts,
+    disorder_related = disorder_related$validation
+  )
+  files <- c(loader = source_result$loader_file, source_result$input_files)
+
+  if (isTRUE(verbose)) {
+    cat("Loaded authoritative significant DEGs from Jacqui's loader.\n")
+    cat("Repo root:", repo_root, "\n")
+    cat("sig.df rows:", validation$sig_row_count, "\n")
+    cat("Unique gene IDs:", validation$global_gene_id_count, "\n")
+    cat("Unique gene names:", validation$global_gene_name_count, "\n")
+    if (length(disorder_related$global) > 0) {
+      cat("Disorder-related DEG sets (gene_id):\n")
+      for (dis in names(disorder_related$global)) {
+        cat(sprintf("  %s: %d\n", dis, nrow(disorder_related$global[[dis]])))
+      }
+    }
+  }
+
+  list(
+    tables = list(sig_df = sig_df),
+    global = deg_global,
+    by_seurat_context = deg_by_seurat_context,
+    by_dataset_id = deg_by_dataset_id,
+    disorder_related = disorder_related,
+    views = deg_views,
+    validation = validation,
+    files = files
+  )
+}
+
+load_standard_DEGs <- function(repo_root = NULL, verbose = TRUE,
+                               include_disorder_degs = TRUE,
+                               host = JHPCE_HOST,
+                               remote_root = JHPCE_REPO_ROOT) {
+  load_jacqui_DEGs(
+    repo_root = repo_root,
+    verbose = verbose,
+    include_disorder_degs = include_disorder_degs,
+    host = host,
+    remote_root = remote_root
   )
 }
 

@@ -274,40 +274,51 @@ GWAS mixed-overlap details are documented in `README_GWAS-gene-lists.md`.
 
 ## DEG Support
 
-The primary DEG overlap uses only the `broad_interaction` view.
+The primary DEG overlap uses the authoritative significant-gene set produced by
+`code/09_DEG_GRN/load_DEGs.r`.
 
 Definition:
 
-- Start from final DEG summary CSVs.
-- Keep rows with F-test BH-adjusted `adj.P.Val < 0.05`.
-- Take the union across PRECAST L-A, PRECAST L-R, Seurat L-A, and Seurat L-R.
+- Source Jacqui Thompson's project loader and use `unique(sig.df$gene_id)`.
+- `sig.df` first limits moderated t-test results to genes passing the matching
+  omnibus F-test, then retains rows with adjusted `adj.P.Val2 < 0.05`.
+- Require exactly 503 unique gene IDs and 503 unique gene names with a one-to-one
+  ID/name mapping.
 - Match eQTL eGenes by `gene_id`.
 - Do not context-match or sex-match.
 
-Disorder-related DEG columns in `map_significant_summary.csv` use the same
-F-test-filtered source rows, then require a same-disorder post-hoc t-test flag:
+Disorder-related DEG columns in `map_significant_summary.csv` are derived from
+the same authoritative `sig.df`, then require a same-disorder contrast:
 
-- MDD-related: `F_NTC.MDD_ttest` or `M_NTC.MDD_ttest` is significant.
-- BD-related: `F_NTC.BD_ttest` or `M_NTC.BD_ttest` is significant.
+- MDD-related: `F_NTC.MDD` or `M_NTC.MDD`.
+- BD-related: `F_NTC.BPD` or `M_NTC.BPD` (`BPD` is the legacy internal label).
 
 These columns are disorder-related, not formal disorder-specific-only calls.
-The broad DEG columns remain the four-file F-test union. See
-`README_DEGs_by_disorder.md` for the statistical rationale.
+They contain 224 MDD and 281 BD genes and are unchanged from the earlier
+same-disorder reconstruction. See `README_DEGs_by_disorder.md` for the
+statistical rationale.
 
-DEG source files:
+The authoritative loader reads the four omnibus F-test summaries plus the four
+corresponding moderated t-test result files:
 
 - `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
 - `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_smoothed-k9-1663_dx-sex_degs-F-test-t-test.csv`
 - `processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
 - `processed-data/07_dx_DE/layer-restricted-pc3-age-nspots_seurat-pc30_dx-sex_degs-F-test-t-test.csv`
+- the matching `*_rev-gene-input_moderated-t-test.csv` files for each of those
+  PRECAST/Seurat and L-A/L-R analyses.
 
 Use `gene_id` as the primary overlap key. Keep `gene_name` for reporting and validation.
+
+`load_legacy_standard_DEGs()` preserves the earlier 817-gene union for audits,
+but normal calls to `load_DEGs(mode = "standard")` use only the authoritative
+503-gene set.
 
 Preferred wording:
 
 - F-test significant dx/sex DGE genes
 - sex-stratified diagnosis-associated DGE genes
-- broad PRECAST-or-Seurat DGE-supported genes
+- significant PRECAST-or-Seurat diagnosis-associated DGE genes
 
 Avoid claiming that every gene has a formal interaction-only effect.
 
