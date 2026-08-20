@@ -164,6 +164,9 @@ front_order <- function(dt, cols) {
   dt[]
 }
 
+## start from the already significant lead/independent signals. This recovery
+## does not call new eGenes or change their significance; it repairs the
+## one-representative-variant-per-signal reporting used for exact-ID matching.
 current_pairs <- fread(input_paths$current_pairs)
 independent <- fread(input_paths$independent)
 manifest <- fread(input_paths$manifest)
@@ -197,6 +200,8 @@ if (anyDuplicated(current_pairs[, ..pair_keys])) {
   stop("Current significant-pair input is not unique by ", paste(pair_keys, collapse = ", "))
 }
 
+## attach the conditional rank to each independent index variant, then assign
+## a stable signal ID so extra tied variants remain members of the same signal.
 rank_lut <- unique(independent[, c(pair_keys, "rank"), with = FALSE])
 setnames(rank_lut, "rank", "signal_rank")
 signals <- merge(current_pairs, rank_lut, by = pair_keys, all.x = TRUE, sort = FALSE)
@@ -222,6 +227,8 @@ if (anyDuplicated(signals$signal_id)) {
   stop("Signal IDs are not unique: ", paste(head(dup, 20L), collapse = ", "))
 }
 
+## recover the exact donor set used by each tensorQTL context. Genotype ties
+## must be checked within those samples, not across every donor in the PGEN.
 manifest_all <- manifest[status == "prepared" & split == "all"]
 manifest_all[, context := seurat_label]
 manifest_all <- manifest_all[, .(dataset_id, context, split, n_samples)]
@@ -265,6 +272,9 @@ message("Selected datasets: ", paste(selected_datasets, collapse = ", "))
 message("Selected chromosomes: ", paste(selected_chromosomes, collapse = ", "))
 message("Current index-variant rows/signals: ", nrow(signals))
 
+## use the dense tensorQTL map_nominal parquet output to enumerate candidates.
+## The lead and independent tables contain only one representative variant, so
+## they cannot reveal every variant with the same gene-level test statistic.
 required_nominal <- unique(signals[, .(
   path = nominal_file(dataset_id, signal_chr),
   dataset_id,
@@ -348,6 +358,9 @@ if (any(!signals$variant_id %in% candidates$member_variant_id)) {
 }
 message("Nominal same-p candidate memberships: ", nrow(candidates))
 
+## equal nominal p-values only nominate candidates. Accept a member only when
+## its donor dosage vector is identical to the index vector up to orientation:
+## abs(r) = 1 within the configured numerical tolerance.
 candidate_variant_ids <- unique(c(candidates$index_variant_id, candidates$member_variant_id))
 message("Loading genotype dosages for ", length(candidate_variant_ids), " unique candidate variant(s)")
 
@@ -399,6 +412,8 @@ if (any(!signals$signal_id %in% members$signal_id)) {
 message("Verified exact-dosage signal memberships: ", nrow(members))
 message("Same-p candidates rejected because |dosage r| < 1: ", nrow(rejected_same_p))
 
+## record whether the equivalent dosage uses the same or reversed allele
+## orientation, and retain the original index row as an explicit signal member.
 members[, `:=`(
   tie_orientation = fifelse(dosage_r >= 0, 1L, -1L),
   is_index_variant = member_variant_id == index_variant_id
@@ -435,6 +450,9 @@ setnames(
   )
 )
 
+## expand each original signal to all verified members. Member-specific nominal
+## fields replace variant fields, while conditional effect estimates are scaled
+## for genotype orientation without inventing additional independent signals.
 expanded <- merge(signals, member_map, by = "signal_id", allow.cartesian = TRUE, sort = FALSE)
 expanded[, index_end_distance := end_distance]
 expanded[, variant_id := member_variant_id]
@@ -687,6 +705,9 @@ coloc_summary[, context_order_tmp := match(context, names(SEURAT_CONTEXT_TO_DATA
 setorder(coloc_summary, disorder, context_order_tmp)
 coloc_summary[, context_order_tmp := NULL]
 
+## write the expanded signal-member and audit tables separately first. These
+## outputs expose recovered members, rejected same-p candidates, and changes to
+## exact GWAS or coloc-lead matching without changing the underlying eQTL calls.
 output_paths <- list(
   recovered_pairs = file.path(output_dir, "map_significant_pairs_tie_recovered.csv.gz"),
   recovered_independent = file.path(output_dir, "map_independent_significant_tie_recovered.csv.gz"),
@@ -713,6 +734,8 @@ fwrite(coloc_summary, output_paths$coloc_summary)
 fwrite(new_coloc_matches, output_paths$new_coloc)
 fwrite(rejected_same_p, output_paths$rejected)
 
+## promotion is explicit: preserve the one-index input, then make the expanded
+## table canonical for downstream exact variant-ID reporting and boxplot choice.
 if (isTRUE(opts$promote_current_pairs)) {
   index_backup <- sub("[.]csv[.]gz$", "_index_only.csv.gz", input_paths$current_pairs)
   if (identical(index_backup, input_paths$current_pairs)) {
