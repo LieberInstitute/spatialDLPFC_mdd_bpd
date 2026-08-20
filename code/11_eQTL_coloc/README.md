@@ -219,6 +219,9 @@ Completed datasets are skipped only when the result, metadata, sensitivity, and
 `.complete` marker all exist. If the marker is missing but the three primary
 files exist, the script validates them and writes the marker before skipping. To
 rerun a completed dataset, delete its existing coloc output files first.
+Completion markers are local resumability state containing timestamps and
+absolute paths. They are gitignored and must not be committed or copied between
+hosts as analysis results.
 
 ## Summaries
 
