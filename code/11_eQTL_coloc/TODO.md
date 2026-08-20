@@ -36,8 +36,8 @@ SURF1   MDD contexts had PP3 about 0.770 and PP4 below 0.007; no          No sha
 6. Compare donor LD with an ancestry-matched external panel, inspect possible
    recombinant haplotypes, and overlay repeats or structural variants when LD
    extends unexpectedly far.
-7. Treat absence of an eQTL/GWAS credible-set pair as unresolved, not as a
-   negative colocalization result.
+7. Treat absence of comparable eQTL and GWAS credible sets as unresolved, not
+   as a negative colocalization result.
 8. Keep this extension isolated from production outputs and report it as a
    manuscript-priority follow-up, not as part of the completed 100-target run.
 

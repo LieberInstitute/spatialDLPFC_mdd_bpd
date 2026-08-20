@@ -120,8 +120,8 @@ Several general points follow:
 The `SURF1` example illustrates the unresolved locus question: seven variants
 span about 60 kb in AstCT/InbCT, two span about 45 kb in L4CT/L5CT, and six
 span about 25 kb in Oligo. Similar MAF across those groups cannot determine
-whether they form one LD block. Direct paired dosages are needed for r and
-r-squared; phased haplotypes are optional but useful for D-prime,
+whether they form one LD block. Joint donor-genotype observations are needed
+for r and r-squared; phased haplotypes are optional but useful for D-prime,
 recombination, and population-LD descriptions.
 
 ## MAPK3 multi-signal results
@@ -130,20 +130,25 @@ At primary p12 = 1e-5, the five approved MAPK3 targets were:
 
 | Disorder/context | Single-causal ABF result | SuSiE eQTL component | SuSiE GWAS component | Multi-signal interpretation |
 |---|---|---|---|---|
-| BD AstCT | Lead `rs55732507`; PP4 = 0.920 | 10-member CS, led jointly by tied `rs28529403` and `rs55732507` (PIP = 0.249 each) | 45-member CS led by `rs8054556` (`chr16:29946895:G:A`; PIP = 0.0498), also containing `rs28529403` and `rs55732507` | Shared component pair: H4 = 0.921, H3 = 0.0787 |
-| BD L2/3CT | Lead `rs55732507`; PP4 = 0.801 | 16-member CS containing tied `rs28529403` and `rs55732507` (PIP = 0.152 each) | Same 45-member BD CS led by `rs8054556` | Shared component pair: H4 = 0.824, H3 = 0.175 |
-| BD L5CT | Lead `rs55732507`; PP4 = 0.827 | 34-member CS containing tied `rs28529403` and `rs55732507` (PIP = 0.173 each) | Same 45-member BD CS led by `rs8054556` | Shared component pair: H4 = 0.871, H3 = 0.127 |
+| BD AstCT | Lead `rs55732507`; PP4 = 0.920 | 10-member CS, led jointly by tied `rs28529403` and `rs55732507` (PIP = 0.249 each) | 45-member CS led by `rs8054556` (`chr16:29946895:G:A`; PIP = 0.0498), also containing `rs28529403` and `rs55732507` | H4 supports one shared causal variant, but its identity is unresolved: H4 = 0.921, H3 = 0.0787 |
+| BD L2/3CT | Lead `rs55732507`; PP4 = 0.801 | 16-member CS containing tied `rs28529403` and `rs55732507` (PIP = 0.152 each) | Same 45-member BD CS led by `rs8054556` | H4 supports one shared causal variant, but its identity is unresolved: H4 = 0.824, H3 = 0.175 |
+| BD L5CT | Lead `rs55732507`; PP4 = 0.827 | 34-member CS containing tied `rs28529403` and `rs55732507` (PIP = 0.173 each) | Same 45-member BD CS led by `rs8054556` | H4 supports one shared causal variant, but its identity is unresolved: H4 = 0.871, H3 = 0.127 |
 | BD InbCT | Lead `rs55732507`; PP4 = 0.820 | Singleton CS at `rs148788997` (PIP = 0.979) | Same 45-member BD CS led by `rs8054556`, containing `rs28529403` and `rs55732507` | Distinct components: H3 = 0.985, H4 = 0.0137 |
-| MDD InbCT | Lead `rs148788997`; PP4 = 0.944 | Singleton CS at `rs148788997` (PIP = 0.978) | 11-member MDD CS led by `rs4787644` (`chr16:30406798:G:A`; PIP = 0.223), with `rs148788997` also present (PIP = 0.0595) | Shared component pair: H4 = 0.982, H3 = 0.0165 |
+| MDD InbCT | Lead `rs148788997`; PP4 = 0.944 | Singleton CS at `rs148788997` (PIP = 0.978) | 11-member MDD CS led by `rs4787644` (`chr16:30406798:G:A`; PIP = 0.223), with `rs148788997` also present (PIP = 0.0595) | H4 supports one shared causal variant, but its identity is unresolved: H4 = 0.982, H3 = 0.0165 |
 
-Here, shared means a coloc-supported regional component pair, not one uniquely
-identified shared SNP.
+Here, shared has the standard H4 meaning: the eQTL and GWAS signals are
+inferred to have one causal variant in common. H4 does not necessarily identify
+which SNP that is. Its posterior support can be distributed across several
+correlated credible-set variants, including variants that are statistically
+indistinguishable in this cohort.
 
-- BD AstCT, L2/3CT, and L5CT pair an eQTL component containing the inseparable
-  `rs28529403`/`rs55732507` proxies with a broad BD GWAS component led by
-  `rs8054556`. None of those three SNPs is uniquely nominated.
+- In BD AstCT, L2/3CT, and L5CT, H4 supports one causal variant shared by the
+  MAPK3 eQTL and BD GWAS signals. The eQTL credible sets contain the
+  inseparable `rs28529403`/`rs55732507` proxies, while the broad BD GWAS
+  credible set is led by `rs8054556`. None of those three SNPs is uniquely
+  nominated as the shared variant.
 - BD InbCT is different: the eQTL component centers on `rs148788997`, whereas
-  the BD GWAS component centers on `rs8054556` and contains the promoter pair.
+  the BD GWAS component centers on `rs8054556` and contains both promoter SNPs.
   SuSiE changes the single-causal H4-favored result to strong H3.
 - MDD InbCT supports sharing between the singleton `rs148788997` eQTL
   component and an 11-variant MDD GWAS component led by `rs4787644` that also
@@ -161,9 +166,9 @@ Three other manuscript DEG findings were present in `coloc_pass`:
 - SCZ/L4CT `PTP4A3`, ABF lead `rs4129585`, PP4 = 0.947. This was the strict
   same-disorder exact-variant support example.
 
-None produced a comparable pair of SuSiE eQTL and GWAS credible sets. They are
-unresolved by this multi-signal analysis, not SuSiE-negative and not
-SuSiE-confirmed.
+None had both an eQTL credible set and a GWAS credible set that `coloc.susie`
+could compare. They are unresolved by this multi-signal analysis, not
+SuSiE-negative and not SuSiE-confirmed.
 
 The omitted loci had different ABF roles:
 
@@ -194,10 +199,10 @@ manuscript-priority locus extension.
 - External GWAS LD can mismatch the study population despite correct allele
   harmonization. Finite-reference flags were clear, but mismatch diagnostics
   and a separately reviewed `R_mismatch = "eb"` sensitivity remain advisable.
-- Failure to obtain a comparable credible-set pair can arise because one trait
-  has no credible set, the regional signal is weak, LD resolution is poor, or
-  the traits have different components. It is not automatically evidence
-  against colocalization.
+- Failure to obtain comparable eQTL and GWAS credible sets can arise because
+  one trait has no credible set, the regional signal is weak, LD resolution is
+  poor, or the traits have different components. It is not automatically
+  evidence against colocalization.
 - Single-causal ABF can favor H4 when multiple components are present. MAPK3
   BD InbCT demonstrates how multi-signal modeling can instead isolate strong
   H3.
@@ -207,7 +212,7 @@ manuscript-priority locus extension.
 - Context differences may represent genuinely context-specific regulatory
   components, different expression measurement precision, or different
   effective sample/covariate structures.
-- A shared regional component supports compatible genetic architecture but
+- H4 support is compatible with one variant driving both associations, but it
   does not prove that altered expression mediates disease risk.
 - A tied set can identify a regulatory haplotype without identifying the
   causal nucleotide or molecular mechanism.
@@ -241,8 +246,8 @@ manuscript-priority locus extension.
 > Exact-tie recovery improves variant reporting but does not create
 > independent evidence. Variants with identical cohort dosages should be
 > presented as statistically indistinguishable signal members. Multi-signal
-> colocalization can separate regional components only where the association
-> statistics and LD contain discriminatory information.
+> colocalization can distinguish multiple causal signals only where the
+> association statistics and LD contain discriminatory information.
 
 ## Further work
 
