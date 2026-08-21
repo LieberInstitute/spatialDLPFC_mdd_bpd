@@ -1,0 +1,24 @@
+table	term	description
+metrics	n_total	European participants represented by cases plus controls
+metrics	n_case	European cases
+metrics	n_control	European controls
+metrics	has_23andme	whether the panel includes 23andMe
+metrics	n_variant_all	all GRCh38 BCF records with no local p-value or FILTER criterion
+metrics	n_variant_1e5	unique exact variants with p <= 1e-5
+metrics	n_variant_5e8	unique exact variants with p <= 5e-8
+metrics	panel_file	repository-relative GRCh38 BCF
+metrics	paper_doi	study publication DOI
+metrics	release_doi	public release DOI
+overlaps	p_bd,p_mdd,p_sczd	per-disorder p-value cutoffs
+overlaps	n_bd,n_mdd,n_sczd	per-disorder variant-set sizes
+overlaps	*_only	variants exclusive to one disorder
+overlaps	*_mdd_only	two-disorder region excluding SCZD
+overlaps	*_sczd_only	two-disorder region excluding the remaining mood disorder
+overlaps	all_three	variants shared by BD, MDD, and SCZD
+overlaps	bd_mdd	inclusive BD and MDD intersection
+overlaps	bd_sczd	inclusive BD and SCZD intersection
+overlaps	mdd_sczd	inclusive MDD and SCZD intersection
+overlaps	union	unique variants present in one or more sets
+scheme	strict_all	5e-8 for all disorders
+scheme	mood_explore	1e-5 for BD and MDD; 5e-8 for SCZD
+scheme	explore_all	1e-5 for all disorders

@@ -1,0 +1,18 @@
+   Disorder        Total      Cases     Controls    All variants    p<=1e-5    p<=5e-8
+  ━━━━━━━━━━  ━━━━━━━━━━━  ━━━━━━━━━  ━━━━━━━━━━━  ━━━━━━━━━━━━━━  ━━━━━━━━━  ━━━━━━━━━
+   BD            840,309     59,287      781,022       6,938,764     13,307      3,017
+  ──────────  ───────────  ─────────  ───────────  ──────────────  ─────────  ─────────
+   MDD         2,000,702    412,305    1,588,397       7,362,678     46,869     14,448
+  ──────────  ───────────  ─────────  ───────────  ──────────────  ─────────  ─────────
+   SCZD          130,644     53,386       77,258       7,658,487     46,715     20,457
+
+  Important overlaps:
+
+  - Strict 5e-8 triple overlap: 805, exactly reproducing the earlier report.
+  - BD/MDD 1e-5, SCZD 5e-8 triple overlap: 1,947.
+  - All at 1e-5: BD-SCZD inclusive overlap 4,685; MDD-SCZD inclusive overlap 5,371; triple overlap 2,047.
+  - The overlap table also provides mutually exclusive Venn regions.
+
+  Sample counts come from the exact European public-release metadata, not the larger paper headline analyses: BD
+  release (https://figshare.com/articles/dataset/bip2024/27216117), MDD release (https://figshare.com/articles/dataset/GWAS_summary_statistics_for_major_depression_PGC_MDD2025_/27061255),
+  and SCZD release (https://figshare.com/articles/dataset/scz2022/19426775).
