@@ -236,8 +236,8 @@ load_coloc_target <- function(gene, disorder, dataset_id = NULL,
 
 r2_legend_grob <- function() {
   colors <- c("#000080", "#2C7FB8", "#32CD32", "#FFA500", "#FF0000")
-  bar_left <- 0.12
-  bar_right <- 0.48
+  bar_left <- 0.15
+  bar_right <- 0.43
   edges <- seq(0.08, 0.75, length.out = length(colors) + 1L)
   children <- list(
     grid::rectGrob(
@@ -264,12 +264,12 @@ r2_legend_grob <- function() {
   ## ticks sit outside the cassette on the label side only.
   tick_y <- edges[2:5]
   children[[length(children) + 1L]] <- grid::segmentsGrob(
-    x0 = bar_right, x1 = 0.56, y0 = tick_y, y1 = tick_y,
+    x0 = bar_right, x1 = 0.51, y0 = tick_y, y1 = tick_y,
     gp = grid::gpar(col = "grey20", lwd = 0.7)
   )
   children[[length(children) + 1L]] <- grid::textGrob(
     c("0.2", "0.4", "0.6", "0.8"),
-    x = 0.63, y = tick_y, just = "left",
+    x = 0.58, y = tick_y, just = "left",
     gp = grid::gpar(col = "grey15", fontsize = 8.5)
   )
   grid::gTree(children = do.call(grid::gList, children))
@@ -281,7 +281,8 @@ plot_coloc_locus <- function(x, highlight = NULL,
                              point_color = "#17365D",
                              highlight_color = "#7B2CBF",
                              point_size = 2.2,
-                             title = "auto") {
+                             title = "auto",
+                             subtitle = "auto") {
   trait <- match.arg(trait)
   color_by <- match.arg(color_by)
   highlight_ids <- resolve_highlights(x, highlight)
@@ -319,7 +320,9 @@ plot_coloc_locus <- function(x, highlight = NULL,
 
   target <- x$target
   pp4 <- as.numeric(x$fit$summary[["PP.H4.abf"]])
-  auto_title <- paste0(target$gene_name, " colocalization with ", target$disorder, " GWAS")
+  auto_title <- paste0(
+    target$gene_name, " eQTL-", target$disorder, " GWAS colocalization"
+  )
   title_to_use <- if (identical(title, "auto")) auto_title else title
   highlight_label <- if (length(highlight_ids) == 1L) {
     row <- dt[variant_id == highlight_ids][1]
@@ -329,7 +332,11 @@ plot_coloc_locus <- function(x, highlight = NULL,
   } else {
     "no highlighted variant"
   }
-  subtitle <- sprintf("%s | %s | coloc PP4 = %.3f", target$context, highlight_label, pp4)
+  auto_subtitle <- sprintf(
+    "%s | highlighted variant: %s | coloc PP4 = %.3f",
+    target$context, highlight_label, pp4
+  )
+  subtitle_to_use <- if (identical(subtitle, "auto")) auto_subtitle else subtitle
 
   p <- ggplot(long, aes(x = position / 1e6, y = value))
   if (color_by == "r2") {
@@ -363,7 +370,7 @@ plot_coloc_locus <- function(x, highlight = NULL,
     ) +
     labs(
       title = title_to_use,
-      subtitle = subtitle,
+      subtitle = subtitle_to_use,
       x = paste0("Chromosome ", sub("^chr", "", target$chr), " position (Mb)"),
       y = expression(-log[10](italic(P)))
     ) +
