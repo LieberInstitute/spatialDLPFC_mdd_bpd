@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=dx-by-PRS_prsMDD-prsBPD_glm-binomial_include-dxAny_sex-age-covars
+#SBATCH --job-name=dx-by-PRS_prsMDD-prsBPD_glm-binomial_include-dxAny_sex-age-covars_PRS-null
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/tmp_PRS_DE/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -17,7 +17,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 module load conda_R/4.4.x
 module list
 
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/tmp_PRS_DE/02_dx-by-PRS_model.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/tmp_PRS_DE/02_dx-by-PRS-null_model.r
 
 echo "**** Job ends ****"
 date
