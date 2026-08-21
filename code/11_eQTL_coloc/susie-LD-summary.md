@@ -3,11 +3,15 @@
 ## Scope and sources
 
 This report synthesizes the locus-LD discussion from August 18-20, 2026,
-Results 2.6 and Methods 4.8 of the current MBv manuscript, and the completed
-targeted SuSiE results. The workflow itself was reviewed against the project
-README and tensorQTL preparation, current official coloc and susieR
-documentation, and official 1000 Genomes documentation. Full-23andMe GWAS
-data and old coloc caches were excluded.
+Results 2.6 and Methods 4.8 of the current MBv manuscript, the completed
+targeted SuSiE analysis, the empirical-Bayes (EB) LD-mismatch sensitivity, and
+the manuscript-priority exploratory extension. The workflow was reviewed
+against the project README and tensorQTL preparation, current official coloc
+and susieR documentation, and official 1000 Genomes and TOP-LD documentation.
+Full-23andMe GWAS data and old coloc caches were excluded, and existing
+`coloc.abf` results were used only as read-only quasi-validation.
+Detailed execution results and package/input provenance are recorded in
+`susie-plan-next-results.md` and `susie-work_26-08-20_20-20_susie.md`.
 
 The completed target list was not a manual list of manuscript genes. It was
 the 100-row `coloc_pass` sheet from the approved final ABF workbook: 54 genes,
@@ -18,9 +22,12 @@ robust ABF-H4 findings rather than every manuscript-priority, exact-tie, or
 high-H3 locus.
 
 This distinction matters. `MAPK3`, `FBLN7`, and `PTP4A3` were represented in
-the 100 targets. `SURF1`, `SPON2`, `IFITM2`, and `IFITM3` were not. The latter
-loci require a separate manuscript-priority extension to answer their direct
-LD questions; that omission does not mean LD was missing from the 100 runs.
+the 100 confirmatory targets. `SURF1`, `SPON2`, `IFITM2`, and `IFITM3` were not
+in that ABF-H4-selected set. A separate manifest was therefore frozen before
+viewing new SuSiE results and analyzed nine MDD comparisons: IFITM2 AstCT and
+L5CT, IFITM3 AstCT, SPON2 L6CT, and SURF1 AstCT, InbCT, L4CT, L5CT, and Oligo.
+These exploratory results do not retrospectively change the confirmatory
+target definition.
 
 ## Was LD calculated for the completed SuSiE analysis?
 
@@ -39,7 +46,9 @@ For GWAS fine mapping, LD did not come from the 119 donors. It used a fresh
 subset of the 2022 1000 Genomes 30x panel: 503 approved unrelated EUR samples,
 exact REF/ALT matching, and signed ALT-dosage correlations. Residual variance
 was fixed and `R_finite = 503` represented finite external-reference
-uncertainty.
+uncertainty. All 100 confirmatory targets and all nine exploratory targets
+were also fitted with `R_mismatch = "eb"` as a separately reported
+sensitivity.
 
 Validation included exact allele and variant-order checks, symmetry, unit
 diagonal checks, eigenvalue and effective-rank summaries,
@@ -51,13 +60,18 @@ diagnostics. Stored and reconstructed eQTL z scores correlated from 0.9873 to
 differed by at most 0.0672 in PIP, and interpretable colocalization classes
 remained stable.
 
-What was not done was a phased haplotype or D-prime analysis for each locus.
-SuSiE-RSS requires signed genotype-predictor correlations, not phased
-haplotypes, so this was not a missing SuSiE input. Haplotype mosaics,
-recombination-break inspection, and D-prime remain useful follow-ups when the
-scientific question is why LD spans an unexpectedly long interval. They are
-also still required for the omitted `SURF1`, `SPON2`, `IFITM2`, and `IFITM3`
-loci if those specific discussion questions are to be resolved.
+The exploratory loci additionally received raw donor, covariate-adjusted
+donor, and 503-EUR pairwise LD summaries. Thirteen predeclared pairs were
+submitted to TOP-LD: six returned estimates and seven were explicitly recorded
+as not returned, never as zero LD. TOP-LD agreed with the principal MAPK3,
+SPON2, and SURF1 conclusions.
+
+What was not done was a complete phased-haplotype or D-prime analysis for
+every locus. SuSiE-RSS requires signed genotype-predictor correlations, not
+phased haplotypes, so this was not a missing model input. Haplotype mosaics,
+recombination-break inspection, and structural-variant analysis remain useful
+follow-ups when the scientific question is why LD spans an unexpectedly long
+interval.
 
 ## Concrete manuscript loci
 
@@ -117,12 +131,13 @@ Several general points follow:
   population structure and LD mismatch; ancestry-specific panels and
   stratified sensitivity analyses are preferable.
 
-The `SURF1` example illustrates the unresolved locus question: seven variants
-span about 60 kb in AstCT/InbCT, two span about 45 kb in L4CT/L5CT, and six
-span about 25 kb in Oligo. Similar MAF across those groups cannot determine
-whether they form one LD block. Joint donor-genotype observations are needed
-for r and r-squared; phased haplotypes are optional but useful for D-prime,
-recombination, and population-LD descriptions.
+The completed `SURF1` validation answers the original LD question. The three
+manuscript representative variants are one highly correlated regional
+structure: 503-EUR r-squared = 0.919-0.985 and TOP-LD EUR R2 = 0.910-0.989.
+They are not independent replications. Each is nearly uncorrelated with the
+distant MDD lead `rs55924785`: 503-EUR r-squared = 0.0011-0.0028. Phased
+haplotypes remain optional for describing recombination and D-prime but are
+not needed to establish this separation.
 
 ## MAPK3 multi-signal results
 
@@ -130,11 +145,11 @@ At primary p12 = 1e-5, the five approved MAPK3 targets were:
 
 | Disorder/context | Single-causal ABF result | SuSiE eQTL component | SuSiE GWAS component | Multi-signal interpretation |
 |---|---|---|---|---|
-| BD AstCT | Lead `rs55732507`; PP4 = 0.920 | 10-member CS, led jointly by tied `rs28529403` and `rs55732507` (PIP = 0.249 each) | 45-member CS led by `rs8054556` (`chr16:29946895:G:A`; PIP = 0.0498), also containing `rs28529403` and `rs55732507` | H4 supports one shared causal variant, but its identity is unresolved: H4 = 0.921, H3 = 0.0787 |
-| BD L2/3CT | Lead `rs55732507`; PP4 = 0.801 | 16-member CS containing tied `rs28529403` and `rs55732507` (PIP = 0.152 each) | Same 45-member BD CS led by `rs8054556` | H4 supports one shared causal variant, but its identity is unresolved: H4 = 0.824, H3 = 0.175 |
-| BD L5CT | Lead `rs55732507`; PP4 = 0.827 | 34-member CS containing tied `rs28529403` and `rs55732507` (PIP = 0.173 each) | Same 45-member BD CS led by `rs8054556` | H4 supports one shared causal variant, but its identity is unresolved: H4 = 0.871, H3 = 0.127 |
-| BD InbCT | Lead `rs55732507`; PP4 = 0.820 | Singleton CS at `rs148788997` (PIP = 0.979) | Same 45-member BD CS led by `rs8054556`, containing `rs28529403` and `rs55732507` | Distinct components: H3 = 0.985, H4 = 0.0137 |
-| MDD InbCT | Lead `rs148788997`; PP4 = 0.944 | Singleton CS at `rs148788997` (PIP = 0.978) | 11-member MDD CS led by `rs4787644` (`chr16:30406798:G:A`; PIP = 0.223), with `rs148788997` also present (PIP = 0.0595) | H4 supports one shared causal variant, but its identity is unresolved: H4 = 0.982, H3 = 0.0165 |
+| BD AstCT | Lead `rs55732507`; PP4 = 0.920 | 10-member CS, led jointly by tied `rs28529403` and `rs55732507` (PIP = 0.249 each) | 45-member CS led by `rs8054556` (`chr16:29946895:G:A`; PIP = 0.0498), also containing `rs28529403` and `rs55732507` | EB H4 supports one shared causal variant, but its identity is unresolved: H4 = 0.9212, H3 = 0.0788 |
+| BD L2/3CT | Lead `rs55732507`; PP4 = 0.801 | 16-member CS containing tied `rs28529403` and `rs55732507` (PIP = 0.152 each) | Same 45-member BD CS led by `rs8054556` | EB H4 supports one shared causal variant, but its identity is unresolved: H4 = 0.8243, H3 = 0.1756 |
+| BD L5CT | Lead `rs55732507`; PP4 = 0.827 | 34-member CS containing tied `rs28529403` and `rs55732507` (PIP = 0.173 each) | Same 45-member BD CS led by `rs8054556` | EB H4 supports one shared causal variant, but its identity is unresolved: H4 = 0.8710, H3 = 0.1268 |
+| BD InbCT | Lead `rs55732507`; PP4 = 0.820 | Singleton CS at `rs148788997` (PIP = 0.979) | Same 45-member BD CS led by `rs8054556`, containing `rs28529403` and `rs55732507` | EB-distinct components: H3 = 0.9855, H4 = 0.0137 |
+| MDD InbCT | Lead `rs148788997`; PP4 = 0.944 | Singleton CS at `rs148788997` (PIP = 0.978) | 11-member MDD CS led by `rs4787644` (`chr16:30406798:G:A`; PIP = 0.223), with `rs148788997` also present (PIP = 0.0595) | EB H4 supports one shared causal variant, but its identity is unresolved: H4 = 0.9808, H3 = 0.0189 |
 
 Here, shared has the standard H4 meaning: the eQTL and GWAS signals are
 inferred to have one causal variant in common. H4 does not necessarily identify
@@ -157,7 +172,24 @@ indistinguishable in this cohort.
 The result therefore supports context-dependent MAPK3 signal architecture,
 not one shared causal SNP across every context and disorder.
 
-## Other manuscript genes and the target-definition gap
+## EB sensitivity across the 100 confirmatory targets
+
+All 200 EB trait fits converged, and each direct susieR result was numerically
+identical to its coloc wrapper result. Baseline analysis yielded 31
+credible-set pairs in 24 targets; EB yielded 29 pairs in 23 targets. eQTL
+credible-set counts did not change. GWAS credible-set counts changed in five
+targets, and no formal finite-reference or mismatch reliability flag fired.
+
+The baseline classes were 76 no-pair, 16 shared, six mixed, and two distinct;
+the EB classes were 77 no-pair, 16 shared, five mixed, and two distinct. Most
+conclusions were stable. The main explanatory change was HLA-DMA SCZ L6CT:
+EB removed a mismatch-sensitive second GWAS component, eliminating the
+baseline high-H3 pair and leaving a shared pair with H4 = 0.9845. HCG17 BD
+L2/3CT instead lost its only GWAS credible set and was downgraded from H4 =
+0.935 to unresolved. NAGA SCZ L6CT and MAPK3 BD InbCT remained convincing
+distinct-component results.
+
+## Other manuscript genes and exploratory extension
 
 Three other manuscript DEG findings were present in `coloc_pass`:
 
@@ -167,25 +199,43 @@ Three other manuscript DEG findings were present in `coloc_pass`:
   same-disorder exact-variant support example.
 
 None had both an eQTL credible set and a GWAS credible set that `coloc.susie`
-could compare. They are unresolved by this multi-signal analysis, not
-SuSiE-negative and not SuSiE-confirmed.
+could compare. This is compatible with high single-causal ABF PP4 because
+`coloc.abf` integrates regional single-variant evidence without requiring each
+trait to produce a retained, pure SuSiE credible set. These findings are
+unresolved by multi-signal analysis, not SuSiE-negative and not
+SuSiE-confirmed.
 
-The omitted loci had different ABF roles:
+The completed exploratory extension gave the following results:
 
-- `IFITM2`: MDD Astro PP3 = 0.899 and PP4 = 0.007; MDD L5 PP3 = 0.986 and
-  PP4 = 0.000063. These favor distinct signals rather than sharing.
-- `IFITM3`: no strong category across 24 disorder/context comparisons; MDD
-  Astro PP4 = 0.057.
-- `SPON2`: approved no-23andMe MDD L6 PP3 = 0.197 and PP4 = 0.790. Although
-  68% of the plausible prior grid passed, the primary PP4 > 0.8 requirement
-  failed. A later full-23andMe result of PP4 = 0.928 is prohibited here and
-  must not be substituted.
-- `SURF1`: MDD contexts had PP3 near 0.770 and PP4 below 0.007; no context
-  passed the H4 gate.
+- `IFITM2`: AstCT yielded H3 = 0.9959 and H4 = 0.000093; L5CT yielded H3 =
+  0.9982 and H4 = 0.000037. The respective eQTL and GWAS leads are effectively
+  uncorrelated, confirming distinct signals.
+- `IFITM3`: AstCT had one GWAS credible set but no retained eQTL credible set.
+  The manuscript variant `rs61876236` lacked an approved MDD GWAS allele match
+  and was absent from the 503-EUR extraction, so the result remains unresolved.
+- `SPON2`: L6CT had one eQTL credible set but no retained GWAS credible set.
+  Donor-adjusted r-squared = 0.495, 503-EUR r-squared = 0.409, and TOP-LD EUR
+  R2 = 0.414 between the eQTL lead `rs13119951` and MDD variant `rs6851528`.
+  Approved no-23andMe ABF PP4 = 0.790 remains suggestive but is not SuSiE
+  confirmed.
+- `SURF1`: AstCT, InbCT, L4CT, L5CT, and Oligo all produced one or two eQTL
+  credible sets but no retained 95% GWAS credible set. EB did not change this.
 
-These exclusions explain the 100-row manifest but do not answer the direct LD
-questions. The missing work is documented in `TODO.md` as a separate,
-manuscript-priority locus extension.
+For SURF1, the approved MDD GWAS itself is large and the top regional variant
+`rs55924785` has imputation quality 0.978, but its p value is 3.0e-7 and its
+GWAS PIP is only 0.177 without EB and 0.184 with EB. The unfiltered 95%
+component contains 94 variants whose minimum absolute correlation is 0.00014,
+so it correctly fails the default purity filter. An exploratory 80% set
+contains six highly correlated variants with minimum absolute correlation =
+0.987, showing a coherent core plus a diffuse posterior tail. This is limited
+localization, not evidence that the GWAS file is generally low quality.
+
+SURF1 also has meaningful external-LD mismatch: EB estimated a corrected
+effective reference size near 33 rather than 503. Nevertheless, EB did not
+recover a credible set, and independent LD sources confirm separation from
+the eQTL components. The current evidence therefore leans strongly toward
+distinct eQTL and MDD signals while remaining formally unresolved by
+`coloc.susie`.
 
 ## Possible impacts and explanations
 
@@ -197,8 +247,8 @@ manuscript-priority locus extension.
   population. Wide credible sets can therefore reflect limited LD resolution,
   not many independent causal variants.
 - External GWAS LD can mismatch the study population despite correct allele
-  harmonization. Finite-reference flags were clear, but mismatch diagnostics
-  and a separately reviewed `R_mismatch = "eb"` sensitivity remain advisable.
+  harmonization. The completed EB sensitivity showed that most results were
+  stable, while HLA-DMA and HCG17 required revised interpretation.
 - Failure to obtain comparable eQTL and GWAS credible sets can arise because
   one trait has no credible set, the regional signal is weak, LD resolution is
   poor, or the traits have different components. It is not automatically
@@ -249,37 +299,41 @@ manuscript-priority locus extension.
 > colocalization can distinguish multiple causal signals only where the
 > association statistics and LD contain discriminatory information.
 
+> At SURF1, the manuscript eQTL representatives form one highly correlated
+> regional structure but are nearly uncorrelated with the distant leading MDD
+> association. The approved MDD signal did not yield a retained 95% pure SuSiE
+> credible set, so multi-signal colocalization remains unresolved rather than
+> negative. Existing ABF and LD evidence favor distinct regional signals.
+
 ## Further work
 
-1. Create a second target manifest for `SURF1`, `SPON2`, `IFITM2`, and
-   `IFITM3`, limited to manuscript- and discussion-relevant contexts and
-   disorders. Keep it separate from the completed ABF-H4 target set.
-2. Apply the same approved dense-summary, allele-harmonization, signed-LD, and
-   SuSiE settings. Do not use significance-filtered variants, full-23andMe
-   inputs, or old coloc caches.
-3. Produce locus LD summaries using donor dosage r and r-squared, including
-   exact-tie membership, context sample size, missingness, allele order, and
-   comparison with ancestry-matched external LD.
-4. Where long LD remains unexplained, inspect phased haplotypes, recombinant
-   donors, D-prime, recombination maps, repeats, and structural-variant
-   annotations. Keep these population-genetic diagnostics distinct from the
-   signed matrix required by SuSiE-RSS.
-5. Run prior sensitivity and a separately reviewed external-LD mismatch
-   sensitivity. Use ancestry-specific panels rather than a naively mixed
-   reference.
-6. Update manuscript language and supplemental results to distinguish shared,
+1. For SURF1, seek LD matched to the contributing MDD GWAS cohorts or a larger
+   ancestry-matched reference. Actual GWAS-cohort LD would be preferable.
+2. Treat 80% and 90% SURF1 credible-set analyses only as transparent
+   sensitivity checks; do not replace the predeclared 95% primary result.
+3. Revisit SURF1 when a larger approved non-23andMe MDD GWAS becomes available
+   and test whether it localizes the distant signal or reveals a secondary
+   signal in the eQTL block.
+4. Replicate the SURF1 eQTL components in a larger independent brain or
+   cell-type-specific cohort. Phasing and recombinant-donor inspection may
+   then help distinguish the tied eQTL proxies.
+5. Update manuscript language and supplemental results to distinguish shared,
    distinct, mixed, and unresolved component results. Avoid unique causal-SNP
    claims for tied or broad credible sets.
 
 ## Bottom line
 
-The completed 100-target run did calculate the LD required by SuSiE correctly.
-It established that the `rs28529403`/`rs55732507` MAPK3 eQTL component shares
-regional support with a BD GWAS component in AstCT, L2/3CT, and L5CT; that the
-`rs148788997` InbCT eQTL is distinct from the BD component; and that the same
-`rs148788997` eQTL component is compatible with the MDD signal.
+The completed confirmatory and exploratory runs used the LD required by
+SuSiE, converged identically between direct susieR and coloc wrappers, and
+were stable under EB mismatch correction in most loci. MAPK3 retained shared
+BD components in AstCT, L2/3CT, and L5CT, a distinct BD InbCT architecture,
+and a shared MDD InbCT component. HLA-DMA showed how EB can remove a
+mismatch-sensitive apparent H3 component, while HCG17 became unresolved.
 
-The remaining gap is target definition. The robust-ABF-H4 `coloc_pass` set was
-not equivalent to the manuscript/LD-discussion locus set. Direct analyses of
-`SURF1`, `SPON2`, `IFITM2`, and `IFITM3` remain necessary before their LD
-questions can be considered resolved.
+The manuscript-priority extension confirmed distinct IFITM2 signals, left
+IFITM3 and SPON2 unresolved because one trait lacked a retained credible set,
+and resolved the SURF1 LD structure without establishing colocalization.
+SURF1's eQTL representatives form a high-LD group separated from a distant,
+weakly localized MDD association. Better GWAS-matched LD and stronger
+association information are needed for a definitive multi-signal result; the
+present evidence favors H3 over H4.
