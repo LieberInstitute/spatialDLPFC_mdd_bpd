@@ -1,0 +1,528 @@
+---
+title: "Seurat colocalization locus plots"
+output: html_notebook
+---
+
+This notebook follows the coloc data-structure vignette: each plot uses the
+dense set of variants shared by the eQTL and GWAS datasets within one genomic
+region. The publication plots show the eQTL association panel only, color
+neighboring variants by 1000 Genomes European-reference LD with the requested
+variant, highlight the requested variant in purple, and omit the gene track.
+
+Reference: <https://cran.r-project.org/web/packages/coloc/vignettes/a02_data.html>
+
+```{r setup}
+suppressPackageStartupMessages({
+  library(coloc)
+  library(data.table)
+  library(ggplot2)
+  library(here)
+})
+
+here::i_am(".git/HEAD")
+
+repo_root <- here()
+target_root <- here(
+  "processed-data", "11_eQTL_coloc", "seurat", "coloc",
+  "susie_targeted_no23andMe", "all_targets_20260819"
+)
+target_summary_file <- file.path(
+  target_root, "aggregate_eb_20260820", "baseline_vs_eb_target_summary.tsv.gz"
+)
+pvar_file <- file.path(target_root, "inputs", "target_pvar.tsv.gz")
+plots_dir <- here("plots", "11_eQTL_coloc")
+
+## primary manuscript examples requested by Jacqui.
+plot_targets <- data.table(
+  disorder = "BD",
+  dataset_id = c("astro", "l2-3", "l5"),
+  gene = "MAPK3",
+  highlight = "rs55732507"
+)
+
+dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
+```
+
+```{r helpers}
+assert_files <- function(paths) {
+  missing <- paths[!file.exists(paths)]
+  if (length(missing) > 0L) {
+    stop("Missing required file(s):\n", paste(missing, collapse = "\n"))
+  }
+  invisible(TRUE)
+}
+
+assert_cols <- function(dt, cols, label) {
+  missing <- setdiff(cols, names(dt))
+  if (length(missing) > 0L) {
+    stop("Missing columns in ", label, ": ", paste(missing, collapse = ", "))
+  }
+  invisible(TRUE)
+}
+
+reference_gt_cache <- new.env(parent = emptyenv())
+
+reference_gt_path <- function(chr) {
+  file.path(
+    target_root, "inputs", "reference",
+    paste0(chr, ".1000G_highcov.EUR_unrelated.GT.tsv.gz")
+  )
+}
+
+load_reference_gt <- function(chr) {
+  if (exists(chr, envir = reference_gt_cache, inherits = FALSE)) {
+    return(get(chr, envir = reference_gt_cache, inherits = FALSE))
+  }
+  path <- reference_gt_path(chr)
+  assert_files(path)
+  gt <- fread(path)
+  assert_cols(gt, "variant_id", basename(path))
+  assign(chr, gt, envir = reference_gt_cache)
+  gt
+}
+
+reference_r2 <- function(variant_ids, index_variant_id, chr) {
+  gt <- load_reference_gt(chr)
+  keep <- gt[variant_id %chin% unique(c(variant_ids, index_variant_id))]
+  if (!index_variant_id %chin% keep$variant_id) {
+    stop("LD index variant is absent from the reference genotypes: ", index_variant_id)
+  }
+
+  sample_cols <- setdiff(names(keep), "variant_id")
+  genotype <- as.matrix(keep[, ..sample_cols])
+  storage.mode(genotype) <- "numeric"
+  index_genotype <- genotype[match(index_variant_id, keep$variant_id), ]
+  r <- as.numeric(stats::cor(t(genotype), index_genotype, use = "pairwise.complete.obs"))
+  data.table(
+    variant_id = keep$variant_id,
+    r2 = pmin(1, pmax(0, r^2)),
+    ld_reference_n = length(sample_cols)
+  )
+}
+
+local_nominal_path <- function(path) {
+  if (file.exists(path)) return(path)
+  file.path(target_root, "inputs", "nominal", basename(path))
+}
+
+resolve_coloc_target <- function(gene, disorder, dataset_id = NULL,
+                                 context = NULL, target_id = NULL) {
+  gene_value <- gene
+  disorder_value <- disorder
+  dataset_id_value <- dataset_id
+  context_value <- context
+  target_id_value <- target_id
+  rows <- copy(target_summary)
+  if (!is.null(target_id_value)) rows <- rows[target_id == target_id_value]
+  rows <- rows[
+    disorder == disorder_value &
+      (gene_id == gene_value | gene_name == gene_value)
+  ]
+  if (!is.null(dataset_id_value)) rows <- rows[dataset_id == dataset_id_value]
+  if (!is.null(context_value)) rows <- rows[context == context_value]
+
+  if (nrow(rows) != 1L) {
+    stop(
+      "Expected one coloc target for gene=", gene,
+      ", disorder=", disorder,
+      if (!is.null(dataset_id)) paste0(", dataset_id=", dataset_id) else "",
+      if (!is.null(context)) paste0(", context=", context) else "",
+      "; found ", nrow(rows), "."
+    )
+  }
+  rows[1]
+}
+
+resolve_highlights <- function(x, highlight) {
+  if (is.null(highlight) || length(highlight) == 0L) return(character())
+  highlight <- unique(as.character(highlight))
+  variant_hits <- highlight[highlight %chin% x$plot_data$variant_id]
+  rsid_hits <- x$plot_data[rsid %chin% highlight, unique(variant_id)]
+  resolved <- unique(c(variant_hits, rsid_hits))
+  missing <- setdiff(highlight, c(variant_hits, x$plot_data[variant_id %chin% resolved, rsid]))
+  if (length(missing) > 0L) {
+    stop("Highlight variant(s) not found in the coloc region: ", paste(missing, collapse = ", "))
+  }
+  resolved
+}
+
+load_coloc_target <- function(gene, disorder, dataset_id = NULL,
+                              context = NULL, target_id = NULL,
+                              p1 = 1e-4, p2 = 1e-4, p12 = 1e-5) {
+  target <- resolve_coloc_target(
+    gene = gene, disorder = disorder, dataset_id = dataset_id,
+    context = context, target_id = target_id
+  )
+  nominal_file <- local_nominal_path(target$nominal_file)
+  gwas_file <- file.path(target_root, "inputs", "gwas", paste0(disorder, "_approved.tsv.gz"))
+  assert_files(c(nominal_file, gwas_file, pvar_file))
+
+  eqtl <- fread(nominal_file)
+  gwas <- fread(gwas_file)
+  pvar <- fread(pvar_file)
+  assert_cols(
+    eqtl,
+    c("phenotype_id", "variant_id", "af", "pval_nominal", "slope", "slope_se"),
+    basename(nominal_file)
+  )
+  assert_cols(
+    gwas,
+    c("variant_id", "rsid", "beta", "beta_se", "N", "ncas", "p"),
+    basename(gwas_file)
+  )
+  assert_cols(pvar, c("variant_id", "CHROM", "POS"), basename(pvar_file))
+
+  ## coloc uses only variants available in both studies within one dense region.
+  plot_data <- merge(eqtl, gwas, by = "variant_id", suffixes = c("_eqtl", "_gwas"))
+  plot_data <- merge(
+    plot_data,
+    pvar[, .(variant_id, chromosome = CHROM, position = POS)],
+    by = "variant_id"
+  )
+  plot_data <- plot_data[
+    position >= target$region_start & position <= target$region_end &
+      is.finite(pval_nominal) & pval_nominal > 0 & pval_nominal <= 1 &
+      is.finite(p) & p > 0 & p <= 1
+  ]
+  setorder(plot_data, position, variant_id)
+  if (nrow(plot_data) < 10L) stop("Too few shared variants for coloc plotting.")
+  if (anyDuplicated(plot_data$variant_id)) stop("Duplicate shared variant IDs in coloc plotting data.")
+
+  dataset1 <- list(
+    beta = plot_data$slope,
+    varbeta = plot_data$slope_se^2,
+    pvalues = plot_data$pval_nominal,
+    snp = plot_data$variant_id,
+    position = plot_data$position,
+    N = target$n_eqtl,
+    MAF = pmin(plot_data$af, 1 - plot_data$af),
+    type = "quant"
+  )
+  dataset2 <- list(
+    beta = plot_data$beta,
+    varbeta = plot_data$beta_se^2,
+    pvalues = plot_data$p,
+    snp = plot_data$variant_id,
+    position = plot_data$position,
+    N = stats::median(plot_data$N, na.rm = TRUE),
+    type = "cc",
+    s = stats::median(plot_data$ncas / plot_data$N, na.rm = TRUE)
+  )
+  coloc::check_dataset(dataset1)
+  coloc::check_dataset(dataset2)
+
+  fit <- NULL
+  invisible(utils::capture.output(
+    fit <- coloc::coloc.abf(
+      dataset1 = dataset1, dataset2 = dataset2,
+      p1 = p1, p2 = p2, p12 = p12
+    )
+  ))
+  plot_data[fit$results, SNP.PP.H4 := i.SNP.PP.H4, on = .(variant_id = snp)]
+  plot_data[, `:=`(
+    neglog10_eqtl = -log10(pval_nominal),
+    neglog10_gwas = -log10(p)
+  )]
+
+  ## retain both the fresh result and the manuscript target metadata.
+  list(
+    target = target,
+    dataset1 = dataset1,
+    dataset2 = dataset2,
+    fit = fit,
+    plot_data = plot_data
+  )
+}
+
+r2_legend_grob <- function() {
+  colors <- c("#000080", "#2C7FB8", "#32CD32", "#FFA500", "#FF0000")
+  bar_left <- 0.12
+  bar_right <- 0.48
+  edges <- seq(0.08, 0.75, length.out = length(colors) + 1L)
+  children <- list(
+    grid::rectGrob(
+      x = 0.5, y = 0.5, width = 0.98, height = 0.98,
+      gp = grid::gpar(fill = "white", col = "grey50", lwd = 0.8)
+    ),
+    grid::textGrob(
+      expression(r^2), x = 0.5, y = 0.88,
+      gp = grid::gpar(col = "grey15", fontsize = 10)
+    )
+  )
+
+  ## draw bordered blocks so internal boundaries span the full cassette width.
+  for (i in seq_along(colors)) {
+    children[[length(children) + 1L]] <- grid::rectGrob(
+      x = (bar_left + bar_right) / 2,
+      y = (edges[i] + edges[i + 1L]) / 2,
+      width = bar_right - bar_left,
+      height = edges[i + 1L] - edges[i],
+      gp = grid::gpar(fill = colors[i], col = "grey20", lwd = 0.7)
+    )
+  }
+
+  ## ticks sit outside the cassette on the label side only.
+  tick_y <- edges[2:5]
+  children[[length(children) + 1L]] <- grid::segmentsGrob(
+    x0 = bar_right, x1 = 0.56, y0 = tick_y, y1 = tick_y,
+    gp = grid::gpar(col = "grey20", lwd = 0.7)
+  )
+  children[[length(children) + 1L]] <- grid::textGrob(
+    c("0.2", "0.4", "0.6", "0.8"),
+    x = 0.63, y = tick_y, just = "left",
+    gp = grid::gpar(col = "grey15", fontsize = 8.5)
+  )
+  grid::gTree(children = do.call(grid::gList, children))
+}
+
+plot_coloc_locus <- function(x, highlight = NULL,
+                             trait = c("eQTL", "GWAS", "both"),
+                             color_by = c("r2", "highlight"),
+                             point_color = "#17365D",
+                             highlight_color = "#7B2CBF",
+                             point_size = 2.2,
+                             title = "auto") {
+  trait <- match.arg(trait)
+  color_by <- match.arg(color_by)
+  highlight_ids <- resolve_highlights(x, highlight)
+  if (color_by == "r2" && length(highlight_ids) != 1L) {
+    stop("r2 coloring requires exactly one highlighted index variant.")
+  }
+  dt <- copy(x$plot_data)
+  dt[, highlighted := variant_id %chin% highlight_ids]
+  if (color_by == "r2") {
+    ld <- reference_r2(
+      variant_ids = dt$variant_id,
+      index_variant_id = highlight_ids,
+      chr = x$target$chr
+    )
+    dt[ld, `:=`(r2 = i.r2, ld_reference_n = i.ld_reference_n), on = "variant_id"]
+  } else {
+    dt[, `:=`(r2 = NA_real_, ld_reference_n = NA_integer_)]
+  }
+
+  long <- if (trait == "eQTL") {
+    dt[, .(variant_id, rsid, position, highlighted, r2, ld_reference_n,
+           trait = "eQTL", value = neglog10_eqtl)]
+  } else if (trait == "GWAS") {
+    dt[, .(variant_id, rsid, position, highlighted, r2, ld_reference_n,
+           trait = "GWAS", value = neglog10_gwas)]
+  } else {
+    rbindlist(list(
+      dt[, .(variant_id, rsid, position, highlighted, r2, ld_reference_n,
+             trait = "eQTL", value = neglog10_eqtl)],
+      dt[, .(variant_id, rsid, position, highlighted, r2, ld_reference_n,
+             trait = "GWAS", value = neglog10_gwas)]
+    ))
+    long[, trait := factor(trait, levels = c("eQTL", "GWAS"))]
+  }
+
+  target <- x$target
+  pp4 <- as.numeric(x$fit$summary[["PP.H4.abf"]])
+  auto_title <- paste0(target$gene_name, " colocalization with ", target$disorder, " GWAS")
+  title_to_use <- if (identical(title, "auto")) auto_title else title
+  highlight_label <- if (length(highlight_ids) == 1L) {
+    row <- dt[variant_id == highlight_ids][1]
+    if (!is.na(row$rsid) && nzchar(row$rsid)) row$rsid else row$variant_id
+  } else if (length(highlight_ids) > 1L) {
+    paste(length(highlight_ids), "highlighted variants")
+  } else {
+    "no highlighted variant"
+  }
+  subtitle <- sprintf("%s | %s | coloc PP4 = %.3f", target$context, highlight_label, pp4)
+
+  p <- ggplot(long, aes(x = position / 1e6, y = value))
+  if (color_by == "r2") {
+    p <- p +
+      geom_point(
+        data = long[highlighted == FALSE],
+        aes(fill = r2), color = "grey20", shape = 21,
+        size = point_size, stroke = 0.3, alpha = 0.88
+      ) +
+      scale_fill_stepsn(
+        ## hold each LD bin at one color, matching the reference locus plot.
+        colours = rep(c("#000080", "#2C7FB8", "#32CD32", "#FFA500", "#FF0000"), each = 2L),
+        values = c(0, 0.1999, 0.2, 0.3999, 0.4, 0.5999, 0.6, 0.7999, 0.8, 1),
+        breaks = c(0.2, 0.4, 0.6, 0.8),
+        limits = c(0, 1),
+        na.value = "grey75",
+        guide = "none"
+      )
+  } else {
+    p <- p + geom_point(
+      data = long[highlighted == FALSE],
+      fill = point_color, color = "grey20", shape = 21,
+      size = point_size, stroke = 0.3, alpha = 0.82
+    )
+  }
+  p <- p +
+    geom_point(
+      data = long[highlighted == TRUE],
+      color = "grey20", fill = highlight_color,
+      size = point_size + 0.3, shape = 23, stroke = 0.4
+    ) +
+    labs(
+      title = title_to_use,
+      subtitle = subtitle,
+      x = paste0("Chromosome ", sub("^chr", "", target$chr), " position (Mb)"),
+      y = expression(-log[10](italic(P)))
+    ) +
+    scale_y_continuous(expand = expansion(mult = c(0.02, 0.12))) +
+    theme_classic(base_size = 11) +
+    theme(
+      plot.title = element_text(face = "bold", size = 12),
+      plot.subtitle = element_text(size = 10),
+      strip.text.y = element_text(face = "bold"),
+      axis.line = element_line(linewidth = 0.4),
+      legend.position = "none"
+    )
+  if (trait == "both") p <- p + facet_grid(trait ~ ., scales = "free_y")
+
+  label_data <- long[highlighted == TRUE]
+  if (nrow(label_data) > 0L) {
+    label_data[, label := ifelse(!is.na(rsid) & nzchar(rsid), rsid, variant_id)]
+    p <- p + geom_text(
+      data = label_data,
+      aes(label = label),
+      color = "grey15", nudge_y = 0.35,
+      vjust = 0, size = 3.2, fontface = "bold",
+      check_overlap = TRUE
+    )
+  }
+  if (color_by == "r2") {
+    x_range <- range(long$position / 1e6, na.rm = TRUE)
+    y_range <- range(c(0, long$value), na.rm = TRUE)
+    x_span <- diff(x_range)
+    y_span <- diff(y_range)
+    legend_xmax <- x_range[2] - 0.01 * x_span
+    legend_ymax <- y_range[2] + 0.105 * y_span
+    p <- p + annotation_custom(
+      r2_legend_grob(),
+      xmin = legend_xmax - 0.14 * x_span,
+      xmax = legend_xmax,
+      ymin = legend_ymax - 0.45 * y_span,
+      ymax = legend_ymax
+    )
+  }
+
+  list(
+    plot = p,
+    data = long,
+    highlight_ids = highlight_ids,
+    ld_source = if (color_by == "r2") {
+      paste0("1000 Genomes high-coverage EUR unrelated; n=", unique(na.omit(long$ld_reference_n)))
+    } else {
+      NA_character_
+    }
+  )
+}
+
+save_coloc_pdf_set <- function(plots, filename, width = 6.5, height = 4.2) {
+  out_file <- file.path(plots_dir, filename)
+  grDevices::pdf(out_file, width = width, height = height, onefile = TRUE)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  for (plot in plots) print(plot)
+  out_file
+}
+```
+
+```{r load-inputs}
+assert_files(c(target_summary_file, pvar_file))
+target_summary <- fread(target_summary_file)
+assert_cols(
+  target_summary,
+  c(
+    "target_id", "dataset_id", "gene_id", "gene_name", "disorder", "context",
+    "chr", "nominal_file", "region_start", "region_end", "n_eqtl", "PP4"
+  ),
+  basename(target_summary_file)
+)
+```
+
+```{r mapk3-bd-plots, fig.width=6.5, fig.height=4.2}
+mapk3_results <- vector("list", nrow(plot_targets))
+
+for (i in seq_len(nrow(plot_targets))) {
+  spec <- plot_targets[i]
+  coloc_target <- load_coloc_target(
+    gene = spec$gene,
+    disorder = spec$disorder,
+    dataset_id = spec$dataset_id
+  )
+  pobj <- plot_coloc_locus(
+    coloc_target,
+    highlight = spec$highlight,
+    trait = "eQTL"
+  )
+
+  coloc_target$plot_result <- pobj
+  mapk3_results[[i]] <- coloc_target
+  print(pobj$plot)
+}
+names(mapk3_results) <- plot_targets$dataset_id
+
+mapk3_pdf <- save_coloc_pdf_set(
+  lapply(mapk3_results, function(x) x$plot_result$plot),
+  "coloc_MAPK3_BD_rs55732507_Astro_L23_L5.pdf"
+)
+```
+
+```{r write-mapk3-summary}
+mapk3_summary <- rbindlist(lapply(mapk3_results, function(x) {
+  highlight_id <- x$plot_result$highlight_ids[[1]]
+  highlight_row <- unique(x$plot_result$data[variant_id == highlight_id])
+  data.table(
+    disorder = x$target$disorder,
+    dataset_id = x$target$dataset_id,
+    context = x$target$context,
+    gene_id = x$target$gene_id,
+    gene_name = x$target$gene_name,
+    highlight_variant_id = highlight_id,
+    highlight_rsid = highlight_row$rsid[[1]],
+    highlight_r2 = highlight_row$r2[[1]],
+    ld_source = x$plot_result$ld_source,
+    nsnps = as.integer(x$fit$summary[["nsnps"]]),
+    PP4 = as.numeric(x$fit$summary[["PP.H4.abf"]])
+  )
+}))
+mapk3_summary[, plot_rank := match(dataset_id, plot_targets$dataset_id)]
+setorder(mapk3_summary, plot_rank)
+mapk3_summary[, plot_rank := NULL]
+
+mapk3_summary
+```
+
+```{r validate-outputs}
+expected_pp4 <- setNames(
+  target_summary[
+    disorder == "BD" & gene_name == "MAPK3" & dataset_id %chin% plot_targets$dataset_id,
+    PP4
+  ],
+  target_summary[
+    disorder == "BD" & gene_name == "MAPK3" & dataset_id %chin% plot_targets$dataset_id,
+    dataset_id
+  ]
+)
+observed_pp4 <- setNames(mapk3_summary$PP4, mapk3_summary$dataset_id)
+stopifnot(
+  file.exists(mapk3_pdf),
+  identical(mapk3_summary$dataset_id, plot_targets$dataset_id),
+  all(mapk3_summary$nsnps == 1561L),
+  all(mapk3_summary$highlight_r2 == 1),
+  all(grepl("1000 Genomes.*n=503", mapk3_summary$ld_source)),
+  isTRUE(all.equal(observed_pp4[names(expected_pp4)], expected_pp4, tolerance = 1e-10))
+)
+```
+
+```{r generic-examples, eval=FALSE}
+## plot another targeted gene/context/disorder combination.
+example_target <- load_coloc_target(
+  gene = "FBLN7",
+  disorder = "MDD",
+  dataset_id = "astro"
+)
+plot_coloc_locus(example_target, highlight = example_target$target$lead_rsid)$plot
+
+## show aligned eQTL and GWAS association panels when both are useful.
+plot_coloc_locus(example_target, highlight = example_target$target$lead_snp, trait = "both")$plot
+```
