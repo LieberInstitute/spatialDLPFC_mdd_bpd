@@ -12,7 +12,7 @@ source("code/publication/plotting_utils.r")
 
 de.df2 = filter(de.df, group!="MDD.BPD")
 
-plot.genes = c("SST","CORT","CRH")
+plot.genes = c("CRH","SST","CORT")
 
 p3 <- getDotplot(plot.genes, de.df2)+theme(axis.text.y=element_text(size=7))
 p3.1 <- getMeanRatioBar(plot.genes, sce_summ)
@@ -49,7 +49,7 @@ p3.1 <- getMeanRatioBar(plot.genes, sce_summ)
 
 ggsave(file="plots/publication/Figure_nrn/neuropep_dotplot.pdf", 
        arrangeGrob(grobs=list(p3, p3.1), layout_matrix=matrix(c(1,1,1,1,1,2), ncol=6)),
-       height=2, width=4)
+       height=2, width=3.5)
 
 ## Reproducibility information
 print("Reproducibility information:")
