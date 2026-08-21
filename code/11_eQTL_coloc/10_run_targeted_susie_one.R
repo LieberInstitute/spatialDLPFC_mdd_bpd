@@ -19,12 +19,16 @@ suppressPackageStartupMessages({
 data.table::setDTthreads(1L)
 options(stringsAsFactors = FALSE)
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 2L) stop("usage: 10_run_targeted_susie_one.R BASE TARGET_ID")
+if (!length(args) %in% 2:3) {
+    stop("usage: 10_run_targeted_susie_one.R BASE TARGET_ID [none|eb]")
+}
 base <- normalizePath(args[[1L]], mustWork = TRUE)
 target_key <- args[[2L]]
+mismatch_mode <- if (length(args) == 3L) args[[3L]] else "none"
+if (!mismatch_mode %chin% c("none", "eb")) stop("Unsupported mismatch mode")
 
 ## use a private directory and expose one atomic checkpoint at completion
-result_dir <- file.path(base, "results")
+result_dir <- file.path(base, if (mismatch_mode == "none") "results" else "results_eb")
 dir.create(result_dir, recursive = TRUE, showWarnings = FALSE)
 final_file <- file.path(result_dir, paste0(target_key, ".rds"))
 if (file.exists(final_file)) {
@@ -217,7 +221,8 @@ susie_common <- list(
 )
 susie_eqtl <- modifyList(susie_common, list(estimate_residual_variance = TRUE, R_finite = FALSE))
 susie_gwas <- modifyList(susie_common, list(estimate_residual_variance = FALSE,
-                                            R_finite = length(ref_samples)))
+                                            R_finite = length(ref_samples),
+                                            R_mismatch = mismatch_mode))
 n_eqtl <- length(samples)
 n_gwas <- median(g$N, na.rm = TRUE)
 z_eqtl <- e$slope / e$slope_se
@@ -232,6 +237,10 @@ dimnames(R_eqtl) <- list(ids, ids)
 D_eqtl <- list(
     beta = e$slope, varbeta = e$slope_se^2, z = z_eqtl, snp = ids,
     LD = R_eqtl, N = n_eqtl, MAF = pmin(e$af, 1 - e$af), type = "quant"
+)
+fit_eqtl_direct <- timed(
+    "susie_rss_eqtl_direct",
+    do.call(susieR::susie_rss, c(list(z = z_eqtl, R = R_eqtl, n = n_eqtl), susie_eqtl))
 )
 fit_eqtl <- timed("runsusie_eqtl_primary", do.call(coloc::runsusie, c(list(d = D_eqtl), susie_eqtl)))
 rm(D_eqtl, R_eqtl)
@@ -255,6 +264,10 @@ D_gwas <- list(
     beta = g$beta, varbeta = g$beta_se^2, z = z_gwas, snp = ids,
     LD = R_gwas, N = n_gwas, type = "cc",
     s = median(g$ncas / g$N, na.rm = TRUE)
+)
+fit_gwas_direct <- timed(
+    paste0("susie_rss_gwas_direct_", mismatch_mode),
+    do.call(susieR::susie_rss, c(list(z = z_gwas, R = R_gwas, n = n_gwas), susie_gwas))
 )
 fit_gwas <- timed("runsusie_gwas_primary", do.call(coloc::runsusie, c(list(d = D_gwas), susie_gwas)))
 rm(D_gwas, R_gwas, Xg_std, Xg, Xe_std, Xe)
@@ -294,6 +307,26 @@ fit_comparison <- data.table(
     cs_identical = identical(canonical_cs(fit_eqtl), canonical_cs(fit_eqtl_raw)),
     n_cs_primary = length(fit_eqtl$sets$cs), n_cs_sensitivity = length(fit_eqtl_raw$sets$cs)
 )
+direct_wrapper_comparison <- rbindlist(list(
+    cbind(
+        data.table(trait = "eqtl"),
+        data.table(
+            max_abs_pip_diff = max(abs(fit_eqtl_direct$pip - fit_eqtl$pip)),
+            max_abs_alpha_diff = max(abs(fit_eqtl_direct$alpha - fit_eqtl$alpha)),
+            final_elbo_diff = tail(fit_eqtl_direct$elbo, 1L) - tail(fit_eqtl$elbo, 1L),
+            cs_identical = identical(canonical_cs(fit_eqtl_direct), canonical_cs(fit_eqtl))
+        )
+    ),
+    cbind(
+        data.table(trait = "gwas"),
+        data.table(
+            max_abs_pip_diff = max(abs(fit_gwas_direct$pip - fit_gwas$pip)),
+            max_abs_alpha_diff = max(abs(fit_gwas_direct$alpha - fit_gwas$alpha)),
+            final_elbo_diff = tail(fit_gwas_direct$elbo, 1L) - tail(fit_gwas$elbo, 1L),
+            cs_identical = identical(canonical_cs(fit_gwas_direct), canonical_cs(fit_gwas))
+        )
+    )
+))
 
 summarize_fit <- function(fit, trait, n) {
     finite <- fit$R_finite_diagnostics
@@ -304,6 +337,9 @@ summarize_fit <- function(fit, trait, n) {
         residual_variance = fit$sigma2,
         finite_effective_rank = if (is.null(finite)) NA_real_ else finite$effective_rank,
         finite_rank_over_B = if (is.null(finite)) NA_real_ else finite$r_over_B,
+        mismatch_lambda_bias = if (is.null(finite$lambda_bias)) NA_real_ else finite$lambda_bias,
+        mismatch_B_corrected = if (is.null(finite$B_corrected)) NA_real_ else finite$B_corrected,
+        mismatch_Q_art = if (is.null(finite$Q_art)) NA_real_ else finite$Q_art,
         finite_max_penalty = if (is.null(finite)) NA_real_ else max(finite$per_variable_penalty),
         finite_sensitivity_flag = if (is.null(finite)) NA else finite$R_sensitivity_flag,
         finite_reliability_flag = if (is.null(finite)) NA else finite$R_reliability_flag
@@ -326,6 +362,7 @@ metadata <- data.table(
     dataset_id = target$dataset_id, gene_id = target$gene_id, gene_name = target$gene_name,
     chr = target$chr, n_eqtl = n_eqtl, covariate_rank = qrc$rank,
     n_reference = length(ref_samples), n_variants = length(ids), peak_rss_kb = peak_rss_kb,
+    R_mismatch = mismatch_mode,
     completed = format(Sys.time(), "%Y-%m-%d %H:%M:%S %z")
 )
 
@@ -333,7 +370,9 @@ checkpoint <- list(
     metadata = metadata, variant_audit = audit, exclusions = exclusions,
     ld_diagnostics = rbindlist(list(ld_eqtl, ld_gwas), fill = TRUE),
     fit_summary = fit_summary, fit_comparison = fit_comparison,
-    fit_eqtl = fit_eqtl, fit_eqtl_raw = fit_eqtl_raw, fit_gwas = fit_gwas,
+    direct_wrapper_comparison = direct_wrapper_comparison,
+    fit_eqtl_direct = fit_eqtl_direct, fit_eqtl = fit_eqtl,
+    fit_eqtl_raw = fit_eqtl_raw, fit_gwas_direct = fit_gwas_direct, fit_gwas = fit_gwas,
     coloc_primary = coloc_primary, coloc_sensitivity = coloc_sensitivity,
     timings = rbindlist(timings), warnings = unique(warnings_seen),
     parameters = list(eqtl = susie_eqtl, gwas = susie_gwas, p1 = 1e-4, p2 = 1e-4, p12 = 1e-5)

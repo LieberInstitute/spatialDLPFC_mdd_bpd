@@ -220,6 +220,30 @@ Completed datasets are skipped only when the result, metadata, sensitivity, and
 files exist, the script validates them and writes the marker before skipping. To
 rerun a completed dataset, delete its existing coloc output files first.
 
+## Targeted SuSiE follow-up
+
+The targeted workflow is separate from production `coloc.abf` outputs. It uses
+dense tensorQTL nominal statistics, covariate-adjusted donor LD for eQTLs, and
+approved 503-sample 1000G EUR LD for current no-23andMe GWAS inputs. See
+`susie-plan-next.md` and `susie-exploratory-manifest.tsv` for the reviewed target
+definitions and run order.
+
+- `08_prepare_targeted_susie_all.R` prepares either the final 100-row
+  `coloc_pass` set or a supplied reviewed exploratory manifest.
+- `09_extract_1000g_target_reference.R` extracts exact target variants from the
+  pinned 1000G high-coverage GDS.
+- `10_run_targeted_susie_one.R` runs direct `susieR::susie_rss`,
+  `coloc::runsusie`, and `coloc::coloc.susie` with `R_mismatch` set to `none`
+  or `eb`.
+- `15_run_MAPK3_gwas_eb.R` reuses the verified MAPK3 eQTL fits and refits only
+  the GWAS model for the EB gate.
+- `16_aggregate_susie_next.R` through `19_run_topld_validation.sh` aggregate
+  sensitivity results and validate signed donor, 1000G, and TOP-LD structure.
+
+All sensitivity and exploratory outputs belong under isolated
+`susie_next_no23andMe_*`, `results_eb`, or `aggregate_eb_*` directories. Do not
+use full-23andMe inputs, old coloc caches, or rerun `coloc.abf` in this workflow.
+
 ## Summaries
 
 `03_eqtl_explore.Rmd` defaults to:

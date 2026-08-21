@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
-## prepare all approved coloc_pass targets without reading production caches.
+## prepare approved targets without reading production coloc caches.
+## optional arguments allow a reviewed exploratory manifest and isolated output.
 
 suppressPackageStartupMessages({
   library(arrow)
@@ -15,7 +16,15 @@ source(file.path(repo_root, "code", "11_eQTL_coloc", "utils.R"))
 data.table::setDTthreads(2L)
 
 base_dir <- file.path(repo_root, "processed-data", "11_eQTL_coloc", "seurat")
-out_dir <- file.path(base_dir, "coloc", "susie_targeted_no23andMe", "all_targets_20260819")
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) > 2L) {
+  stop("usage: 08_prepare_targeted_susie_all.R [TARGET_MANIFEST.tsv OUT_DIR]")
+}
+if (length(args) == 1L) stop("TARGET_MANIFEST and OUT_DIR must be supplied together")
+exploratory <- length(args) == 2L
+out_dir <- if (exploratory) args[[2L]] else file.path(
+  base_dir, "coloc", "susie_targeted_no23andMe", "all_targets_20260819"
+)
 nominal_dir <- file.path(out_dir, "inputs", "nominal")
 gwas_dir <- file.path(out_dir, "inputs", "gwas")
 ref_dir <- file.path(out_dir, "inputs", "reference")
@@ -23,16 +32,28 @@ dir.create(nominal_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(gwas_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(ref_dir, recursive = TRUE, showWarnings = FALSE)
 
-final_xlsx <- file.path(base_dir, "final", "coloc_results.xlsx")
-targets <- as.data.table(read.xlsx(final_xlsx, sheet = "coloc_pass"))
-if (nrow(targets) != 100L) stop("Expected exactly 100 coloc_pass rows")
-targets[, target_id := sprintf("target_%03d", .I)]
-targets[, dataset_id := unname(SEURAT_CONTEXT_TO_DATASET_ID[context])]
-if (anyNA(targets$dataset_id)) stop("Unmapped final-table context")
-targets[, chr := sub(":.*$", "", lead_snp)]
+if (exploratory) {
+  manifest_file <- normalizePath(args[[1L]], mustWork = TRUE)
+  targets <- fread(manifest_file)
+  required <- c("target_id", "disorder", "context", "dataset_id", "gene_id",
+                "gene_name", "chr", "region_start", "region_end")
+  if (!all(required %in% names(targets))) stop("Exploratory manifest is incomplete")
+  if (anyDuplicated(targets$target_id)) stop("Exploratory target IDs are not unique")
+  setnames(targets, c("region_start", "region_end"),
+           c("declared_region_start", "declared_region_end"))
+  targets[, mapk3_pilot_complete := FALSE]
+} else {
+  final_xlsx <- file.path(base_dir, "final", "coloc_results.xlsx")
+  targets <- as.data.table(read.xlsx(final_xlsx, sheet = "coloc_pass"))
+  if (nrow(targets) != 100L) stop("Expected exactly 100 coloc_pass rows")
+  targets[, target_id := sprintf("target_%03d", .I)]
+  targets[, dataset_id := unname(SEURAT_CONTEXT_TO_DATASET_ID[context])]
+  if (anyNA(targets$dataset_id)) stop("Unmapped final-table context")
+  targets[, chr := sub(":.*$", "", lead_snp)]
+  targets[, mapk3_pilot_complete := gene_id == "ENSG00000102882"]
+}
 targets[, chr_num := as.integer(sub("^chr", "", chr))]
 if (anyNA(targets$chr_num)) stop("Cannot parse target chromosome")
-targets[, mapk3_pilot_complete := gene_id == "ENSG00000102882"]
 
 ## scan each required parquet once and export only target genes.
 gene_context <- unique(targets[, .(
@@ -137,6 +158,10 @@ targets <- merge(
 )
 setorder(targets, target_id)
 if (anyNA(targets$nominal_file)) stop("Incomplete target-to-nominal mapping")
+if (exploratory && any(
+  targets$declared_region_start != targets$region_start |
+  targets$declared_region_end != targets$region_end
+)) stop("Reviewed exploratory bounds differ from dense nominal bounds")
 
 ## query each approved GWAS BCF once at all target positions, without p filtering.
 query_gwas <- function(disorder) {

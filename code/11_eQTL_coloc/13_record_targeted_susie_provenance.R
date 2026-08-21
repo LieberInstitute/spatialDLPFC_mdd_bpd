@@ -77,7 +77,7 @@ sources <- data.table(
     resource = c(
         "official_1000G_30x_collection", "UW_SeqArray_catalog", "fresh_GDS_object",
         "susieR_RSS", "susieR_RSS_diagnostics", "susieR_LD_mismatch",
-        "coloc_SuSiE", "tensorQTL_source"
+        "coloc_SuSiE", "tensorQTL_source", "TOP-LD_publication", "TOP-LD_API_client"
     ),
     url = c(
         "https://internationalgenome.org/data-portal/data-collections/1000genomes_30x/",
@@ -88,7 +88,9 @@ sources <- data.table(
         "https://stephenslab.github.io/susieR/articles/susierss_diagnostic.html",
         "https://stephenslab.github.io/susieR/articles/rss_mismatch.html",
         "https://chr1swallace.github.io/coloc/articles/a06_SuSiE.html",
-        "https://github.com/broadinstitute/tensorqtl/blob/master/tensorqtl/core.py"
+        "https://github.com/broadinstitute/tensorqtl/blob/master/tensorqtl/core.py",
+        "https://doi.org/10.1016/j.ajhg.2022.08.006",
+        "https://github.com/linnabrown/topld_api"
     )
 )
 fwrite(sources, file.path(audit_dir, "source_documentation.tsv"), sep = "\t")
