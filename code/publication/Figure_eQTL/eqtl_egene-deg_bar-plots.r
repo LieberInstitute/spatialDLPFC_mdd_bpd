@@ -44,7 +44,7 @@ p2 <- ggplot(filter(df1, set!="SNP-gene pairs"), aes(x=context, y=n_y, fill=set)
 
 ggsave(file="plots/publication/Figure_eQTL/snp-gene-pairs_egenes_bar-plots.pdf",
        grid.arrange(p1, p2, layout_matrix=rbind(c(1,1,2,2,2))),
-       width=4, height=2)
+       width=4, height=1.5)
 
 
 
