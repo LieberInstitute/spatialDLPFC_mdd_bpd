@@ -981,15 +981,15 @@ message("Wrote examples: ", examples_file)
 ```{r mapk3-all-clusters-fixed-axis, fig.width=14, fig.height=10}
 MAPK3_GENE_ID <- "ENSG00000102882"
 MAPK3_GENE_NAME <- "MAPK3"
-MAPK3_VARIANT_ID <- "chr16:30123335:T:C"
+MAPK3_VARIANT_ID <- "chr16:30130664:T:C"
 mapk3_contexts <- c("Micro.Vasc", "Astro", "L2.3", "L4", "Inhb", "L5", "L6", "Oligo")
 mapk3_dataset_ids <- unname(SEURAT_CONTEXT_TO_DATASET_ID[mapk3_contexts])
 mapk3_plot_width <- publication_pdf_width * 4
 mapk3_plot_height <- publication_pdf_height * 2
 mapk3_size_scale <- 1.35
-mapk3_table_file <- file.path(tables_dir, "MAPK3_chr16_30123335_all_clusters.csv")
-mapk3_pdf_file <- file.path(plots_dir, "MAPK3_chr16_30123335_all_clusters.pdf")
-mapk3_png_file <- file.path(plots_dir, "MAPK3_chr16_30123335_all_clusters.png")
+mapk3_table_file <- file.path(tables_dir, "MAPK3_chr16_30130664_all_clusters.csv")
+mapk3_pdf_file <- file.path(plots_dir, "MAPK3_chr16_30130664_all_clusters.pdf")
+mapk3_png_file <- file.path(plots_dir, "MAPK3_chr16_30130664_all_clusters.png")
 
 read_mapk3_nominal_row <- function(dataset_id) {
   parquet_file <- file.path(tqtl_out_dir, paste0(dataset_id, ".gene.cis_qtl_pairs.chr16.parquet"))
