@@ -178,8 +178,9 @@ the enumerated `cis_independent` worksheet, the eQTL summaries and exact GWAS
 overlap lists, and the final coloc lead/eQTL-membership flag. The worksheet
 retains signal IDs and signal classes so the 15,677 variant-gene memberships
 cannot be mistaken for 15,677 independent
-signals. `03b_eQTL_boxplots.Rmd` also selects future significant examples from
-the recovered table. Existing plots were not regenerated.
+signals. `03b_eQTL_boxplots.Rmd` now renders only maintained manuscript plots;
+the MAPK3 plot uses the recovered coloc member `chr16:30130664:T:C`
+(`rs55732507`) rather than selecting exploratory DEG-supported examples.
 
 The coloc ABF calculation itself already uses the full nominal parquet data and
 does not need to be rerun because of this recovery.

@@ -9,6 +9,13 @@ region. The publication plots show the eQTL association panel only, color
 neighboring variants by 1000 Genomes European-reference LD with the requested
 variant, highlight the requested variant in purple, and omit the gene track.
 
+Here, `r2` is the squared Pearson correlation between each variant's allele-count
+genotypes and the highlighted variant's genotypes in the prefiltered 1000 Genomes
+high-coverage European unrelated reference subset (n = 503). Point color shows
+this binned reference-panel LD `r2`; it is not PP4 and is not a correlation
+between the GWAS and eQTL association signals. PP4 is the separate locus-level
+coloc posterior shown in the plot subtitle.
+
 Reference: <https://cran.r-project.org/web/packages/coloc/vignettes/a02_data.html>
 
 ```{r setup}
@@ -92,6 +99,8 @@ reference_r2 <- function(variant_ids, index_variant_id, chr) {
   genotype <- as.matrix(keep[, ..sample_cols])
   storage.mode(genotype) <- "numeric"
   index_genotype <- genotype[match(index_variant_id, keep$variant_id), ]
+
+  ## estimate LD r2 as squared allele-count genotype correlation with the index.
   r <- as.numeric(stats::cor(t(genotype), index_genotype, use = "pairwise.complete.obs"))
   data.table(
     variant_id = keep$variant_id,
@@ -218,6 +227,7 @@ load_coloc_target <- function(gene, disorder, dataset_id = NULL,
       p1 = p1, p2 = p2, p12 = p12
     )
   ))
+  ## retain SNP.PP.H4 for audit; it does not determine the point colors.
   plot_data[fit$results, SNP.PP.H4 := i.SNP.PP.H4, on = .(variant_id = snp)]
   plot_data[, `:=`(
     neglog10_eqtl = -log10(pval_nominal),
@@ -340,6 +350,7 @@ plot_coloc_locus <- function(x, highlight = NULL,
 
   p <- ggplot(long, aes(x = position / 1e6, y = value))
   if (color_by == "r2") {
+    ## fill shows binned LD r2 with the highlighted variant, not coloc PP4.
     p <- p +
       geom_point(
         data = long[highlighted == FALSE],

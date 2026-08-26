@@ -22,18 +22,14 @@ tqtl_out_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tqtl_out")
 tables_dir <- here("processed-data", "11_eQTL_coloc", "seurat", "tables")
 plots_dir <- here("plots", "11_eQTL_coloc", "boxplots")
 plink2_prefix <- here("processed-data", "00_genotypes", "plink2", "merged_maf05")
-full_deg_pdf_file <- file.path(plots_dir, "eqtl_boxplot_degs_broad_union.pdf")
 
 context_order <- names(SEURAT_CONTEXT_TO_DATASET_ID)
-disorders <- c("BD", "MDD", "SCZD")
 publication_pdf_width <- 3.5
 publication_pdf_height <- 5
+jitter_seed <- 20260824L
 dx_palette <- c(NTC = "#7F7F7F", MDD = "#FB8861", BD = "#9260B2")
 sex_shape_values <- c(Male = 16, Female = 18)
 sex_point_size_values <- c(Male = 2, Female = 2.3)
-
-## change to TRUE to run the full DEG boxplot PDF generation
-RUN_FULL_DEG_BOXPLOT_PDF <- FALSE
 
 dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
@@ -297,15 +293,6 @@ load_plot_context <- function(dataset_id, gene_ids = NULL) {
 ```
 
 ```{r genotype-and-gwas-cache}
-gwas_matched_files <- setNames(
-  file.path(
-    here("processed-data", "00_genotypes"),
-    sprintf("GWAS-%s_flt_p1e-6_SI0.8_merged_maf05_tqtl-matched.tab.gz", disorders)
-  ),
-  disorders
-)
-assert_files(unname(gwas_matched_files))
-
 pvar <- read_pvar(plink2_prefix)
 variant_info_cache_file <- genotype_variant_info_cache_file(plink2_prefix)
 variant_info <- load_genotype_variant_info(
@@ -378,8 +365,13 @@ load_pgen_dosage <- function(variant_ids) {
 
 read_gwas_effect_lut <- function(disorder) {
   disorder <- gwas_check_disorder(disorder)
-  dt <- fread(gwas_matched_files[[disorder]], select = c("variant_id", "A1", "A2", "beta", "p"))
-  assert_cols(dt, c("variant_id", "A1", "A2", "beta", "p"), basename(gwas_matched_files[[disorder]]))
+  gwas_file <- file.path(
+    here("processed-data", "00_genotypes"),
+    sprintf("GWAS-%s_flt_p1e-6_SI0.8_merged_maf05_tqtl-matched.tab.gz", disorder)
+  )
+  assert_files(gwas_file)
+  dt <- fread(gwas_file, select = c("variant_id", "A1", "A2", "beta", "p"))
+  assert_cols(dt, c("variant_id", "A1", "A2", "beta", "p"), basename(gwas_file))
   dt[, disorder := disorder]
   setkey(dt, variant_id)
   dt[]
@@ -678,12 +670,14 @@ plot_eQTL_boxplots <- function(plot_dataset_id, eqtl_pairs, axis_mode = c("ref",
   point_layer <- if (isTRUE(shape_by_sex)) {
     geom_jitter(
       aes(color = DX, shape = Sex, size = Sex),
-      width = jitter_width, height = 0, alpha = jitter_alpha
+      position = position_jitter(width = jitter_width, height = 0, seed = jitter_seed),
+      alpha = jitter_alpha
     )
   } else {
     geom_jitter(
       aes(color = DX),
-      width = jitter_width, height = 0, size = 2, alpha = jitter_alpha
+      position = position_jitter(width = jitter_width, height = 0, seed = jitter_seed),
+      size = 2, alpha = jitter_alpha
     )
   }
 
@@ -809,187 +803,18 @@ if (!is.na(surf1_page_count)) stopifnot(surf1_page_count == nrow(surf1_plot_pair
 saved_surf1_pdf
 ```
 
-```{r load-manifest-and-select-examples}
-manifest <- load_eqtl_manifest(
-  tqtl_in_dir = tqtl_in_dir,
-  context_order = context_order,
-  split_order = "all"
-)
-
-sig_file <- file.path(tables_dir, "map_significant_pairs.csv.gz")
-if (!file.exists(sig_file)) {
-  sig_file <- file.path(tables_dir, "map_significant_pairs_tie_recovered.csv.gz")
-}
-if (!file.exists(sig_file)) {
-  sig_file <- file.path(tables_dir, "map_significant_unified.csv.gz")
-}
-if (!file.exists(sig_file)) {
-  sig_file <- file.path(tables_dir, "map_independent_significant_tie_recovered.csv.gz")
-}
-if (!file.exists(sig_file)) {
-  sig_file <- file.path(tables_dir, "map_independent_significant.csv.gz")
-}
-nominal_file <- file.path(tables_dir, "nominal_BH05.csv.gz")
-assert_files(c(sig_file, nominal_file))
-
-sig <- fread(sig_file)
-nominal <- fread(nominal_file)
-assert_cols(sig, c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "DEG", "MDD_gwasVar_strict", "MDD_gwas_strict", "pval_nominal"), basename(sig_file))
-assert_cols(nominal, c("dataset_id", "context", "split", "gene_id", "gene_name", "phenotype_id", "variant_id", "DEG", "MDD_gwasVar_strict", "MDD_gwas_strict", "fdr", "pval_nominal"), basename(nominal_file))
-
-degs <- load_DEGs(repo_root = repo_root, mode = "standard", verbose = FALSE)
-mdd_deg_ids <- unique(as.data.table(degs$disorder_related$global$MDD)$gene_id)
-bd_deg_ids <- unique(as.data.table(degs$disorder_related$global$BD)$gene_id)
-
-## use disorder-related DEG lists for disorder-targeted examples.
-sig[, `:=`(
-  MDD_DEG = as.integer(gene_id %in% mdd_deg_ids),
-  BD_DEG = as.integer(gene_id %in% bd_deg_ids)
-)]
-nominal[, `:=`(
-  MDD_DEG = as.integer(gene_id %in% mdd_deg_ids),
-  BD_DEG = as.integer(gene_id %in% bd_deg_ids)
-)]
-
-sig_candidates <- sig[split == "all" & MDD_DEG == 1L & MDD_gwas_strict == 1L]
-sig_deg_basis <- "MDD_DEG"
-if (nrow(sig_candidates) == 0L) {
-  sig_candidates <- sig[split == "all" & DEG == 1L & MDD_gwas_strict == 1L]
-  sig_deg_basis <- "broad_DEG"
-}
-if (nrow(sig_candidates) == 0L) {
-  sig_candidates <- sig[split == "all" & MDD_DEG == 1L]
-  sig_deg_basis <- "MDD_DEG_no_MDD_gwas"
-}
-if (nrow(sig_candidates) == 0L) {
-  sig_candidates <- sig[split == "all" & DEG == 1L]
-  sig_deg_basis <- "broad_DEG_no_MDD_gwas"
-}
-if (nrow(sig_candidates) == 0L) {
-  sig_candidates <- sig[split == "all"]
-  sig_deg_basis <- "none"
-}
-if (nrow(sig_candidates) == 0L) stop("No significant examples found.")
-## prioritise variant-level GWAS hits, then curated gene-list hits, then the rest.
-sig_candidates[, example_priority := fifelse(MDD_gwasVar_strict == 1L, 1L, fifelse(MDD_gwasGene == 1L, 2L, 3L))]
-setorder(sig_candidates, example_priority, pval_nominal)
-sig_examples <- head(sig_candidates[, .SD[1], by = gene_id], 3L)
-sig_examples[, example_type := "mdd_significant"]
-sig_examples[, example_deg_basis := sig_deg_basis]
-
-sig_keys <- unique(sig[split == "all", .(dataset_id, gene_id, variant_id)])
-nominal_l23 <- nominal[split == "all" & dataset_id == "l2-3"]
-nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
-nominal_only <- nominal_only[MDD_DEG == 1L & MDD_gwas_strict == 1L]
-nominal_deg_basis <- "MDD_DEG"
-if (nrow(nominal_only) == 0L) {
-  nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
-  nominal_only <- nominal_only[DEG == 1L & MDD_gwas_strict == 1L]
-  nominal_deg_basis <- "broad_DEG"
-}
-if (nrow(nominal_only) == 0L) {
-  nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
-  nominal_only <- nominal_only[MDD_DEG == 1L]
-  nominal_deg_basis <- "MDD_DEG_no_MDD_gwas"
-}
-if (nrow(nominal_only) == 0L) {
-  nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
-  nominal_only <- nominal_only[DEG == 1L]
-  nominal_deg_basis <- "broad_DEG_no_MDD_gwas"
-}
-if (nrow(nominal_only) == 0L) {
-  nominal_only <- nominal_l23[!sig_keys, on = .(dataset_id, gene_id, variant_id)]
-  nominal_deg_basis <- "none"
-}
-if (nrow(nominal_only) == 0L) stop("No L2.3 nominal-only examples found.")
-setorder(nominal_only, fdr, pval_nominal)
-nominal_examples <- head(nominal_only[, .SD[1], by = gene_id], 2L)
-nominal_examples[, example_type := "l2-3_nominal_only"]
-nominal_examples[, example_deg_basis := nominal_deg_basis]
-
-example_cols <- unique(c(
-  "example_type", "example_deg_basis", "dataset_id", "context", "split", "gene_id", "gene_name",
-  "phenotype_id", "variant_id", "DEG", "MDD_DEG", "BD_DEG", "MDD_gwasVar_strict", "MDD_gwas_strict",
-  "MDD_gwasGene", "pval_nominal", "fdr",
-  "pval_perm", "qval", "qval_parent", "slope", "slope_se"
-))
-examples <- rbindlist(
-  list(sig_examples[, intersect(example_cols, names(sig_examples)), with = FALSE],
-       nominal_examples[, intersect(example_cols, names(nominal_examples)), with = FALSE]),
-  use.names = TRUE,
-  fill = TRUE
-)
-setcolorder(examples, c(intersect(example_cols, names(examples)), setdiff(names(examples), example_cols)))
-
-## attach dbSNP IDs from the genotype-wide variant cache.
-examples[, `:=`(
-  rsid = rsid_lut$rsid[match(variant_id, rsid_lut$variant_id)],
-  rsid_source = rsid_lut$rsid_source[match(variant_id, rsid_lut$variant_id)]
-)]
-examples[is.na(rsid), rsid := ""]
-examples[is.na(rsid_source), rsid_source := ""]
-missing_example_rsids <- examples[!nzchar(rsid), unique(variant_id)]
-if (length(missing_example_rsids) > 0L) {
-  stop("Missing rsIDs for example variants: ", paste(missing_example_rsids, collapse = ", "))
-}
-
-expected_example_rsids <- c(
-  "chr9:133345514:A:G" = "rs2129965621",
-  "chr8:27240919:C:T" = "rs1562330",
-  "chr4:1209477:T:C" = "rs1250105",
-  "chr2:232708988:G:C" = "rs35395584",
-  "chr1:9292645:C:G" = "rs114709597"
-)
-observed_example_rsids <- setNames(examples$rsid, examples$variant_id)
-expected_ids <- names(expected_example_rsids)
-bad_example_rsids <- expected_ids[
-  is.na(observed_example_rsids[expected_ids]) |
-    observed_example_rsids[expected_ids] != expected_example_rsids
-]
-if (length(bad_example_rsids) > 0L) {
-  stop("Unexpected genotype VCF rsIDs for examples: ", paste(bad_example_rsids, collapse = ", "))
-}
-
-examples_file <- file.path(tables_dir, "eqtl_boxplot_examples.csv")
-fwrite(examples, examples_file)
-examples
-```
-
-```{r validate-examples}
-if (nrow(examples) == 0L) stop("No examples selected.")
-if (!file.exists(variant_info_cache_file) || nrow(fread(variant_info_cache_file, nrows = 1)) == 0L) {
-  stop("Genotype variant cache was not created or is empty.")
-}
-
-missing_pvar <- setdiff(examples$variant_id, pvar$ID)
-if (length(missing_pvar) > 0L) {
-  stop("Example variants missing from pvar: ", paste(missing_pvar, collapse = ", "))
-}
-
-for (ds in unique(examples$dataset_id)) {
-  expr_file <- file.path(tqtl_in_dir, paste0(ds, ".gene.expr.bed.gz"))
-  dt <- fread(expr_file, select = "ID")
-  missing_genes <- setdiff(examples[dataset_id == ds, phenotype_id], dt$ID)
-  if (length(missing_genes) > 0L) {
-    stop("Example genes missing from expression BED for ", ds, ": ", paste(missing_genes, collapse = ", "))
-  }
-}
-
-message("Wrote examples: ", examples_file)
-```
-
 ```{r mapk3-all-clusters-fixed-axis, fig.width=14, fig.height=10}
 MAPK3_GENE_ID <- "ENSG00000102882"
 MAPK3_GENE_NAME <- "MAPK3"
-MAPK3_VARIANT_ID <- "chr16:30123335:T:C"
+MAPK3_VARIANT_ID <- "chr16:30130664:T:C"
 mapk3_contexts <- c("Micro.Vasc", "Astro", "L2.3", "L4", "Inhb", "L5", "L6", "Oligo")
 mapk3_dataset_ids <- unname(SEURAT_CONTEXT_TO_DATASET_ID[mapk3_contexts])
 mapk3_plot_width <- publication_pdf_width * 4
 mapk3_plot_height <- publication_pdf_height * 2
 mapk3_size_scale <- 1.35
-mapk3_table_file <- file.path(tables_dir, "MAPK3_chr16_30123335_all_clusters.csv")
-mapk3_pdf_file <- file.path(plots_dir, "MAPK3_chr16_30123335_all_clusters.pdf")
-mapk3_png_file <- file.path(plots_dir, "MAPK3_chr16_30123335_all_clusters.png")
+mapk3_table_file <- file.path(tables_dir, "MAPK3_chr16_30130664_all_clusters.csv")
+mapk3_pdf_file <- file.path(plots_dir, "MAPK3_chr16_30130664_all_clusters.pdf")
+mapk3_png_file <- file.path(plots_dir, "MAPK3_chr16_30130664_all_clusters.png")
 
 read_mapk3_nominal_row <- function(dataset_id) {
   parquet_file <- file.path(tqtl_out_dir, paste0(dataset_id, ".gene.cis_qtl_pairs.chr16.parquet"))
@@ -1024,7 +849,14 @@ mapk3_nominal[, `:=`(
 mapk3_nominal[is.na(rsid), rsid := ""]
 mapk3_nominal[is.na(rsid_source), rsid_source := ""]
 
-mapk3_bh05 <- nominal[
+nominal_fdr_file <- file.path(tables_dir, "nominal_BH05.csv.gz")
+assert_files(nominal_fdr_file)
+mapk3_bh05 <- fread(
+  nominal_fdr_file,
+  select = c("split", "dataset_id", "gene_id", "variant_id", "fdr")
+)
+assert_cols(mapk3_bh05, c("split", "dataset_id", "gene_id", "variant_id", "fdr"), basename(nominal_fdr_file))
+mapk3_bh05 <- mapk3_bh05[
   split == "all" & gene_id == MAPK3_GENE_ID & variant_id == MAPK3_VARIANT_ID,
   .(dataset_id, fdr)
 ]
@@ -1103,7 +935,11 @@ mapk3_plot <- ggplot(mapk3_plot_dt, aes(x = genotype, y = expression)) +
     outlier.shape = NA, alpha = 0.5, linewidth = 0.5 * mapk3_size_scale,
     color = "gray70", fill = "gray90"
   ) +
-  geom_jitter(aes(color = DX), width = 0.2, height = 0, size = 2 * mapk3_size_scale, alpha = 0.8) +
+  geom_jitter(
+    aes(color = DX),
+    position = position_jitter(width = 0.2, height = 0, seed = jitter_seed),
+    size = 2 * mapk3_size_scale, alpha = 0.8
+  ) +
   geom_text(
     data = mapk3_annot,
     aes(x = Inf, y = -Inf, label = label),
@@ -1140,217 +976,4 @@ stopifnot(
   uniqueN(mapk3_plot_dt$context) == length(mapk3_contexts)
 )
 list(table = mapk3_table_file, pdf = mapk3_pdf_file, png = mapk3_png_file)
-```
-
-```{r prepare-deg-plot-pairs}
-sig_deg_pairs <- copy(sig[split == "all" & DEG == 1L])
-if (nrow(sig_deg_pairs) == 0L) stop("No significant broad DEG eQTL pairs found.")
-
-sig_deg_pairs[, context_order_rank := match(context, context_order)]
-setorder(sig_deg_pairs, context_order_rank, gene_name, gene_id, pval_nominal, variant_id)
-sig_deg_pairs <- sig_deg_pairs[, .SD[1], by = .(dataset_id, gene_id, variant_id)]
-sig_deg_pairs[, context_order_rank := match(context, context_order)]
-setorder(sig_deg_pairs, context_order_rank, gene_name, gene_id, pval_nominal, variant_id)
-
-sig_plot_degs <- copy(sig_deg_pairs)
-sig_plot_degs[, `:=`(
-  example_type = "broad_deg_significant",
-  example_deg_basis = "broad_DEG"
-)]
-setcolorder(sig_plot_degs, c(
-  "example_type", "example_deg_basis",
-  setdiff(names(sig_plot_degs), c("example_type", "example_deg_basis"))
-))
-
-## attach dbSNP IDs from the genotype-wide variant cache.
-sig_plot_degs[, `:=`(
-  rsid = rsid_lut$rsid[match(variant_id, rsid_lut$variant_id)],
-  rsid_source = rsid_lut$rsid_source[match(variant_id, rsid_lut$variant_id)]
-)]
-sig_plot_degs[is.na(rsid), rsid := ""]
-sig_plot_degs[is.na(rsid_source), rsid_source := ""]
-
-core_plot_cols <- c("dataset_id", "gene_id", "phenotype_id", "variant_id")
-for (col in core_plot_cols) {
-  bad <- is.na(sig_plot_degs[[col]]) | !nzchar(as.character(sig_plot_degs[[col]]))
-  if (any(bad)) stop("Missing ", col, " in sig_plot_degs.")
-}
-
-expected_sig_plot_degs_rows <- sig_deg_pairs[, uniqueN(paste(dataset_id, gene_id, variant_id, sep = "\r"))]
-if (nrow(sig_plot_degs) != expected_sig_plot_degs_rows) {
-  stop("Unexpected sig_plot_degs row count: ", nrow(sig_plot_degs), " != ", expected_sig_plot_degs_rows)
-}
-if (nrow(sig_plot_degs) != 263L) {
-  stop("Current sig_plot_degs row count is not 263: ", nrow(sig_plot_degs))
-}
-if ("disorder" %in% names(sig_plot_degs)) {
-  stop("sig_plot_degs should not contain a disorder column.")
-}
-
-missing_deg_pvar <- setdiff(sig_plot_degs$variant_id, pvar$ID)
-if (length(missing_deg_pvar) > 0L) {
-  stop("DEG plot variants missing from pvar: ", paste(missing_deg_pvar, collapse = ", "))
-}
-
-for (ds in unique(sig_plot_degs$dataset_id)) {
-  expr_file <- file.path(tqtl_in_dir, paste0(ds, ".gene.expr.bed.gz"))
-  dt <- fread(expr_file, select = "ID")
-  missing_genes <- setdiff(sig_plot_degs[dataset_id == ds, phenotype_id], dt$ID)
-  if (length(missing_genes) > 0L) {
-    stop("DEG plot genes missing from expression BED for ", ds, ": ", paste(missing_genes, collapse = ", "))
-  }
-}
-
-sig_plot_deg_counts <- sig_plot_degs[, .(
-  n_deg_egenes = uniqueN(gene_id),
-  n_eqtl_pairs = uniqueN(paste(gene_id, variant_id, sep = "\r")),
-  n_variants = uniqueN(variant_id),
-  n_pairs_with_rsid = uniqueN(paste(gene_id, variant_id, sep = "\r")[nzchar(rsid)])
-), by = .(context, dataset_id)]
-sig_plot_deg_counts[, context_order_rank := match(context, context_order)]
-setorder(sig_plot_deg_counts, context_order_rank)
-sig_plot_deg_counts[, context_order_rank := NULL]
-
-sig_plot_degs_file <- file.path(tables_dir, "eqtl_boxplot_deg_pairs.csv")
-fwrite(sig_plot_degs, sig_plot_degs_file)
-message("Wrote DEG plot pair metadata: ", sig_plot_degs_file)
-sig_plot_deg_counts
-```
-
-```{r validate-deg-genotype-axis, include=FALSE}
-deg_axis_dry_run <- validate_ref_axis_dry_run(sig_plot_degs)
-stopifnot(nrow(deg_axis_dry_run) == uniqueN(sig_plot_degs$variant_id))
-```
-
-```{r plot-significant-examples, fig.width=3.5, fig.height=5}
-sig_plot_examples <- examples[example_type == "mdd_significant"]
-saved_sig_pdfs <- character()
-for (ds in unique(sig_plot_examples$dataset_id)) {
-  pairs <- sig_plot_examples[dataset_id == ds]
-  pobj <- plot_eQTL_boxplots(ds, pairs, axis_mode = "ref", plot_style = "publication")
-  print(pobj$plot)
-  saved_sig_pdfs <- c(
-    saved_sig_pdfs,
-    save_eQTL_boxplots(
-      pairs,
-      filter_dataset_id = ds,
-      out_file = file.path(
-        plots_dir,
-        paste0("eqtl_boxplot_significant_", safe_plot_slug(ds), ".pdf")
-      ),
-      axis_mode = "ref",
-      plot_style = "publication"
-    )
-  )
-}
-saved_sig_pdfs
-```
-
-```{r plot-nominal-only-examples, fig.width=3.5, fig.height=5}
-nominal_plot_examples <- examples[example_type == "l2-3_nominal_only"]
-pobj_nominal <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "ref", plot_style = "publication")
-print(pobj_nominal$plot)
-saved_nominal_pdf <- save_eQTL_boxplots(
-  nominal_plot_examples,
-  filter_dataset_id = "l2-3",
-  out_file = file.path(plots_dir, "eqtl_boxplot_nominal_l2-3.pdf"),
-  axis_mode = "ref",
-  plot_style = "publication"
-)
-saved_nominal_pdf
-```
-
-```{r check-example-pdf-pages, include=FALSE}
-expected_example_pages <- c(
-  "eqtl_boxplot_significant_l2-3.pdf" = 2L,
-  "eqtl_boxplot_significant_oligo.pdf" = 1L,
-  "eqtl_boxplot_nominal_l2-3.pdf" = 2L
-)
-for (pdf_name in names(expected_example_pages)) {
-  pdf_file <- file.path(plots_dir, pdf_name)
-  stopifnot(file.exists(pdf_file), file.info(pdf_file)$size > 0L)
-  n_pages <- pdf_page_count(pdf_file)
-  if (!is.na(n_pages)) stopifnot(n_pages == expected_example_pages[[pdf_name]])
-}
-```
-
-```{r test-deg-pdf-save, include=FALSE}
-test_deg_pdf <- file.path(plots_dir, "eqtl_boxplot_degs_broad_union_uvasc.pdf")
-saved_test_deg_pdf <- save_eQTL_boxplots(
-  sig_plot_degs,
-  filter_dataset_id = "uvasc",
-  out_file = test_deg_pdf,
-  axis_mode = "ref"
-)
-stopifnot(file.exists(saved_test_deg_pdf), file.info(saved_test_deg_pdf)$size > 0L)
-
-test_deg_pages <- pdf_page_count(saved_test_deg_pdf)
-if (!is.na(test_deg_pages)) stopifnot(test_deg_pages == 5L)
-if (nzchar(Sys.which("gs"))) {
-  preview_png <- tempfile("eqtl_boxplot_degs_broad_union_uvasc_", fileext = ".png")
-  gs_status <- system2(
-    "gs",
-    c(
-      "-q", "-dSAFER", "-dBATCH", "-dNOPAUSE", "-sDEVICE=png16m",
-      "-dFirstPage=1", "-dLastPage=1", "-r144",
-      paste0("-sOutputFile=", preview_png),
-      saved_test_deg_pdf
-    )
-  )
-  stopifnot(gs_status == 0L, file.exists(preview_png), file.info(preview_png)$size > 0L)
-  unlink(preview_png)
-}
-```
-
-```{r full-deg-pdf-save, eval=FALSE}
-## set RUN_FULL_DEG_BOXPLOT_PDF <- TRUE and run this chunk explicitly to write all 263 pages.
-if (isTRUE(RUN_FULL_DEG_BOXPLOT_PDF)) {
-  saved_full_deg_pdf <- save_eQTL_boxplots(
-    sig_plot_degs,
-    filter_dataset_id = NULL,
-    out_file = full_deg_pdf_file,
-    axis_mode = "ref"
-  )
-  saved_full_deg_pdf
-}
-```
-
-```{r validate-full-deg-pdf-axis, include=FALSE}
-if (file.exists(full_deg_pdf_file) && nzchar(Sys.which("mutool"))) {
-  validate_pdf_ref_axis_labels(
-    full_deg_pdf_file,
-    sig_plot_degs,
-    pages = c(1L, 2L, 3L, 263L)
-  )
-}
-```
-
-```{r check-gwas-effect-axis, include=FALSE}
-## exercise the optional GWAS effect-allele orientation without printing another plot.
-gwas_axis_check <- plot_eQTL_boxplots(
-  "l2-3",
-  nominal_plot_examples[1],
-  axis_mode = "gwas_effect",
-  gwas_disorder = "MDD"
-)
-stopifnot(nrow(gwas_axis_check$data) > 0L)
-```
-
-```{r gwas-effect-axis-examples, eval=FALSE}
-## order the x axis by MDD GWAS A1 effect allele instead of genome REF/ALT.
-pobj_mdd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "MDD")
-print(pobj_mdd$plot)
-
-## switch the GWAS effect-allele context to BD or SCZD.
-pobj_bd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "BD")
-pobj_sczd <- plot_eQTL_boxplots("l2-3", nominal_plot_examples, axis_mode = "gwas_effect", gwas_disorder = "SCZD")
-
-## plot a gene-variant pair in another Seurat cluster.
-astro_pair <- examples[dataset_id == "astro"][1]
-pobj_astro <- plot_eQTL_boxplots("astro", astro_pair, axis_mode = "ref")
-print(pobj_astro$plot)
-
-## optional raster/vector saves after inspection.
-## ggsave(file.path(tables_dir, "example_eqtl_boxplot.png"), pobj_mdd$plot, width = 8, height = 5.5, dpi = 300)
-## ggsave(file.path(tables_dir, "example_eqtl_boxplot.pdf"), pobj_mdd$plot, width = 8, height = 5.5)
 ```
