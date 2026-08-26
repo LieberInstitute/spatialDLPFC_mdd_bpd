@@ -11,7 +11,7 @@ refined.modules = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_a
 source("code/publication/plotting_utils.r")
 de.df2 = filter(de.df, group!="MDD.BPD")
 
-plot.genes = c("MAPK3","DUSP4","DUSP6","ELK1","TEF","RASD1")#,
+plot.genes = c("MAPK3","DUSP4","DUSP6","ELK1","RASD1")#,
 #	"FABP3","SURF1","ATP6V0E2",
 #	"SPON2","BAIAP3")
 
