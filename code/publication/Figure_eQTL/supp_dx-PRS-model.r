@@ -7,30 +7,35 @@ set.seed(123)
 cpList <- readRDS("plots/colorPalettes.rds")
 
 # load model results
-riskList <- readRDS("processed-data/tmp_PRS_DE/glm-binomial_MDD-Bipolar-PRS_predicting-dxMDD-dxBPD_without-RIN.rda")
+#riskList <- readRDS("processed-data/tmp_PRS_DE/glm-binomial_MDD-Bipolar-PRS_predicting-dxMDD-dxBPD_without-RIN.rda")
+riskList <- readRDS("processed-data/tmp_PRS_DE/glm-binomial_BPD-PRS_predicting-dxMDD-dxBPD-dxAny.rda")
 
 # load PRS values
-cdata = read.csv("raw-data/PRS/PRS_chosen-p-cutoffs.csv")
+#cdata = read.csv("raw-data/PRS/PRS_chosen-p-cutoffs.csv")
+bd.df = prs.df = read.csv(paste0("raw-data/PRS/PRS_","Bipolar",".csv"))
+bd.df$prsBPD = scale(bd.df[,"p.cutoff.1e.07"])
+cdata = read.csv("raw-data/sample_info/DLPFC_cross-disorders_demographics_MBv.csv")
+cdata = left_join(cdata, as.data.frame(bd.df[,c("IID","prsBPD")]), by=c("brnum"="IID"))
 
-colnames(cdata)[8:10] = paste0("prs", substr(colnames(cdata)[8:10], start=0, stop=3))
-for(i in colnames(cdata)[8:10]) cdata[,i] = scale(cdata[,i])
+#colnames(cdata)[8:10] = paste0("prs", substr(colnames(cdata)[8:10], start=0, stop=3))
+#for(i in colnames(cdata)[8:10]) cdata[,i] = scale(cdata[,i])
 
 cdata$condition = factor(cdata$condition, levels=c("NTC","MDD","BPD"))
 
-# boxplots
-p1 <- ggplot(cdata, aes(x=condition, y=prsMDD))+
-  ggbeeswarm::geom_beeswarm(aes(color=condition), cex=3, size=.5)+
-  scale_color_manual(values=cpList$dx.pal, guide="none")+#scale_shape_manual(values=c("F"=16, "M"=17))+
-  geom_boxplot(outliers=F, fill="transparent")+ylim(-3,3)+
-  labs(x="diagnosis", y="PRS (z-score)", title="GWAS-MDD")+
-  theme_bw()+theme(panel.grid.minor=element_blank(), panel.grid.major.x=element_blank(), text=element_text(size=6))
+## boxplots
+#p1 <- ggplot(cdata, aes(x=condition, y=prsMDD))+
+#  ggbeeswarm::geom_beeswarm(aes(color=condition), cex=3, size=.5)+
+#  scale_color_manual(values=cpList$dx.pal, guide="none")+#scale_shape_manual(values=c("F"=16, "M"=17))+
+#  geom_boxplot(outliers=F, fill="transparent")+ylim(-3,3)+
+#  labs(x="diagnosis", y="PRS (z-score)", title="GWAS-MDD")+
+#  theme_bw()+theme(panel.grid.minor=element_blank(), panel.grid.major.x=element_blank(), text=element_text(size=6))
 
-p2 <- ggplot(cdata, aes(x=condition, y=prsBPD))+
-  ggbeeswarm::geom_beeswarm(aes(color=condition), cex=3, size=.5)+
-  scale_color_manual(values=cpList$dx.pal, guide="none")+#scale_shape_manual(values=c("F"=16, "M"=17))+
-  geom_boxplot(outliers=F, fill="transparent")+ylim(-3,3)+
-  labs(x="diagnosis", y="PRS (z-score)", title="GWAS-BPD")+
-  theme_bw()+theme(panel.grid.minor=element_blank(), panel.grid.major.x=element_blank(), text=element_text(size=6))
+#p2 <- ggplot(cdata, aes(x=condition, y=prsBPD))+
+#  ggbeeswarm::geom_beeswarm(aes(color=condition), cex=3, size=.5)+
+#  scale_color_manual(values=cpList$dx.pal, guide="none")+#scale_shape_manual(values=c("F"=16, "M"=17))+
+#  geom_boxplot(outliers=F, fill="transparent")+ylim(-3,3)+
+#  labs(x="diagnosis", y="PRS (z-score)", title="GWAS-BPD")+
+#  theme_bw()+theme(panel.grid.minor=element_blank(), panel.grid.major.x=element_blank(), text=element_text(size=6))
 
 
 # make PRS DFrame long for plotting with facets
@@ -40,8 +45,8 @@ cdata2 = bind_rows(filter(cdata, condition %in% c("NTC","MDD")) %>% mutate(predi
   mutate(predictor=factor(predictor, levels=c("dxMDD","dxBPD","dxAny"),
                           labels=c("NTC+MDD\n(n=79)","NTC+BD\n(n=80)","NTC+DX (MDD or BD)\n(n=119)")))
 
-
-plist <- lapply(names(riskList), function(x) {
+#riskList <- riskList[["p.cutoff.1e.07"]]
+plist <- lapply("p.cutoff.1e.07", function(x) {
   # extract model p value
   rlist = riskList[[x]]
   pvals = sapply(rlist, function(y) {
@@ -52,8 +57,9 @@ plist <- lapply(names(riskList), function(x) {
                     "pval"=paste("p =",pvals))
   
   # PRS
-  cdata2$plot_me = cdata2[[x]]
-  
+  #cdata2$plot_me = cdata2[[x]]
+  cdata2$plot_me = cdata2$prsBPD
+
   # fitted values
   tmp = do.call(rbind, lapply(rlist, function(y) {
     tmp = data.frame("brnum"=y$data$brnum, "condition2"=y$data$condition, "fitted"=y$fitted.values)
@@ -66,17 +72,18 @@ plist <- lapply(names(riskList), function(x) {
   df1 = left_join(cdata2, tmp)
 
   ggplot(df1, aes(x=plot_me, y=fitted))+
-    geom_point(aes(color=condition2), size=.3)+scale_color_manual(values=c(cpList$dx.pal,"DX"="black"))+
+    geom_point(aes(color=condition2), size=.5)+scale_color_manual(values=c(cpList$dx.pal,"DX"="black"))+
     geom_text(data=p.df, aes(x=-3, y=0, label=pval), hjust=0, vjust=0, size=2)+
-    geom_hline(aes(yintercept=.5), lty=2)+ylim(0,1)+xlim(-3,3)+
+    geom_hline(aes(yintercept=.5), lty=2)+ylim(0,1)+xlim(-4,4)+
     facet_wrap(vars(predictor))+
     labs(x=paste0(x, " (z-score)"), y="predicted diagnosis")+
     theme_bw()+theme(text=element_text(size=6), legend.key.size=unit(6,"pt"),
-                     panel.grid.minor=element_blank())
+                     panel.grid.minor=element_blank(), legend.position="bottom")
 })
 
-ggsave(file="plots/publication/Figure_eQTL/supp_dx-PRS-model.pdf",
-       grid.arrange(p1, p2, plist[[1]], plist[[2]], layout_matrix=rbind(c(1,3,3,3), c(2,4,4,4))),
+ggsave(file="plots/publication/Figure_eQTL/supp_dx-PRS-model_prsBPD-p1e-07.pdf",
+	plist[[1]],
+       #grid.arrange(p1, p2, plist[[1]], plist[[2]], layout_matrix=rbind(c(1,3,3,3), c(2,4,4,4))),
        width=6, height=3)
 
 
