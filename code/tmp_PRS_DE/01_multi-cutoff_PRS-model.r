@@ -23,8 +23,8 @@ prsMDD = prs_wrapper("MDD")
 saveRDS(prsMDD, "processed-data/tmp_PRS_DE/glm-binomial_MDD-PRS_predicting-dxMDD-dxBPD-dxAny.rda")
 pmtx = sapply(prsMDD, getPval)
 cat("\nprsMDD...\n")
-print(pmtx)
-apply(pmtx, MARGIN=1, FUN=p.adjust, method="BH")
+print(round(pmtx,3))
+t(round(apply(pmtx, MARGIN=1, FUN=p.adjust, method="BH"),3))
 
 # plot prsMDD
 tmp = cbind("IID"=mdd.df[,1], as.data.frame(scale(mdd.df[,2:5])))
@@ -33,9 +33,12 @@ prs.df = left_join(tmp, cdata, by=c("IID"="brnum")) %>%
          condition=factor(condition, levels=c("NTC","MDD","BPD"))) %>%
   tidyr::pivot_longer(colnames(tmp)[2:5], names_to="cutoff", values_to="PRS_scaled")
 
-p1 <- ggplot(prs.df, aes(x=condition, y=PRS_scaled, fill=condition))+
-  geom_boxplot(outlier.size=.5)+facet_grid(cols=vars(cutoff))+
-  ylim(-4,4)+scale_fill_manual(values=cpList$dx.pal, guide="none")+
+p1 <- ggplot(prs.df, aes(x=condition, y=PRS_scaled))+
+    geom_boxplot(outliers=F)+
+  ggbeeswarm::geom_quasirandom(aes(shape=sex, color=condition), size=.5)+
+  facet_grid(cols=vars(cutoff))+
+  ylim(-4,4)+scale_color_manual(values=cpList$dx.pal, guide="none")+
+  scale_shape_manual(values=c(19,1))+
   theme_minimal()+labs(x="", y="PRS (z-score)", title="GWAS-MDD")+
   theme(panel.grid.major.x=element_blank(), panel.grid.minor=element_blank(), text=element_text(size=6))
 
@@ -45,8 +48,8 @@ prsBPD = prs_wrapper("Bipolar")
 saveRDS(prsBPD, "processed-data/tmp_PRS_DE/glm-binomial_BPD-PRS_predicting-dxMDD-dxBPD-dxAny.rda")
 pmtx = sapply(prsBPD, getPval)
 cat("\nprsBPD...\n")
-print(pmtx)
-apply(pmtx, MARGIN=1, FUN=p.adjust, method="BH")
+print(round(pmtx,3))
+t(round(apply(pmtx, MARGIN=1, FUN=p.adjust, method="BH"),3))
 
 # plot prsBPD
 tmp = cbind("IID"=bd.df[,1], as.data.frame(scale(bd.df[,2:5])))
@@ -55,14 +58,17 @@ prs.df = left_join(tmp, cdata, by=c("IID"="brnum")) %>%
          condition=factor(condition, levels=c("NTC","MDD","BPD"))) %>%
   tidyr::pivot_longer(colnames(tmp)[2:5], names_to="cutoff", values_to="PRS_scaled")
 
-p2 <- ggplot(prs.df, aes(x=condition, y=PRS_scaled, fill=condition))+
-  geom_boxplot(outlier.size=.5)+facet_grid(cols=vars(cutoff))+
-  ylim(-4,4)+scale_fill_manual(values=cpList$dx.pal, guide="none")+
+p2 <- ggplot(prs.df, aes(x=condition, y=PRS_scaled))+
+  geom_boxplot(outliers=F)+
+  ggbeeswarm::geom_quasirandom(aes(shape=sex, color=condition), size=.5)+
+  facet_grid(cols=vars(cutoff))+
+  ylim(-4,4)+scale_color_manual(values=cpList$dx.pal, guide="none")+
+  scale_shape_manual(values=c(19,1))+
   theme_minimal()+labs(x="", y="PRS (z-score)", title="GWAS-BPD")+
   theme(panel.grid.major.x=element_blank(), panel.grid.minor=element_blank(), text=element_text(size=6))
 
 ggsave(file="plots/tmp_PRS_DE/top-thresholds.pdf", grid.arrange(p1, p2, ncol=1),
-	width=5, height=3)
+	width=6, height=4)
 
 ## Reproducibility information
 print("Reproducibility information:")

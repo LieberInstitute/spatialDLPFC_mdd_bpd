@@ -78,8 +78,8 @@ sigCoef <- function(modelList) {
 }
 
 getPval <- function(modelList) {
-  lapply(modelList, function(y) {
+  unlist(lapply(modelList, function(y) {
     z = coef(summary(y))
     return( z["PRS_scaled", "Pr(>|z|)"])
-  })
+  }))
 }
