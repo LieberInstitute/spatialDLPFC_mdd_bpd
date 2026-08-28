@@ -81,10 +81,10 @@ plist <- lapply("p.cutoff.1e.07", function(x) {
                      panel.grid.minor=element_blank(), legend.position="bottom")
 })
 
-ggsave(file="plots/publication/Figure_eQTL/supp_dx-PRS-model_prsBPD-p1e-07.pdf",
+ggsave(file="plots/publication/supp_PRS/dx-PRS-model_prsBPD-p1e-07.pdf",
 	plist[[1]],
        #grid.arrange(p1, p2, plist[[1]], plist[[2]], layout_matrix=rbind(c(1,3,3,3), c(2,4,4,4))),
-       width=6, height=3)
+       width=6, height=2.5)
 
 
 ## Reproducibility information

@@ -44,12 +44,12 @@ p1 <- ggplot(all.df, aes(x=OR, y=dx))+
   scale_color_manual(values=c("FALSE"="grey30", "TRUE"="red"))+
   geom_point(aes(fill=cutoff), position=position_dodge(width=.2), shape=21)+
   scale_fill_manual(values=RColorBrewer::brewer.pal(n=5, "PuBu")[2:5])+
-  facet_grid(cols=vars(disorder))+
+  facet_wrap(vars(disorder), scales="free_y")+
   geom_vline(aes(xintercept=1))+
   theme_bw()+theme(text=element_text(size=6))
 
-ggsave(file="plots/publication/Figure_eQTL/supp_dx-PRS-model_multi-threshold-results.pdf",
-       p1, height=3, width=5)
+ggsave(file="plots/publication/supp_PRS/dx-PRS-model_multi-threshold-results.pdf",
+       p1, height=5, width=3)
 
 
 ## Reproducibility information
