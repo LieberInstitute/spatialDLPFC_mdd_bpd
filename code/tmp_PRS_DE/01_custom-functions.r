@@ -83,3 +83,26 @@ getPval <- function(modelList) {
     return( z["PRS_scaled", "Pr(>|z|)"])
   }))
 }
+
+meltPvalDF <- function(modelList) {
+  pmtx = sapply(modelList, getPval)
+  padjmtx = apply(pmtx, MARGIN=1, FUN=p.adjust, method="BH")
+  df1 = tibble::rownames_to_column(as.data.frame(t(pmtx)), var="cutoff") %>%
+    tidyr::pivot_longer(c("dxMDD","dxBPD","dxAny"), names_to="dx", values_to="raw_p")
+  df2 = tibble::rownames_to_column(as.data.frame(padjmtx), var="cutoff") %>%
+    tidyr::pivot_longer(c("dxMDD","dxBPD","dxAny"), names_to="dx", values_to="adj_p")
+  merge(df1, df2)
+}
+
+getConfInt <- function(modelList) {
+  df1 = do.call(rbind, lapply(modelList, function(model1) {
+    suppressMessages({
+      data.frame("OR"=exp(coef(model1))[["PRS_scaled"]],
+                 "CI05"=exp(confint(model1))["PRS_scaled",1],
+                 "CI95"=exp(confint(model1))["PRS_scaled",2])
+    })
+  }))
+  df1$dx = rownames(df1)
+  rownames(df1) <- NULL
+  return(df1[,c(4,1:3)])
+}
