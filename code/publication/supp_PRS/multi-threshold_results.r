@@ -44,7 +44,7 @@ p1 <- ggplot(all.df, aes(x=OR, y=dx))+
   scale_color_manual(values=c("FALSE"="grey30", "TRUE"="red"))+
   geom_point(aes(fill=cutoff), position=position_dodge(width=.2), shape=21)+
   scale_fill_manual(values=RColorBrewer::brewer.pal(n=5, "PuBu")[2:5])+
-  facet_wrap(vars(disorder), scales="free_y")+
+  facet_wrap(vars(disorder), scales="free_y", ncol=1)+
   geom_vline(aes(xintercept=1))+
   theme_bw()+theme(text=element_text(size=6))
 

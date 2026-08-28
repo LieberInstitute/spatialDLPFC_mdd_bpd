@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=1G
-#SBATCH --job-name=SF-prs_sig-model
+#SBATCH --job-name=SF-prs_multi-threshold
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -18,8 +18,8 @@ module load conda_R/4.4.x
 module list
 
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/supp_PRS/PRS_boxplots.r
-#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/supp_PRS/multi-threshold_results.r
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/supp_PRS/significant_dx-PRS-model.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/supp_PRS/multi-threshold_results.r
+#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/publication/supp_PRS/significant_dx-PRS-model.r
 
 echo "**** Job ends ****"
 date
