@@ -86,12 +86,17 @@ plist1 <- lapply(mod_subset, function(x) {
                                          stroke=.3, point_size = .5) |> 
     add_fill(var=x, point_size = .5)
   p2 <- p+scale_color_manual(values=c(cpList$smoothed.light, "drop"="grey"), guide="none")+
-    scale_fill_gradient(limits=c(0,1), low="white",high="black", guide="none")+
+    scale_fill_gradient(limits=c(0,1), low="white",high="black")+#, guide="none")+
     labs(subtitle=x)+
     theme(plot.subtitle=element_text(size=9))
   return(rasterize(p2, dpi=200))
 })
 
+ggsave(file="plots/publication/modules/example-sample_module-AUCell_spot-plots_LEGENDS.pdf",
+	marrangeGrob(grobs= plist1, nrow=1, ncol=1, top=NULL),
+	height=2.5, width=3.5)
+
+stop("Just save legends to check for consistency and pull one for illustrator")
 
 ggsave(file="plots/publication/modules/example-sample_module-AUCell_spot-plots.pdf",
        arrangeGrob(grobs=plist1, layout_matrix=rbind(1:5,6:10,11:15), top=NULL),
