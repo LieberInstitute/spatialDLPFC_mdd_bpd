@@ -101,7 +101,8 @@ getIntersections <- function(upsetList) {
 	pc3.overlaps = setdiff(names(pc3.overlaps)[pc3.overlaps==(length(upsetList)-1)], all.overlaps)
 
 	data.frame(group=c(names(upsetList), "all_models", "pc3_models"),
-		n_DEGs= c(sapply(totally.unique, length), length(all.overlaps), length(pc3.overlaps)))
+		n_DEGs= c(sapply(totally.unique, length), length(all.overlaps), length(pc3.overlaps)),
+		type= c(rep("unique", length(totally.unique)), "overlaps", "overlaps"))
 		
 
 }
@@ -211,21 +212,29 @@ print(sapply(ct.upset, length))
 df4 = getIntersections(ct.upset) %>% mutate(annotation="domain-CT", model="domain-restricted")
 
 df.all = bind_rows(df1, df2, df3, df4) %>%
-	mutate(group= factor(group, levels=c("all_models", "pc3_models", "none", "pc3_only", "age", "nspots", "BMI", "chrM_ratio", "Smoking", "RIN")),
-		annotation = factor(annotation, levels=c("domain-SP",  "domain-CT")),
-		model = factor(model, levels=c("whole-tissue", "domain-restricted"))
+	mutate(group= factor(group, levels=rev(c("all_models", "pc3_models", "none", "pc3_only", "age", "nspots", "BMI", "chrM_ratio", "Smoking", "RIN"))),
+		annotation = factor(annotation, levels=rev(c("domain-SP",  "domain-CT"))),
+		model = factor(model, levels=c("whole-tissue", "domain-restricted")),
+		type = factor(type, levels=c("overlaps","unique"))
 	)
 
-p1 <- ggplot(df.all, aes(x=group, y=n_DEGs))+
-	geom_bar(stat="identity", width=.7)+
-	geom_text(aes(label=n_DEGs), hjust=.5, vjust=0, size=2, color="red")+
-	scale_y_continuous(breaks=c(0,40,80,120))+
-	facet_grid(rows=vars(model), cols=vars(annotation), axes="all_x")+
-	theme_minimal()+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.5), text=element_text(size=6),
-		panel.grid.minor=element_blank(), axis.title.x=element_blank())
+#p1 <- ggplot(df.all, aes(x=group, y=n_DEGs))+
+#	geom_bar(stat="identity", width=.7)+
+#	geom_text(aes(label=n_DEGs), hjust=.5, vjust=0, size=2, color="red")+
+#	scale_y_continuous(breaks=c(0,40,80,120))+
+#	facet_grid(rows=vars(model), cols=vars(annotation), axes="all_x")+
+#	theme_minimal()+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.5), text=element_text(size=6),
+#		panel.grid.minor=element_blank(), axis.title.x=element_blank())
+#ggsave(file="plots/publication/supp_covariate-selection/DE-model_simple-overlaps.pdf", p1, width=4, height=3.5)
 
-ggsave(file="plots/publication/supp_covariate-selection/DE-model_simple-overlaps.pdf", p1, width=4, height=3.5)
+p1 <- ggplot(df.all, aes(y=group, x=n_DEGs, fill=annotation))+
+  geom_bar(stat="identity", position="dodge")+
+  scale_fill_manual(values=c("domain-SP"="black", "domain-CT"="grey50"))+
+  facet_grid(rows=vars(type), cols=vars(model), scales="free_y", space="free")+
+  theme_bw()+theme(text=element_text(size=6), legend.position="inside", legend.position.inside=c(.8,.2),
+                   legend.key.size = unit(6,"pt"))
 
+ggsave(file="plots/publication/supp_covariate-selection/DE-model_similarity-dissimilarity.pdf", p1, width=3.5, height=3.5)
 
 cat("\n\nReproducibility information:\n")
 Sys.time()
