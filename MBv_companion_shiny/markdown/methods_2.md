@@ -1,0 +1,7 @@
+Pseudobulk datasets were generated for both the domain~SP~ and domain~CT~ annotation sets by aggregating the raw counts within each annotated domain within each donor. This created different numbers of pseudobulk samples between the two annotation strategies owing to the different number of domains labeled per donor (domain~SP~ *k*=6, domain~CT~ *k*=8).
+
+Prior to counts matrix normalization and transformation, we performed gene filtering. We removed genes from the mitochondrial genome (which helps with normalization) and we also removed some lowly expressed genes with <a href="https://rdrr.io/bioc/edgeR/man/filterByExpr.html" target="_blank">edgeR</a>. Slightly different sets of genes were identified as lowly expressed between the two annotation datasets, given the unique cell populations captured with the two strategies. At this stage many lowly expressed genes were retained because they were abundantly expressed in the dlPFC snRNAseq dataset we used (SZBDMulti-seq). This was necessary to obtain enrichment *t*-test statistics in our SRT pseudobulk that we used to compare with snRNAseq.
+
+Quality control (QC) was then performed on pseudobulk samples, and afterward raw counts were re-normalized since the removal of samples during QC slightly impacts `edgeR` normalization factor calculation and subsequent logcounts values. 
+
+After pseudobulk processing, 21,080 genes were shared across the domain~SP~ and domain~CT~ pseudobulk datasets. These genes, and the resulting logcounts, are available for plotting in the **Pseudobulk Expression Plots** tab. 

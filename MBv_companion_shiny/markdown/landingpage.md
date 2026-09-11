@@ -1,0 +1,11 @@
+### Study Design
+Major depressive disorder (MDD) and bipolar disorder (BD) exhibit both overlapping and distinct clinical features, including differences in sex prevalence and symptomatology, but how these similarities and differences are reflected at the molecular and cellular level in the human brain remains poorly understood. 
+
+We applied spatial transcriptomics (SRT) in the human dorsolateral prefrontal cortex (dlPFC) of 119 donors that were split into diagnostic groups of neurotypical control (NTC), major depressive disorder (MDD), and bipolar disorder (BD). Our donors were selected to be sex- and age-balanced. SRT was achieved with Visium which provides supra-cellular resolution (55um) sequencing linked with spot-specific barcodes that allow for spatial coordinates to be matched with the RNA expression matrix. 
+
+We used two complementary annotation strategies to extract the biological domains of the dlPFC from spot-level gene expression data. Spatial clustering provided domains that correspond to canonical dlPFC cytoarchitectural layers (domain~SP~). Label projection from snRNAseq cell types provided domains that correspond to major cell type groups (domain~CT~) and allow for characterization of trans-laminar cell types like inhibitory neurons. 
+
+We performed pseudobulking for both annotation strategies and used these pseudobulk samples as input for differential expression (DE) testing. Our implementation of two different models allowed us to test for diagnosis-by-sex group differences across the entire dlPFC tissue section (whole-tissue model) and within specific domains (domain-restricted model). The results of these tests are annotated on the violin plots in the **Pseudobulk Expression Plots** tab and browsable in Supplementary Tables 6 and 7 of our manuscript.
+
+Our DE results were used as filtering criteria several additional analyses that helped us to draw conclusions about how MDD and BD are impacted at the molecular and cellular levels in the dlPFC. The outcomes from co-expression modules, regulon analysis, eQTL, and colocalization analysis are not presented in this companion app, but are relevant to the downstream use of the DE results described here.
+

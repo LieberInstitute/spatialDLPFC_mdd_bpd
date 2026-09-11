@@ -1,0 +1,5 @@
+The gene expression values that we see in the violin plots are not the same as what the statistical model “sees”.
+
+Both the whole-tissue and domain-restricted DE model designs contain several covariates (donor age, the number of spots per pseudobulk sample, and a continuous metric of technical variation). Inclusion of these covariates helps to isolate the changes in gene expression attributable to our independent variables of diagnosis and sex. Although it is possible to estimate what the model "sees" by regress out the influence of the covariates and producing residualized expression values, in our study we chose to visualize the un-altered logcount expression. 
+
+Additionally, the RNAseq information from each of our donors was stratified into different pseudobulk samples based on the domain annotation, creating quasi-repeated measurements from each donor. We utilized the <a href="https://rdrr.io/bioc/limma/man/dupcor.html" target="_blank">duplicateCorrelation</a> utility of `limma` which treats donor identity as a random effect. This too changes what the model “sees” when fitting gene expression, but is impossible to represent visually when plotting.

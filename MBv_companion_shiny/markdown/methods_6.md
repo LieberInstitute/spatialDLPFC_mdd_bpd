@@ -1,0 +1,5 @@
+Aggregated raw RNAseq counts for each pseudobulk sample are normalized by library size, we used effective library sizes calculated with <a href="https://rdrr.io/bioc/edgeR/man/calcNormFactors.html" target="_blank">edgeR::calcNormFactors</a>. Normalized counts were then transformed to counts per million (CPM), and a constant is added to avoid subsequent log~2~ transformation of zero values.
+
+Since the domain~SP~ and domain~CT~ pseudobulk annotation datasets were processed separately, this resulted in the lowest logcount expression measurements corresponding to different non-zero values. In both cases, this minimum measurement identifies un-detected expression (raw count of zero). 
+
+These differences do not impact DE results. As previously stated, DE models utilized <a href="https://rdrr.io/bioc/limma/man/voom.html" target="_blank">voom</a> transformation, which differs from log~2~(CPM) transformation. However, because domain~SP~ and domain~CT~ pseudobulk datasets were tested with separate DE models, any minor technical differences in minimum expression are inconsequential to DE results.
