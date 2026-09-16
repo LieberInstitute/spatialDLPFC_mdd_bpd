@@ -1,4 +1,4 @@
-Following spot level quality control, our dataset consisted of an RNA expression matrix for 535,248 SRT spots (observations) and RNA 28,965 genes (features).
+Following spot level quality control, our dataset of 119 postmortem brain donors consisted of an RNA expression matrix for 535,248 SRT spots (observations) and RNA 28,965 genes (features).
 
 Biological domains from the dlPFC were annotated with two parallel strategies. <a href="https://github.com/feiyoung/PRECAST" target="_blank">PRECAST</a> spatial clustering was used to define spatial domains (**domain~SP~**) that mirrored canonical dlPFC cytoarchitectural lamina. This strategy identified spatially contiguous regions with low UMI counts that clustered separately and were removed from downstream analyses. Domain~SP~ consisted of the following annotations: layers (L) L1, L2, L3/4, L5, L6, and white matter (WM). 
 
