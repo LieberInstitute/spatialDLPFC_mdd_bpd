@@ -75,7 +75,7 @@ p5 <- ggplot(sil.results3, aes(x=cluster, y=width, colour=closest))+
                         legend.position="none")
 
 
-pdf(file="plots/publication/Figure1/supp_PRECAST-pseudobulk.pdf", height=5, width=5)
+pdf(file="plots/publication/supp_clustering_PRECAST/pseudobulk_qc-silhouette.pdf", height=5, width=5)
 grid.arrange(p1, p2, ncol=1)
 grid.arrange(p3, p4, p5, layout_matrix=rbind(c(1,1),c(2,3)))
 dev.off()
