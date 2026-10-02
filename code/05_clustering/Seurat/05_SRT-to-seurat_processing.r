@@ -8,7 +8,7 @@ suppressPackageStartupMessages({
 set.seed(123)
 setAutoBlockSize(1e9)
 
-#spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC-conservative_norm_")
+#spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 #cat("\nDim spe:",dim(spe),"\n")
 #cat("\ntree:\n")
 #showtree(logcounts(spe))
@@ -25,7 +25,7 @@ setAutoBlockSize(1e9)
 #cat("\nSubset counts to pseudobulk filtered genes...\n")
 #load("processed-data/05_clustering/Seurat/seurat_SZBDMulti-seq_control_processed-SCT.Rdata")
 
-#rdata = read.csv("processed-data/06_pseudobulk/PRECAST_smoothed/pseudobulk-sample-smoothed-n1626-k7_conservative_filtered-genes_avg-logcounts.csv", row.names=1)
+#rdata = read.csv("processed-data/06_pseudobulk/pseudobulk-sample-n1663-k9_filtered-genes_avg-logcounts.csv", row.names=1)
 #head(rdata)
 
 #fdata = seu_con[["RNA"]]@meta.data
@@ -36,7 +36,7 @@ setAutoBlockSize(1e9)
 
 #rdata = rdata[fdata$featureid,]
 #dim(rdata)
-#stopifnot(identical(rownames(rdata), fdata$featureid))
+#identical(rownames(rdata), fdata$featureid)
 
 #rdata$featurekey = rownames(fdata)
 
@@ -55,35 +55,21 @@ setAutoBlockSize(1e9)
 #seu_mbv <- CreateSeuratObject(counts = sparse_matrix_counts, meta.data = as.data.frame(colData(spe)))
 #seu_mbv[["RNA"]] <- AddMetaData(object = seu_mbv[["RNA"]], metadata = rdata)
 #seu_mbv
-#save(seu_mbv, file="processed-data/05_clustering/Seurat/seurat_MBv_conservative.Rdata")
-#cat("\nFile save checkpoint: processed-data/05_clustering/Seurat/seurat_MBv_conservative.Rdata\n")
+#save(seu_mbv, file="processed-data/05_clustering/Seurat/seurat_MBv.Rdata")
+#cat("\nFile save checkpoint: processed-data/05_clustering/Seurat/seurat_MBv.Rdata\n")
 
 #load saved raw seurat object
-cat("\nLoading saved, unprocessed seurat object: processed-data/05_clustering/Seurat/seurat_MBv_conservative.Rdata\n")
-load("processed-data/05_clustering/Seurat/seurat_MBv_conservative.Rdata")
-dim(seu_mbv)
-
-# need to subset genes
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_conservative_pseudo_sample-smoothed-n1626-k7_norm-filt.Rdata")
-pass.genes = rowSums(as.data.frame(rowData(spe_pseudo)[,c("high_expr_group_sample_id","high_expr_group_cluster","high_expr_SZBDMultiseq")]))>2
-seu_mbv = seu_mbv[rowData(spe_pseudo)$gene_name[pass.genes],]
-cat("\nSubset to genes that passed edgeR filters for PRECAST (smoothed) pseudobulk and are present in SZBDMulti-seq:\n")
-dim(seu_mbv)
-
-# need to exclude any spots with no genes now
-seu_mbv$nFeature_RNA = colSums(seu_mbv@assays$RNA$counts>0)
-seu_mbv = seu_mbv[,seu_mbv$nFeature_RNA>0]
-cat("\nRemove any spots that have no counts with filtered genes:\n")
-dim(seu_mbv)
+cat("\nLoading saved, unprocessed seurat object: processed-data/05_clustering/Seurat/seurat_MBv.Rdata\n")
+load("processed-data/05_clustering/Seurat/seurat_MBv.Rdata")
 
 #pre-process SRT
-seu_mbv <- SCTransform(seu_mbv, ncells=10000, verbose=T) #default ncells is 5k
+seu_mbv <- SCTransform(seu_mbv, ncells=10000, vars.to.regress="sum_umi", verbose=T) #default ncells is 5k
 ### ncells parameter is the number of cells on which the noise is learned
 ### considering that I have 500k, maybe it will help to improve the ncells
 seu_mbv <- RunPCA(seu_mbv)
 seu_mbv
-save(seu_mbv, file="processed-data/05_clustering/Seurat/seurat_MBv_conservative_processed-SCT.Rdata")
-cat("\nSaved to: processed-data/05_clustering/Seurat/seurat_MBv_conservative_processed-SCT.Rdata\n")
+save(seu_mbv, file="processed-data/05_clustering/Seurat/seurat_MBv_processed-SCT-sum-umi.Rdata")
+cat("\nSaved to: processed-data/05_clustering/Seurat/seurat_MBv_processed-SCT-sum-umi.Rdata\n")
 
 ## Reproducibility information
 print("Reproducibility information:")

@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=250G
-#SBATCH --job-name=MBv-conservative_transfer-anchors_MBv-filtered_low-res-pc20
+#SBATCH --mem=200G
+#SBATCH --job-name=MBv_transfer-anchors_MBv-filtered_seurat-annotated
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/Seurat/logs/%x_%j.log
 
 echo "**** Job starts ****"

@@ -6,12 +6,12 @@ suppressPackageStartupMessages({
 })
 set.seed(123)
 
-load("processed-data/05_clustering/Seurat/seurat_SZBDMulti-seq_bipolar_MBv-filtered-conservative_processed-SCT.Rdata")
+load("processed-data/05_clustering/Seurat/seurat_SZBDMulti-seq_bipolar_MBv-filtered_processed-SCT.Rdata")
 
 #load results
-res1 = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered-conservative_ref-control_query-bipolar_qual-genes-kanchor-50-pc30_red-pca-kweight-50-azimuth.csv", row.names=1)
+res1 = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-bipolar_qual-genes-kanchor-50-pc30_red-pca-kweight-50-azimuth.csv", row.names=1)
 stopifnot(identical(rownames(res1), colnames(seu_bd)))
-res2 = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered-conservative_ref-control_query-bipolar_qual-genes-kanchor-50-pc30_red-pca-kweight-50-low-res.csv", row.names=1)
+res2 = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-bipolar_qual-genes-kanchor-50-pc30_red-pca-kweight-50-low-res.csv", row.names=1)
 stopifnot(identical(rownames(res2), colnames(seu_bd)))
 
 
@@ -25,7 +25,7 @@ new.levels = c("Micro","Immune","Endo","PC","SMC","VLMC",
 
 seu_bd$azimuth = factor(as.character(seu_bd$azimuth), levels=new.levels)
 seu_bd$transfer_pc30_azimuth = factor(res1$predicted.id, levels=new.levels)
-seu_bd$transfer_pc30_low.res = factor(res2$predicted.id, levels=c("Micro.Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"))
+seu_bd$transfer_pc30_low.res = factor(res2$predicted.id, levels=c("Micro/Vasc","Astro","L2","L3","L4","L5","L6","Oligo","Inhb"))
 
 #plot annotations
 low.res.pal = c("Astro"="#cfa45c","Micro/Vasc"="#911223",
@@ -79,14 +79,14 @@ p3 <- ggplot(cdata2, aes(x=transfer_pc30_low.res,
   theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.5),
                    aspect.ratio=1, legend.key.size = unit(10, "pt"))
 
-pdf(file="plots/05_clustering/Seurat/seu-bd_conservative_label-transfer-pc30_plots.pdf", height=7, width=7)
+pdf(file="plots/05_clustering/Seurat/seu-bd_label-transfer-pc30_plots.pdf", height=7, width=7)
 gridExtra::grid.arrange(p1[[1]]+theme(text=element_text(size=10))+NoLegend(), 
                         p1[[2]]+theme(text=element_text(size=10))+NoLegend(), 
                         p1[[3]]+scale_color_manual(values=low.res.pal)+theme(text=element_text(size=10))+NoLegend(), ncol=2)
 p2
 p3
 dev.off()
-cat("\nSaved to: plots/05_clustering/Seurat/seu-bd_conservative_label-transfer-pc30_plots.pdf\n")
+cat("\nSaved to: plots/05_clustering/Seurat/seu-bd_label-transfer-pc30_plots.pdf\n")
 
 ## Reproducibility information
 print("Reproducibility information:")

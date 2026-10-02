@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=450G
-#SBATCH --job-name=seurat_MBv_conservative_SCT
+#SBATCH --job-name=seurat_MBv_SCT-sum-umi
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/Seurat/logs/%x_%j.log
 
 echo "**** Job starts ****"
