@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=example-spot-plots_conservative_k7
+#SBATCH --job-name=example-spot-plots
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/05_clustering/PRECAST/logs/%x_%j.log
 
 echo "**** Job starts ****"

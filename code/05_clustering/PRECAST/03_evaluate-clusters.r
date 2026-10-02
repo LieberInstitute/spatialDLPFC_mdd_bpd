@@ -10,14 +10,14 @@ suppressPackageStartupMessages({
 	library(pheatmap)
 })
 source("code/05_clustering/PRECAST/03-supp_plot-functions.r")
-#source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
+source("code/05_clustering/PRECAST/PRECAST_colorLists.r")
 
-.gene_set = "n1626" #character specifying gene set (starting with 'n' for most instances except for H-M gene set)
-#.gene_set = "H-M-markers" #character specifying gene set (starting with 'n' for most instances except for H-M gene set)
+#.gene_set = "n1663" #character specifying gene set (starting with 'n' for most instances except for H-M gene set)
+.gene_set = "H-M-markers" #character specifying gene set (starting with 'n' for most instances except for H-M gene set)
 .k_clusters = 7 #numeric
 
 
-spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC-conservative_norm_")
+spe <- loadHDF5SummarizedExperiment(dir="processed-data/04_feature_selection/", prefix="spe_n119_postQC_norm_")
 
 #estimate spatial domain
 layer.markers = read.csv("processed-data/04_feature_selection/EXT_TableS9_sig_genes_FDR5perc_enrichment.csv") %>%
@@ -55,18 +55,18 @@ top100.unique.df$gene_id = lut[top100.unique.df$gene,"gene_id"]
 
 
 #if i want to loop this i have to use a for loop so that coldata keeps getting updated
-spe <- updateColData(spe, .gene_set, .k_clusters, conservative=T)
+spe <- updateColData(spe, .gene_set, .k_clusters)
 quickResaveHDF5SummarizedExperiment(spe)
 cat("\nPRECAST clusters", .gene_set, "genes, k=", .k_clusters, "updated to spe with quickResave\n")
 
 #make plots
-pdf(file=paste0("plots/05_clustering/PRECAST/PRECAST_conservative_", .gene_set, "-k", .k_clusters, "_loss-plot_layer-heatmap.pdf"),
+pdf(file=paste0("plots/05_clustering/PRECAST/PRECAST_", .gene_set, "-k", .k_clusters, "_loss-plot_layer-heatmap.pdf"),
 	width=6, height=7)
 lossPlot(.gene_set, .k_clusters)
 plot(annotationHeatmap(spe, .gene_set, .k_clusters, top100.unique.df))
 dev.off()
 cat("\nInitial evaluation plots saved to:",
-	paste0("plots/05_clustering/PRECAST/PRECAST_conservative_", .gene_set, "-k", .k_clusters, "_loss-plot_layer-heatmap.pdf"),"\n")
+	paste0("plots/05_clustering/PRECAST/PRECAST_", .gene_set, "-k",	.k_clusters, "_loss-plot_layer-heatmap.pdf"),"\n")
 
 ## skip making all spot plots and rather make example spot plots in next step after annotating clusters
 #uniquepal = precast.colorList[[paste0(.gene_set,"_k",.k_clusters)]][["colors"]]
