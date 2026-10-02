@@ -2,7 +2,7 @@
 #SBATCH --mem=3G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=norm_QC_PCA_conservative_smoothed-n1626-k7-with-lowUMI_prior-count-2_no-MT-genes
+#SBATCH --job-name=norm_QC_PCA_smoothed-n1663-k9-with-lowUMI_prior-count-2_no-MT-genes
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/06_pseudobulk/PRECAST_smoothed/logs/%x_%j.log
 
 echo "**** Job starts ****"

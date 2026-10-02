@@ -15,25 +15,24 @@ set.seed(123)
 cpList = readRDS("plots/colorPalettes.rds")
 cpList$smoothed.bright = c(cpList$smoothed.bright, "low UMI"="grey50")
 
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_conservative_pseudo-with-lowUMI_sample-smoothed-n1626-k7.Rdata")
+load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-with-lowUMI_sample-smoothed-n1663-k9.Rdata")
 dim(spe_pseudo) 
 
-#use the gene set from the without low UMI object b/c with low UMI cluster there are fewer genes that pass, eliminating some SVGs
+#use the gene set from the without low UMI object b/c with low UMI cluster there are fewer genes that pass 
 spe_save = spe_pseudo
 
-load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_conservative_pseudo_sample-smoothed-n1626-k7.Rdata")
+load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9.Rdata")
 dim(spe_pseudo) 
 
 #filter by expression before recalculating norm counts
 rowData(spe_pseudo)$high_expr_group_sample_id <- filterByExpr(spe_pseudo, group = spe_pseudo$sample_id)
-rowData(spe_pseudo)$high_expr_group_cluster <- filterByExpr(spe_pseudo, group = spe_pseudo$smoothed_k7_1626)
+rowData(spe_pseudo)$high_expr_group_cluster <- filterByExpr(spe_pseudo, group = spe_pseudo$smoothed_k9_1663)
 
 with(rowData(spe_pseudo), table(high_expr_group_sample_id, high_expr_group_cluster))
 
 keep.genes = rowData(spe_pseudo)$high_expr_group_sample_id & rowData(spe_pseudo)$high_expr_group_cluster
 table(keep.genes)
 
-#spe_pseudo <- spe_pseudo[keep.genes,]
 spe_pseudo <- spe_save[keep.genes, ]
 
 #calculate QC metrics, then remove MT genes prior to normalizing
@@ -57,7 +56,7 @@ cdata= as.data.frame(colData(spe_pseudo))
 p1 <- ggplot(cdata, aes(x=condition, y=nspots))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
-  facet_wrap(vars(smoothed_k7_1626), ncol=7, scales="free_y")+
+  facet_wrap(vars(smoothed_k9_1663), ncol=7, scales="free_y")+
   scale_shape_manual(values=c(19,1))+
   scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Number of spots per pseudobulked sample", y="nspots")+
@@ -67,7 +66,7 @@ p1 <- ggplot(cdata, aes(x=condition, y=nspots))+
 p2 <- ggplot(cdata, aes(x=condition, y=sum))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
-  facet_grid(cols=vars(smoothed_k7_1626))+
+  facet_grid(cols=vars(smoothed_k9_1663))+
   scale_y_log10()+scale_shape_manual(values=c(19,1))+
   scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Library size per pseudobulked sample", y="sum UMI (log10 scale)")+
@@ -76,7 +75,7 @@ p2 <- ggplot(cdata, aes(x=condition, y=sum))+
 p3 <- ggplot(cdata, aes(x=condition, y=detected))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
-  facet_grid(cols=vars(smoothed_k7_1626))+
+  facet_grid(cols=vars(smoothed_k9_1663))+
   scale_shape_manual(values=c(19,1))+
   scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Unique detected genes per pseudobulked sample", y="detected")+
@@ -85,15 +84,15 @@ p3 <- ggplot(cdata, aes(x=condition, y=detected))+
 p4 <- ggplot(cdata, aes(x=condition, y=subsets_mito_percent))+
   ggbeeswarm::geom_quasirandom(aes(color=condition, shape=sex))+
   geom_boxplot(alpha=.4, linewidth=.5, outliers=F)+
-  facet_grid(cols=vars(smoothed_k7_1626))+
+  facet_grid(cols=vars(smoothed_k9_1663))+
   scale_shape_manual(values=c(19,1))+ylim(0,45)+
   scale_color_manual("diagnosis", values=cpList$dx.pal)+
   theme_bw()+labs(title="Fraction of chrM reads per pseudobulked sample", y="subsets_mito_percent")+
   theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
-ggsave("plots/06_pseudobulk/PRECAST_smoothed/sample-smoothed-n1626-k7_conservative_with-lowUMI_unfiltered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
+ggsave("plots/06_pseudobulk/PRECAST_smoothed/sample-smoothed-n1663-k9_with-lowUMI_unfiltered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
         bg="white", width=12, height=12, units="in")
-cat("\nQC plots saved to: plots/06_pseudobulk/PRECAST_smoothed/sample-smoothed-n1626-k7_conservative_with-lowUMI_unfiltered_QC-metrics.png\n")
+cat("\nQC plots saved to: plots/06_pseudobulk/PRECAST_smoothed/sample-smoothed-n1663-k9_with-lowUMI_unfiltered_QC-metrics.png\n")
 
 #remove MT- genes prior to calculating norm factors (this improves histogram of norm factors)
 spe_pseudo = spe_pseudo[-grep("MT-", rowData(spe_pseudo)$gene_name),]
@@ -105,11 +104,11 @@ logcounts(spe_pseudo) <- x
 
 
 #PCA before filtering reveals one component dominated by low detected genes samples
-geneList <- readRDS("processed-data/04_feature_selection/nnSVG-eval_conservative_geneList.rds")
+geneList <- readRDS("processed-data/04_feature_selection/nnSVG-eval_geneList.rds")
 n1663.ids = rownames(spe_pseudo)[rowData(spe_pseudo)$gene_name %in% geneList$qual_genes]
 length(n1663.ids)
 
-exp.vars = c("smoothed_k7_1626","sample_id",
+exp.vars = c("smoothed_k9_1663","sample_id",
              "slide","seq",
              "condition","sex",
              "age","PMI","RIN",
@@ -122,14 +121,14 @@ exp.vars.colors = c("#FB8072", "#80B1D3",
                     "#CCEBC5", "#D9D9D9","black")
 names(exp.vars.colors) = exp.vars
 
-spe_pseudo <- runPCA(spe_pseudo, subset_row=n1663.ids, exprs_values="logcounts", name="PCA_1626")
-p1 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1626", variables=exp.vars)+
+spe_pseudo <- runPCA(spe_pseudo, subset_row=n1663.ids, exprs_values="logcounts", name="PCA_1663")
+p1 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", variables=exp.vars)+
         scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
-p2 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1626", npcs_to_plot=20, variables=exp.vars)+
+p2 <- plotExplanatoryPCs(spe_pseudo, dimred="PCA_1663", npcs_to_plot=20, variables=exp.vars)+
         scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
-p3 <- plotReducedDim(spe_pseudo, dimred="PCA_1626", ncomponents=2, colour_by = "smoothed_k7_1626", point_alpha=1)+
+p3 <- plotReducedDim(spe_pseudo, dimred="PCA_1663", ncomponents=2, colour_by = "smoothed_k9_1663", point_alpha=1)+
         scale_color_manual("", values=cpList$smoothed.bright)
-p4 <- plotPCA(spe_pseudo, dimred="PCA_1626", ncomponents=4, colour_by = "smoothed_k7_1626")+
+p4 <- plotPCA(spe_pseudo, dimred="PCA_1663", ncomponents=4, colour_by = "smoothed_k9_1663")+
         scale_color_manual("", values=cpList$smoothed.bright)
 
 
@@ -151,8 +150,8 @@ q4 = ggplot_gtable(q4)
 cdata = as.data.frame(colData(spe_pseudo))
 cdata$cond_sex = factor(paste(cdata$condition, cdata$sex), levels=c("NTC M","NTC F","MDD M","MDD F","BPD M","BPD F"))
 
-bp1 <- ggplot(group_by(cdata, cond_sex, smoothed_k7_1626) %>% summarise(n_total=sum(nspots)), 
-       aes(x=cond_sex, y=n_total, fill=smoothed_k7_1626))+
+bp1 <- ggplot(group_by(cdata, cond_sex, smoothed_k9_1663) %>% summarise(n_total=sum(nspots)), 
+       aes(x=cond_sex, y=n_total, fill=smoothed_k9_1663))+
   geom_bar(stat="identity", position="stack", width=.7)+
   scale_y_continuous("# spots", labels=function(x) paste0(x/1000,"k"))+
   scale_fill_manual("PRECAST\n(smoothed)", values=cpList$smoothed.bright)+
@@ -161,19 +160,19 @@ bp1 <- ggplot(group_by(cdata, cond_sex, smoothed_k7_1626) %>% summarise(n_total=
 	legend.position="bottom")
 
 #PCA colored by detected
-p5 <- plotPCA(spe_pseudo, dimred="PCA_1626", ncomponents=4, colour_by = "detected")+
+p5 <- plotPCA(spe_pseudo, dimred="PCA_1663", ncomponents=4, colour_by = "detected")+
         scale_color_viridis_c("detected\ngenes")
 q5 = ggplot_build(p5)
 q5$data[[2]]$size = 1
 q5 = ggplot_gtable(q5)
 
-ggsave("plots/06_pseudobulk/PRECAST_smoothed/sample-smoothed-n1626-k7_conservative_with-lowUMI_unfiltered_PCA-1626-eval.png",
+ggsave("plots/06_pseudobulk/PRECAST_smoothed/sample-smoothed-n1663-k9_with-lowUMI_unfiltered_PCA-1663-eval.png",
 	gridExtra::grid.arrange(q1, q2, p3, q4, bp1, q5, layout_matrix=cbind(c(1,3,3,5,5),c(2,4,4,6,6))),
         bg="white", height=12, width=12, units="in")
-cat("\nPCA eval plots saved to: plots/06_pseudobulk/PRECAST_smoothed/sample-smoothed-n1626-k7_conservative_with-lowUMI_unfiltered_PCA-1626-eval.png\n")
+cat("\nPCA eval plots saved to: plots/06_pseudobulk/PRECAST_smoothed/sample-smoothed-n1663-k9_with-lowUMI_unfiltered_PCA-1663-eval.png\n")
 
 
-save(spe_pseudo, file="processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_conservative_pseudo-with-lowUMI_sample-smoothed-n1626-k7_norm.Rdata")
+save(spe_pseudo, file="processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo-with-lowUMI_sample-smoothed-n1663-k9_norm.Rdata")
 ##### stop early to evaluate filters then run again
 stop("Evaluate plots then continue")
 #####
