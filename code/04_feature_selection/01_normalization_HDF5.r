@@ -19,16 +19,11 @@ cat("\nDim spe:",dim(spe),"\n")
 
 stopifnot(identical(rownames(cdata), rownames(colData(spe))))
 
-#spe$remove_spots = cdata$remove_spots
-#spe$problem_area_flag = cdata$problem_area_flag
-
-spe$remove_spots = cdata$spotsweeper_outlier | cdata$true_edges
+spe$remove_spots = cdata$remove_spots
+spe$problem_area_flag = cdata$problem_area_flag
 
 format(Sys.time(), tz="EST")
 spe = spe[,spe$remove_spots==FALSE]
-spe = spe[,spe$in_tissue]
-spe = spe[,spe$sum_umi>0]
-
 cat("\nDim spe (QC filtered):",dim(spe),"\n\n")
 
 spe = spe[,spe$sample_id!="V13F27-338_C1"]
@@ -53,7 +48,7 @@ spe <- logNormCounts(spe)
 start.time = Sys.time()
 cat("\nStart HDF5SummarizedExperiment save:"); start.time
 
-saveHDF5SummarizedExperiment(spe, dir="processed-data/04_feature_selection", prefix="spe_n119_postQC-conservative_norm_",
+saveHDF5SummarizedExperiment(spe, dir="processed-data/04_feature_selection", prefix="spe_n119_postQC_norm_",
         chunkdim=c(100,500),
         verbose=F)
 
@@ -63,7 +58,7 @@ cat("\nTime elapsed (saveHDF5):",
 #update spe tracker
 write(c(paste("**** Created filtered, normalized spe on",format(Sys.time(), tz="EST"),"EST"),
         "**** Old file location: processed-data/02_build_spe/spe_n120_",
-        "**** New file location: processed-data/04_feature_selection/spe_n119_postQC-conservative_norm_",
+        "**** New file location: processed-data/04_feature_selection/spe_n119_postQC_norm_",
         "**** Source code: code/04_feature_selection/01_normalization_HDF5.r",
         "****","****","****"), "spe_tracker_current.txt", append=TRUE)
 

@@ -4,7 +4,7 @@
 #SBATCH --time=0-05:00:00
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=standard-nnSVG_per-sample_min-100_conservative
+#SBATCH --job-name=standard-nnSVG_per-sample_min-100
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_feature_selection/array_logs/%x_%j_%a.log
 #SBATCH --array=1-119
 

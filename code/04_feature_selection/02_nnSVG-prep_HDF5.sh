@@ -2,7 +2,7 @@
 #SBATCH --mem=10G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jthom338@jh.edu
-#SBATCH --job-name=nnSVG-prep_conservative_HDF5_avg-expr-only
+#SBATCH --job-name=nnSVG-prep_HDF5
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/04_feature_selection/logs/%x_%j.log
 
 echo "**** Job starts ****"
