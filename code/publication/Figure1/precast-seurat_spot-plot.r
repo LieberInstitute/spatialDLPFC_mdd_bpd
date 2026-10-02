@@ -43,7 +43,7 @@ plist <- lapply(pc30.labels, function(x) {
   rasterize(p2, layers="Point", dpi=300)
 })
 
-ggsave(file="plots/publication/supp_clustering_compare/precast-outline_seurat-fill_spot-plot.pdf", 
+ggsave(file="plots/publication/Figure1/precast-outline_seurat-fill_spot-plot.pdf", 
        do.call(grid.arrange, c(plist, ncol=4)),
        width=8, height=4)
 
