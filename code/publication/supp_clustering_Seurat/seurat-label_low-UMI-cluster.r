@@ -41,7 +41,7 @@ p1 <- ggplot(filter(cdata, precast_k9_1663=="low UMI"), aes(x=sample_id, fill=se
 	panel.grid.minor=element_blank(), panel.grid.major.x=element_blank(),
 	axis.ticks = element_line(color="black", linewidth=.3))
 
-ggsave(file="plots/publication/Figure3/seurat-label_low-UMI-proportion.pdf", p1, height=4, width=3)
+ggsave(file="plots/publication/supp_clustering_Seurat/seurat-label_low-UMI-proportion.pdf", p1, height=4, width=3)
 
 
 cdata2 <- group_by(cdata, sample_id, condition, sex) %>% add_tally(name="n_total") %>%
@@ -70,7 +70,7 @@ p2 <- ggplot(cdata2, aes(x=x_lab, y=prop_spots, fill=seurat_label))+
                      panel.grid=element_blank(), text=element_text(size=8),
                      axis.ticks = element_line(color="black", linewidth=.3))
 
-ggsave(file="plots/publication/Figure3/seurat-label_per-sample-proportion.pdf", p2, height=2, width=3.5)
+ggsave(file="plots/publication/supp_clustering_Seurat/seurat-label_per-sample-proportion.pdf", p2, height=2, width=3.5)
 
 print("\n\nReproducibility information:")
 format(Sys.time())

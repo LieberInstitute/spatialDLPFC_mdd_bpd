@@ -97,7 +97,7 @@ plist <- lapply(spe_list, function(x) {
 
 
 lmat = rbind(c(1,2),c(3,3))
-pdf(file="plots/publication/Figure3/seurat-label_dx-sex.pdf", width=3, height=4)
+pdf(file="plots/publication/supp_clustering_Seurat/seurat-label_dx-sex.pdf", width=3, height=4)
 grid.arrange(rasterize(plist[[1]], dpi=300), rasterize(plist[[2]], dpi=300), 
              blist[[1]]+theme(legend.position="none"), layout_matrix=lmat)
 grid.arrange(rasterize(plist[[3]], dpi=300), rasterize(plist[[4]], dpi=300), 

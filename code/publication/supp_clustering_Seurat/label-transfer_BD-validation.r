@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 # azimuth to azimuth for ground truth
-bd.transfer = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-bipolar_qual-genes-kanchor-50-pc30_red-pca-kweight-50-azimuth.csv", row.names=1)
+bd.transfer = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-bipolar_qual-genes-kanchor-50-pc30_red-pca-kweight-50-azimuth_new.csv", row.names=1)
 
 # load all SZBDMulti-seq obs data
 cdata = read.csv("processed-data/05_clustering/Seurat/obs_SZBDMulti-Seq_filtered.csv")
@@ -39,7 +39,7 @@ phm1 = pheatmap(pred1[order1, paste0("prediction.score.", gsub("/","\\.", gsub("
 
 
 # now the low res version that I used for SRT
-bd.transfer2 = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-bipolar_qual-genes-kanchor-50-pc30_red-pca-kweight-50-low-res.csv", row.names=1)
+bd.transfer2 = read.csv("processed-data/05_clustering/Seurat/results_label-transfer_MBv-filtered_ref-control_query-bipolar_qual-genes-kanchor-50-pc30_red-pca-kweight-50-low-res_new.csv", row.names=1)
 stopifnot(identical(rownames(bd.transfer2), rownames(cdata2)))
 
 rand2 = pairwiseRand(cdata2$azimuth, bd.transfer2$predicted.id, mode="index")
@@ -55,7 +55,7 @@ phm2 = pheatmap(pred2[order1,paste0("prediction.score.",c("Oligo","Astro","Micro
 	cluster_col=F, cluster_rows=F, angle_col=90, fontsize=7,
 	main=paste("BD snRNA-seq transfer Rand index:", round(rand2,4)))
 
-pdf(file="plots/publication/Figure3/module_BD-transfer-validation.pdf", height=4, width=4)
+pdf(file="plots/publication/supp_clustering_Seurat/label-transfer_BD-transfer-validation.pdf", height=4, width=4)
 plot(phm1[[4]])
 plot(phm2[[4]])
 dev.off()
