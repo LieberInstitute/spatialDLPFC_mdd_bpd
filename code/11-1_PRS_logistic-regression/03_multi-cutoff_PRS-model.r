@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
 set.seed(123)
 cpList <- readRDS("plots/colorPalettes.rds")
 
-source("code/tmp_PRS_DE/01_custom-functions.r")
+source("code/11-1_PRS_DE/03-supp_custom-functions.r")
 
 # load for plottings
 mdd.df = prs.df = read.csv(paste0("raw-data/PRS/PRS_","MDD",".csv"))
