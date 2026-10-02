@@ -162,7 +162,7 @@ for(y in spot.genes) {
   spotList[[y]] = arrangeGrob(grobs=plist1, ncol=4, nrow=1, top=paste(y, "(fill scale fixed, can compare across sections)"))
 }
 
-ggsave(file="plots/publication/Figure3/rnascope-samples_alt-329-A1_key-spot-plots.pdf", 
+ggsave(file="plots/15_RNAscope_Validation/rnascope-samples_alt-329-A1_key-spot-plots.pdf", 
        marrangeGrob(grobs=spotList, ncol=1, nrow=6, top=NULL),
        height=12, width=9)
 
