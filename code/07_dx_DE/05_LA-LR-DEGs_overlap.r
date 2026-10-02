@@ -11,22 +11,16 @@ set.seed(123)
 cpList <- readRDS("plots/colorPalettes.rds")
 source("code/06_pseudobulk/custom_functions.r")
 
-#results_set = "smoothed-k9-1663"
-#comp_names = c("L1","L2","L3dot4","L5","L6","WM")
-#names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
-#col.pal = cpList$smoothed.bright
+results_set = "smoothed-k9-1663"
+comp_names = c("L1","L2","L3dot4","L5","L6","WM")
+names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
+col.pal = cpList$smoothed.bright
 
 #results_set = "seurat-pc30"
 #comp_names = c("MicrodotVasc","Astro","L2dot3","L4","Inhb","L5","L6","Oligo")
 #names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")
 #col.pal = cpList$transfer.bright
 
-results_set = "custom-cluster"
-comp_names = c("MicrodotVasc","AstrodotL1","AstrodotNrn","L2","L3","L4","Inhb","L5","L6","WM")
-names(comp_names) = c("Micro.Vasc","Astro.L1","Astro.Nrn","L2","L3","L4","Inhb","L5","L6","WM")
-col.pal = c('Micro.Vasc'="#911223", 'Astro.L1'="#cfa45c", 'Astro.Nrn'= "#F5D29E", 
-                 'L2'= "#5D9940", 'L3'= "#5095CD",'L4'= "#c2cfcf",'Inhb'= "#9377AC", 
-                 'L5'= "#ddc94e", 'L6'= "#E45C5F", 'WM'= "#D1C4B0")
 
 comparisons = c("F_NTC.MDD","M_NTC.MDD",
                 "F_NTC.BPD","M_NTC.BPD",
@@ -116,7 +110,7 @@ plist <- lapply(comparisons, function(i) {
     group_by(cluster) %>% tally() %>% mutate(overlap="L-R only")
   
   if(results_set=="smoothed-k9-1663") ymax=55
-  if(results_set!="smoothed-k9-1663") ymax=65
+  if(results_set=="seurat-pc30") ymax=65
   
   p <- ggplot(bind_rows(tmp.lr.overlap, tmp.lr.only) %>% mutate(overlap=factor(overlap, levels=c("L-A & L-R overlap","L-R only"))),
          aes(x=cluster, y=n, fill=cluster))+
@@ -127,7 +121,6 @@ plist <- lapply(comparisons, function(i) {
     theme_minimal()+theme(panel.border = element_rect(fill=NA, color="grey"),
                           plot.title=element_text(hjust=.5))
   if(results_set=="seurat-pc30") p <- p+scale_x_discrete(labels=c("M.V","A","L2.3","L4","In","L5","L6","Olg"))+theme(axis.text.x=element_text(size=8))
-  if(results_set=="seurat-pc30") p <- p+scale_x_discrete(labels=c("M.V","A.L1","A.N","L2","L3","L4","In","L5","L6","WM"))+theme(axis.text.x=element_text(size=8))
   return(p)
 })
 
@@ -177,8 +170,6 @@ df3 = left_join(df1, df2)
 
 if(results_set=="seurat-pc30") marginMax=50
 if(results_set=="smoothed-k9-1663") marginMax=80
-if(results_set=="custom-cluster") marginMax=50
-
 dp <- ggplot(df3, aes(x=query_cluster, y=ref_cluster, 
                 size=n_DEG_common, color=prop_DEG_common,
                 shape=n_DEG_common<10))+
@@ -195,7 +186,6 @@ dp <- ggplot(df3, aes(x=query_cluster, y=ref_cluster,
                         plot.title.position = "plot")
 
 if(results_set=="seurat-pc30") dp <- dp+scale_x_discrete(labels=c("Micro/\nVasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo"))
-if(results_set=="custom-cluster") dp <- dp+scale_x_discrete(labels=c("Micro/\nVasc","Astro\n(L1)","Astro\n(Nrn)","L2","L3","L4","Inhb","L5","L6","WM"))
 
 # plot dotplot of uniquely L-R genes
 cond_sex = c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M")
@@ -211,12 +201,6 @@ if(results_set=="seurat-pc30") {
   spe_pseudo$cluster = spe_pseudo$seurat_label
   load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo-dotplot_dx-sex-seurat-pc30.Rdata")
   spe_summ$cluster = factor(spe_summ$seurat_label, levels=names(comp_names))
-}
-if(results_set=="custom-cluster") {
-  load("processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo_sample-custom-cluster_norm-filt.Rdata")
-  spe_pseudo$cluster = spe_pseudo$custom_cluster
-  load("processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo-dotplot_dx-sex-custom-cluster.Rdata")
-  spe_summ$cluster = factor(spe_summ$custom_cluster, levels=names(comp_names))
 }
 
 spe_summ$sample_id = factor(paste(spe_summ$condition, spe_summ$sex, spe_summ$cluster),

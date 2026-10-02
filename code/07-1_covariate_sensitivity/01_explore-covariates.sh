@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=explore_custom-cluster_with-cluster
+#SBATCH --job-name=explore_smoothed_with-cluster
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07-1_covariate_sensitivity/logs/%x_%j.log
 
 echo "**** Job starts ****"

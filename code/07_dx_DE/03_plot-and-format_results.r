@@ -9,24 +9,16 @@ suppressPackageStartupMessages({
 set.seed(123)
 source("code/07_dx_DE/custom_functions.r")
 cpList = readRDS("plots/colorPalettes.rds")
-fill.palette = c('Micro.Vasc'="#911223", 'Astro.L1'="#cfa45c", 'Astro.Nrn'= "#F5D29E", 
-                 'L2'= "#5D9940", 'L3'= "#5095CD",'L4'= "#c2cfcf",'Inhb'= "#9377AC", 
-                 'L5'= "#ddc94e", 'L6'= "#E45C5F", 'WM'= "#D1C4B0")
 
 #load("processed-data/06_pseudobulk/PRECAST_smoothed/spe_n119_pseudo_sample-smoothed-n1663-k9_norm-filt.Rdata")
 #results_set = "smoothed-k9-1663"
 #comp_names = c("L1","L2","L3dot4","L5","L6","WM")
 #names(comp_names) = c("L1","L2","L3.4","L5","L6","WM")
 
-#load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
-#results_set = "seurat-pc30"
-#comp_names = c("MicrodotVasc","Astro","L2dot3","L4","Inhb","L5","L6","Oligo")
-#names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")
-
-load("processed-data/06_pseudobulk/custom_cluster/spe_n119_pseudo_sample-custom-cluster_norm-filt.Rdata")
-results_set = "custom-cluster"
-comp_names = c("MicrodotVasc","AstrodotL1","AstrodotNrn","L2","L3","L4","Inhb","L5","L6","WM")
-names(comp_names) = c("Micro.Vasc","Astro.L1","Astro.Nrn","L2","L3","L4","Inhb","L5","L6","WM")
+load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
+results_set = "seurat-pc30"
+comp_names = c("MicrodotVasc","Astro","L2dot3","L4","Inhb","L5","L6","Oligo")
+names(comp_names) = c("Micro.Vasc","Astro","L2.3","L4","Inhb","L5","L6","Oligo")
 
 ## layer adjusted
 results <- readRDS(paste0("processed-data/07_dx_DE/lmFit-voom_layer-adjusted_", results_set, 

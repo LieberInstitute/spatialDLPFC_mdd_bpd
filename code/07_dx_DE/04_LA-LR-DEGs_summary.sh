@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=3G
-#SBATCH --job-name=plot_dx-sex-DEGs_custom-cluster_pc3-age-nspots
+#SBATCH --job-name=plot_dx-sex-DEGs_smoothed_pc3-age-nspots
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/07_dx_DE/logs/%x_%j.log
 
 echo "**** Job starts ****"
