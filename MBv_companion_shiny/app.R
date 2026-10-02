@@ -29,7 +29,7 @@ ui <- page_navbar(title = "MBv Pseudobulk Companion App",
                           card(
                             layout_columns(
                               includeMarkdown(landingpage),
-                              img(src="https://github.com/LieberInstitute/Posit_Connect_shiny_apps/blob/devel/dlpfc/DLPFC_MBv_companion/code/www/graphical_abstract-1.png?raw=TRUE", height=633, width=550),
+                              img(src="https://github.com/LieberInstitute/Posit_Connect_shiny_apps/blob/devel/dlpfc/DLPFC_MBv_companion/code/www/landing-page.png?raw=TRUE", height=633, width=550),
                               gap = 50
                             )
                           )
