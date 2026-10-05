@@ -1,7 +1,7 @@
 # spatialDLPFC_mdd_bpd
 
 
-![Experimental Overview](./images/graphical_abstract.png)  
+![Experimental Overview](./images/landing-page.png)  
 
 ## Study Design  
 
