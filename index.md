@@ -26,8 +26,7 @@ software labeled by emojis:
 
 ## Data Access
 Public [globus endpoint](https://research.libd.org/globus/) to access R objects associate with apps for this project.  
-SpaceRanger processed data outputs, can be accessed via Gene Expression Omnibus (GEO) under accessions [GSE333974](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE333974). 
-Zenodo Archive for this project can be found at [link](link). Project data was also uploaded to the National Institute of Mental Health Data Archive (NDA) and can be found at [10.15154/m7k5-3z24](https://dx.doi.org/10.15154/m7k5-3z24).
+Image and SpaceRanger output files can be accessed via Gene Expression Omnibus (GEO) under accession number [GSE333974](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE333974). Zenodo Archive for this project can be found at [link](link). Project data was also uploaded to the National Institute of Mental Health Data Archive (NDA) and can be found at [10.15154/m7k5-3z24](https://dx.doi.org/10.15154/m7k5-3z24).
 
 
 ## Contact
