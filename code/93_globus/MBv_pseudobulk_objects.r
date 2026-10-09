@@ -30,7 +30,7 @@ colData(spe_pseudo) <- colData(spe_pseudo)[,c("sample_id", "brnum", "MBv_sample"
 ## round age to tenths for privacy
 colData(spe_pseudo)$age = signif(colData(spe_pseudo)$age, 3)
 
-saveRDS(spe_pseudo, "processed-data/16_globus/MBv_pseudobulk_domain-sp.rds")
+saveRDS(spe_pseudo, "processed-data/93_globus/MBv_pseudobulk_domain-sp.rds")
 
 
 # domain-ct next
@@ -57,7 +57,7 @@ colData(spe_pseudo) <- colData(spe_pseudo)[,c("sample_id", "brnum", "MBv_sample"
 ## round age to tenths for privacy
 colData(spe_pseudo)$age = signif(colData(spe_pseudo)$age, 3)
 
-saveRDS(spe_pseudo, "processed-data/16_globus/MBv_pseudobulk_domain-ct.rds")
+saveRDS(spe_pseudo, "processed-data/93_globus/MBv_pseudobulk_domain-ct.rds")
 
 
 # domain-ct for eQTL next
@@ -84,7 +84,7 @@ colData(spe_pseudo) <- colData(spe_pseudo)[,c("sample_id", "brnum", "MBv_sample"
 ## round age to tenths for privacy
 colData(spe_pseudo)$age = signif(colData(spe_pseudo)$age, 3)
 
-saveRDS(spe_pseudo, "processed-data/16_globus/MBv_pseudobulk_domain-ct-eQTL.rds")
+saveRDS(spe_pseudo, "processed-data/93_globus/MBv_pseudobulk_domain-ct-eQTL.rds")
 
 
 cat("\n\nReproducibility information:\n")

@@ -73,20 +73,20 @@ colData(spe)$SCENIC_n109 = !spe$brnum %in% npas4.outliers
 rownames(spatialCoords(spe)) <- colnames(spe)
 
 # write files
-#write.csv(spatialCoords(spe), "processed-data/16_globus/MBv_n119_spatial-coords.csv", row.names=T)
-##write.csv(rowData(spe), "processed-data/16_globus/MBv_n119_features.csv", row.names=T)
-#write.csv(colData(spe), "processed-data/16_globus/MBv_n119_observations.csv", row.names=T)
+#write.csv(spatialCoords(spe), "processed-data/93_globus/MBv_n119_spatial-coords.csv", row.names=T)
+##write.csv(rowData(spe), "processed-data/93_globus/MBv_n119_features.csv", row.names=T)
+#write.csv(colData(spe), "processed-data/93_globus/MBv_n119_observations.csv", row.names=T)
 
 #Sys.time()
 #dgc_matrix <- as(counts(spe), "dgCMatrix")
-#writeMM(dgc_matrix, file = "processed-data/16_globus/MBv_n119_raw-counts.mtx")
+#writeMM(dgc_matrix, file = "processed-data/93_globus/MBv_n119_raw-counts.mtx")
 #cat("MM saved")
 
 # subset to qc filtered object then re-calculate nspots detected per gene since this is what we used to find the 28,965 genes moving forward
 spe = spe[,spe$remove_spots==FALSE]
 dim(spe)
 rowData(spe)$n_spots = rowSums(counts(spe)>0)
-write.csv(rowData(spe), "processed-data/16_globus/MBv_n119_features.csv", row.names=T)
+write.csv(rowData(spe), "processed-data/93_globus/MBv_n119_features.csv", row.names=T)
 
 ## Reproducibility information
 cat("\n\nReproducibility information:\n")

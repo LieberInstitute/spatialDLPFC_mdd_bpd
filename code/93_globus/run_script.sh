@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --mem=50G
 #SBATCH --job-name=fix-features
-#SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/16_globus/logs/%x_%j.log
+#SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/93_globus/logs/%x_%j.log
 
 echo "**** Job starts ****"
 date
@@ -16,7 +16,7 @@ echo "n Tasks: ${SLURM_NTASKS}"
 
 module load conda_R/4.4.x
 module list
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/16_globus/MBv_spot-level_objects.r
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/93_globus/MBv_spot-level_objects.r
 
 echo "**** Job ends ****"
 date
