@@ -24,9 +24,9 @@ import glob
 
 
 this_sample = sys.argv[1:]
-#with open("/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/11_samui/sample_list.txt", "r", encoding="utf-8") as f:
+#with open("/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/91_samui/sample_list.txt", "r", encoding="utf-8") as f:
 #    lines = [line.rstrip("\r\n") for line in f.readlines()]
-#file = open("/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/11_samui/sample_list.txt", "r")
+#file = open("/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/91_samui/sample_list.txt", "r")
 #this_sample = file.readlines()
 #this_sample = lines[1]
 this_sample = ''.join(this_sample)
@@ -37,7 +37,7 @@ spot_diameter_m = 55e-6 # 5-micrometer diameter for Visium spot
 ################################################################################
 #   Gather gene-expression data into a DataFrame to later as a feature
 ################################################################################
-spg_path = here("processed-data", "11_samui", "01-spe_n24_example-samples.h5ad")
+spg_path = here("processed-data", "91_samui", "01-spe_n24_example-samples.h5ad")
 spg = sc.read(spg_path)
 
 unique_sample_ids = spg.obs['sample_id'].unique
@@ -48,7 +48,7 @@ spgP = spg[spg.obs['brnum'] == this_sample, :]
 #capture_id=spgP.obs['capture_id'].unique()[0]
 sample_id=spgP.obs['sample_id'].unique()[0]
 
-samui_dir = Path(here('processed-data', '11_samui', f"{sample_id}"))
+samui_dir = Path(here('processed-data', '91_samui', f"{sample_id}"))
 samui_dir.mkdir(parents = True, exist_ok = True)
 json_path = Path(here("processed-data", "01_spaceranger", sample_id, "outs", "spatial", "scalefactors_json.json"))
 #   Read in the spaceranger JSON to calculate meters per pixel for

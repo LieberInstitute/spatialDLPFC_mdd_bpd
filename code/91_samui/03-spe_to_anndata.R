@@ -13,7 +13,7 @@ library(dplyr)
 #  "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/publication/spe_n24_example-samples.rds"
 #  )
 
-spe_path= "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/publication/spe_n24_example-samples.rds"
+spe_path= "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/91_samui/spe_n24_example-samples.rds"
 spe =readRDS(spe_path)
 coords <- DataFrame(spatialCoords(spe))
 colData(spe) <- cbind(colData(spe), coords)
@@ -39,7 +39,7 @@ colData(spe) <- cbind(colData(spe), coords)
 #spe$neun_pos <- ifelse(spe$spg_PNeuN > 0.05 & spe$spg_PNeuN < 0.3,TRUE, FALSE)
 #spe$vasc_pos <- ifelse(spe$spg_PClaudin5 > 0.05 & spe$spg_PClaudin5 < 0.20,TRUE, FALSE)
 
-spe_out <- here("processed-data", "11_samui", "01-spe_n24_example-samples.h5ad")
+spe_out <- here("processed-data", "91_samui", "01-spe_n24_example-samples.h5ad")
 
 write_anndata <- function(sce, out_path) {
   invisible(
@@ -76,6 +76,6 @@ session_info()
 brnums <- unique(colData(spe)$brnum)
 sample_ids <- unique(colData(spe)$sample_id)
 sample_ids <- as.character(sample_ids)
-writeLines(brnums, con = '/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/11_samui/sample_list.txt')
-writeLines(sample_ids, con = '/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/12_samui/sample_ids-visium.txt')
+writeLines(brnums, con = '/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/91_samui/sample_list.txt')
+writeLines(sample_ids, con = '/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/91_samui/sample_ids-visium.txt')
 

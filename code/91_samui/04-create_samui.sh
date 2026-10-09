@@ -16,13 +16,13 @@ echo "Job name: ${SLURM_JOB_NAME}"
 echo "Hostname: ${SLURM_NODENAME}"
 echo "Task id: ${SLURM_ARRAY_TASK_ID}"
 
-donor=$(awk "NR==${SLURM_ARRAY_TASK_ID}" /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/11_samui/sample_list.txt)
+donor=$(awk "NR==${SLURM_ARRAY_TASK_ID}" /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/91_samui/sample_list.txt)
 echo "Processing sample ${donor}"
 date
 
 
 module load samui/1.0.0-next.45
-python 02-create_samui.py $donor
+python 04-create_samui.py $donor
 
 echo "**** Job ends ****"
 date

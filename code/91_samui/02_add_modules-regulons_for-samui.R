@@ -3,7 +3,7 @@ suppressPackageStartupMessages({
 	library(SpatialExperiment)
 })
 
-spe <- readRDS("processed-data/publication/spe_n24_example-samples.rds")
+spe <- readRDS("processed-data/91_samui/spe_n24_example-samples.rds")
 
 # aucell for modules
 aucell = read.csv("processed-data/09_DEG_GRN/spe-n119_13162-no-lowUMI_modules-DEG-subset-refined_AUCell.csv", row.names=1)
@@ -33,7 +33,7 @@ aucell_reg = aucell[rownames(aucell) %in% colnames(spe), reg_subset]
 
 reducedDim(spe, "AUCell_regulon") <- aucell_reg[colnames(spe),]
 
-saveRDS(spe, "processed-data/publication/spe_n24_example-samples.rds")
+saveRDS(spe, "processed-data/91_samui/spe_n24_example-samples.rds")
 
 
 ## Reproducibility information
