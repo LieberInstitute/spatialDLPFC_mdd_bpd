@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --mem=200G
-#SBATCH --job-name=write-raw-matrix
-#SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/16_globus/%x_%j.log
+#SBATCH --mem=50G
+#SBATCH --job-name=fix-features
+#SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/16_globus/logs/%x_%j.log
 
 echo "**** Job starts ****"
 date
