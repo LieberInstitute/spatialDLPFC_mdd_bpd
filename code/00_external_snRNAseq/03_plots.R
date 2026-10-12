@@ -1,9 +1,9 @@
 library(dplyr)
 library(ggplot2)
 
-sn.bd = read.csv("processed-data/00_external_snRNAseq/SZBDMultiseq_control-BD_filtered_observations.csv") %>%
+sn.bd = read.csv("processed-data/00_external_snRNAseq/SZBDMultiseq_control-BD_filtered_observations.csv.gz") %>%
 	filter(individualID!="BD24")
-sn.mdd = read.csv("processed-data/00_external_snRNAseq/Maitra2023_control-MDD_filtered_observations.csv")
+sn.mdd = read.csv("processed-data/00_external_snRNAseq/Maitra2023_control-MDD_filtered_observations.csv.gz")
 
 # detected genes
 ggplot(sn.bd, aes(x=nFeature_RNA, color=individualID))+
