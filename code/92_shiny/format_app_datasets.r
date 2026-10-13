@@ -63,8 +63,8 @@ for(results_set in c("smoothed-k9-1663","seurat-pc30")) {
   
   print(head(colData(spe_pseudo)))
   
-  saveRDS(spe_pseudo, paste0("processed-data/publication/iSEE_pseudobulk-spe_donor-", annot_name, ".rds"))
-  cat("\nSaved rds to:",paste0("processed-data/publication/iSEE_pseudobulk-spe_donor-", annot_name, ".rds"),"\n")
+  saveRDS(spe_pseudo, paste0("processed-data/92_shiny/shiny_pseudobulk-spe_donor-", annot_name, ".rds"))
+  cat("\nSaved rds to:",paste0("processed-data/92_shiny/shiny_pseudobulk-spe_donor-", annot_name, ".rds"),"\n")
 }
 
 
