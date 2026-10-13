@@ -833,6 +833,7 @@ write_final_workbook <- function(sheets, out_file) {
     openxlsx::setColWidths(workbook, sheet, cols = seq_along(dt), widths = excel_widths(dt))
     apply_excel_number_formats(workbook, sheet, dt)
     write_coloc_exploratory_na(workbook, sheet, dt)
+    write_eqtl_summary_na(workbook, sheet, dt)
   }
   openxlsx::saveWorkbook(workbook, out_file, overwrite = TRUE)
   remove_dangling_openxlsx_relationships(out_file)
