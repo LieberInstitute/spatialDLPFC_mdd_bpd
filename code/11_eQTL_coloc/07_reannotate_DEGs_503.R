@@ -696,7 +696,7 @@ set_context_order(intersections_public, extra_order = c("eQTL_type", "context_ra
 
 coloc_workbook <- file.path(source_final_dir, "coloc_results.xlsx")
 if (!requireNamespace("openxlsx", quietly = TRUE)) fail("openxlsx is required to read the existing coloc workbook")
-coloc_pass <- as.data.table(openxlsx::read.xlsx(coloc_workbook, sheet = "coloc_pass", na.strings = ""))
+coloc_pass <- as.data.table(openxlsx::read.xlsx(coloc_workbook, sheet = "coloc_pass", na.strings = c("", "N/A")))
 coloc_summary <- as.data.table(openxlsx::read.xlsx(coloc_workbook, sheet = "coloc_summary", na.strings = ""))
 assert_columns(coloc_pass, c("gene_id", "DEG", "MDD_DEG", "BD_DEG"), "coloc_pass")
 old_coloc_deg <- copy(coloc_pass$DEG)
@@ -832,6 +832,7 @@ write_final_workbook <- function(sheets, out_file) {
     openxlsx::freezePane(workbook, sheet, firstRow = TRUE)
     openxlsx::setColWidths(workbook, sheet, cols = seq_along(dt), widths = excel_widths(dt))
     apply_excel_number_formats(workbook, sheet, dt)
+    write_coloc_exploratory_na(workbook, sheet, dt)
   }
   openxlsx::saveWorkbook(workbook, out_file, overwrite = TRUE)
   remove_dangling_openxlsx_relationships(out_file)

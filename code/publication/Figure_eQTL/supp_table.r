@@ -1,6 +1,6 @@
 library(dplyr)
 
-coloc = readxl::read_excel("processed-data/11_eQTL_coloc/seurat/final/coloc_results.xlsx", sheet = "coloc_pass") %>%
+coloc = readxl::read_excel("processed-data/11_eQTL_coloc/seurat/final/coloc_results.xlsx", sheet = "coloc_pass", na = c("", "N/A")) %>%
   mutate(disorder= factor(disorder, levels=c("MDD","BD","SCZD")))
 
 

@@ -248,6 +248,7 @@ write_final_workbook <- function(sheets, out_file, apply_number_formats = FALSE)
     if (isTRUE(apply_number_formats)) {
       apply_excel_number_formats(wb, sheet = sheet, dt = dt)
     }
+    write_coloc_exploratory_na(wb, sheet, dt)
   }
 
   openxlsx::saveWorkbook(wb, out_file, overwrite = TRUE)
