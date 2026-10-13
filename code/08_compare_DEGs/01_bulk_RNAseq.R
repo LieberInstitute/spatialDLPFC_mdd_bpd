@@ -92,13 +92,15 @@ resList <- lapply(c("smoothed-k9-1663","seurat-pc30"), function(results) {
 
 names(resList) <- c("domain.sp","domain.ct")
 
-plot.df = bind_rows(filter(resList[[1]]$data, gene_name_mbv %in% ftest$V1),
-		filter(resList[[2]]$data, gene_name_mbv %in% ftest$V1)) %>%
+plot.df = #bind_rows(filter(resList[[1]]$data, gene_name_mbv %in% ftest$V1),
+	#	filter(resList[[2]]$data, gene_name_mbv %in% ftest$V1)) %>%
+	bind_rows(resList[[1]]$data, resList[[2]]$data) %>%
 	mutate(MBv_annot= factor(MBv_annot, levels=c("smoothed-k9-1663","seurat-pc30"), labels=c("domain-SP","domain-CT")))
 
 cor.df = data.frame(group= rep(names(resList[[1]]$logFC_correlations$corr_Ftest), 2),
 	MBv_annot = c(rep("domain-SP", 4), rep("domain-CT", 4)),
-	rho = c(unlist(resList[[1]]$logFC_correlations$corr_Ftest), unlist(resList[[2]]$logFC_correlations$corr_Ftest))
+#	rho = c(unlist(resList[[1]]$logFC_correlations$corr_Ftest), unlist(resList[[2]]$logFC_correlations$corr_Ftest))
+	rho = c(unlist(resList[[1]]$logFC_correlations$corr_all), unlist(resList[[2]]$logFC_correlations$corr_all))
 )
 cor.df$MBv_coef = factor(cor.df$group, levels=names(resList[[1]]$logFC_correlations$corr_Ftest), labels=c("F_NTC.MDD","M_NTC.MDD","F_NTC.MDD","M_NTC.MDD"))
 cor.df$bulk_source = factor(cor.df$group, levels=names(resList[[1]]$logFC_correlations$corr_Ftest), labels=c("Jaffe 2022", "Jaffe 2022", "Girgenti 2021", "Girgenti 2021"))
@@ -106,9 +108,9 @@ cor.df$bulk_source = factor(cor.df$group, levels=names(resList[[1]]$logFC_correl
 p1 <- ggplot(plot.df, aes(x=logFC_mbv, y=logFC_bulk))+
 	geom_point(size=.3)+
 	geom_smooth(method="lm", se=F, color="red3")+
-	geom_text(data=cor.df, aes(x=-2, y=1, label=paste0("rho: ", round(rho, 3))), hjust=0, size=3, color="red3")+
-	facet_grid(rows=vars(bulk_source), cols=vars(paste(MBv_coef, MBv_annot)), scales="free")+
-#	coord_cartesian(ylim=c(-3,3), xlim=c(-3,3))+
+	geom_text(data=cor.df, aes(x=-2.5, y=2, label=paste0("rho: ", round(rho, 3))), hjust=0, size=3, color="red3")+
+	facet_grid(rows=vars(bulk_source), cols=vars(paste(MBv_coef, MBv_annot)))+
+	coord_cartesian(ylim=c(-3,3), xlim=c(-3,3))+
 	ggtitle("Whole-tissue model DE compared to bulk MDD")+
 	theme_bw()+theme(panel.grid.minor=element_blank(), text=element_text(size=10))
 
@@ -153,13 +155,15 @@ resList2 <- lapply(c("smoothed-k9-1663","seurat-pc30"), function(results) {
 })
 names(resList2) <- c("domain.sp","domain.ct")
 
-plot.df2 = bind_rows(filter(resList2[[1]]$data, gene_name_mbv %in% ftest$V1),
-                filter(resList2[[2]]$data, gene_name_mbv %in% ftest$V1)) %>%
+plot.df2 = #bind_rows(filter(resList2[[1]]$data, gene_name_mbv %in% ftest$V1),
+        #        filter(resList2[[2]]$data, gene_name_mbv %in% ftest$V1)) %>%
+	bind_rows(resList2[[1]]$data, resList2[[2]]$data) %>%
         mutate(MBv_annot= factor(MBv_annot, levels=c("smoothed-k9-1663","seurat-pc30"), labels=c("domain-SP","domain-CT")))
 
 cor.df2 = data.frame(group= rep(names(resList2[[1]]$logFC_correlations$corr_Ftest), 2),
         MBv_annot = c(rep("domain-SP", 2), rep("domain-CT", 2)),
-        rho = c(unlist(resList2[[1]]$logFC_correlations$corr_Ftest), unlist(resList2[[2]]$logFC_correlations$corr_Ftest))
+#        rho = c(unlist(resList2[[1]]$logFC_correlations$corr_Ftest), unlist(resList2[[2]]$logFC_correlations$corr_Ftest))
+        rho = c(unlist(resList2[[1]]$logFC_correlations$corr_all), unlist(resList2[[2]]$logFC_correlations$corr_all))
 )
 cor.df2$MBv_coef = factor(c("F_NTC.BPD","M_NTC.BPD","F_NTC.BPD","M_NTC.BPD"), levels=c("F_NTC.BPD","M_NTC.BPD"))
 cor.df2$bulk_source = "Xia 2024"
@@ -167,13 +171,13 @@ cor.df2$bulk_source = "Xia 2024"
 p2 <- ggplot(plot.df2, aes(x=logFC_mbv, y=logFC_bulk))+
         geom_point(size=.3)+
         geom_smooth(method="lm", se=F, color="red3")+
-        geom_text(data=cor.df2, aes(x=-2, y=1, label=paste0("rho: ", round(rho, 3))), hjust=0, size=3, color="red3")+
-        facet_grid(rows=vars(bulk_source), cols=vars(paste(MBv_coef, MBv_annot)), scales="free")+
-        #coord_cartesian(ylim=c(-3,3), xlim=c(-3,3))+
+        geom_text(data=cor.df2, aes(x=-2.5, y=1, label=paste0("rho: ", round(rho, 3))), hjust=0, size=3, color="red3")+
+        facet_grid(rows=vars(bulk_source), cols=vars(paste(MBv_coef, MBv_annot)))+#, scales="free")+
+        coord_cartesian(ylim=c(-1.5,1.5), xlim=c(-3,3))+
         ggtitle("Whole-tissue model DE compared to bulk BD")+
         theme_bw()+theme(panel.grid.minor=element_blank(), text=element_text(size=10))
 
-ggsave(file="plots/08_compare_DEGs/bulk-RNAseq_whole-tissue-model.png",
+ggsave(file="plots/08_compare_DEGs/bulk-RNAseq_whole-tissue-model_all-genes.png",
 	gridExtra::grid.arrange(p1, p2, layout_matrix=matrix(c(1,1,1,2,2), ncol=1)),
 	width=7, height=6, bg="white")
 
