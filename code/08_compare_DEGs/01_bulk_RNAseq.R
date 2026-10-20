@@ -1,5 +1,8 @@
-library(dplyr)
-library(ggplot2)
+setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
+suppressPackageStartupMessages({
+	library(dplyr)
+	library(ggplot2)
+})
 
 ### load in F-test sig genes to test subset
 ftest = read.table("raw-data/SCENIC_aux/tf_lists/MBv_PRECAST-Seurat_F-test-adjp-05.txt")
@@ -92,15 +95,15 @@ resList <- lapply(c("smoothed-k9-1663","seurat-pc30"), function(results) {
 
 names(resList) <- c("domain.sp","domain.ct")
 
-plot.df = #bind_rows(filter(resList[[1]]$data, gene_name_mbv %in% ftest$V1),
-	#	filter(resList[[2]]$data, gene_name_mbv %in% ftest$V1)) %>%
-	bind_rows(resList[[1]]$data, resList[[2]]$data) %>%
+plot.df = bind_rows(filter(resList[[1]]$data, gene_name_mbv %in% ftest$V1),
+		filter(resList[[2]]$data, gene_name_mbv %in% ftest$V1)) %>%
+	#bind_rows(resList[[1]]$data, resList[[2]]$data) %>%
 	mutate(MBv_annot= factor(MBv_annot, levels=c("smoothed-k9-1663","seurat-pc30"), labels=c("domain-SP","domain-CT")))
 
 cor.df = data.frame(group= rep(names(resList[[1]]$logFC_correlations$corr_Ftest), 2),
 	MBv_annot = c(rep("domain-SP", 4), rep("domain-CT", 4)),
-#	rho = c(unlist(resList[[1]]$logFC_correlations$corr_Ftest), unlist(resList[[2]]$logFC_correlations$corr_Ftest))
-	rho = c(unlist(resList[[1]]$logFC_correlations$corr_all), unlist(resList[[2]]$logFC_correlations$corr_all))
+	rho = c(unlist(resList[[1]]$logFC_correlations$corr_Ftest), unlist(resList[[2]]$logFC_correlations$corr_Ftest))
+#	rho = c(unlist(resList[[1]]$logFC_correlations$corr_all), unlist(resList[[2]]$logFC_correlations$corr_all))
 )
 cor.df$MBv_coef = factor(cor.df$group, levels=names(resList[[1]]$logFC_correlations$corr_Ftest), labels=c("F_NTC.MDD","M_NTC.MDD","F_NTC.MDD","M_NTC.MDD"))
 cor.df$bulk_source = factor(cor.df$group, levels=names(resList[[1]]$logFC_correlations$corr_Ftest), labels=c("Jaffe 2022", "Jaffe 2022", "Girgenti 2021", "Girgenti 2021"))
@@ -155,15 +158,15 @@ resList2 <- lapply(c("smoothed-k9-1663","seurat-pc30"), function(results) {
 })
 names(resList2) <- c("domain.sp","domain.ct")
 
-plot.df2 = #bind_rows(filter(resList2[[1]]$data, gene_name_mbv %in% ftest$V1),
-        #        filter(resList2[[2]]$data, gene_name_mbv %in% ftest$V1)) %>%
-	bind_rows(resList2[[1]]$data, resList2[[2]]$data) %>%
+plot.df2 = bind_rows(filter(resList2[[1]]$data, gene_name_mbv %in% ftest$V1),
+                filter(resList2[[2]]$data, gene_name_mbv %in% ftest$V1)) %>%
+#	bind_rows(resList2[[1]]$data, resList2[[2]]$data) %>%
         mutate(MBv_annot= factor(MBv_annot, levels=c("smoothed-k9-1663","seurat-pc30"), labels=c("domain-SP","domain-CT")))
 
 cor.df2 = data.frame(group= rep(names(resList2[[1]]$logFC_correlations$corr_Ftest), 2),
         MBv_annot = c(rep("domain-SP", 2), rep("domain-CT", 2)),
-#        rho = c(unlist(resList2[[1]]$logFC_correlations$corr_Ftest), unlist(resList2[[2]]$logFC_correlations$corr_Ftest))
-        rho = c(unlist(resList2[[1]]$logFC_correlations$corr_all), unlist(resList2[[2]]$logFC_correlations$corr_all))
+        rho = c(unlist(resList2[[1]]$logFC_correlations$corr_Ftest), unlist(resList2[[2]]$logFC_correlations$corr_Ftest))
+#        rho = c(unlist(resList2[[1]]$logFC_correlations$corr_all), unlist(resList2[[2]]$logFC_correlations$corr_all))
 )
 cor.df2$MBv_coef = factor(c("F_NTC.BPD","M_NTC.BPD","F_NTC.BPD","M_NTC.BPD"), levels=c("F_NTC.BPD","M_NTC.BPD"))
 cor.df2$bulk_source = "Xia 2024"
@@ -177,7 +180,128 @@ p2 <- ggplot(plot.df2, aes(x=logFC_mbv, y=logFC_bulk))+
         ggtitle("Whole-tissue model DE compared to bulk BD")+
         theme_bw()+theme(panel.grid.minor=element_blank(), text=element_text(size=10))
 
-ggsave(file="plots/08_compare_DEGs/bulk-RNAseq_whole-tissue-model_all-genes.png",
+ggsave(file="plots/08_compare_DEGs/bulk-RNAseq_whole-tissue-model_F-sig-genes.png",
 	gridExtra::grid.arrange(p1, p2, layout_matrix=matrix(c(1,1,1,2,2), ncol=1)),
 	width=7, height=6, bg="white")
+cat("\nSex-pooled plot saved to: plots/08_compare_DEGs/bulk-RNAseq_whole-tissue-model_F-sig-genes.png\n")
 
+
+### sex-specific ###
+gg21_f = read.csv("raw-data/bulk_DE_results/Girgenti-2021_ST10-females.csv")
+colnames(gg21_f)[1:2] = c("gene_id","gene_name")
+colnames(gg21_f)[9:10] = c("logFC","adj.P.Val")
+nrow(gg21_f)
+
+gg21_m = read.csv("raw-data/bulk_DE_results/Girgenti-2021_ST10-males.csv")
+colnames(gg21_m)[1:2] = c("gene_id","gene_name")
+colnames(gg21_m)[9:10] = c("logFC","adj.P.Val")
+nrow(gg21_m)
+
+xia24_f = xia24[,c("gene_id","gene_name","FBD.logFC","FBD.fdr")]
+colnames(xia24_f)[3:4] = c("logFC","adj.P.Val")
+
+xia24_m	= xia24[,c("gene_id","gene_name","MBD.logFC","MBD.fdr")]
+colnames(xia24_m)[3:4] = c("logFC","adj.P.Val")
+
+resList3 <- lapply(c("smoothed-k9-1663","seurat-pc30"), function(results) {
+        wt.mbv = read.csv(paste0("processed-data/07_dx_DE/layer-adjusted-pc3-age-nspots_", results, "_rev-gene-input_moderated-t-test.csv"))
+
+        mbv.gg21_f = inner_join(filter(wt.mbv, coef=="F_NTC.MDD"),
+                gg21_f[,c("gene_id","gene_name","logFC","adj.P.Val")],
+                by="gene_id", suffix=c("_mbv", "_bulk")) %>%
+                mutate("MBv_coef"= "F_NTC.MDD", "MBv_annot"=results, bulk_source="Girgenti 2021")
+        tmp = filter(mbv.gg21_f, gene_name_mbv %in% ftest$V1)
+        corList = list("corr_all" = list("gg21_f"=cor(mbv.gg21_f$logFC_mbv, mbv.gg21_f$logFC_bulk)),
+                "corr_Ftest" = list("gg21_f"= cor(tmp$logFC_mbv, tmp$logFC_bulk))
+                )
+
+        ### males next
+        mbv.gg21_m = inner_join(filter(wt.mbv, coef=="M_NTC.MDD"),
+                gg21_m[,c("gene_id","gene_name","logFC","adj.P.Val")],
+                by="gene_id", suffix=c("_mbv", "_bulk")) %>%
+                mutate("MBv_coef"= "M_NTC.MDD", "MBv_annot"=results, bulk_source="Girgenti 2021")
+
+        corList[["corr_all"]][["gg21_m"]] <- cor(mbv.gg21_m$logFC_mbv, mbv.gg21_m$logFC_bulk)
+
+        tmp = filter(mbv.gg21_m, gene_name_mbv %in% ftest$V1)
+        corList[["corr_Ftest"]][["gg21_m"]] <- cor(tmp$logFC_mbv, tmp$logFC_bulk)
+
+	### BD females next
+        mbv_f = inner_join(filter(wt.mbv, coef=="F_NTC.BPD"),
+                xia24_f[,c("gene_id","gene_name","logFC","adj.P.Val")],
+                by="gene_id", suffix=c("_mbv", "_bulk")) %>%
+                mutate("MBv_coef"= "F_NTC.BPD", "MBv_annot"=results, bulk_source="Xia 2024")
+
+	corList[["corr_all"]][["xia24_f"]] <- cor(mbv_f$logFC_mbv, mbv_f$logFC_bulk)
+        tmp = filter(mbv_f, gene_name_mbv %in% ftest$V1)
+        corList[["corr_Ftest"]][["xia24_f"]] <- cor(tmp$logFC_mbv, tmp$logFC_bulk)
+
+        ### males next
+        mbv_m = inner_join(filter(wt.mbv, coef=="M_NTC.BPD"),
+                xia24_m[,c("gene_id","gene_name","logFC","adj.P.Val")],
+                by="gene_id", suffix=c("_mbv", "_bulk")) %>%
+                mutate("MBv_coef"= "M_NTC.BPD", "MBv_annot"=results, bulk_source="Xia 2024")
+
+        corList[["corr_all"]][["xia24_m"]] <- cor(mbv_m$logFC_mbv, mbv_m$logFC_bulk)
+
+        tmp = filter(mbv_m, gene_name_mbv %in% ftest$V1)
+        corList[["corr_Ftest"]][["xia24_m"]] <- cor(tmp$logFC_mbv, tmp$logFC_bulk)
+
+
+	### combine
+	tmp = bind_rows(mbv.gg21_f, mbv.gg21_m, mbv_f, mbv_m)
+        tmp$MBv_coef = factor(tmp$MBv_coef, levels=c("F_NTC.MDD","M_NTC.MDD","F_NTC.BPD","M_NTC.BPD"))
+        tmp$bulk_source = factor(tmp$bulk_source, levels=c("Girgenti 2021","Xia 2024"), labels=c("MDD (Girgenti 2021)","BD (Xia 2024)"))
+
+        return(list("data"=tmp, "logFC_correlations"=corList))
+})
+
+names(resList3) <- c("domain.sp","domain.ct")
+
+plot.df3 = bind_rows(filter(resList3[[1]]$data, gene_name_mbv %in% ftest$V1),
+               filter(resList3[[2]]$data, gene_name_mbv %in% ftest$V1)) %>%
+        mutate(MBv_annot= factor(MBv_annot, levels=c("smoothed-k9-1663","seurat-pc30"), labels=c("domain-SP","domain-CT")))
+
+cor.df3 = data.frame(group= rep(names(resList3[[1]]$logFC_correlations$corr_Ftest), 2),
+        MBv_annot = c(rep("domain-SP", 4), rep("domain-CT", 4)),
+	rho = c(unlist(resList3[[1]]$logFC_correlations$corr_Ftest), unlist(resList3[[2]]$logFC_correlations$corr_Ftest))
+)
+cor.df3$MBv_coef = factor(rep(c("F_NTC.MDD","M_NTC.MDD","F_NTC.BPD","M_NTC.BPD"), 2), levels=c("F_NTC.MDD","M_NTC.MDD","F_NTC.BPD","M_NTC.BPD"))
+cor.df3$bulk_source = factor(rep(rep(c("Girgenti 2021", "Xia 2024"), each=2), 2), levels=c("Girgenti 2021", "Xia 2024"),
+	labels=c("MDD (Girgenti 2021)","BD (Xia 2024)"))
+cor.df3$y_pos = ifelse(cor.df3$bulk_source=="MDD (Girgenti 2021)", 2, 1)
+
+plot.df3$facets = factor(paste(plot.df3$MBv_coef, plot.df3$MBv_annot),
+	levels=c(paste(rep(c("F_NTC.MDD","M_NTC.MDD"), 2), rep(c("domain-SP","domain-CT"), each=2)),
+		paste(rep(c("F_NTC.BPD","M_NTC.BPD"), 2), rep(c("domain-SP","domain-CT"), each=2))),
+	labels=rep(paste(rep(c("F","M"), 2), rep(c("domain-SP","domain-CT"), each=2)), 2)
+)
+cor.df3$facets = factor(paste(cor.df3$MBv_coef, cor.df3$MBv_annot),
+        levels=c(paste(rep(c("F_NTC.MDD","M_NTC.MDD"), 2), rep(c("domain-SP","domain-CT"), each=2)),
+                paste(rep(c("F_NTC.BPD","M_NTC.BPD"), 2), rep(c("domain-SP","domain-CT"), each=2))),
+        labels=rep(paste(rep(c("F","M"), 2), rep(c("domain-SP","domain-CT"), each=2)), 2)
+)
+# swap facet levels
+plot.df3$facets = factor(plot.df3$facets, levels=c("F domain-SP", "F domain-CT", "M domain-SP", "M domain-CT"))
+cor.df3$facets = factor(cor.df3$facets, levels=c("F domain-SP", "F domain-CT", "M domain-SP", "M domain-CT"))
+
+p3 <- ggplot(plot.df3, aes(x=logFC_mbv, y=logFC_bulk))+
+        geom_point(size=.3)+
+        geom_smooth(method="lm", se=F, color="red3")+
+        geom_text(data=cor.df3, aes(x=-2.5, y=y_pos, label=paste0("rho: ", round(rho, 3))), hjust=0, size=3, color="red3")+
+        facet_grid(cols=vars(facets), rows=vars(bulk_source), scales="free")+
+        ggtitle("Whole-tissue model DE compared to sex-specific bulk RNA-seq")+
+        theme_bw()+theme(panel.grid.minor=element_blank(), text=element_text(size=10))
+
+ggsave(file="plots/08_compare_DEGs/bulk-RNAseq-sex-stratified_whole-tissue-model_F-sig-genes.png",
+        p3,
+        width=7, height=4.5, bg="white")
+cat("\nSex-specific plot saved to: plots/08_compare_DEGs/bulk-RNAseq-sex-stratified_whole-tissue-model_F-sig-genes.png\n")
+
+
+## Reproducibility information
+cat("\n\nReproducibility information:\n")
+format(Sys.time())
+proc.time()
+options(width = 120)
+sessionInfo()
