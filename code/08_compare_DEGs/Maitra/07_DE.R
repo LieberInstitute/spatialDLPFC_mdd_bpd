@@ -7,7 +7,7 @@ set.seed(123)
 
 load("processed-data/08_compare_DEGs/Maitra/sce_Maitra_pseudo_sample-low-res_norm-filt.Rdata")
 dim(sce_pseudo)
-sce_pseudo$pc3 = reducedDim(sce_pseudo)[,"PC3"]
+sce_pseudo$pc3 = reducedDim(sce_pseudo, "PCA_HVG")[,"PC3"]
 
 ##revised genes, recalculated on filtered samples
 #rowData(sce_pseudo)$high_expr_group_sample2 <- filterByExpr(sce_pseudo, group = sce_pseudo$Sample)

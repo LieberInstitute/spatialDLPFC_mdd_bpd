@@ -103,11 +103,12 @@ filter(sex.res_df, adj.P.Val<.05, gene_id %in% eb_f$gene_id[eb_f$adj.P.Val<.05])
 #volcanos
 tmp = do.call(rbind, lapply(names(comp_names), function(x)
   filter(sex.res_df, cluster==x, adj.P.Val<.05, gene_id %in% eb_f$gene_id[eb_f$adj.P.Val<.05])
-))
+)) %>%
+	mutate(facets=factor(paste(sex, group, sep="_"), levels=c("F_NTC.MDD","M_NTC.MDD")))
 
 p1 <- ggplot(mutate(sex.res_df, facets=factor(paste(sex, group, sep="_"), levels=c("F_NTC.MDD","M_NTC.MDD"))), 
     aes(x=logFC, y=-log10(adj.P.Val)))+
-  geom_point(size=.3)+geom_point(data=filter(tmp, sex=="F"), size=.3, color="red2")+
+  geom_point(size=.3)+geom_point(data=tmp, size=.3, color="red2")+
   facet_grid(rows=vars(cluster), cols=vars(facets))+
   xlim(-ceiling(max(sex.res_df$logFC)), ceiling(max(sex.res_df$logFC)))+ggtitle("Maitra 2023: MDD")+
   theme_bw()
