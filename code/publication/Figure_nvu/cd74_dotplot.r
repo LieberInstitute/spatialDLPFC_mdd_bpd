@@ -48,11 +48,11 @@ p3.2 <- getDetectedBoxplot(rev(plot.genes), spe_summ)+coord_flip()+
 #                        panel.grid.minor=element_blank(), #panel.grid.major.y=element_blank(),
 #                        plot.margin = margin(.2,.0,1.8,0, unit="cm"))
 
-ggsave(file=paste0("plots/publication/Figure_inflamm/",mod_gene,"_dotplot.pdf"), 
+ggsave(file=paste0("plots/publication/Figure_nvu/supp_",mod_gene,"_dotplot.pdf"), 
        arrangeGrob(grobs=list(p3, p3.1), layout_matrix=matrix(c(1,1,1,1,1,1,1,2), ncol=8)),
        height=5.5, width=6.5)
 
-ggsave(file=paste0("plots/publication/Figure_inflamm/",mod_gene,"_prop-detected.pdf"),
+ggsave(file=paste0("plots/publication/Figure_nvu/supp_",mod_gene,"_prop-detected.pdf"),
 	p3.2, 
 	height=2, width=6.5)
 
@@ -76,7 +76,7 @@ p3.3 <- ggplot(tmp, aes(x=gene_name, y=med_prop.spots))+
                         axis.text.x=element_text(angle=90, hjust=1, vjust=.5, size=6),
                         plot.margin = margin(.2,.2,1.5,.2,"cm"))
 
-ggsave(file=paste0("plots/publication/Figure_inflamm/",mod_gene,"_median-prop-detected.pdf"),
+ggsave(file=paste0("plots/publication/Figure_nvu/supp_",mod_gene,"_median-prop-detected.pdf"),
         p3.3,
         height=2, width=6.5)
 

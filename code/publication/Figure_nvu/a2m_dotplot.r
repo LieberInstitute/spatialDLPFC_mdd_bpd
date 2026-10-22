@@ -40,7 +40,7 @@ p3.1 <- getMeanRatioBar(plot.genes, sce_summ)
 #                        panel.grid.minor=element_blank(), #panel.grid.major.y=element_blank(),
 #                        plot.margin = margin(.2,.0,1.8,0, unit="cm"))
 
-ggsave(file=paste0("plots/publication/Figure_ox-stress/",mod_gene,"_dotplot-half.pdf"), 
+ggsave(file=paste0("plots/publication/Figure_nvu/",mod_gene,"_dotplot-half.pdf"), 
        arrangeGrob(grobs=list(p3, p3.1), layout_matrix=matrix(c(1,1,1,1,1,2), ncol=6)),
        height=2.5, width=4)
 
