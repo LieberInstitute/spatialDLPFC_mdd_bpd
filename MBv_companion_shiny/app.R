@@ -20,7 +20,7 @@ myitems = list(
 
 ui <- page_navbar(title = "MBv Pseudobulk Companion App",
                  tabPanel("Study Design",
-                          p("This is a companion app for ", tags$a(href="http://www.google.com", target="_blank", "Thompson et al. 2026"), " that allows users to easily check the expression of their favorite gene across our diagnosis-by-sex groups and domain annotations."),
+                          p("This is a companion app for ", tags$a(href="https://doi.org/10.64898/2026.10.22.761067", target="_blank", "Thompson et al. 2026"), " that allows users to easily check the expression of their favorite gene across our diagnosis-by-sex groups and domain annotations."),
                           tags$ul(
                             tags$li(tags$strong("Study Design", .noWS="outside"), ": Below you will find a quick refresher on our study design that provides helpful context for interpreting gene expression plots."),
                             tags$li("In the ", tags$strong("Pseudobulk Expression Plots", .noWS="outside"), " tab you can view violin plots of our pseudobulked spatial gene expression data. Plot subtitles contain the results of the gene-level omnibus ", tags$em("F", .noWS="outside"), "-test. Diagnosis-by-sex group contrasts are annotated to indicate statistically significant ", tags$em("t", .noWS="outside"), "-test results, where appropriate"),
@@ -47,7 +47,7 @@ ui <- page_navbar(title = "MBv Pseudobulk Companion App",
                               p("Use the bar above to select a gene to plot (e.g. SST). Gene selection is possible for 21,080 genes and includes about 7,000 genes lowly expressed in SRT but highly expressed in snRNAseq from the dlPFC. Only the subset of genes included in DE modeling have statistics available (see 'Pseudobulk Methods Details' tab for more information)."),
                               p("Plots present pseudobulk data, where spot-level RNAseq counts are aggregated for each annotated domain within each donor. Pseudobulk counts were then normalized and transformed (logcount expression, ", tags$em("y", .noWS="outside"), "-axis). Pseudobulk processing occurred separately for the domain", tags$sub("SP", .noWS = "outside"), " and domain", tags$sub("CT", .noWS = "outside"), " annotation strategies."),
                               p("Each point represents a single pseudobulk sample corresponding to each domain identified within each donor. Points are colored based on diagnosis group (DX). Crossbar indicates the mean +/- SD."),
-                              p("For a complete list of statistics for all tested genes please see our ", tags$a(href = "https://www.google.com", target = "_blank", "Supplementary Tables"), ".")
+                              p("For a complete list of statistics for all tested genes please see our ", tags$a(href = "https://www.biorxiv.org/content/10.64898/2026.10.22.761067v1.supplementary-material", target = "_blank", "Supplementary Tables"), ".")
                             ),
                             mainPanel(
                               card(h3("Whole-tissue DE model"),
@@ -63,7 +63,7 @@ ui <- page_navbar(title = "MBv Pseudobulk Companion App",
                           )
                  ),
                  tabPanel("Pseudobulk Methods Details",
-                          p("For a full description of project methods, please see our ", tags$a(href="http://www.google.com", target="_blank", "publication in Cell", .noWS = "outside"), ". Visit the project ", tags$a(href="https://github.com/LieberInstitute/spatialDLPFC_mdd_bpd/tree/devel", target="_blank", "Github"), " for complete documentation of the code used in this analysis."),
+                          p("For a full description of project methods, please see our ", tags$a(href="https://doi.org/10.64898/2026.10.22.761067", target="_blank", "preprint", .noWS = "outside"), ". Visit the project ", tags$a(href="https://github.com/LieberInstitute/spatialDLPFC_mdd_bpd/tree/devel", target="_blank", "Github"), " for complete documentation of the code used in this analysis."),
                           layout_columns(
                             accordion(!!!myitems, id = "acc"),
                             img(src="https://github.com/LieberInstitute/Posit_Connect_shiny_apps/blob/devel/dlpfc/DLPFC_MBv_companion/code/www/pseudobulk-pipeline.png?raw=TRUE", height=616, width=550),
