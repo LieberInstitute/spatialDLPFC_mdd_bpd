@@ -41,6 +41,10 @@ rowData(sce) = rdata
 dim(sce)
 table(colData(sce)[,c("Sex","Condition")])
 
+save(sce, file="processed-data/08_compare_DEGs/Maitra/sce_Maitra_pre-pseudo.Rdata")
+cat("\nFull SCE saved to: processed-data/08_compare_DEGs/Maitra/sce_Maitra_pre-pseudo.Rdata\n")
+stop("Save full sce only")
+
 cat("\nPseudobulk...\n")
 sce_pseudo <- aggregateAcrossCells(sce, ids=colData(sce)[,c("Sample","seurat_low.res")],
 	statistics="sum", use.assay.type="counts")
