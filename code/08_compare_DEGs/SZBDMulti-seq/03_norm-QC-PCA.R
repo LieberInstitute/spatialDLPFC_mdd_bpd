@@ -105,9 +105,9 @@ p4 <- ggplot(cdata, aes(x=condition, y=subsets_ribo_percent))+
   theme_bw()+labs(title="Fraction of RPS|RPL reads per pseudobulked sample", y="subsets_ribo_percent")+
   theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
-ggsave("plots/08_compare_DEGs/SZBD-low-res_unfiltered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
+ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_unfiltered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
         bg="white", width=12, height=12, units="in")
-cat("\nQC plots saved to: plots/08_compare_DEGs/SZBD-low-res_unfiltered_QC-metrics.png\n")
+cat("\nQC plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_unfiltered_QC-metrics.png\n")
 
 # normalize
 tmp = calcNormFactors(sce_pseudo)
@@ -197,10 +197,10 @@ p5 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
 	scale_color_manual(values=low.res.pal)+
 	theme_minimal()
 
-ggsave("plots/08_compare_DEGs/SZBD-low-res_unfiltered_PCA-HVG-eval.png",
+ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_unfiltered_PCA-HVG-eval.png",
 	gridExtra::grid.arrange(hm1[[4]], q2, p3, q4, bp1, p5, layout_matrix=cbind(c(1,3,5),c(2,4,6))),
         bg="white", height=10, width=12, units="in")
-cat("\nPCA eval plots saved to: plots/08_compare_DEGs/Maitra-low-res_unfiltered_PCA-HVG-eval.png\n")
+cat("\nPCA eval plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/Maitra-low-res_unfiltered_PCA-HVG-eval.png\n")
 
 
 save(sce_pseudo, file="processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res_norm.Rdata")
@@ -287,9 +287,9 @@ p4 <- ggplot(cdata2, aes(x=condition, y=subsets_ribo_percent))+
   theme_bw()+labs(title="Fraction of ribo reads per pseudobulked sample", y="subsets_ribo_percent")+
   theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
-ggsave("plots/08_compare_DEGs/SZBD-low-res_filtered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
+ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_filtered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
         bg="white", width=12, height=12, units="in")
-cat("\nQC plots saved to: plots/08_compare_DEGs/SZBD-low-res_filtered_QC-metrics.png\n")
+cat("\nQC plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_filtered_QC-metrics.png\n")
 
 #heatmap of layer markers
 hm2 <- plotHeatmap(sce_pseudo, features=unlist(dlpfc.genes), swap_rownames="gene_name",
@@ -339,10 +339,10 @@ p5 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
         theme_minimal()
 
 
-ggsave("plots/08_compare_DEGs/SZBD-low-res_filtered_PCA-HVG-eval.png",
+ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_filtered_PCA-HVG-eval.png",
         gridExtra::grid.arrange(hm2[[4]], q2, p3, q4, bp1, p5, layout_matrix=cbind(c(1,3,5),c(2,4,6))),
         bg="white", height=10, width=12, units="in")
-cat("\nPCA eval plots saved to: plots/08_compare_DEGs/SZBD-low-res_filtered_PCA-HVG-eval.png\n")
+cat("\nPCA eval plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_filtered_PCA-HVG-eval.png\n")
 
 save(sce_pseudo, file="processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res_norm-filt.Rdata")
 cat("\nFiltered, normalized pseudobulk sce saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res_norm-filt.Rdata\n")

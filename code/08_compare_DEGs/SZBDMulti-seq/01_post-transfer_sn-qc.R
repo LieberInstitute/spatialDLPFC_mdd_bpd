@@ -57,7 +57,7 @@ p3 <- ggplot(as.data.frame(seu_bd@meta.data), aes(x=log10(nCount_RNA), group=ind
         stat_ecdf()+facet_wrap(vars(seurat_low.res))+
         geom_hline(aes(yintercept=.5), color="red")+geom_vline(aes(xintercept=3), color="red")
 
-ggsave(file="plots/08_compare_DEGs/SZBDMultiseq_post-sn-qc_bipolar.png",
+ggsave(file="plots/08_compare_DEGs/SZBDMulti-seq/post-sn-qc_bipolar.png",
         gridExtra::grid.arrange(p0, p1, p2, p3, layout_matrix=matrix(c(1,2,3,4,4), ncol=1)),
         width=8, height=11)
 
@@ -87,7 +87,7 @@ p3 <- ggplot(as.data.frame(seu_con@meta.data), aes(x=log10(nCount_RNA), group=in
         stat_ecdf()+facet_wrap(vars(transfer_low.res))+
         geom_hline(aes(yintercept=.5), color="red")+geom_vline(aes(xintercept=3), color="red")
 
-ggsave(file="plots/08_compare_DEGs/SZBDMultiseq_post-sn-qc_control.png",
+ggsave(file="plots/08_compare_DEGs/SZBDMulti-seq/post-sn-qc_control.png",
         gridExtra::grid.arrange(p0, p1, p2, p3, layout_matrix=matrix(c(1,2,3,4,4), ncol=1)),
         width=8, height=11)
 

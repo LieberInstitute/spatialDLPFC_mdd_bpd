@@ -69,10 +69,10 @@ p3.f <- ggplot(as.data.frame(seu_f@meta.data), aes(x=log10(nCount_RNA), group=Sa
         stat_ecdf()+facet_wrap(vars(seurat_low.res))+
         geom_hline(aes(yintercept=.5), color="red")+geom_vline(aes(xintercept=3), color="red")
 
-ggsave(file="plots/08_compare_DEGs/Maitra_post-sn-qc_males.png", 
+ggsave(file="plots/08_compare_DEGs/Maitra/post-sn-qc_males.png", 
 	gridExtra::grid.arrange(p0.m, p1.m, p2.m, p3.m, layout_matrix=matrix(c(1,2,3,4,4), ncol=1)),
 	width=8, height=11)
-ggsave(file="plots/08_compare_DEGs/Maitra_post-sn-qc_females.png", 
+ggsave(file="plots/08_compare_DEGs/Maitra/post-sn-qc_females.png", 
         gridExtra::grid.arrange(p0.f, p1.f, p2.f, p3.f, layout_matrix=matrix(c(1,2,3,4,4), ncol=1)),
         width=8, height=11)
 
