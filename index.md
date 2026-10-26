@@ -1,5 +1,6 @@
 # spatialDLPFC_mdd_bpd
 
+This repo contains all code associated with the [Thompson et al. 2026](https://doi.org/10.64898/2026.10.22.761067) preprint.
 
 ![Experimental Overview](./images/landing-page.png)  
 
