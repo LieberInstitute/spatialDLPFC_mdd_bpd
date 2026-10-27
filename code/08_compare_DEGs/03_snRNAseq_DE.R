@@ -81,11 +81,13 @@ p3 <- ggplot(all.df, aes(x=t_mbv, y=t_sn))+
         geom_text(data=cor.df, aes(x=-7, y=7, label=paste0("rho: ", round(corr_t, 3))), hjust=0, size=3, color="red3")+
         facet_grid(cols=vars(paste(source, sex)), rows=vars(cluster_og))+
 	ylim(-8,8)+xlim(-8,8)+
-        ggtitle("Domain-restircted model DE compared to sex-specific snRNA-seq")+
-        theme_bw()+theme(panel.grid.minor=element_blank(), text=element_text(size=10))
+        labs(title="Domain-CT restricted model DE compared to snRNA-seq",
+		subtitle="Maitra = NTC.MDD compared, SZBD = NTC.BPD compared", y="t stat (snRNA-seq)", x="t stat (MBv SRT)")+
+        theme_bw()+theme(panel.grid.minor=element_blank(), text=element_text(size=10),
+		plot.title=element_text(size=9), plot.subtitle=element_text(size=8))
 
 
-ggsave(file="plots/08_compare_DEGs/snRNAseq-sex-stratified_domain-restricted-model_domain-ct-F-sig-genes.png",
+ggsave(file="plots/08_compare_DEGs/snRNAseq_domain-restricted-model_domain-ct-F-sig-genes.png",
 	p3, height= 8, width= 5.5, bg="white")
 
 cat("\n\nReproducibility information:\n")

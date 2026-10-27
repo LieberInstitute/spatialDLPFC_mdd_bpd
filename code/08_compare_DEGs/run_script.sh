@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=1G
-#SBATCH --job-name=plot-corr
+#SBATCH --mem=3G
+#SBATCH --job-name=sn_plot-DE
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -17,7 +17,9 @@ echo "n Tasks: ${SLURM_NTASKS}"
 module load conda_R/4.4.x
 module list
 
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/01_bulk_RNAseq.R
+#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/01_bulk_RNAseq.R
+#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/02_snRNAseq_QC-abundance.R
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/03_snRNAseq_DE.R
 
 echo "**** Job ends ****"
 date
