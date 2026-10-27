@@ -16,7 +16,8 @@ colnames(colData(sce_pseudo))[grep("_percent", colnames(colData(sce_pseudo)))] =
 
 colData(sce_pseudo)$pc3_svg = reducedDim(sce_pseudo, "PCA_1663")[,"PC3"]
 colData(sce_pseudo)$pc6_hvg = reducedDim(sce_pseudo, "PCA_HVG")[,"PC6"]
-colData(sce_pseudo)$pc9_hvg = reducedDim(sce_pseudo, "PCA_HVG")[,"PC9"]
+colData(sce_pseudo)$pc10_hvg = reducedDim(sce_pseudo, "PCA_HVG")[,"PC10"]
+colData(sce_pseudo)$pc11_hvg = reducedDim(sce_pseudo, "PCA_HVG")[,"PC11"]
 
 # demographic data anova
 demo = distinct(as.data.frame(colData(sce_pseudo)), individualID, sex, condition, Age_death, PMI)
@@ -43,7 +44,7 @@ p2 <- ggplot(demo, aes(x=condition, y=PMI))+geom_boxplot(outliers=F)+
 	ylim(0,42)+ggtitle("PMI is NS by ANOVA")
 
 
-covars = c("individualID","batch","Age_death","PMI","condition","sex","ncells","ribo_ratio","detected","pc3_svg","pc6_hvg","pc9_hvg")
+covars = c("individualID","batch","Age_death","PMI","condition","sex","ncells","ribo_ratio","detected","pc3_svg","pc6_hvg","pc10_hvg","pc11_hvg")
 
 var.m = getVarianceExplained(sce_pseudo, variables=covars, exprs_values="logcounts")
 cor.var.m = cor(var.m, method="pearson")
@@ -56,19 +57,19 @@ phm = pheatmap(cor.var.m, angle_col=90, fontsize=8,
 
 l1 <- lapply(levels(sce_pseudo$seurat_low.res), function(x) {
         tmp <- sce_pseudo[,sce_pseudo$seurat_low.res==x]
-        var.m = as.data.frame(getVarianceExplained(tmp, variables=c("ncells","Age_death","PMI","ribo_ratio","pc9_hvg")))
+        var.m = as.data.frame(getVarianceExplained(tmp, variables=c("ncells","Age_death","PMI","pc6_hvg","pc10_hvg","pc11_hvg")))
         var.m$cluster = x
         return(var.m)
 })
 
 df1 = do.call(rbind, l1) %>% mutate(cluster=factor(cluster, levels=levels(sce_pseudo$seurat_low.res)))
 
-df_tally <- do.call(rbind, lapply(c("ncells","Age_death","PMI","ribo_ratio","pc9_hvg"), function(x) {
+df_tally <- do.call(rbind, lapply(c("ncells","Age_death","PMI","pc6_hvg","pc10_hvg","pc11_hvg"), function(x) {
         tmp <- df1
         tmp$plot.me = cut(tmp[[x]], breaks=c(0,1,5,10,25,50,100), include.lowest=T)
 
         return(group_by(tmp, plot.me, cluster) %>% tally() %>% mutate(covar=x))
-})) %>% mutate(covar=factor(covar, levels=c("ncells","Age_death","pc9_hvg","PMI","ribo_ratio")))
+})) %>% mutate(covar=factor(covar, levels=c("ncells","Age_death","pc10_hvg","pc11_hvg","PMI","pc6_hvg")))
 
 p3 <- ggplot(df_tally, aes(x=cluster, y=n, fill=plot.me))+
         geom_bar(stat="identity", position="stack", color="black", linewidth=.1)+

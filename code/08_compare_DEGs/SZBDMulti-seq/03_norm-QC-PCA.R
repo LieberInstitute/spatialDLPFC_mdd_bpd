@@ -39,27 +39,28 @@ with(rowData(sce_pseudo), table(high_expr_group_indivID, high_expr_group_cluster
 sce_keep.genes = rownames(sce_pseudo)[rowData(sce_pseudo)$high_expr_group_indivID & rowData(sce_pseudo)$high_expr_group_cluster]
 cat("\nGenes to keep from edgeR filtered gene set:", length(sce_keep.genes), "\n")
 
-fdata = read.csv("processed-data/93_globus/MBv_n119_features.csv.gz", row.names=1)
-de.genes = rownames(fdata)[fdata$DE_domain.sp | fdata$DE_domain.ct]
-cat("Genes to keep from MBv SRT (used as DE input in either annot):", length(de.genes), "\n")
+sce_pseudo = sce_pseudo[sce_keep.genes,]
+#fdata = read.csv("processed-data/93_globus/MBv_n119_features.csv.gz", row.names=1)
+#de.genes = rownames(fdata)[fdata$DE_domain.sp | fdata$DE_domain.ct]
+#cat("Genes to keep from MBv SRT (used as DE input in either annot):", length(de.genes), "\n")
 
-keep.genes = union(sce_keep.genes, de.genes)
-keep.genes = intersect(rownames(sce_pseudo), keep.genes)
-cat("\nNumber of genes to keep (union of edgeR filters and MBv DE input):", length(keep.genes), "\n")
+#keep.genes = union(sce_keep.genes, de.genes)
+#keep.genes = intersect(rownames(sce_pseudo), keep.genes)
+#cat("\nNumber of genes to keep (union of edgeR filters and MBv DE input):", length(keep.genes), "\n")
 
-# this is too many genes to keep so instead I will just do the same genes from Maitra
-cat("\n!!!! Don't do that, instead just keep the same genes that were kept in the Maitra dataset !!!\n")
-sce_save = sce_pseudo
-load("processed-data/08_compare_DEGs/Maitra/sce_Maitra_pseudo_sample-low-res_norm-filt.Rdata")
-maitra_keep.genes = rownames(sce_pseudo)
-keep.genes = intersect(maitra_keep.genes, rownames(sce_save))
-length(keep.genes)
-sce_pseudo <- sce_save[keep.genes,]
+## this is too many genes to keep so instead I will just do the same genes from Maitra
+#cat("\n!!!! Don't do that, instead just keep the same genes that were kept in the Maitra dataset !!!\n")
+#sce_save = sce_pseudo
+#load("processed-data/08_compare_DEGs/Maitra/sce_Maitra_pseudo_sample-low-res_norm-filt.Rdata")
+#maitra_keep.genes = rownames(sce_pseudo)
+#keep.genes = intersect(maitra_keep.genes, rownames(sce_save))
+#length(keep.genes)
+#sce_pseudo <- sce_save[keep.genes,]
 
 
 ribo.genes = rownames(sce_pseudo)[grep("RPS|RPL",rowData(sce_pseudo)$gene_name)]
 cat("\nNumber of ribo genes:\n")
-length(ribo.genes) #182
+length(ribo.genes)
 
 
 sce_pseudo <- addPerCellQC(sce_pseudo, subsets = list(ribo=ribo.genes))
@@ -220,6 +221,7 @@ cdata2 = cdata[cdata$detected>5000,]
 cdata2 = cdata2[cdata2$ncells>10,]
 
 ## extra filters
+cdata2 = cdata2[cdata2$individualID!="BD1",]
 ### based on silhouette score after the above first round of filters, there are several M/V samples that don't fit well
 ### these happen to be all MDD M M.V samples, which when removed equalize the number of case/control M samples
 #rownames(cdata2) = paste(cdata2$Sample, cdata2$seurat_low.res, sep="_")
@@ -240,11 +242,13 @@ sce_pseudo = sce_pseudo[,sce_pseudo$detected>5000]
 sce_pseudo = sce_pseudo[,sce_pseudo$ncells>10]
 #colnames(sce_pseudo) = paste(sce_pseudo$Sample, sce_pseudo$seurat_low.res, sep="_")
 #sce_pseudo = sce_pseudo[,rownames(cdata2)]
+sce_pseudo = sce_pseudo[,sce_pseudo$individualID!="BD1"]
 dim(sce_pseudo)
+sce_pseudo$individualID = droplevels(sce_pseudo$individualID)
 
 #renorm after removing samples
 tmp = calcNormFactors(sce_pseudo)
-x = cpm(tmp, log=T, prior.count=8)
+x = cpm(tmp, log=T, prior.count=9)
 stopifnot(min(x)>0)
 dimnames(x) <- dimnames(sce_pseudo)
 logcounts(sce_pseudo) <- x
@@ -297,8 +301,8 @@ hm2 <- plotHeatmap(sce_pseudo, features=unlist(dlpfc.genes), swap_rownames="gene
         scale=T, center=T, annotation_legend=F, legend=F, fontsize=6, treeheight_col=15)
 
 # PCA with HVGs looks better and still has batch/sample element
-#m1 <- scran::modelGeneVar(sce_pseudo)
-#hvg.genes <- scran::getTopHVGs(m1, n=2000)
+m1 <- scran::modelGeneVar(sce_pseudo)
+hvg.genes <- scran::getTopHVGs(m1, n=2000)
 
 sce_pseudo <- runPCA(sce_pseudo, subset_row=hvg.genes, exprs_values="logcounts", name="PCA_HVG")
 

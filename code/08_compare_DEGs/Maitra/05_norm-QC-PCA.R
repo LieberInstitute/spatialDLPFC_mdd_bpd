@@ -38,19 +38,29 @@ with(rowData(sce_pseudo), table(high_expr_group_sample, high_expr_group_cluster)
 sce_keep.genes = rownames(sce_pseudo)[rowData(sce_pseudo)$high_expr_group_sample & rowData(sce_pseudo)$high_expr_group_cluster]
 cat("\nGenes to keep from edgeR filtered gene set:", length(sce_keep.genes), "\n")
 
-fdata = read.csv("processed-data/93_globus/MBv_n119_features.csv.gz", row.names=1)
-de.genes = rownames(fdata)[fdata$DE_domain.sp | fdata$DE_domain.ct]
-cat("Genes to keep from MBv SRT (used as DE input in either annot):", length(de.genes), "\n")
+#fdata = read.csv("processed-data/93_globus/MBv_n119_features.csv.gz", row.names=1)
+#de.genes = rownames(fdata)[fdata$DE_domain.sp | fdata$DE_domain.ct]
+#cat("Genes to keep from MBv SRT (used as DE input in either annot):", length(de.genes), "\n")
+#
+#keep.genes = union(sce_keep.genes, de.genes)
+#cat("\nNumber of genes to keep (union of edgeR filters and MBv DE input):", length(keep.genes), "\n")
 
-keep.genes = union(sce_keep.genes, de.genes)
-cat("\nNumber of genes to keep (union of edgeR filters and MBv DE input):", length(keep.genes), "\n")
+# copy SRT pipeline to bump up the number of genes
+sce_save = sce_pseudo
+load("processed-data/06_pseudobulk/SZBDMulti-seq/sce_control_pseudo_indivID-low-res.Rdata")
+rowData(sce_pseudo)$high_expr_group_individualID <- filterByExpr(sce_pseudo, group = sce_pseudo$individualID)
+rowData(sce_pseudo)$high_expr_group_cluster <- filterByExpr(sce_pseudo, group = sce_pseudo$seurat_low.res)
+sce_keep.genes2 = rownames(sce_pseudo)[rowData(sce_pseudo)$high_expr_group_individualID & rowData(sce_pseudo)$high_expr_group_cluster]
 
-sce_pseudo <- sce_pseudo[keep.genes,]
+keep.genes = union(sce_keep.genes, sce_keep.genes2)
+cat("\nNumber of genes to keep (union of SZBD control edgeR filters and Maitra edgeR filters):", length(keep.genes), "\n")
+
+sce_pseudo <- sce_save[keep.genes,]
 
 
 ribo.genes = rownames(sce_pseudo)[grep("RPS|RPL",rowData(sce_pseudo)$gene_name)]
 cat("\nNumber of ribo genes:\n")
-length(ribo.genes) #182
+length(ribo.genes)
 
 
 sce_pseudo <- addPerCellQC(sce_pseudo, subsets = list(ribo=ribo.genes))
@@ -213,9 +223,9 @@ cdata2 = cdata2[cdata2$ncells>10,]
 ## based on silhouette score after the above first round of filters, there are several M/V samples that don't fit well
 ## these happen to be all MDD M M.V samples, which when removed equalize the number of case/control M samples
 rownames(cdata2) = paste(cdata2$Sample, cdata2$seurat_low.res, sep="_")
-remove.mv = c("M28_M.V","M34_M.V","M26_M.V","M14_M.V")
+remove.mv = c("M28_M.V","M34_M.V","M26_M.V")#,"M14_M.V")
 cdata2 = cdata2[!rownames(cdata2) %in% remove.mv,]
-## additional detected filter for astro and oligo
+# additional detected filter for astro and oligo
 remove.glia = rownames(cdata2)[cdata2$seurat_low.res %in% c("Ast","Olg") & cdata2$detected<8000]
 cdata2 = cdata2[!rownames(cdata2) %in% remove.glia,]
 ## last additional detected filter for L6
@@ -226,8 +236,8 @@ cat("\nSample number per group after QC filters:\n")
 table(cdata2[,c("seurat_low.res","cond_sex")])
 
 # now filter sce object
-#sce_pseudo = sce_pseudo[,sce_pseudo$detected>5000]
-#sce_pseudo = sce_pseudo[,sce_pseudo$ncells>10]
+sce_pseudo = sce_pseudo[,sce_pseudo$detected>5000]
+sce_pseudo = sce_pseudo[,sce_pseudo$ncells>10]
 colnames(sce_pseudo) = paste(sce_pseudo$Sample, sce_pseudo$seurat_low.res, sep="_")
 sce_pseudo = sce_pseudo[,rownames(cdata2)]
 dim(sce_pseudo)
@@ -287,8 +297,8 @@ hm2 <- plotHeatmap(sce_pseudo, features=unlist(dlpfc.genes), swap_rownames="gene
         scale=T, center=T, annotation_legend=F, legend=F, fontsize=6, treeheight_col=15)
 
 # PCA with HVGs looks better and still has batch/sample element
-#m1 <- scran::modelGeneVar(sce_pseudo)
-#hvg.genes <- scran::getTopHVGs(m1, n=2000)
+m1 <- scran::modelGeneVar(sce_pseudo)
+hvg.genes <- scran::getTopHVGs(m1, n=2000)
 
 sce_pseudo <- runPCA(sce_pseudo, subset_row=hvg.genes, exprs_values="logcounts", name="PCA_HVG")
 
