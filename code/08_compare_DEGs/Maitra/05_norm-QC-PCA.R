@@ -344,6 +344,39 @@ ggsave("plots/08_compare_DEGs/Maitra/Maitra-low-res_filtered_PCA-HVG-eval.png",
         bg="white", height=10, width=12, units="in")
 cat("\nPCA eval plots saved to: plots/08_compare_DEGs/Maitra/Maitra-low-res_filtered_PCA-HVG-eval.png\n")
 
+#save(sce_pseudo, file="processed-data/08_compare_DEGs/Maitra/sce_Maitra_pseudo_sample-low-res_norm-filt.Rdata")
+#cat("\nFiltered, normalized pseudobulk sce saved to: processed-data/08_compare_DEGs/Maitra/sce_Maitra_pseudo_sample-low-res_norm-filt.Rdata\n")
+
+# filtered plot with SVGs too
+set.seed(123)
+sce_pseudo <- runPCA(sce_pseudo, subset_row=n1663.ids, exprs_values="logcounts", name="PCA_1663")
+
+p2 <- plotExplanatoryPCs(sce_pseudo, dimred="PCA_1663", npcs_to_plot=20, variables=exp.vars)+
+        scale_y_continuous()+scale_color_manual("", values=exp.vars.colors)
+p3 <- plotReducedDim(sce_pseudo, dimred="PCA_1663", ncomponents=c(1,3), colour_by = "seurat_low.res", point_alpha=1)+
+        scale_color_manual("", values=low.res.pal)
+p4 <- plotPCA(sce_pseudo, dimred="PCA_1663", ncomponents=4, colour_by = "seurat_low.res")+
+        scale_color_manual("", values=low.res.pal)
+
+q2 <- change_linewidth(p2)
+q4 = ggplot_build(p4)
+q4$data[[2]]$size = 1
+q4 = ggplot_gtable(q4)
+
+# silhouette
+sil.results <- as.data.frame(approxSilhouette(reducedDim(sce_pseudo, "PCA_1663"), clusters=sce_pseudo$seurat_low.res))
+sil.results$closest <- factor(ifelse(sil.results$width > 0, as.character(sil.results$cluster), as.character(sil.results$other)))
+sil.results$closest <- factor(sil.results$closest, levels=levels(sce_pseudo$seurat_low.res))
+p5 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
+        ggbeeswarm::geom_quasirandom()+
+        scale_color_manual(values=low.res.pal)+
+        theme_minimal()
+
+ggsave("plots/08_compare_DEGs/Maitra/Maitra-low-res_filtered_PCA-SVG-eval.png",
+        gridExtra::grid.arrange(hm2[[4]], q2, p3, q4, bp1, p5, layout_matrix=cbind(c(1,3,5),c(2,4,6))),
+        bg="white", height=10, width=12, units="in")
+cat("\nPCA eval plots saved to: plots/08_compare_DEGs/Maitra/Maitra-low-res_filtered_PCA-SVG-eval.png\n")
+
 save(sce_pseudo, file="processed-data/08_compare_DEGs/Maitra/sce_Maitra_pseudo_sample-low-res_norm-filt.Rdata")
 cat("\nFiltered, normalized pseudobulk sce saved to: processed-data/08_compare_DEGs/Maitra/sce_Maitra_pseudo_sample-low-res_norm-filt.Rdata\n")
 

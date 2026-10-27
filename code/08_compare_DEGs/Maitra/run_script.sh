@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=5G
-#SBATCH --job-name=DE-models_pc3-ncells_rev-gene-input
+#SBATCH --mem=3G
+#SBATCH --job-name=plot-format_rev-gene-input_pc2-ncells
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/Maitra/logs/%x_%j.log
 
 echo "**** Job starts ****"
@@ -23,8 +23,8 @@ module list
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/Maitra/04_pseudobulk.R
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/Maitra/05_norm-QC-PCA.R
 #Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/Maitra/06_covariate-selection.R
-Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/Maitra/07_DE.R
-#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/Maitra/08_plot-format-DE-results.R
+#Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/Maitra/07_DE.R
+Rscript /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/Maitra/08_plot-format-DE-results.R
 
 echo "**** Job ends ****"
 date

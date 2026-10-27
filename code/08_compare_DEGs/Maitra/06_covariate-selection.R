@@ -14,12 +14,19 @@ set.seed(123)
 load("processed-data/08_compare_DEGs/Maitra/sce_Maitra_pseudo_sample-low-res_norm-filt.Rdata")
 colnames(colData(sce_pseudo))[15] = "ribo_ratio"
 
-colData(sce_pseudo)$pc3_svg = reducedDim(sce_pseudo, "PCA_1663")[,"PC3"]
+colData(sce_pseudo)$pc2_svg = reducedDim(sce_pseudo, "PCA_1663")[,"PC2"]
 colData(sce_pseudo)$pc3_hvg = reducedDim(sce_pseudo, "PCA_HVG")[,"PC3"]
+colData(sce_pseudo)$pc10_hvg = reducedDim(sce_pseudo, "PCA_HVG")[,"PC10"]
+colData(sce_pseudo)$pc11_hvg = reducedDim(sce_pseudo, "PCA_HVG")[,"PC11"]
+colData(sce_pseudo)$pc15_hvg = reducedDim(sce_pseudo, "PCA_HVG")[,"PC15"]
 
-covars = c("Sample","Batch","Chemistry","Sequencing","condition","sex","ncells","ribo_ratio","detected","pc3_svg","pc3_hvg")
+covars = c("Sample","Batch","Chemistry","Sequencing","condition","sex","ncells","ribo_ratio","detected","pc2_svg","pc3_hvg","pc10_hvg","pc11_hvg")
 
 var.m = getVarianceExplained(sce_pseudo, variables=covars, exprs_values="logcounts")
+
+cat("\nTop 5 genes with highest % variance explained by each covar:\n")
+sapply(colnames(var.m), function(x) rowData(sce_pseudo)[names(sort(var.m[,x], decreasing=T)[1:5]),"gene_name"])
+
 cor.var.m = cor(var.m, method="pearson")
 cor.var.m[cor.var.m==1] = NA
 
@@ -30,19 +37,19 @@ phm = pheatmap(cor.var.m, angle_col=90, fontsize=8,
 
 l1 <- lapply(levels(sce_pseudo$seurat_low.res), function(x) {
         tmp <- sce_pseudo[,sce_pseudo$seurat_low.res==x]
-        var.m = as.data.frame(getVarianceExplained(tmp, variables=c("ncells","ribo_ratio","pc3_svg","pc3_hvg")))
+        var.m = as.data.frame(getVarianceExplained(tmp, variables=c("ncells","Chemistry","pc10_hvg","pc11_hvg","pc2_svg")))
         var.m$cluster = x
         return(var.m)
 })
 
 df1 = do.call(rbind, l1) %>% mutate(cluster=factor(cluster, levels=levels(sce_pseudo$seurat_low.res)))
 
-df_tally <- do.call(rbind, lapply(c("ncells","ribo_ratio","pc3_svg","pc3_hvg"), function(x) {
+df_tally <- do.call(rbind, lapply(c("ncells","Chemistry","pc10_hvg","pc11_hvg","pc2_svg"), function(x) {
         tmp <- df1
         tmp$plot.me = cut(tmp[[x]], breaks=c(0,1,5,10,25,50,100), include.lowest=T)
 
         return(group_by(tmp, plot.me, cluster) %>% tally() %>% mutate(covar=x))
-})) %>% mutate(covar=factor(covar, levels=c("ncells","pc3_hvg","pc3_svg","ribo_ratio")))
+})) %>% mutate(covar=factor(covar, levels=c("ncells","Chemistry","pc10_hvg","pc11_hvg","pc2_svg")))
 
 p1 <- ggplot(df_tally, aes(x=cluster, y=n, fill=plot.me))+
         geom_bar(stat="identity", position="stack", color="black", linewidth=.1)+
