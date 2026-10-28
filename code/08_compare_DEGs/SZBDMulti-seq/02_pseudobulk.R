@@ -40,15 +40,15 @@ sce <- SingleCellExperiment(assays = list(counts = counts), colData=cdata)
 rowData(sce) = rdata
 
 dim(sce)
-table(colData(sce)[,c("Biological_Sex","Disorder")])
+table(colData(sce)[,c("batch","Disorder","Biological_Sex")])
 
 
-save(sce, file="processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pre-pseudo.Rdata")
-cat("\nFull SCE saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pre-pseudo.Rdata\n")
-stop("Save full sce only")
+#save(sce, file="processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pre-pseudo.Rdata")
+#cat("\nFull SCE saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pre-pseudo.Rdata\n")
+#stop("Save full sce only")
 
 cat("\nPseudobulk...\n")
-sce_pseudo <- aggregateAcrossCells(sce, ids=colData(sce)[,c("individualID","seurat_low.res")],
+sce_pseudo <- aggregateAcrossCells(sce, ids=colData(sce)[,c("individualID","Channel","seurat_low.res")],
         statistics="sum", use.assay.type="counts")
 dim(sce_pseudo)
 
@@ -57,6 +57,8 @@ g1 = grep("seurat", colnames(colData(sce_pseudo)))
 if(length(g1)>1) colData(sce_pseudo)[,g1[[2]]] <- NULL
 g2 = grep("individualID", colnames(colData(sce_pseudo)))
 if(length(g2)>1) colData(sce_pseudo)[,g2[[2]]] <- NULL
+g3 = grep("Channel", colnames(colData(sce_pseudo)))
+if(length(g3)>1) colData(sce_pseudo)[,g3[[2]]] <- NULL
 
 # rename factor levels
 sce_pseudo$condition = factor(sce_pseudo$Disorder, levels=c("control","Bipolar Disorder"), labels=c("NTC","BD"))
@@ -65,8 +67,8 @@ sce_pseudo$seurat_low.res = factor(sce_pseudo$seurat_low.res, levels=c("Micro/Va
         labels=c("M.V","Ast","L2","L3","L4","Inb","L5","L6","Olg"))
 
 format(Sys.time())
-save(sce_pseudo, file="processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res.Rdata")
-cat("\nPseudobulk sce saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res.Rdata\n")
+save(sce_pseudo, file="processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-channel-low-res.Rdata")
+cat("\nPseudobulk sce saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-channel-low-res.Rdata\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()

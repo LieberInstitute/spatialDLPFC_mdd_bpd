@@ -13,7 +13,7 @@ cpList <- readRDS("plots/colorPalettes.rds")
 load("processed-data/08_compare_DEGs/Maitra/sce_Maitra_pseudo_sample-low-res_norm-filt.Rdata")
 sce_mdd <- sce_pseudo
 
-load("processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res_norm-filt.Rdata")
+load("processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-channel-low-res_norm-filt.Rdata")
 sce_bd <- sce_pseudo
 
 load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
@@ -50,7 +50,7 @@ full.df = bind_rows(full.df,
 		x_lab= factor(paste(source, condition, sep="\n"), levels=c("MBv\nNTC","MBv\nMDD","MBv\nBPD",
 			"Maitra\nNTC","Maitra\nMDD","SZBD\nNTC","SZBD\nBPD")))
 # easy labeling of this nuance in plots
-text.df = data.frame(x_pos= c(1,1), y_pos= c(2000,2000), seurat_low.res=factor(c("L2","L3"), levels=levels(full.df$seurat_low.res)), tlabel=rep("MBv values\nfor L2/3", 2))
+text.df = data.frame(x_pos= c(1,1), y_pos= c(1750,1750), seurat_low.res=factor(c("L2","L3"), levels=levels(full.df$seurat_low.res)), tlabel=rep("MBv values\nfor L2/3", 2))
 
 # plot QC metrics
 p1 <- ggplot(full.df, aes(x=x_lab, y=nobs, color=condition))+
@@ -78,7 +78,7 @@ p3 <- ggplot(full.df, aes(x=x_lab, y=detected, color=condition))+
 	ggbeeswarm::geom_beeswarm(aes(shape=sex), dodge.width=.8)+
 	scale_color_manual(values=cpList$dx.pal)+
 	scale_shape_manual(values=c(19,1))+
-	facet_wrap(vars(seurat_low.res))+ylim(5000,20000)+
+	facet_wrap(vars(seurat_low.res))+ylim(5000,25000)+
 	geom_text(data=text.df, aes(x=x_pos, y=y_pos, label=tlabel), color="black", hjust=0)+
 	labs(x="", y="# unique genes", title="Detected genes per pseudobulk sample")+
 	theme_bw()+theme(axis.text.x= element_text(size=7))
@@ -98,8 +98,11 @@ p4 <- ggplot(full.df, aes(x=x_lab, y=subsets_ribo_percent, color=condition))+
 
 # quantify proportional comparison of number of observations
 ## make sure to exclude duplicated L2.3 entries so that not inflating the SRT totals
-prop.df = filter(full.df, !is.na(clus_orig)) %>% group_by(source, condition, sex, clus_orig) %>% 
-	mutate(group_obs = sum(nobs, na.rm=T)) %>% ungroup() %>%
+prop.df = filter(full.df, !is.na(clus_orig)) %>% 
+	#aggregate nobs by hand to combine channels
+	group_by(source, condition, sex, clus_orig, sample_id, x_lab, seurat_label, seurat_low.res) %>% summarise(nobs= sum(nobs)) %>%
+	# aggregate by dx-sex group
+	group_by(source, condition, sex, clus_orig) %>% mutate(group_obs = sum(nobs, na.rm=T)) %>% ungroup() %>%
 	mutate(prop_group = nobs/group_obs, source= factor(source, levels=c("MBv","Maitra","SZBD")),
 		cond_sex= factor(paste(condition, sex), levels=c("NTC F","NTC M","MDD F","MDD M","BPD F","BPD M")))
 
@@ -175,7 +178,7 @@ pp4 <- ggplot(prop.df, aes(x=x_lab, y=prop_group, color=condition))+
 
 
 # save plots
-pdf(file="plots/08_compare_DEGs/snRNAseq_QC-abundance_across-studies.pdf", height=7, width=8)
+pdf(file="plots/08_compare_DEGs/snRNAseq_QC-abundance_across-studies_SZBD-channel.pdf", height=7, width=8)
 p1
 p2
 p3
@@ -184,7 +187,7 @@ gridExtra::grid.arrange(pp1, pp2, layout_matrix= matrix(c(1,1,1,2,2), ncol=1))
 pp3
 pp4
 dev.off()
-cat("\nSaved QC and abundance plots to: plots/08_compare_DEGs/snRNAseq_QC-abundance_across-studies.pdf\n")
+cat("\nSaved QC and abundance plots to: plots/08_compare_DEGs/snRNAseq_QC-abundance_across-studies_SZBD-channel.pdf\n")
 
 
 cat("\n\nReproducibility information:\n")
