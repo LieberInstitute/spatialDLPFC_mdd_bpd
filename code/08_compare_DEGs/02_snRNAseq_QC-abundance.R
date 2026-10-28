@@ -13,7 +13,7 @@ cpList <- readRDS("plots/colorPalettes.rds")
 load("processed-data/08_compare_DEGs/Maitra/sce_Maitra_pseudo_sample-low-res_norm-filt.Rdata")
 sce_mdd <- sce_pseudo
 
-load("processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-channel-low-res_norm-filt.Rdata")
+load("processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res_norm-filt.Rdata")
 sce_bd <- sce_pseudo
 
 load("processed-data/06_pseudobulk/Seurat/spe_n119_pseudo_sample-seurat-pc30_norm-filt.Rdata")
@@ -99,8 +99,8 @@ p4 <- ggplot(full.df, aes(x=x_lab, y=subsets_ribo_percent, color=condition))+
 # quantify proportional comparison of number of observations
 ## make sure to exclude duplicated L2.3 entries so that not inflating the SRT totals
 prop.df = filter(full.df, !is.na(clus_orig)) %>% 
-	#aggregate nobs by hand to combine channels
-	group_by(source, condition, sex, clus_orig, sample_id, x_lab, seurat_label, seurat_low.res) %>% summarise(nobs= sum(nobs)) %>%
+#	#aggregate nobs by hand to combine channels
+#	group_by(source, condition, sex, clus_orig, sample_id, x_lab, seurat_label, seurat_low.res) %>% summarise(nobs= sum(nobs)) %>%
 	# aggregate by dx-sex group
 	group_by(source, condition, sex, clus_orig) %>% mutate(group_obs = sum(nobs, na.rm=T)) %>% ungroup() %>%
 	mutate(prop_group = nobs/group_obs, source= factor(source, levels=c("MBv","Maitra","SZBD")),
@@ -178,7 +178,7 @@ pp4 <- ggplot(prop.df, aes(x=x_lab, y=prop_group, color=condition))+
 
 
 # save plots
-pdf(file="plots/08_compare_DEGs/snRNAseq_QC-abundance_across-studies_SZBD-channel.pdf", height=7, width=8)
+pdf(file="plots/08_compare_DEGs/snRNAseq_QC-abundance_across-studies.pdf", height=7, width=8)
 p1
 p2
 p3
@@ -187,7 +187,7 @@ gridExtra::grid.arrange(pp1, pp2, layout_matrix= matrix(c(1,1,1,2,2), ncol=1))
 pp3
 pp4
 dev.off()
-cat("\nSaved QC and abundance plots to: plots/08_compare_DEGs/snRNAseq_QC-abundance_across-studies_SZBD-channel.pdf\n")
+cat("\nSaved QC and abundance plots to: plots/08_compare_DEGs/snRNAseq_QC-abundance_across-studies.pdf\n")
 
 
 cat("\n\nReproducibility information:\n")
