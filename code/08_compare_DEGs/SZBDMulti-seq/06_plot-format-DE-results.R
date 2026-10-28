@@ -24,7 +24,7 @@ names(comp_names) = c("M.V","Ast","L2","L3","L4","Inb","L5","L6","Olg")
 comparisons = c("F_NTC.BD","M_NTC.BD")
 
 ### layer-adjusted 
-results <- readRDS("processed-data/08_compare_DEGs/SZBDMulti-seq/lmFit-voom_layer-adjusted_low-res_condition-sex_covars-pc9-age-ncells.rda")
+results <- readRDS("processed-data/08_compare_DEGs/SZBDMulti-seq/lmFit-voom_layer-adjusted_low-res_condition-sex_covars-pc10-age-ncells.rda")
 
 eb <- eBayes(groupContrasts(results, comparisons), trend=T, robust=T)
 #plotSA(eb)
@@ -53,19 +53,19 @@ p <- ggplot(sex.res$results, aes(x=logFC, y=-log10(adj.P.Val)))+
   theme_bw()
 
 
-ggsave("plots/08_compare_DEGs/SZBDMulti-seq/layer-adjusted-pc9-age-ncells_low-res_p-val-histogram-volcano.png",
+ggsave("plots/08_compare_DEGs/SZBDMulti-seq/layer-adjusted-pc10-age-ncells_low-res_p-val-histogram-volcano.png",
 	gridExtra::grid.arrange(sex.res$phist, p, ncol=1),
 	bg="white", width=6, height=6)
-cat("\n\nSaved un-adjusted p value histogram and volcano plots to: plots/08_compare_DEGs/SZBDMulti-seq/layer-adjusted-pc9-age-ncells_low-res_p-val-histogram-volcano.png\n")
+cat("\n\nSaved un-adjusted p value histogram and volcano plots to: plots/08_compare_DEGs/SZBDMulti-seq/layer-adjusted-pc10-age-ncells_low-res_p-val-histogram-volcano.png\n")
 
-write.csv(eb.f, "processed-data/08_compare_DEGs/SZBDMulti-seq/layer-adjusted-pc9-age-ncells_low-res_F-test.csv", row.names=F)
-cat("\n\n\nSaved F test results dframe to: processed-data/08_compare_DEGs/SZBDMulti-seq/layer-adjusted-pc9-age-ncells_low-res_F-test.csv\n")
-write.csv(sex.res$results, "processed-data/08_compare_DEGs/SZBDMulti-seq/layer-adjusted-pc9-age-ncells_low-res_moderated-t-test.csv", row.names=F)
-cat("\nSaved moderated t test results dframe to: processed-data/08_compare_DEGs/SZBDMulti-seq/layer-adjusted-pc9-age-ncells_low-res_moderated-t-test.csv\n\n")
+write.csv(eb.f, "processed-data/08_compare_DEGs/SZBDMulti-seq/layer-adjusted-pc10-age-ncells_low-res_F-test.csv", row.names=F)
+cat("\n\n\nSaved F test results dframe to: processed-data/08_compare_DEGs/SZBDMulti-seq/layer-adjusted-pc10-age-ncells_low-res_F-test.csv\n")
+write.csv(sex.res$results, "processed-data/08_compare_DEGs/SZBDMulti-seq/layer-adjusted-pc10-age-ncells_low-res_moderated-t-test.csv", row.names=F)
+cat("\nSaved moderated t test results dframe to: processed-data/08_compare_DEGs/SZBDMulti-seq/layer-adjusted-pc10-age-ncells_low-res_moderated-t-test.csv\n\n")
 
 
 ### layer restricted
-results <- readRDS("processed-data/08_compare_DEGs/SZBDMulti-seq/lmFit-voom_layer-restricted_low-res_condition-sex_covars-pc9-age-ncells.rda")
+results <- readRDS("processed-data/08_compare_DEGs/SZBDMulti-seq/lmFit-voom_layer-restricted_low-res_condition-sex_covars-pc10-age-ncells.rda")
 
 #need to have "dot" instead of "." in comparisons for cluster name 
 comparisons = unlist(lapply(comp_names, 
@@ -116,18 +116,18 @@ p1 <- ggplot(mutate(sex.res_df, facets=factor(paste(sex, group, sep="_"), levels
   theme_bw()
 
 
-pdf(file="plots/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc9-age-ncells_low-res_p-val-histogram-volcano.pdf",
+pdf(file="plots/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc10-age-ncells_low-res_p-val-histogram-volcano.pdf",
     width=5, height=8)
 p0
 ggrastr::rasterize(p1,layer='point',dpi=300)
 dev.off()
-cat("\n\nSaved volcano plots to: plots/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc9-age-ncells_low-res_p-val-histogram-volcano.pdf\n\n\n")
+cat("\n\nSaved volcano plots to: plots/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc10-age-ncells_low-res_p-val-histogram-volcano.pdf\n\n\n")
 
 
-write.csv(eb_f, "processed-data/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc9-age-ncells_low-res_F-test_all.csv", row.names=F)
-cat("\n\n\nSaved F test results dframe to: processed-data/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc9-age-ncells_low-res_F-test_all.csv\n")
-write.csv(sex.res_df, "processed-data/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc9-age-ncells_low-res_moderated-t-test.csv", row.names=F)
-cat("\nSaved moderated t test results dframe to: processed-data/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc9-age-ncells_low-res_moderated-t-test.csv\n")
+write.csv(eb_f, "processed-data/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc10-age-ncells_low-res_F-test_all.csv", row.names=F)
+cat("\n\n\nSaved F test results dframe to: processed-data/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc10-age-ncells_low-res_F-test_all.csv\n")
+write.csv(sex.res_df, "processed-data/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc10-age-ncells_low-res_moderated-t-test.csv", row.names=F)
+cat("\nSaved moderated t test results dframe to: processed-data/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc10-age-ncells_low-res_moderated-t-test.csv\n")
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time())
