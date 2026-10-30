@@ -9,7 +9,11 @@ suppressPackageStartupMessages({
 sink("code/00_external_snRNAseq/logs/SZBDMultiseq_check-sex-chr.log", append=FALSE, split=TRUE)
 
 adata <- read_h5ad("raw-data/PsychEncode_backup/SZBDMulti-Seq_annotated.h5ad")
-seu <- CreateSeuratObject(counts = t(adata$X), meta.data = adata$obs)
+# use raw
+m1 = adata$raw$X
+colnames(m1) = colnames(adata)
+rownames(m1) = rownames(adata)
+seu <- CreateSeuratObject(counts = t(m1), meta.data = adata$obs)
 # replace underscores with dashes (just like CreateSeuratObject did)
 tmp = adata$var
 rownames(tmp) = gsub("_","-",rownames(tmp))
@@ -63,7 +67,7 @@ dim(seu) # 34291 312828
 seu[["RNA"]]@meta.data$featurekey = rownames(seu)
 
 # save object
-saveRDS(seu, "processed-data/00_external_snRNAseq/seurat_SZBDMultiseq.rda")
+#saveRDS(seu, "processed-data/00_external_snRNAseq/seurat_SZBDMultiseq.rda")
 write.csv(seu@meta.data, "processed-data/00_external_snRNAseq/SZBDMultiseq_control-BD_unfiltered_observations.csv", row.names=F)
 write.csv(seu[["RNA"]]@meta.data, "processed-data/00_external_snRNAseq/SZBDMultiseq_control-BD_unfiltered_features.csv", row.names=F)
 
@@ -87,16 +91,11 @@ dim(seu) # 29887 301136
 tmp = seu@meta.data
 genes1 = c("XIST","DDX3Y","RPS4Y1")
 for(i in genes1) tmp[[i]] = seu[["RNA"]]$counts[i,]
-{
-	gid = seu[["RNA"]]@meta.data$featureid[seu[["RNA"]]@meta.data$featurekey==i]
-	gid2 = rownames(seu)[seu[["RNA"]]@meta.data$featurekey==i]
-	stopifnot(gid==gid2)
-	tmp[[i]] = seu[gid,]
-}
+
 library(dplyr)
 tmp = group_by(tmp, individualID, Disorder, Biological_Sex) %>% summarise(ncells=n(), XIST=sum(XIST), DDX3Y=sum(DDX3Y), RPS4Y1=sum(RPS4Y1))
-write.csv(tmp, "processed-data/00_external_snRNAseq/check_SZBD_seurat-creation.csv")
-stop("Stop to just save csv for checking sex chr raw counts")
+write.csv(tmp, "processed-data/00_external_snRNAseq/check_SZBD_seurat-creation-rawX.csv")
+#stop("Stop to just save csv for checking sex chr raw counts")
 
 # save nuclei and gene filters
 saveRDS(seu, "processed-data/00_external_snRNAseq/seurat_SZBDMultiseq_qc-filtered.rda")

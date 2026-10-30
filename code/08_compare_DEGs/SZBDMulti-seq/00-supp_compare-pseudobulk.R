@@ -3,7 +3,7 @@ library(SingleCellExperiment)
 library(dplyr)
 
 # load csv export of raw counts for 3 sex chr genes and ncells for sanity check
-df1 = read.csv("processed-data/08_compare_DEGs/check_sex-chrM_raw-counts.csv", row.names=1)
+df1 = read.csv("processed-data/08_compare_DEGs/SZBDMulti-seq/check_sex-chrM_raw-counts.csv", row.names=1)
 
 # load raw pseudobulk
 load("processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res.Rdata")
