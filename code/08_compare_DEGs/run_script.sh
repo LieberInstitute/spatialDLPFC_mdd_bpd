@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --mem=3G
-#SBATCH --job-name=sn_plot-DE_F-sig-genes
+#SBATCH --mem=5G
+#SBATCH --job-name=sn_plot-DE_fixed-raw_all-genes
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/logs/%x_%j.log
 
 echo "**** Job starts ****"

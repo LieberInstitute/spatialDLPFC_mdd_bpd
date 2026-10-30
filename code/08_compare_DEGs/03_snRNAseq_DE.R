@@ -24,7 +24,7 @@ mt23$cluster_match = factor(mt23$cluster, levels=c("M.V","Ast","L2","L3","L4","I
 	c("M.V","Ast","L2.3","L2.3","L4","Inb","L5","L6","Olg"))
 mt23$source = "Maitra 2023"
 
-rz24 = read.csv("processed-data/08_compare_DEGs/SZBDMulti-seq/layer-restricted-pc10-age-ncells_low-res_moderated-t-test.csv")
+rz24 = read.csv("processed-data/08_compare_DEGs/SZBDMulti-seq/layer-restricted-batch-age-ncells_low-res_moderated-t-test.csv")
 rz24$cluster_og = factor(rz24$cluster, levels=c("M.V","Ast","L2","L3","L4","Inb","L5","L6","Olg"))
 rz24$cluster_match = factor(rz24$cluster, levels=c("M.V","Ast","L2","L3","L4","Inb","L5","L6","Olg"),
 	c("M.V","Ast","L2.3","L2.3","L4","Inb","L5","L6","Olg"))
@@ -35,8 +35,8 @@ mdd = inner_join(mbv[,c("gene_id","gene_name","cluster","sex","group","logFC","t
 	mt23[,c("gene_id","cluster_og","cluster_match","sex","group","logFC","t","P.Value","source")],
 	by=c("gene_id","cluster"="cluster_match","sex","group"), suffix=c("_mbv","_sn"))
 
-tmp = filter(mdd, gene_name %in% ftest$V1)
-#tmp = mdd
+#tmp = filter(mdd, gene_name %in% ftest$V1)
+tmp = mdd
 tmp1 = filter(tmp, sex=="F")
 tmp2 = filter(tmp, sex=="M")
 cor.df1 = do.call(rbind, lapply(levels(tmp$cluster_og), function(x) {
@@ -56,8 +56,8 @@ bd = inner_join(mbv[,c("gene_id","gene_name","cluster","sex","group","logFC","t"
 	by=c("gene_id","cluster"="cluster_match","sex","group"), suffix=c("_mbv","_sn"))
 
 
-tmp = filter(bd, gene_name %in% ftest$V1)
-#tmp = bd
+#tmp = filter(bd, gene_name %in% ftest$V1)
+tmp = bd
 tmp1 = filter(tmp, sex=="F")
 tmp2 = filter(tmp, sex=="M")
 cor.df2 = do.call(rbind, lapply(levels(tmp$cluster_og), function(x) {
@@ -73,13 +73,13 @@ cor.df2 = do.call(rbind, lapply(levels(tmp$cluster_og), function(x) {
 
 
 all.df = bind_rows(mdd, bd) %>% 
-	filter(gene_name %in% ftest$V1) %>%
+#	filter(gene_name %in% ftest$V1) %>%
 	mutate(cluster_og = factor(cluster_og, levels=levels(mt23$cluster_og)))
 cor.df = bind_rows(cor.df1, cor.df2) %>%
 	mutate(cluster_og = factor(cluster_og, levels=levels(mt23$cluster_og)))
 
 p3 <- ggplot(all.df, aes(x=t_mbv, y=t_sn))+
-        geom_point(size=.3)+
+        geom_point(size=.3, color="grey")+
         geom_smooth(method="lm", se=F, color="red3")+
         geom_text(data=cor.df, aes(x=-7, y=7, label=paste0("rho: ", round(corr_t, 3))), hjust=0, size=3, color="red3")+
         facet_grid(cols=vars(paste(source, sex)), rows=vars(cluster_og))+
@@ -90,9 +90,9 @@ p3 <- ggplot(all.df, aes(x=t_mbv, y=t_sn))+
 		plot.title=element_text(size=9), plot.subtitle=element_text(size=8))
 
 
-#ggsave(file="plots/08_compare_DEGs/snRNAseq_domain-restricted-model_all-shared-genes.png",
-ggsave(file="plots/08_compare_DEGs/snRNAseq_domain-restricted-model_domain-ct-F-sig-genes.png",
-	p3, height= 8, width= 5.5, bg="white")
+ggsave(file="plots/08_compare_DEGs/snRNAseq_domain-restricted-model_all-shared-genes.png",
+#ggsave(file="plots/08_compare_DEGs/snRNAseq_domain-restricted-model_domain-ct-F-sig-genes.png",
+	p3, height= 10, width= 5, bg="white")
 
 cat("\n\nReproducibility information:\n")
 format(Sys.time())
