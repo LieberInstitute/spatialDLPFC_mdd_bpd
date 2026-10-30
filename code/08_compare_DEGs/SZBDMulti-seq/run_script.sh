@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=5G
-#SBATCH --job-name=plot-format_fixed-raw_age-ncells
+#SBATCH --job-name=plot-format_fixed-raw_batch-age-ncells
 #SBATCH --output=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/code/08_compare_DEGs/SZBDMulti-seq/logs/%x_%j.log
 
 echo "**** Job starts ****"
