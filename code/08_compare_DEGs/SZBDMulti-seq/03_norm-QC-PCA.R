@@ -19,17 +19,17 @@ low.res.pal = c("Ast"="#cfa45c","M.V"="#911223",
                 "L5"="#ddc94e","L6"="#E45C5F",
                 "Olg"="#D1C4B0")
 
-load("processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-channel-low-res.Rdata")
+load("processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res.Rdata")
 dim(sce_pseudo)
 rowData(sce_pseudo)$gene_name = rowData(sce_pseudo)$featurekey
 
 # remove NA columns after pseudobulking
-#colData(sce_pseudo)$Channel <- NULL
+colData(sce_pseudo)$Channel <- NULL
 colData(sce_pseudo)$key <- NULL
 
 # remove the many donor-level QC metadata (for simplicity)
-#colData(sce_pseudo) <- colData(sce_pseudo)[,c(1:2,7,12:16)]
-colData(sce_pseudo) <- colData(sce_pseudo)[,c(1:3,8,13:17)]
+colData(sce_pseudo) <- colData(sce_pseudo)[,c(1:2,7,12:16)]
+#colData(sce_pseudo) <- colData(sce_pseudo)[,c(1:3,8,13:17)] # for when/if including channel
 colData(sce_pseudo)$individualID = droplevels(sce_pseudo$individualID)
 
 # filter genes
@@ -118,13 +118,13 @@ p4 <- ggplot(cdata, aes(x=condition, y=subsets_ribo_percent))+
   theme_bw()+labs(title="Fraction of RPS|RPL reads per pseudobulked sample", y="subsets_ribo_percent")+
   theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
-ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-channel-low-res_unfiltered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
+ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_unfiltered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
         bg="white", width=12, height=12, units="in")
-cat("\nQC plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-channel-low-res_unfiltered_QC-metrics.png\n")
+cat("\nQC plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_unfiltered_QC-metrics.png\n")
 
 # normalize
 tmp = calcNormFactors(sce_pseudo)
-x = cpm(tmp, log=T, prior.count=1)
+x = cpm(tmp, log=T, prior.count=10)
 stopifnot(min(x)>0)
 dimnames(x) <- dimnames(sce_pseudo)
 logcounts(sce_pseudo) <- x
@@ -210,14 +210,14 @@ p5 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
 	scale_color_manual(values=low.res.pal)+
 	theme_minimal()
 
-ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-channel-low-res_unfiltered_PCA-HVG-eval.png",
+ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_unfiltered_PCA-HVG-eval.png",
 	gridExtra::grid.arrange(hm1[[4]], q2, p3, q4, bp1, p5, layout_matrix=cbind(c(1,3,5),c(2,4,6))),
         bg="white", height=10, width=12, units="in")
-cat("\nPCA eval plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-channel-low-res_unfiltered_PCA-HVG-eval.png\n")
+cat("\nPCA eval plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_unfiltered_PCA-HVG-eval.png\n")
 
 
-save(sce_pseudo, file="processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-channel-low-res_norm.Rdata")
-cat("\nNormalized pseudobulk sce saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-channel-low-res_norm.Rdata\n")
+save(sce_pseudo, file="processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res_norm.Rdata")
+cat("\nNormalized pseudobulk sce saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res_norm.Rdata\n")
 
 ##### stop early to evaluate filters then run again
 #stop("Evaluate plots then continue")
@@ -229,13 +229,13 @@ cat("\nSample number per group before QC filters:\n")
 table(cdata[,c("seurat_low.res","cond_sex")])
 
 cdata2 = cdata[cdata$ncells>=5,]
-#cdata2 = cdata2[cdata2$detected>5000,]
+cdata2 = cdata2[cdata2$detected>5000,]
 
 ### extra filters
-rownames(cdata2) = paste(cdata2$individualID, cdata2$Channel, cdata2$seurat_low.res, sep="_")
-remove.nrn = rownames(cdata2)[cdata2$seurat_low.res %in% c("L2","L3","L4","L5","L6","Inb") &
-	cdata2$sum<1e5]
-cdata2 = cdata2[!rownames(cdata2) %in% remove.nrn,]
+#rownames(cdata2) = paste(cdata2$individualID, cdata2$Channel, cdata2$seurat_low.res, sep="_")
+#remove.nrn = rownames(cdata2)[cdata2$seurat_low.res %in% c("L2","L3","L4","L5","L6","Inb") &
+#	cdata2$sum<1e5]
+#cdata2 = cdata2[!rownames(cdata2) %in% remove.nrn,]
 
 #cdata2 = cdata2[cdata2$individualID!="BD1",]
 ### based on silhouette score after the above first round of filters, there are several M/V samples that don't fit well
@@ -255,18 +255,18 @@ table(cdata2[,c("seurat_low.res","cond_sex")])
 
 # now filter sce object
 sce_pseudo = sce_pseudo[,sce_pseudo$ncells>=5]
-#sce_pseudo = sce_pseudo[,sce_pseudo$detected>5000]
+sce_pseudo = sce_pseudo[,sce_pseudo$detected>5000]
 #sce_pseudo = sce_pseudo[,sce_pseudo$individualID!="BD1"]
 #colnames(sce_pseudo) = paste(sce_pseudo$Sample, sce_pseudo$seurat_low.res, sep="_")
-colnames(sce_pseudo) = paste(sce_pseudo$individualID, sce_pseudo$Channel, sce_pseudo$seurat_low.res, sep="_")
-sce_pseudo = sce_pseudo[,rownames(cdata2)]
+#colnames(sce_pseudo) = paste(sce_pseudo$individualID, sce_pseudo$Channel, sce_pseudo$seurat_low.res, sep="_")
+#sce_pseudo = sce_pseudo[,rownames(cdata2)]
 
 dim(sce_pseudo)
 #sce_pseudo$individualID = droplevels(sce_pseudo$individualID)
 
 #renorm after removing samples
 tmp = calcNormFactors(sce_pseudo)
-x = cpm(tmp, log=T, prior.count=2)
+x = cpm(tmp, log=T, prior.count=10)
 stopifnot(min(x)>0)
 dimnames(x) <- dimnames(sce_pseudo)
 logcounts(sce_pseudo) <- x
@@ -309,9 +309,9 @@ p4 <- ggplot(cdata2, aes(x=condition, y=subsets_ribo_percent))+
   theme_bw()+labs(title="Fraction of ribo reads per pseudobulked sample", y="subsets_ribo_percent")+
   theme(strip.background=element_rect(fill=NA, color=NA), panel.grid.minor=element_blank())
 
-ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-channel-low-res_filtered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
+ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_filtered_QC-metrics.png", gridExtra::grid.arrange(p1, p2, p3, p4, ncol=1),
         bg="white", width=12, height=12, units="in")
-cat("\nQC plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-channel-low-res_filtered_QC-metrics.png\n")
+cat("\nQC plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_filtered_QC-metrics.png\n")
 
 #heatmap of layer markers
 hm2 <- plotHeatmap(sce_pseudo, features=unlist(dlpfc.genes), swap_rownames="gene_name",
@@ -361,10 +361,10 @@ p5 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
         theme_minimal()
 
 
-ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-channel-low-res_filtered_PCA-HVG-eval.png",
+ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_filtered_PCA-HVG-eval.png",
         gridExtra::grid.arrange(hm2[[4]], q2, p3, q4, bp1, p5, layout_matrix=cbind(c(1,3,5),c(2,4,6))),
         bg="white", height=10, width=12, units="in")
-cat("\nPCA eval plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-channel-low-res_filtered_PCA-HVG-eval.png\n")
+cat("\nPCA eval plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_filtered_PCA-HVG-eval.png\n")
 
 
 # save with SVG PCA too
@@ -391,13 +391,13 @@ p5 <- ggplot(sil.results, aes(x=cluster, y=width, colour=closest))+
         scale_color_manual(values=low.res.pal)+
         theme_minimal()
 
-ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-channel-low-res_filtered_PCA-SVG-eval.png",
+ggsave("plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_filtered_PCA-SVG-eval.png",
         gridExtra::grid.arrange(hm2[[4]], q2, p3, q4, bp1, p5, layout_matrix=cbind(c(1,3,5),c(2,4,6))),
         bg="white", height=10, width=12, units="in")
-cat("\nPCA eval plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-channel-low-res_filtered_PCA-SVG-eval.png\n")
+cat("\nPCA eval plots saved to: plots/08_compare_DEGs/SZBDMulti-seq/SZBD-low-res_filtered_PCA-SVG-eval.png\n")
 
-save(sce_pseudo, file="processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-channel-low-res_norm-filt.Rdata")
-cat("\nFiltered, normalized pseudobulk sce saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-channel-low-res_norm-filt.Rdata\n")
+save(sce_pseudo, file="processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res_norm-filt.Rdata")
+cat("\nFiltered, normalized pseudobulk sce saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res_norm-filt.Rdata\n")
 
 
 cat("\n\nReproducibility information:\n")
