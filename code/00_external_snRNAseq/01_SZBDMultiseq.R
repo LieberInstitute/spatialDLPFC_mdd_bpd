@@ -87,16 +87,6 @@ dim(seu) # 34291 301136
 seu = seu[seu[["RNA"]]@meta.data$n_cells>100,]
 dim(seu) # 29887 301136
 
-# check sex chr raw counts
-tmp = seu@meta.data
-genes1 = c("XIST","DDX3Y","RPS4Y1")
-for(i in genes1) tmp[[i]] = seu[["RNA"]]$counts[i,]
-
-library(dplyr)
-tmp = group_by(tmp, individualID, Disorder, Biological_Sex) %>% summarise(ncells=n(), XIST=sum(XIST), DDX3Y=sum(DDX3Y), RPS4Y1=sum(RPS4Y1))
-write.csv(tmp, "processed-data/00_external_snRNAseq/check_SZBD_seurat-creation-rawX.csv")
-#stop("Stop to just save csv for checking sex chr raw counts")
-
 # save nuclei and gene filters
 saveRDS(seu, "processed-data/00_external_snRNAseq/seurat_SZBDMultiseq_qc-filtered.rda")
 write.csv(seu@meta.data, "processed-data/00_external_snRNAseq/SZBDMultiseq_control-BD_filtered_observations.csv", row.names=F)
