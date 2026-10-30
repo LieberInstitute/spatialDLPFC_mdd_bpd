@@ -1,0 +1,23 @@
+diff --git a/src/pyscenic/cli/pyscenic.py b/src/pyscenic/cli/pyscenic.py
+index 393506f..e118e88 100644
+--- a/src/pyscenic/cli/pyscenic.py
++++ b/src/pyscenic/cli/pyscenic.py
+@@ -21,6 +21,8 @@ from arboreto.utils import load_tf_names
+ from ctxcore.rnkdb import RankingDatabase, opendb
+ from dask.diagnostics import ProgressBar
+ 
++import dask.distributed # JT ADDED
++
+ from pyscenic.aucell import aucell
+ from pyscenic.log import create_logging_handler
+ from pyscenic.prune import _prepare_client, find_features, prune2df
+@@ -88,6 +90,9 @@ def find_adjacencies_command(args):
+         )
+ 
+     LOGGER.info("Inferring regulatory networks.")
++
++    dask.config.set({'distributed.worker.memory.limit': '5GB'}) # JT ADDED
++
+     client, shutdown_callback = _prepare_client(
+         args.client_or_address, num_workers=args.num_workers
+     )
