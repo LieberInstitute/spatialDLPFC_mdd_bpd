@@ -7,7 +7,7 @@ set.seed(123)
 
 load("processed-data/08_compare_DEGs/SZBDMulti-seq/sce_SZBD_pseudo_indivID-low-res_norm-filt.Rdata")
 dim(sce_pseudo)
-sce_pseudo$pc10 = reducedDim(sce_pseudo, "PCA_HVG")[,"PC10"]
+#sce_pseudo$pc10 = reducedDim(sce_pseudo, "PCA_HVG")[,"PC10"]
 
 #revised genes, recalculated on filtered samples
 rowData(sce_pseudo)$high_expr_group_sample2 <- filterByExpr(sce_pseudo, group = sce_pseudo$individualID)
@@ -19,7 +19,7 @@ dim(sce_pseudo)
 dge_pseudo = DGEList(counts(sce_pseudo))
 dge_pseudo <- calcNormFactors(dge_pseudo)
 
-cat("\ndx model: ~ 0 + group + seurat_low.res + pc10 + age + ncells\n")
+cat("\ndx model: ~ 0 + group + seurat_low.res + age + ncells\n")
 group = interaction(sce_pseudo$condition, sce_pseudo$sex)
 table(group)
 
@@ -27,7 +27,7 @@ sce_pseudo$ncells = scale(sce_pseudo$ncells)
 sce_pseudo$age = scale(sce_pseudo$Age_death)
 
 dx_mod <- model.matrix(
-  ~ 0 + group + seurat_low.res + pc10 + age + ncells,
+  ~ 0 + group + seurat_low.res + age + ncells,
   colData(sce_pseudo)
 )
 stopifnot(is.fullrank(dx_mod))
@@ -37,8 +37,8 @@ y = voom(dge_pseudo, dx_mod, plot=F)
 corfit <- duplicateCorrelation(y, block = colData(sce_pseudo)$individualID)
 fit <- lmFit(y, block = colData(sce_pseudo)$individualID, correlation = corfit$consensus)
 
-saveRDS(fit, "processed-data/08_compare_DEGs/SZBDMulti-seq/lmFit-voom_layer-adjusted_low-res_condition-sex_covars-pc10-age-ncells.rda")
-cat("\nlmFit results/ object saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/lmFit-voom_layer-adjusted_low-res_condition-sex_covars-pc10-age-ncells.rda\n")
+saveRDS(fit, "processed-data/08_compare_DEGs/SZBDMulti-seq/lmFit-voom_layer-adjusted_low-res_condition-sex_covars-age-ncells.rda")
+cat("\nlmFit results/ object saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/lmFit-voom_layer-adjusted_low-res_condition-sex_covars-age-ncells.rda\n")
 
 
 # now make layer-restricted model
@@ -50,9 +50,9 @@ group = interaction(dx, clus, sex)
 cat("\ngroup var produced by interaction():\n")
 table(group)
 
-cat("\ndx model: ~ 0 + group + pc10 + age + ncells\n")
+cat("\ndx model: ~ 0 + group + age + ncells\n")
 dx_mod <- model.matrix(
-  ~ 0 + group + pc10 + age + ncells,
+  ~ 0 + group + age + ncells,
   colData(sce_pseudo)
 )
 stopifnot(is.fullrank(dx_mod))
@@ -62,8 +62,8 @@ y = voom(dge_pseudo, dx_mod, plot=F)
 corfit <- duplicateCorrelation(y, block = colData(sce_pseudo)$individualID)
 fit <- lmFit(y, block = colData(sce_pseudo)$individualID, correlation = corfit$consensus)
 
-saveRDS(fit, "processed-data/08_compare_DEGs/SZBDMulti-seq/lmFit-voom_layer-restricted_low-res_condition-sex_covars-pc10-age-ncells.rda")
-cat("\nlmFit results/ object saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/lmFit-voom_layer-restricted_low-res_condition-sex_covars-pc10-age-ncells.rda\n")
+saveRDS(fit, "processed-data/08_compare_DEGs/SZBDMulti-seq/lmFit-voom_layer-restricted_low-res_condition-sex_covars-age-ncells.rda")
+cat("\nlmFit results/ object saved to: processed-data/08_compare_DEGs/SZBDMulti-seq/lmFit-voom_layer-restricted_low-res_condition-sex_covars-age-ncells.rda\n")
 
 cat("\n\nReproducibility information:\n")
 Sys.time()
