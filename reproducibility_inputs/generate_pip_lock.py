@@ -51,10 +51,14 @@ def release_hashes(pin: tuple[str, str]) -> tuple[str, str, list[str]]:
 
 
 def requirement_block(requirement: str, hashes: list[str]) -> str:
-    first = f"{requirement} \\" if hashes else requirement
     if not hashes:
-        return first
-    return first + "\n" + "\n".join(f"    --hash=sha256:{digest}" for digest in hashes)
+        return requirement
+
+    lines = [requirement + " \\"]
+    for index, digest in enumerate(hashes):
+        continuation = " \\" if index < len(hashes) - 1 else ""
+        lines.append(f"    --hash=sha256:{digest}{continuation}")
+    return "\n".join(lines)
 
 
 def main() -> None:
