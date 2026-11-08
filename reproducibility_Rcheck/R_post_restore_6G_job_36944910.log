@@ -1,0 +1,485 @@
+
+Attaching package: ‘renv’
+
+The following objects are masked from ‘package:stats’:
+
+    embed, update
+
+The following objects are masked from ‘package:utils’:
+
+    history, upgrade
+
+The following objects are masked from ‘package:base’:
+
+    autoload, load, remove, use
+
+R version: R version 4.4.3 Patched (2025-02-28 r88218) 
+Installed in target library: 404 
+BiocManagerinstalled=1.30.25
+BiocVersioninstalled=3.20.0
+Rcppinstalled=1.0.14
+Seuratinstalled=5.3.0
+SingleCellExperimentinstalled=1.28.1
+spatialLIBDinstalled=1.18.0
+The following package(s) are in an inconsistent state:
+
+ package              installed recorded used
+ abind                y         y        n   
+ admisc               n         y        n   
+ anndata              y         y        n   
+ annotate             y         y        n   
+ AnnotationDbi        y         y        n   
+ AnnotationHub        y         y        n   
+ ape                  n         y        n   
+ aplot                n         y        n   
+ arrow                y         y        n   
+ askpass              y         y        n   
+ assertthat           y         y        n   
+ assorthead           y         y        n   
+ attempt              y         y        n   
+ backports            y         y        n   
+ base64enc            y         y        n   
+ basilisk             y         y        n   
+ basilisk.utils       y         y        n   
+ beachmat             y         y        n   
+ beeswarm             y         y        n   
+ benchmarkme          y         y        n   
+ benchmarkmeData      y         y        n   
+ BH                   y         y        n   
+ Biobase              y         y        n   
+ BiocFileCache        y         y        n   
+ BiocGenerics         y         y        n   
+ BiocIO               y         y        n   
+ BiocManager          y         y        n   
+ BiocNeighbors        y         y        n   
+ BiocParallel         y         y        n   
+ BiocSingular         y         y        n   
+ BiocVersion          y         y        n   
+ Biostrings           y         y        n   
+ bit                  y         y        n   
+ bit64                y         y        n   
+ bitops               y         y        n   
+ blob                 y         y        n   
+ bluster              y         y        n   
+ boot                 n         y        n   
+ brew                 y         y        n   
+ brio                 y         y        n   
+ BRISC                y         y        n   
+ broom                y         y        n   
+ bslib                y         y        n   
+ cachem               y         y        n   
+ Cairo                y         y        n   
+ callr                y         y        n   
+ car                  y         y        n   
+ carData              y         y        n   
+ caTools              y         y        n   
+ cellranger           y         y        n   
+ circlize             y         y        n   
+ class                n         y        n   
+ classInt             y         y        n   
+ cli                  y         y        n   
+ clipr                y         y        n   
+ clue                 y         y        n   
+ cluster              n         y        n   
+ clusterProfiler      n         y        n   
+ codetools            n         y        n   
+ coloc                n         y        n   
+ colorspace           y         y        n   
+ colourpicker         y         y        n   
+ commonmark           y         y        n   
+ ComplexHeatmap       y         y        n   
+ CompQuadForm         n         y        n   
+ config               y         y        n   
+ corrplot             y         y        n   
+ cowplot              y         y        n   
+ cpp11                y         y        n   
+ crayon               y         y        n   
+ credentials          y         y        n   
+ crosstalk            y         y        n   
+ curl                 y         y        n   
+ data.table           y         y        n   
+ DBI                  y         y        n   
+ dbplyr               y         y        n   
+ dbscan               n         y        n   
+ DelayedArray         y         y        n   
+ deldir               y         y        n   
+ Deriv                y         y        n   
+ desc                 y         y        n   
+ devtools             y         y        n   
+ diffobj              y         y        n   
+ digest               y         y        n   
+ dir.expiry           y         y        n   
+ doBy                 y         y        n   
+ doParallel           y         y        n   
+ DOSE                 n         y        n   
+ dotCall64            y         y        n   
+ downlit              y         y        n   
+ dplyr                y         y        n   
+ dqrng                y         y        n   
+ DR.SC                n         y        n   
+ DT                   y         y        n   
+ e1071                y         y        n   
+ edgeR                y         y        n   
+ ellipsis             y         y        n   
+ enrichplot           n         y        n   
+ enrichR              n         y        n   
+ escheR               n         y        n   
+ evaluate             y         y        n   
+ ExperimentHub        y         y        n   
+ fansi                y         y        n   
+ farver               y         y        n   
+ fastDummies          y         y        n   
+ fastmap              y         y        n   
+ fastmatch            y         y        n   
+ fgsea                y         y        n   
+ fields               y         y        n   
+ filelock             y         y        n   
+ fitdistrplus         y         y        n   
+ FNN                  y         y        n   
+ fontawesome          y         y        n   
+ forcats              y         y        n   
+ foreach              y         y        n   
+ formatR              y         y        n   
+ Formula              y         y        n   
+ fs                   y         y        n   
+ futile.logger        y         y        n   
+ futile.options       y         y        n   
+ future               y         y        n   
+ future.apply         y         y        n   
+ genefilter           y         y        n   
+ generics             y         y        n   
+ GenomeInfoDb         y         y        n   
+ GenomeInfoDbData     y         y        n   
+ GenomicAlignments    y         y        n   
+ GenomicRanges        y         y        n   
+ gert                 y         y        n   
+ GetoptLong           y         y        n   
+ ggbeeswarm           y         y        n   
+ ggbreak              n         y        n   
+ ggforce              y         y        n   
+ ggfun                y         y        n   
+ ggh4x                n         y        n   
+ ggnewscale           y         y        n   
+ ggplot2              y         y        n   
+ ggplotify            n         y        n   
+ ggpubr               y         y        n   
+ ggrastr              y         y        n   
+ ggrepel              y         y        n   
+ ggridges             y         y        n   
+ ggsankey             n         y        n   
+ ggsci                y         y        n   
+ ggside               y         y        n   
+ ggsignif             y         y        n   
+ ggspavis             y         y        n   
+ ggtangle             n         y        n   
+ ggthemes             n         y        n   
+ ggtree               n         y        n   
+ ggVennDiagram        n         y        n   
+ gh                   y         y        n   
+ GiRaF                n         y        n   
+ gitcreds             y         y        n   
+ GlobalOptions        y         y        n   
+ globals              y         y        n   
+ glue                 y         y        n   
+ GO.db                y         y        n   
+ goftest              y         y        n   
+ golem                y         y        n   
+ GOSemSim             n         y        n   
+ gplots               y         y        n   
+ gridExtra            y         y        n   
+ gridGraphics         n         y        n   
+ gridtext             n         y        n   
+ gson                 n         y        n   
+ gtable               y         y        n   
+ gtools               y         y        n   
+ HDF5Array            y         y        n   
+ hdf5r                y         y        n   
+ here                 y         y        n   
+ highr                y         y        n   
+ hms                  y         y        n   
+ htmltools            y         y        n   
+ htmlwidgets          y         y        n   
+ httpuv               y         y        n   
+ httr                 y         y        n   
+ httr2                y         y        n   
+ ica                  y         y        n   
+ igraph               y         y        n   
+ ini                  y         y        n   
+ IRanges              y         y        n   
+ irlba                y         y        n   
+ iSEE                 y         y        n   
+ isoband              y         y        n   
+ iterators            y         y        n   
+ jpeg                 y         y        n   
+ jquerylib            y         y        n   
+ jsonlite             y         y        n   
+ KEGGREST             y         y        n   
+ KernSmooth           n         y        n   
+ knitr                y         y        n   
+ labeling             y         y        n   
+ lambda.r             y         y        n   
+ later                y         y        n   
+ lattice              n         y        n   
+ lazyeval             y         y        n   
+ leidenbase           y         y        n   
+ lifecycle            y         y        n   
+ limma                y         y        n   
+ listenv              y         y        n   
+ listviewer           y         y        n   
+ litedown             y         y        n   
+ lme4                 y         y        n   
+ lmtest               y         y        n   
+ locfit               y         y        n   
+ loomR                n         y        n   
+ magick               y         y        n   
+ magrittr             y         y        n   
+ maps                 y         y        n   
+ markdown             y         y        n   
+ MASS                 n         y        n   
+ Matrix               n         y        n   
+ MatrixGenerics       y         y        n   
+ MatrixModels         y         y        n   
+ matrixStats          y         y        n   
+ mclust               y         y        n   
+ memoise              y         y        n   
+ metapod              y         y        n   
+ mgcv                 y         y        n   
+ microbenchmark       y         y        n   
+ mime                 y         y        n   
+ miniUI               y         y        n   
+ minqa                y         y        n   
+ mixsqp               y         y        n   
+ modelr               y         y        n   
+ nlme                 n         y        n   
+ nloptr               y         y        n   
+ nnet                 n         y        n   
+ nnSVG                y         y        n   
+ numDeriv             y         y        n   
+ openssl              y         y        n   
+ openxlsx             n         y        n   
+ paletteer            y         y        n   
+ parallelly           y         y        n   
+ patchwork            y         y        n   
+ pbapply              y         y        n   
+ pbkrtest             y         y        n   
+ pgenlibr             n         y        n   
+ pheatmap             y         y        n   
+ pillar               y         y        n   
+ pkgbuild             y         y        n   
+ pkgconfig            y         y        n   
+ pkgdown              y         y        n   
+ pkgload              y         y        n   
+ plogr                y         y        n   
+ plotly               y         y        n   
+ plyr                 y         y        n   
+ png                  y         y        n   
+ polyclip             y         y        n   
+ polynom              y         y        n   
+ praise               y         y        n   
+ PRECAST              n         y        n   
+ prettyunits          y         y        n   
+ prismatic            y         y        n   
+ processx             y         y        n   
+ profvis              y         y        n   
+ progress             y         y        n   
+ progressr            y         y        n   
+ promises             y         y        n   
+ proxy                y         y        n   
+ ps                   y         y        n   
+ purrr                y         y        n   
+ qs2                  n         y        n   
+ quantreg             y         y        n   
+ qvalue               y         y        n   
+ R.methodsS3          y         y        n   
+ R.oo                 y         y        n   
+ R.utils              y         y        n   
+ R6                   y         y        n   
+ ragg                 y         y        n   
+ RANN                 y         y        n   
+ rappdirs             y         y        n   
+ raster               y         y        n   
+ rbibutils            y         y        n   
+ rcmdcheck            y         y        n   
+ RColorBrewer         y         y        n   
+ Rcpp                 y         y        n   
+ RcppAnnoy            y         y        n   
+ RcppArmadillo        y         y        n   
+ RcppEigen            y         y        n   
+ RcppHNSW             y         y        n   
+ RcppML               y         y        n   
+ RcppParallel         y         y        n   
+ RcppProgress         y         y        n   
+ RcppTOML             y         y        n   
+ RCurl                y         y        n   
+ rdist                y         y        n   
+ Rdpack               y         y        n   
+ readxl               y         y        n   
+ reformulas           y         y        n   
+ rematch              y         y        n   
+ rematch2             y         y        n   
+ remotes              y         y        n   
+ reshape              y         y        n   
+ reshape2             y         y        n   
+ restfulr             y         y        n   
+ reticulate           y         y        n   
+ rhdf5                y         y        n   
+ rhdf5filters         y         y        n   
+ Rhdf5lib             y         y        n   
+ Rhtslib              y         y        n   
+ rintrojs             y         y        n   
+ rjson                y         y        n   
+ rlang                y         y        n   
+ rmarkdown            y         y        n   
+ ROCR                 y         y        n   
+ roxygen2             y         y        n   
+ rprojroot            y         y        n   
+ Rsamtools            y         y        n   
+ RSpectra             y         y        n   
+ RSQLite              y         y        n   
+ rstatix              y         y        n   
+ rstudioapi           y         y        n   
+ rsvd                 y         y        n   
+ rtracklayer          y         y        n   
+ Rtsne                y         y        n   
+ rversions            y         y        n   
+ s2                   y         y        n   
+ S4Arrays             y         y        n   
+ S4Vectors            y         y        n   
+ S7                   n         y        n   
+ sass                 y         y        n   
+ ScaledMatrix         y         y        n   
+ scales               y         y        n   
+ scater               y         y        n   
+ scattermore          y         y        n   
+ scatterpie           y         y        n   
+ scran                y         y        n   
+ sctransform          y         y        n   
+ scuttle              y         y        n   
+ sessioninfo          y         y        n   
+ Seurat               y         y        n   
+ SeuratObject         y         y        n   
+ sf                   y         y        n   
+ shape                y         y        n   
+ shiny                y         y        n   
+ shinyAce             y         y        n   
+ shinydashboard       y         y        n   
+ shinyjs              y         y        n   
+ shinyWidgets         y         y        n   
+ SingleCellExperiment y         y        n   
+ sitmo                y         y        n   
+ snow                 y         y        n   
+ sourcetools          y         y        n   
+ sp                   y         y        n   
+ spam                 y         y        n   
+ SparseArray          y         y        n   
+ SparseM              y         y        n   
+ spatialEco           n         y        n   
+ SpatialExperiment    y         y        n   
+ spatialLIBD          y         y        n   
+ spatstat.data        y         y        n   
+ spatstat.explore     y         y        n   
+ spatstat.geom        y         y        n   
+ spatstat.random      y         y        n   
+ spatstat.sparse      y         y        n   
+ spatstat.univar      y         y        n   
+ spatstat.utils       y         y        n   
+ spData               y         y        n   
+ spdep                y         y        n   
+ SpotSweeper          n         y        n   
+ statmod              y         y        n   
+ stringfish           n         y        n   
+ stringi              y         y        n   
+ stringr              y         y        n   
+ SummarizedExperiment y         y        n   
+ survival             n         y        n   
+ susieR               n         y        n   
+ sva                  y         y        n   
+ svglite              y         y        n   
+ sys                  y         y        n   
+ systemfonts          y         y        n   
+ tensor               y         y        n   
+ terra                y         y        n   
+ testthat             y         y        n   
+ textshaping          y         y        n   
+ tibble               y         y        n   
+ tidyr                y         y        n   
+ tidyselect           y         y        n   
+ tidytree             n         y        n   
+ tinytex              y         y        n   
+ treeio               n         y        n   
+ tweenr               y         y        n   
+ UCSC.utils           y         y        n   
+ units                y         y        n   
+ UpSetR               y         y        n   
+ urlchecker           y         y        n   
+ usethis              y         y        n   
+ utf8                 y         y        n   
+ uwot                 y         y        n   
+ vctrs                y         y        n   
+ venn                 n         y        n   
+ vipor                y         y        n   
+ viridis              y         y        n   
+ viridisLite          y         y        n   
+ waldo                y         y        n   
+ whisker              y         y        n   
+ withr                y         y        n   
+ wk                   y         y        n   
+ writexl              n         y        n   
+ WriteXLS             n         y        n   
+ xfun                 y         y        n   
+ XML                  y         y        n   
+ xml2                 y         y        n   
+ xopen                y         y        n   
+ xtable               y         y        n   
+ XVector              y         y        n   
+ yaml                 y         y        n   
+ yulab.utils          y         y        n   
+ zellkonverter        n         y        n   
+ zip                  y         y        n   
+ zlibbioc             y         y        n   
+ zoo                  y         y        n   
+
+See `?renv::status` for advice on resolving these issues.
+LOCKFILE_SYNCHRONIZED=FALSE
+Restore exit code: 0; post-check exit code: 0
+bash: Rscript: command not found
+DIRECT_LOCKFILE_COMPARISON
+LOCKFILE_PACKAGE_COUNT=415
+TARGET_LIBRARY_PACKAGE_COUNT=404
+MATCHING=404
+MISSING=11
+VERSION_MISMATCH=0
+ [1] "KernSmooth" "MASS"       "Matrix"     "boot"       "class"     
+ [6] "cluster"    "codetools"  "lattice"    "nlme"       "nnet"      
+[11] "survival"  
+
+Attaching package: ‘renv’
+
+The following objects are masked from ‘package:stats’:
+
+    embed, update
+
+The following objects are masked from ‘package:utils’:
+
+    history, upgrade
+
+The following objects are masked from ‘package:base’:
+
+    autoload, load, remove, use
+
+STATUS_RETURN_KEYS: library, lockfile, synchronized 
+STATUS_SYNCHRONIZED: FALSE 
+STATUS_CAPTURE_LINES: 419 
+STATUS_SUMMARY_HEAD:
+ The following package(s) are in an inconsistent state:
+
+ package              installed recorded used
+ abind                y         y        n   
+ admisc               n         y        n   
+ anndata              y         y        n   
+ annotate             y         y        n   
+ AnnotationDbi        y         y        n   
+ AnnotationHub        y         y        n   
+ ape                  n         y        n   
+ aplot                n         y        n   
+ arrow                y         y        n    
