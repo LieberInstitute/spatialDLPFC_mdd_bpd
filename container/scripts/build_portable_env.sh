@@ -23,6 +23,10 @@ case "$profile" in
         python -m pip install --no-deps --require-hashes \
         --requirement requirements-pip.lock
     )
+    # Package caches are not part of the runtime environment. Removing them
+    # keeps both Docker and Apptainer images substantially smaller.
+    "$conda_root/bin/conda" clean --all --yes
+    rm -rf /root/.cache/pip
     ;;
   r)
     target_lib="$root/renv-library"

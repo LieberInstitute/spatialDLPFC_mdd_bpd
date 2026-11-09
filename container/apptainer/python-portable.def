@@ -15,7 +15,8 @@ From: debian:bookworm-slim
     set -eu
     export DEBIAN_FRONTEND=noninteractive
     apt-get update
-    apt-get install -y --no-install-recommends ca-certificates curl bzip2 procps
+    apt-get install -y --no-install-recommends \
+        build-essential ca-certificates curl bzip2 procps
     rm -rf /var/lib/apt/lists/*
     chmod a+r /opt/mbv/scripts/verify_python_env.py
     bash /opt/mbv/scripts/build_portable_env.sh python
