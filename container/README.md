@@ -1,5 +1,8 @@
 # MBv pipeline containers
 
+For machine-specific build prerequisites, test-user commands, measured image
+sizes, and current test status, see [TEST_USER_README.md](TEST_USER_README.md).
+
 For this container phase, the target is the bulk of the pipeline in code
 directories `00` through `10`, which uses R and Python in separate jobs. This
 repository therefore builds separate R and pySCENIC Python images; the R image
