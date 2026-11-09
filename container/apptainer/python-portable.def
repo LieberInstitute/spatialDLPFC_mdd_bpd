@@ -1,0 +1,32 @@
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    org.opencontainers.image.title MBv Python environment
+    org.opencontainers.image.version 0.1-test
+    org.opencontainers.image.description Portable pySCENIC Conda environment for MBv pipeline validation
+
+%files
+    reproducibility_inputs /opt/mbv/reproducibility_inputs
+    container/scripts/verify_python_env.py /opt/mbv/scripts/verify_python_env.py
+    container/scripts/build_portable_env.sh /opt/mbv/scripts/build_portable_env.sh
+
+%post
+    set -eu
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y --no-install-recommends ca-certificates curl bzip2 procps
+    rm -rf /var/lib/apt/lists/*
+    chmod a+r /opt/mbv/scripts/verify_python_env.py
+    bash /opt/mbv/scripts/build_portable_env.sh python
+
+%environment
+    export PATH=/opt/conda/envs/pyscenic/bin:/opt/conda/bin:$PATH
+
+%test
+    set -eu
+    python /opt/mbv/scripts/verify_python_env.py
+    python -m pip check
+
+%runscript
+    exec "$@"
