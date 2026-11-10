@@ -26,7 +26,7 @@ case "$profile" in
     # Package caches are not part of the runtime environment. Removing them
     # keeps both Docker and Apptainer images substantially smaller.
     "$conda_root/bin/conda" clean --all --yes
-    rm -rf /root/.cache/pip
+    rm -rf /root/.cache/pip "$inputs"
     ;;
   r)
     target_lib="$root/renv-library"

@@ -7,7 +7,9 @@ From: debian:bookworm-slim
     org.opencontainers.image.description JHPCE pySCENIC Conda environment for MBv pipeline validation
 
 %files
-    reproducibility_inputs /opt/mbv/reproducibility_inputs
+    reproducibility_inputs/conda-linux-64.lock /opt/mbv/reproducibility_inputs/conda-linux-64.lock
+    reproducibility_inputs/requirements-pip.lock /opt/mbv/reproducibility_inputs/requirements-pip.lock
+    reproducibility_inputs/wheels /opt/mbv/reproducibility_inputs/wheels
     container/scripts/build_apptainer_env.sh /opt/mbv/scripts/build_apptainer_env.sh
     container/scripts/build_portable_env.sh /opt/mbv/scripts/build_portable_env.sh
     container/scripts/verify_python_env.py /opt/mbv/scripts/verify_python_env.py
