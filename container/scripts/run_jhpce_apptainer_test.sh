@@ -23,7 +23,7 @@ command -v apptainer >/dev/null || {
 }
 
 run_id=${MBV_JHPCE_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)}
-run_root="$repo_root/reproducibility_outputs/apptainer/$run_id/jhpce"
+run_root="$repo_root/reproducibility_outputs/apptainer/$run_id"
 workdir="/tmp/mbv-apptainer-${SLURM_JOB_ID}"
 mkdir -p "$run_root" "$workdir/tmp" "$workdir/cache"
 export APPTAINER_TMPDIR="$workdir/tmp"
@@ -58,7 +58,15 @@ trap cleanup EXIT
   printf '\n'
 } > "$run_root/session-info.txt"
 
-cat > "$run_root/commands.sh" <<EOF
+run_one() {
+  local name=$1
+  local out="$run_root/${name}-jhpce"
+  local definition="$repo_root/container/apptainer/${name}-jhpce.def"
+  local image="$out/mbv-$name-jhpce.sif"
+  mkdir -p "$out"
+
+  sed "s/^profile=.*/profile=$name/" "$run_root/session-info.txt" > "$out/session-info.txt"
+  cat > "$out/commands.sh" <<EOF
 #!/usr/bin/env bash
 # Run the following allocation request from the JHPCE login node:
 srun --mem ${MBV_JHPCE_MEM_REQUEST:-10G} --pty bash
@@ -69,15 +77,8 @@ export MBV_JHPCE_MEM_REQUEST=${MBV_JHPCE_MEM_REQUEST:-10G}
 export MBV_JHPCE_RUN_ID=$run_id
 export APPTAINER_TMPDIR="$workdir/tmp"
 export APPTAINER_CACHEDIR="$workdir/cache"
-bash container/scripts/run_jhpce_apptainer_test.sh $profile
+bash container/scripts/run_jhpce_apptainer_test.sh $name
 EOF
-
-run_one() {
-  local name=$1
-  local out="$run_root/$name"
-  local definition="$repo_root/container/apptainer/jhpce/$name.def"
-  local image="$out/mbv-$name-jhpce.sif"
-  mkdir -p "$out"
 
   if [[ ! -f $definition ]]; then
     echo "Missing JHPCE definition: $definition" >&2
@@ -93,8 +94,8 @@ run_one() {
     printf 'definition=%s\n' "$definition"
     printf 'build_command=apptainer build --fakeroot %q %q\n' "$image" "$definition"
     printf 'test_command=apptainer test %q\n' "$image"
-  printf 'requested_memory=%s\n' "${MBV_JHPCE_MEM_REQUEST:-unknown}" >> "$out/run-info.txt"
   } > "$out/run-info.txt"
+  printf 'requested_memory=%s\n' "${MBV_JHPCE_MEM_REQUEST:-unknown}" >> "$out/run-info.txt"
 
   local start elapsed rc
   start=$(date +%s)
@@ -113,11 +114,11 @@ run_one() {
   start=$(date +%s)
   if apptainer test "$image" > "$out/test.log" 2>&1; then
     elapsed=$(($(date +%s)-start))
-    printf 'test_elapsed_seconds=%s\ntest_status=passed\n' "$elapsed" >> "$out/run-info.txt"
+    printf 'explicit_test_elapsed_seconds=%s\nexplicit_test_status=passed\n' "$elapsed" >> "$out/run-info.txt"
   else
     rc=$?
     elapsed=$(($(date +%s)-start))
-    printf 'test_elapsed_seconds=%s\ntest_status=failed\ntest_exit_code=%s\n' \
+    printf 'explicit_test_elapsed_seconds=%s\nexplicit_test_status=failed\nexplicit_test_exit_code=%s\n' \
       "$elapsed" "$rc" >> "$out/run-info.txt"
     cat "$out/test.log" >&2
     return "$rc"

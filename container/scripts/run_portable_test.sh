@@ -14,7 +14,7 @@ command -v apptainer >/dev/null || {
 
 repo_root=$(git rev-parse --show-toplevel)
 run_id=$(date -u +%Y%m%dT%H%M%SZ)
-out="$repo_root/reproducibility_outputs/apptainer/$run_id/$profile"
+out="$repo_root/reproducibility_outputs/apptainer/$run_id/${profile}-portable"
 mkdir -p "$out"
 image="$out/mbv-${profile}.sif"
 definition="$repo_root/container/apptainer/${profile}-portable.def"

@@ -14,6 +14,10 @@ The first two tracks use `linux/amd64` because the checked-in Conda explicit
 lock targets Linux x86_64. Docker Desktop on Apple Silicon emulates that target;
 record Mac build durations separately from native Linux timings. Keep all
 images and logs under the ignored `reproducibility_outputs/` tree.
+New Apptainer runs use `reproducibility_outputs/apptainer/<UTC-run-id>/<profile>-<site>/`,
+for example `r-portable` or `python-jhpce`. The completed JHPCE result paths
+below retain their original layout because those records were created before
+the output convention changed.
 
 
 ## Apple Silicon Docker results (2026-11-09)

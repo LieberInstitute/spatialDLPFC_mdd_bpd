@@ -54,8 +54,8 @@ and a JHPCE-specific definition:
 
 | Environment | Portable Linux | JHPCE |
 | --- | --- | --- |
-| R | `apptainer/r-portable.def` | `apptainer/jhpce/r.def` |
-| Python | `apptainer/python-portable.def` | `apptainer/jhpce/python.def` |
+| R | `apptainer/r-portable.def` | `apptainer/r-jhpce.def` |
+| Python | `apptainer/python-portable.def` | `apptainer/python-jhpce.def` |
 
 The portable definitions (yet to be tested) use normal Linux build behavior.
 The JHPCE definitions apply site-specific workarounds required by its 
@@ -199,15 +199,15 @@ support configured in Apptainer. If the host has root access but no fakeroot
 support, run the commands as root with `APPTAINER_BUILD_MODE=root`. The
 portable definitions use normal Linux APT behavior and do not include the
 JHPCE-specific settings. Logs, build and test durations, checksums, and
-metadata go under `reproducibility_outputs/apptainer/<UTC-run-id>/<profile>/`.
+metadata go under `reproducibility_outputs/apptainer/<UTC-run-id>/<profile>-portable/`.
 
 These portable definitions have not yet been tested on a clean Linux host.
 The JHPCE results below are not substitutes for that portable build check.
 
 ### Option 3: Build and smoke-test the JHPCE Apptainer images
 
-The JHPCE definitions are `container/apptainer/jhpce/r.def` and
-`container/apptainer/jhpce/python.def`. Use the login node to request a
+The JHPCE definitions are `container/apptainer/r-jhpce.def` and
+`container/apptainer/python-jhpce.def`. Use the login node to request a
 separate 10 GiB compute allocation for each image. The runner loads the
 Apptainer module, builds the selected image, and performs its smoke test.
 
@@ -242,13 +242,13 @@ profile does not use them.
 
 The runner writes the selected definition, commands, logs, image checksum,
 size, and build/test timing under
-`reproducibility_outputs/apptainer/<UTC-run-id>/jhpce/<profile>/`. After each
+`reproducibility_outputs/apptainer/<UTC-run-id>/<profile>-jhpce/`. After each
 compute job exits, capture peak memory from the login node and save the Slurm
 record in that profile directory:
 
 ```bash
 sacct -j JOB_ID --format=JobID,JobName%18,State,ReqMem,MaxRSS,AveRSS,Elapsed -P \
-  | tee reproducibility_outputs/apptainer/RUN_ID/jhpce/PROFILE/slurm-resource-usage.txt
+  | tee reproducibility_outputs/apptainer/RUN_ID/PROFILE-jhpce/slurm-resource-usage.txt
 ```
 
 Replace `JOB_ID`, `RUN_ID`, and `PROFILE` with the values printed by the
@@ -256,22 +256,23 @@ runner. Keep SIF images and node-local Apptainer cache/build data outside Git.
 
 ## Reading build and test results
 
-Each run writes its results to a new directory named with a UTC timestamp in a
-subdirectory named for the profile tested (R/Python). Use `run-info.txt` to 
+Each run writes its results to a new UTC timestamp directory, with one
+subdirectory per build target (`r-portable`, `python-portable`, `r-jhpce`, or
+`python-jhpce`). Use `run-info.txt` to
 find the pass/fail status, then consult the log for details.
 
-> If tested on JHPCE, the UTC timestamp directory will also contain files including 
-> the commands run, job monitoring output, and a temporary cache clean-up log. 
-> The final Slurm memory and elapsed-time record is saved as `slurm-resource-usage.txt` 
-> in the R or Python profile directory.
+> On JHPCE, each profile directory contains the commands run, session details,
+> and build/test output; the timestamp directory also contains a temporary cache clean-up log.
+> The final Slurm memory and elapsed-time record is saved as `slurm-resource-usage.txt`
+> in the matching `r-jhpce` or `python-jhpce` directory.
 
 A successful run records `passed` for both the build and test status fields.
 For **Docker**, `build_status=passed` means the image built; `smoke_test_status=passed`
 means the checks also passed in a fresh container. For **Apptainer**, `build_status`
 covers `apptainer build`, including the definition’s `%test` section.
-`explicit_test_status` or `test_status` covers the runner’s additional
-`apptainer test` against the completed SIF image. A successful **Apptainer** run also 
-writes the SIF image and `image.sha256`.
+`explicit_test_status` covers the runner’s additional `apptainer test` against
+the completed SIF image. A successful **Apptainer** run also writes the SIF
+image and `image.sha256`.
 
 If a build fails, check `build.log`. If the image built but its later test
 failed, check `test.log`. A missing test status usually means the run stopped
