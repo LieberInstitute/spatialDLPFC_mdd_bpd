@@ -1,41 +1,143 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -euo pipefail
 
-REPO=/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd
-OUTDIR="$REPO/reproducibility_apptainer"
-JOB_ID=${SLURM_JOB_ID:-manual}
-WORKDIR="/tmp/mbv-apptainer-test-${JOB_ID}"
-SIF="$WORKDIR/MBv-pipeline.sif"
+profile=${1:?Usage: run_jhpce_apptainer_test.sh r|python|all}
+case "$profile" in
+  r|python) profiles=("$profile") ;;
+  all) profiles=(r python) ;;
+  *) echo "Profile must be r, python, or all" >&2; exit 2 ;;
+esac
 
-mkdir -p "$OUTDIR" "$WORKDIR/tmp" "$WORKDIR/cache"
-export APPTAINER_TMPDIR="$WORKDIR/tmp"
-export APPTAINER_CACHEDIR="$WORKDIR/cache"
+if [[ -z ${SLURM_JOB_ID:-} ]]; then
+  echo "Run this script inside a JHPCE compute allocation." >&2
+  echo "Example: srun --mem 10G --pty bash" >&2
+  exit 2
+fi
 
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
 module load apptainer/1.5.3
+command -v apptainer >/dev/null || {
+  echo "Could not load Apptainer 1.5.3" >&2
+  exit 127
+}
 
-cat > "$OUTDIR/apptainer_test_commands_${JOB_ID}.txt" <<EOF
-JHPCE revision branch, commit: $(git -C "$REPO" rev-parse --short HEAD)
-Compute node request: srun --mem 10G --pty bash
-Apptainer module: apptainer/1.5.3
-Build: apptainer build --fakeroot $SIF $REPO/container/MBv-pipeline.def
-Container checks: apptainer test $SIF
-Post-build smoke: Rscript --version; python --version; python -m pip check
-Temporary SIF and build cache: $WORKDIR (removed after successful checks)
+run_id=${MBV_JHPCE_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)}
+run_root="$repo_root/reproducibility_outputs/apptainer/$run_id/jhpce"
+workdir="/tmp/mbv-apptainer-${SLURM_JOB_ID}"
+mkdir -p "$run_root" "$workdir/tmp" "$workdir/cache"
+export APPTAINER_TMPDIR="$workdir/tmp"
+export APPTAINER_CACHEDIR="$workdir/cache"
+
+cleanup() {
+  rc=$?
+  if [[ $rc -eq 0 ]]; then
+    rm -rf "$workdir"
+    printf 'Removed node-local build temp/cache: %s\n' "$workdir" \
+      | tee -a "$run_root/cleanup.log"
+  else
+    printf 'Build temp/cache retained until the Slurm job ends: %s\n' "$workdir" \
+      | tee -a "$run_root/cleanup.log"
+  fi
+}
+trap cleanup EXIT
+
+{
+  printf 'site=JHPCE\nrun_id_utc=%s\nprofile=%s\n' "$run_id" "$profile"
+  printf 'repository=%s\nbranch=%s\ncommit=%s\n' \
+    "$repo_root" "$(git branch --show-current)" "$(git rev-parse HEAD)"
+  printf 'job_id=%s\nhost=%s\n' "$SLURM_JOB_ID" "$(hostname)"
+  printf 'requested_memory=%s\n' "${MBV_JHPCE_MEM_REQUEST:-unknown}"
+  scontrol show job "$SLURM_JOB_ID" -o 2>&1 || true
+  printf '\nApptainer version: '
+  apptainer --version
+  printf '\nHost memory:\n'
+  free -h
+  printf '\nFilesystem capacity:\n'
+  df -h "$repo_root" "$workdir"
+  printf '\n'
+} > "$run_root/session-info.txt"
+
+cat > "$run_root/commands.sh" <<EOF
+#!/usr/bin/env bash
+# Run the following allocation request from the JHPCE login node:
+srun --mem ${MBV_JHPCE_MEM_REQUEST:-10G} --pty bash
+# Then run these commands from the allocated compute node:
+cd "$repo_root"
+module load apptainer/1.5.3
+export MBV_JHPCE_MEM_REQUEST=${MBV_JHPCE_MEM_REQUEST:-10G}
+export MBV_JHPCE_RUN_ID=$run_id
+export APPTAINER_TMPDIR="$workdir/tmp"
+export APPTAINER_CACHEDIR="$workdir/cache"
+bash container/scripts/run_jhpce_apptainer_test.sh $profile
 EOF
 
-apptainer --version | tee "$OUTDIR/apptainer_version_${JOB_ID}.txt"
-apptainer build --fakeroot "$SIF" "$REPO/container/MBv-pipeline.def" \
-    2>&1 | tee "$OUTDIR/apptainer_build_${JOB_ID}.log"
-apptainer test "$SIF" 2>&1 | tee "$OUTDIR/apptainer_test_${JOB_ID}.log"
-apptainer exec "$SIF" Rscript --version \
-    2>&1 | tee "$OUTDIR/apptainer_R_version_${JOB_ID}.txt"
-apptainer exec "$SIF" python --version \
-    2>&1 | tee "$OUTDIR/apptainer_python_version_${JOB_ID}.txt"
-apptainer exec "$SIF" python -m pip check \
-    2>&1 | tee "$OUTDIR/apptainer_pip_check_${JOB_ID}.txt"
-sha256sum "$SIF" | tee "$OUTDIR/apptainer_sif_sha256_${JOB_ID}.txt"
+run_one() {
+  local name=$1
+  local out="$run_root/$name"
+  local definition="$repo_root/container/apptainer/jhpce/$name.def"
+  local image="$out/mbv-$name-jhpce.sif"
+  mkdir -p "$out"
 
-# Keep test records on the project filesystem; discard only temporary build data.
-rm -rf "$WORKDIR"
-echo "Temporary build directory removed: $WORKDIR" \
-    | tee "$OUTDIR/apptainer_cleanup_${JOB_ID}.txt"
+  if [[ ! -f $definition ]]; then
+    echo "Missing JHPCE definition: $definition" >&2
+    return 2
+  fi
+
+  cp "$definition" "$out/definition-used.def"
+  {
+    printf 'profile=%s\nrun_id_utc=%s\nsite=JHPCE\n' "$name" "$run_id"
+    printf 'repository=%s\nbranch=%s\ncommit=%s\n' \
+      "$repo_root" "$(git branch --show-current)" "$(git rev-parse HEAD)"
+    printf 'job_id=%s\nhost=%s\n' "$SLURM_JOB_ID" "$(hostname)"
+    printf 'definition=%s\n' "$definition"
+    printf 'build_command=apptainer build --fakeroot %q %q\n' "$image" "$definition"
+    printf 'test_command=apptainer test %q\n' "$image"
+  printf 'requested_memory=%s\n' "${MBV_JHPCE_MEM_REQUEST:-unknown}" >> "$out/run-info.txt"
+  } > "$out/run-info.txt"
+
+  local start elapsed rc
+  start=$(date +%s)
+  if apptainer build --fakeroot "$image" "$definition" > "$out/build.log" 2>&1; then
+    elapsed=$(($(date +%s)-start))
+    printf 'build_elapsed_seconds=%s\nbuild_status=passed\n' "$elapsed" >> "$out/run-info.txt"
+  else
+    rc=$?
+    elapsed=$(($(date +%s)-start))
+    printf 'build_elapsed_seconds=%s\nbuild_status=failed\nbuild_exit_code=%s\n' \
+      "$elapsed" "$rc" >> "$out/run-info.txt"
+    cat "$out/build.log" >&2
+    return "$rc"
+  fi
+
+  start=$(date +%s)
+  if apptainer test "$image" > "$out/test.log" 2>&1; then
+    elapsed=$(($(date +%s)-start))
+    printf 'test_elapsed_seconds=%s\ntest_status=passed\n' "$elapsed" >> "$out/run-info.txt"
+  else
+    rc=$?
+    elapsed=$(($(date +%s)-start))
+    printf 'test_elapsed_seconds=%s\ntest_status=failed\ntest_exit_code=%s\n' \
+      "$elapsed" "$rc" >> "$out/run-info.txt"
+    cat "$out/test.log" >&2
+    return "$rc"
+  fi
+
+  sha256sum "$image" > "$out/image.sha256"
+  printf 'image_size_bytes=%s\nimage_sha256=%s\n' \
+    "$(wc -c < "$image" | tr -d ' ')" \
+    "$(awk '{print $1}' "$out/image.sha256")" >> "$out/run-info.txt"
+  printf 'JHPCE %s build and test passed. Results: %s\n' "$name" "$out"
+  sstat -j "${SLURM_JOB_ID}.${SLURM_STEP_ID:-0}" \
+    --format=JobID,MaxRSS,AveRSS,MaxVMSize --parsable2 \
+    > "$out/slurm-live-resource-usage.txt" 2>&1 || true
+}
+
+overall_status=0
+for name in "${profiles[@]}"; do
+  if ! run_one "$name"; then
+    overall_status=1
+  fi
+done
+
+exit "$overall_status"
