@@ -1,102 +1,327 @@
 # MBv pipeline containers
 
-For machine-specific build prerequisites, test-user commands, measured image
-sizes, and current test status, see [TEST_USER_README.md](TEST_USER_README.md).
+To support consistent environment setup for analysis of the MBv spatial 
+transcriptomics (SRT) data, and future application of the pipeline to external 
+datasets, we have created the container images. These images support the bulk
+of the current pipeline in code directories `00` through `10`. The tensorQTL work
+in `11_eQTL_coloc` is outside the current scope and may receive a separate 
+image later.
 
-For this container phase, the target is the bulk of the pipeline in code
-directories `00` through `10`, which uses R and Python in separate jobs. This
-repository therefore builds separate R and pySCENIC Python images; the R image
-does not put the pySCENIC Conda interpreter on `PATH`. A user needs one clone
-of the MBv repository.
-The lockfiles, wheels, build definitions, and verification scripts are included
-in that checkout. The environment smoke tests do not require the study data.
-The tensorQTL work in code directory `11_eQTL_coloc` is outside this phase and
-may receive its own image later.
+The MBv pipeline uses R and Python in separate jobs, so the environments are
+provided as two images to keep their dependency sets isolated:
 
-## Docker on macOS or Windows
+- **R image:** R 4.4.3 and the package versions recorded in `renv.lock`.
+- **Python image:** the locked `pyscenic_bioconda` environment, Python 3.10.4,
+  pySCENIC, and Arboreto. The pySCENIC install preserves a Dask memory patch
+  required for full functionality with a large dataset.
 
-Docker Desktop runs Linux containers inside its Linux VM. It lets Mac and
-Windows users run the Linux environments without managing a separate Linux
-machine. The current Conda lock is `linux-64`, so both images are explicitly
-built as `linux/amd64`. On Apple Silicon this uses architecture emulation, and
-the R package compilation may be slow. Docker documents that emulated builds,
-especially compilation, can take considerably longer than native builds.
 
-With Docker Desktop started, clone this repository and build/test each image:
+## Container overview
+
+Containers package the software environments used by the MBv pipeline so that
+R and Python package versions, system libraries, and supporting tools can be
+installed and run consistently across machines. They also make it easier for
+users to run the pipeline without manually installing the original packages
+one-by-one. 
+
+The MBv pipeline containers recreate the recorded R and Python package environments
+from the working setup on JHPCE (Joint High Performance Computing Exchange, the 
+JHU Biostatistics Department's high-performance computing facility).
+
+### Docker and Apptainer
+
+Both container tools run Linux software images, but they serve different settings.
+**Docker** is the convenient option for workstations, including macOS and
+Windows through Docker Desktop. Desktop runs Linux containers in a managed
+Linux VM. A user builds the images locally with Docker Desktop, and those images
+are not automatically published to a registry. The MBv project images target 
+`linux/amd64` to match the saved Python lock; Apple Silicon therefore uses 
+emulation. 
+
+**Apptainer** is intended for Linux systems and shared high-performance
+computing environments. Its SIF images work with the site's scheduler and
+filesystem setup, including JHPCE's Slurm environment. Apptainer definitions
+are kept separate from Dockerfiles because the build tools and runtime model
+differ.
+
+
+### Portable and JHPCE Apptainer definitions
+
+In building the Apptainer images within JHPCE, several site-specific workarounds 
+were implemented. To improve application of the Apptainer definitions to other
+high-performance computing environments, we created a portable Linux definition
+and a JHPCE-specific definition:
+
+| Environment | Portable Linux | JHPCE |
+| --- | --- | --- |
+| R | `apptainer/r-portable.def` | `apptainer/jhpce/r.def` |
+| Python | `apptainer/python-portable.def` | `apptainer/jhpce/python.def` |
+
+The portable definitions (yet to be tested) use normal Linux build behavior.
+The JHPCE definitions apply site-specific workarounds required by its 
+rootless/fakeroot build environment: APT runs with its sandbox user set to root, 
+archive extraction uses `TAR_OPTIONS=--no-same-owner`, and staged verifier and R
+lockfile permissions are normalized for runtime checks. Both profiles call
+shared build scripts, so package installation logic stays aligned while the
+JHPCE adjustments remain explicit in the JHPCE profile.
+
+For machine prerequisites, commands, test coverage, measured build resources,
+and current availability, see the
+[test-user guide](TEST_USER_README.md). The guide covers image building and
+smoke tests only; it does not describe running the analysis workflow.
+
+# Test-user guide: building the MBv container images
+
+This guide explains how to build and smoke-test the separate R and Python
+images for the bulk MBv pipeline environment in code directories `00`–`10`.
+It covers container setup only, not implementation or execution of the
+analysis workflow.
+
+- **R image:** R 4.4.3 and package versions recorded in `renv.lock`.
+- **Python image:** the locked `pyscenic_bioconda` environment, Python
+  3.10.14, pySCENIC, and Arboreto from the saved Linux x86_64 locks.
+
+The R and Python environments are separate because the pipeline uses them in
+separate jobs. The tensorQTL work in `11_eQTL_coloc` is outside this phase and
+may receive a third image later.
+
+## Tested environments and availability
+
+The JHPCE Apptainer and MacOS Docker R and Python images were built and smoke-tested 
+successfully on 2026-11-09 (see details [below](#measured-image-sizes-times-and-memory)). 
+R builds consistently take over an hour, so plan accordingly.
+
+Docker images built with the commands below are local to that Docker
+installation; they have not been published to a container registry.
+
+### Machine setups and compatibility
+
+Use this table to choose the build instructions best-suited for your setup.
+
+| Machine/setup | Software needed to build and smoke-test | Project clone | Compatible image and current test status |
+| --- | --- | --- | --- |
+| Mac with Apple Silicon | Docker Desktop running; Terminal/Bash | Yes; clone `revision` | Docker `linux/amd64`; built and smoke-tested with emulation |
+| Mac with Intel | Docker Desktop for Mac; Terminal/Bash | Yes; clone `revision` | Docker `linux/amd64`; matches CPU architecture, but this setup has not been tested |
+| Windows PC with x86_64 CPU | Docker Desktop using Linux containers; WSL 2 and Bash terminal recommended | Yes; clone inside WSL filesystem | Docker `linux/amd64`; matches CPU architecture, but this setup has not been tested |
+| Linux x86_64 with Docker | Docker Engine, Git, Bash | Yes; clone `revision` | Docker `linux/amd64`; clean Linux Docker build has not been tested |
+| Linux x86_64 with Apptainer | Apptainer, Git, Bash; configured fakeroot or root access | Yes; clone `revision` | Portable Apptainer definitions are prepared; clean Linux builds have not been tested |
+| JHPCE | JHPCE access, Slurm, and Apptainer module `apptainer/1.5.3` | Yes; checkout on `revision` | Separate named JHPCE Apptainer definitions; both built and passed runtime checks |
+
+The Python lock targets Linux x86_64, so all Docker builds use
+`linux/amd64`. Docker Desktop on Apple Silicon emulates that architecture;
+native `linux/arm64` images would need a separate Conda lock and validation.
+
+## Build and test steps
+
+These instructions outline how to execute scripts that build and test container images 
+to verify environment setup. The build logs and test results are stored in `reproducibility_outputs`
+and described in [Reading build and test results](#reading-build-and-test-results).
+
+Briefly, you need to clone the project and then use bash to build the container image(s)
+and test the builds. These tests verify the environment, not the full pipeline:
+they do not run code directories `00`–`10` end to end or validate external study data.
+
+The R smoke test compares every installed package with `renv.lock` and loads
+representative packages such as sf, s2, Seurat, SingleCellExperiment, and
+spatialLIBD. The Python smoke test checks Python, pySCENIC, and Arboreto
+versions, imports representative packages, and runs `pip check`. 
+
+### Clone the project
+
+Clone the `revision` branch of the MBv repo. The lockfiles, image definitions, 
+and build scripts are all in this checkout; use it to build both images.
 
 ```bash
 git clone --branch revision https://github.com/LieberInstitute/spatialDLPFC_mdd_bpd.git
 cd spatialDLPFC_mdd_bpd
+```
+
+#### Modified clone instructions
+
+To omit cloning large files for just this container test, use these modified instructions
+for a blobless partial clone with cone-mode sparse checkout. This keeps the project files
+needed for environment setup and tests while leaving the top-level `raw-data` and 
+`processed-data` directories out of the working tree:
+
+```bash
+git clone --filter=blob:none --sparse --branch revision \
+  https://github.com/LieberInstitute/spatialDLPFC_mdd_bpd.git \
+  spatialDLPFC_mdd_bpd
+
+cd spatialDLPFC_mdd_bpd
+
+git ls-tree -d --name-only HEAD |
+  grep -Ev '^(raw-data|processed-data)$' |
+  git sparse-checkout set --stdin
+```
+
+Check the selection with:
+
+```bash
+git sparse-checkout list
+test ! -e raw-data && echo "raw-data omitted"
+test ! -e processed-data && echo "processed-data omitted"
+git status --short
+```
+This only limits files materialized in this local checkout; it does not delete files from GitHub or alter branch history. It’s suitable for building and smoke-testing the images, but the MBv analysis itself requires the data.
+
+### Option 1: Build and smoke-test with Docker
+
+Start Docker Desktop (or Docker Engine on Linux), then run the profiles
+separately:
+
+```bash
 bash container/scripts/run_docker_test.sh r
 bash container/scripts/run_docker_test.sh python
 ```
 
-The runner builds each image, checks locked package versions and representative
-imports, then runs the checks again in a fresh container. It records the exact
-command, platform, Git commit, Docker versions, build duration, smoke-test
-duration, image ID and size, and logs under
-`reproducibility_outputs/docker/<UTC-run-id>/<profile>/`. Outputs are ignored
-by Git so image files and machine-specific logs stay out of repository history.
-The images remain local to that Docker installation; publishing them to a
-registry is a separate step.
+The runner builds each image, checks its locked versions and representative
+imports, and repeats the checks in a fresh container. Docker images are tagged
+locally as `mbv-r:test` and `mbv-python:test`. The runner saves commands, logs,
+build and test durations, Docker versions, image ID, and image size under
+`reproducibility_outputs/docker/<UTC-run-id>/<profile>/`.
 
-The included Dockerfiles currently target Linux x86_64 to match the saved
-Python lock. Supporting native `linux/arm64` needs a separate Conda lock and
-validation. Docker Desktop on Apple Silicon supports emulation for non-native
-platform builds; see [Docker's multi-platform build documentation](https://docs.docker.com/build/building/multi-platform/).
+On macOS, Docker Desktop must be running and have enough VM memory and disk.
+On Windows, use Linux containers and run the commands from WSL 2.
 
-### Initial Apple Silicon build measurements
+### Option 2: Build and smoke-test portable Apptainer images on Linux
 
-On an Apple Silicon Mac using Docker Desktop 29.9.2 and the `linux/amd64`
-emulation target, the first successful R image build took 3,574 seconds
-(59 minutes 34 seconds), followed by a 41-second smoke test. The Python image
-build took 439 seconds (7 minutes 19 seconds), followed by a 59-second smoke
-test. The resulting images were 6.64 GB (R) and 13.6 GB (Python). The Python
-image includes the locked CUDA/PyTorch packages even when the host has no
-NVIDIA GPU. Allow at least about 20 GB for the final pair of images, plus
-temporary build cache. Treat these as measurements for this Mac and these
-package sources, not estimates for Intel Macs, PCs, or native Linux.
-
-The first Python attempt failed because `pybedtools` needed to compile but the
-image lacked `gcc`; adding `build-essential` fixed it. That compiler is included
-in both portable Python profiles. The final Python image removes pip and Conda
-package caches after installation, then verifies imports and package consistency.
-
-## Portable Apptainer on Linux
-
-The portable Apptainer definitions are `apptainer/r-portable.def` and
-`apptainer/python-portable.def`. On a clean Linux x86_64 machine with Apptainer
-installed, clone the repository and run:
+Use a Linux x86_64 host with Apptainer installed, then run R and Python as
+separate builds:
 
 ```bash
-git clone --branch revision https://github.com/LieberInstitute/spatialDLPFC_mdd_bpd.git
-cd spatialDLPFC_mdd_bpd
 bash container/scripts/run_portable_test.sh r
 bash container/scripts/run_portable_test.sh python
 ```
 
 The runner defaults to `apptainer build --fakeroot`, which requires fakeroot
 support configured in Apptainer. If the host has root access but no fakeroot
-support, run it as root with `APPTAINER_BUILD_MODE=root`. Logs, build and test
-durations, image checksums, and metadata are saved under
-`reproducibility_outputs/apptainer/<UTC-run-id>/<profile>/`.
+support, run the commands as root with `APPTAINER_BUILD_MODE=root`. The
+portable definitions use normal Linux APT behavior and do not include the
+JHPCE-specific settings. Logs, build and test durations, checksums, and
+metadata go under `reproducibility_outputs/apptainer/<UTC-run-id>/<profile>/`.
 
-## JHPCE Apptainer
+These portable definitions have not yet been tested on a clean Linux host.
+The JHPCE results below are not substitutes for that portable build check.
 
-The JHPCE workflow remains a distinct site-specific track. Do not run
-`container/scripts/run_jhpce_apptainer_test.sh` until that phase is approved.
-Its existing combined definition is retained for that workflow while the
-portable profiles are validated.
+### Option 3: Build and smoke-test the JHPCE Apptainer images
 
-## Reproducibility limits
+The JHPCE definitions are `container/apptainer/jhpce/r.def` and
+`container/apptainer/jhpce/python.def`. Use the login node to request a
+separate 10 GiB compute allocation for each image. The runner loads the
+Apptainer module, builds the selected image, and performs its smoke test.
 
-The smoke tests compare all R package versions to `renv.lock`, exercise
-representative R imports, check Python/pySCENIC/Arboreto versions and imports,
-and run `pip check`. They do not yet run the code-directory `00` through `10`
-analysis end to end or validate external study data.
+```bash
+ssh -X USERID@jhpce01.jhsph.edu
+cd /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd
+git switch revision
+git pull origin revision
 
-The base images use version tags rather than immutable digests, and Debian APT
-repositories are not yet snapshot-pinned. The first tests will establish
-whether the dependency recipes work on each target; pinning base digests and
-system-package snapshots remains necessary before claiming bit-for-bit image
-rebuilds.
+# First, build and test R in its own compute job.
+srun --mem 10G --pty bash
+cd /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd
+export MBV_JHPCE_MEM_REQUEST=10G
+bash container/scripts/run_jhpce_apptainer_test.sh r
+exit
+
+# Request a new compute allocation before building Python.
+srun --mem 10G --pty bash
+cd /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd
+export MBV_JHPCE_MEM_REQUEST=10G
+bash container/scripts/run_jhpce_apptainer_test.sh python
+exit
+exit
+```
+
+The JHPCE build profile uses the site's required APT sandbox setting,
+`TAR_OPTIONS=--no-same-owner` during archive extraction, and readable
+permissions for staged verifier files. The R profile also sets permissions on
+`/opt/mbv/project` and its copied `renv.lock` so the unprivileged runtime test
+can read the lockfile. These are the JHPCE-specific adjustments; the portable
+profile does not use them.
+
+The runner writes the selected definition, commands, logs, image checksum,
+size, and build/test timing under
+`reproducibility_outputs/apptainer/<UTC-run-id>/jhpce/<profile>/`. After each
+compute job exits, capture peak memory from the login node and save the Slurm
+record in that profile directory:
+
+```bash
+sacct -j JOB_ID --format=JobID,JobName%18,State,ReqMem,MaxRSS,AveRSS,Elapsed -P \
+  | tee reproducibility_outputs/apptainer/RUN_ID/jhpce/PROFILE/slurm-resource-usage.txt
+```
+
+Replace `JOB_ID`, `RUN_ID`, and `PROFILE` with the values printed by the
+runner. Keep SIF images and node-local Apptainer cache/build data outside Git.
+
+## Reading build and test results
+
+Each run writes its results to a new directory named with a UTC timestamp in a
+subdirectory named for the profile tested (R/Python). Use `run-info.txt` to 
+find the pass/fail status, then consult the log for details.
+
+> If tested on JHPCE, the UTC timestamp directory will also contain files including 
+> the commands run, job monitoring output, and a temporary cache clean-up log. 
+> The final Slurm memory and elapsed-time record is saved as `slurm-resource-usage.txt` 
+> in the R or Python profile directory.
+
+A successful run records `passed` for both the build and test status fields.
+For **Docker**, `build_status=passed` means the image built; `smoke_test_status=passed`
+means the checks also passed in a fresh container. For **Apptainer**, `build_status`
+covers `apptainer build`, including the definition’s `%test` section.
+`explicit_test_status` or `test_status` covers the runner’s additional
+`apptainer test` against the completed SIF image. A successful **Apptainer** run also 
+writes the SIF image and `image.sha256`.
+
+If a build fails, check `build.log`. If the image built but its later test
+failed, check `test.log`. A missing test status usually means the run stopped
+before reaching that test; for JHPCE, check the Slurm job status as well.
+
+The test logs show the checks that ran and their output. For R, look for
+the locked package count, matched versions, missing packages, and version
+mismatches, followed by successful representative package imports. For Python,
+look for the expected and actual Python, pySCENIC, and Arboreto versions,
+`Python environment imports passed`, and `No broken requirements found.` from
+`pip check`.
+
+## Measured image sizes, times, and memory
+
+These are measurements from the tested machines, not guaranteed minimum
+requirements. The logs and generated images of these tests are machine-specific outputs and
+remain outside Git.
+
+### Docker on Apple Silicon (2026-11-09)
+
+Measurements are from Docker Desktop 29.9.2 on an Apple Silicon Mac using the
+`linux/amd64` emulation target. R package compilation under emulation can take
+longer than native x86_64 builds.
+
+| Image | Size | Build time | Smoke-test time |
+| --- | ---: | ---: | ---: |
+| R | 6.64 GB | 3,574 sec (59m 34s) | 41 sec |
+| Python | 13.6 GB | 439 sec (7m 19s) | 59 sec |
+| **Both** | **20.24 GB** | **About 66m 53s** | **About 1m 40s** |
+
+Docker Desktop reported 10 CPUs and about 7.75 GiB of VM memory during these
+builds; peak memory was not measured. About 35 GB free disk is a planning
+estimate based on the observed image and build-cache growth, not a measured
+minimum.
+
+### JHPCE Apptainer (2026-11-09)
+
+| Image | SIF size | Build time | Standalone test | Peak RSS | Requested memory | Total Slurm time |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| R | 1.68 GiB | 5,611 sec (1h 33m 31s) | 25 sec | 4,827,528 KiB (4.61 GiB) | 10 GiB | 1h 35m 07s |
+| Python | 3.80 GiB | 962 sec (16m 02s) | 7 sec | 8,506,936 KiB (8.11 GiB) | 10 GiB | 17m 33s |
+
+In particular, the Python JHPCE build used about 8.11 GiB of its 10 GiB allocation, 
+so plan additional memory on other hosts when possible.
+
+## Reproducibility notes
+
+The package lockfiles pin R and Python package versions. The base images still
+use version tags instead of immutable digests, and system APT repositories are
+not snapshot-pinned. These tests show that the current recipes build and pass
+their smoke checks; they do not establish bit-for-bit identical images across
+future rebuilds.
+
