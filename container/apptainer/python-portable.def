@@ -8,18 +8,13 @@ From: debian:bookworm-slim
 
 %files
     reproducibility_inputs /opt/mbv/reproducibility_inputs
-    container/scripts/verify_python_env.py /opt/mbv/scripts/verify_python_env.py
+    container/scripts/build_apptainer_env.sh /opt/mbv/scripts/build_apptainer_env.sh
     container/scripts/build_portable_env.sh /opt/mbv/scripts/build_portable_env.sh
+    container/scripts/verify_python_env.py /opt/mbv/scripts/verify_python_env.py
 
 %post
     set -eu
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update
-    apt-get install -y --no-install-recommends \
-        build-essential ca-certificates curl bzip2 procps
-    rm -rf /var/lib/apt/lists/*
-    chmod a+r /opt/mbv/scripts/verify_python_env.py
-    bash /opt/mbv/scripts/build_portable_env.sh python
+    bash /opt/mbv/scripts/build_apptainer_env.sh python portable
 
 %environment
     export PATH=/opt/conda/envs/pyscenic/bin:/opt/conda/bin:$PATH
