@@ -4,7 +4,7 @@ set -euo pipefail
 profile=${1:?Usage: run_jhpce_apptainer_test.sh r|python|all}
 case "$profile" in
   r|python) profiles=("$profile") ;;
-  all) profiles=(r python) ;;
+  all) profiles=(python r) ;;
   *) echo "Profile must be r, python, or all" >&2; exit 2 ;;
 esac
 
@@ -33,30 +33,14 @@ cleanup() {
   rc=$?
   if [[ $rc -eq 0 ]]; then
     rm -rf "$workdir"
-    printf 'Removed node-local build temp/cache: %s\n' "$workdir" \
+    printf '\nNode-local build temp/cache status: removed\nPath: %s\n\n' "$workdir" \
       | tee -a "$run_root/cleanup.log"
   else
-    printf 'Build temp/cache retained until the Slurm job ends: %s\n' "$workdir" \
+    printf '\nNode-local build temp/cache status: retained until the Slurm job ends\nPath: %s\n\n' "$workdir" \
       | tee -a "$run_root/cleanup.log"
   fi
 }
 trap cleanup EXIT
-
-{
-  printf 'site=JHPCE\nrun_id_utc=%s\nprofile=%s\n' "$run_id" "$profile"
-  printf 'repository=%s\nbranch=%s\ncommit=%s\n' \
-    "$repo_root" "$(git branch --show-current)" "$(git rev-parse HEAD)"
-  printf 'job_id=%s\nhost=%s\n' "$SLURM_JOB_ID" "$(hostname)"
-  printf 'requested_memory=%s\n' "${MBV_JHPCE_MEM_REQUEST:-unknown}"
-  scontrol show job "$SLURM_JOB_ID" -o 2>&1 || true
-  printf '\nApptainer version: '
-  apptainer --version
-  printf '\nHost memory:\n'
-  free -h
-  printf '\nFilesystem capacity:\n'
-  df -h "$repo_root" "$workdir"
-  printf '\n'
-} > "$run_root/session-info.txt"
 
 run_one() {
   local name=$1
@@ -65,7 +49,22 @@ run_one() {
   local image="$out/mbv-$name-jhpce.sif"
   mkdir -p "$out"
 
-  sed "s/^profile=.*/profile=$name/" "$run_root/session-info.txt" > "$out/session-info.txt"
+  {
+    printf 'site=JHPCE\nrun_id_utc=%s\nprofile=%s\n' "$run_id" "$name"
+    printf 'repository=%s\nbranch=%s\ncommit=%s\n' \
+      "$repo_root" "$(git branch --show-current)" "$(git rev-parse HEAD)"
+    printf 'job_id=%s\nhost=%s\n' "$SLURM_JOB_ID" "$(hostname)"
+    printf 'requested_memory=%s\n' "${MBV_JHPCE_MEM_REQUEST:-unknown}"
+    scontrol show job "$SLURM_JOB_ID" -o 2>&1 || true
+    printf '\nApptainer version: '
+    apptainer --version
+    printf '\nHost memory:\n'
+    free -h
+    printf '\nFilesystem capacity:\n'
+    df -h "$repo_root" "$workdir"
+    printf '\n'
+  } > "$out/session-info.txt"
+
   cat > "$out/commands.sh" <<EOF
 #!/usr/bin/env bash
 # Run the following allocation request from the JHPCE login node:
@@ -128,10 +127,7 @@ EOF
   printf 'image_size_bytes=%s\nimage_sha256=%s\n' \
     "$(wc -c < "$image" | tr -d ' ')" \
     "$(awk '{print $1}' "$out/image.sha256")" >> "$out/run-info.txt"
-  printf 'JHPCE %s build and test passed. Results: %s\n' "$name" "$out"
-  sstat -j "${SLURM_JOB_ID}.${SLURM_STEP_ID:-0}" \
-    --format=JobID,MaxRSS,AveRSS,MaxVMSize --parsable2 \
-    > "$out/slurm-live-resource-usage.txt" 2>&1 || true
+  printf '\nJHPCE %s build and test passed.\nResults directory:\n%s\n\n' "$name" "$out"
 }
 
 overall_status=0

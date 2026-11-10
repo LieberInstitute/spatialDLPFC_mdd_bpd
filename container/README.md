@@ -173,6 +173,9 @@ Start Docker Desktop (or Docker Engine on Linux), then run the profiles
 separately:
 
 ```bash
+# navigate to cloned directory
+cd spatialDLPFC_mdd_bpd
+# run build/test
 bash container/scripts/run_docker_test.sh r
 bash container/scripts/run_docker_test.sh python
 ```
@@ -196,6 +199,9 @@ Use a Linux x86_64 host with Apptainer installed, then run R and Python as
 separate builds:
 
 ```bash
+# navigate to cloned directory
+cd spatialDLPFC_mdd_bpd
+# run build/test
 bash container/scripts/run_portable_test.sh r
 bash container/scripts/run_portable_test.sh python
 ```
@@ -217,25 +223,33 @@ separate 10 GiB compute allocation for each image. The runner loads the
 Apptainer module, builds the selected image, and performs its smoke test.
 
 ```bash
-ssh -X USERID@jhpce01.jhsph.edu
-cd /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd
-git switch revision
-git pull origin revision
+# navigate to cloned directory
+cd spatialDLPFC_mdd_bpd
 
-# First, build and test R in its own compute job.
+# make dir for batch job outputs
+mkdir -p reproducibility_outputs/apptainer/batch-logs
+
+# run build/test as batch job for both images
+sbatch \
+  --job-name=mbv-all-jhpce \
+  --mem=10G \
+  --output="reproducibility_outputs/apptainer/batch-logs/all-%j.out" \
+  --wrap='bash container/scripts/run_jhpce_apptainer_test.sh all'
+
+# run build/test as batch job for single profile (python example)
+sbatch \
+  --job-name=mbv-python-jhpce \
+  --mem=10G \
+  --output="reproducibility_outputs/apptainer/batch-logs/python-%j.out" \
+  --wrap='bash container/scripts/run_jhpce_apptainer_test.sh python'
+
+# run build/test as interactive job (single profile, R example)
 srun --mem 10G --pty bash
-cd /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd
 export MBV_JHPCE_MEM_REQUEST=10G
 bash container/scripts/run_jhpce_apptainer_test.sh r
+## job runs
 exit
 
-# Request a new compute allocation before building Python.
-srun --mem 10G --pty bash
-cd /dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd
-export MBV_JHPCE_MEM_REQUEST=10G
-bash container/scripts/run_jhpce_apptainer_test.sh python
-exit
-exit
 ```
 
 The JHPCE build profile uses the site's required APT sandbox setting,
@@ -247,17 +261,8 @@ profile does not use them.
 
 The runner writes the selected definition, commands, logs, image checksum,
 size, and build/test timing under
-`reproducibility_outputs/apptainer/<UTC-run-id>/<profile>-jhpce/`. After each
-compute job exits, capture peak memory from the login node and save the Slurm
-record in that profile directory:
-
-```bash
-sacct -j JOB_ID --format=JobID,JobName%18,State,ReqMem,MaxRSS,AveRSS,Elapsed -P \
-  | tee reproducibility_outputs/apptainer/RUN_ID/PROFILE-jhpce/slurm-resource-usage.txt
-```
-
-Replace `JOB_ID`, `RUN_ID`, and `PROFILE` with the values printed by the
-runner. Keep SIF images and node-local Apptainer cache/build data outside Git.
+`reproducibility_outputs/apptainer/<UTC-run-id>/<profile>-jhpce/`. Use the
+`session-info.txt` file to batch the UTC run ID to the job ID.
 
 <br><br>
 
@@ -270,8 +275,8 @@ find the pass/fail status, then consult the log for details.
 
 > On JHPCE, each profile directory contains the commands run, session details,
 > and build/test output; the timestamp directory also contains a temporary cache clean-up log.
-> The final Slurm memory and elapsed-time record is saved as `slurm-resource-usage.txt`
-> in the matching `r-jhpce` or `python-jhpce` directory.
+> If using a batch job, the log saved in `reproducibility_outputs/apptainer/batch-logs`
+> for the specific job ID will also report the test status and results path.
 
 A successful run records `passed` for both the build and test status fields.
 For **Docker**, `build_status=passed` means the image built; `smoke_test_status=passed`
