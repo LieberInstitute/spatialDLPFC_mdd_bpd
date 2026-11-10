@@ -15,6 +15,11 @@ provided as two images to keep their dependency sets isolated:
   pySCENIC, and Arboreto. The pySCENIC install preserves a Dask memory patch
   required for full functionality with a large dataset.
 
+<br>
+
+Jump to [build instructions](#mbv-container-build-instructions).
+
+<br>
 
 ## Container overview
 
@@ -27,6 +32,8 @@ one-by-one.
 The MBv pipeline containers recreate the recorded R and Python package environments
 from the working setup on JHPCE (Joint High Performance Computing Exchange, the 
 JHU Biostatistics Department's high-performance computing facility).
+
+<br>
 
 ### Docker and Apptainer
 
@@ -44,6 +51,7 @@ filesystem setup, including JHPCE's Slurm environment. Apptainer definitions
 are kept separate from Dockerfiles because the build tools and runtime model
 differ.
 
+<br>
 
 ### Portable and JHPCE Apptainer definitions
 
@@ -65,25 +73,14 @@ lockfile permissions are normalized for runtime checks. Both profiles call
 shared build scripts, so package installation logic stays aligned while the
 JHPCE adjustments remain explicit in the JHPCE profile.
 
-For machine prerequisites, commands, test coverage, measured build resources,
-and current availability, see the
-[test-user guide](TEST_USER_README.md). The guide covers image building and
-smoke tests only; it does not describe running the analysis workflow.
+<br><br>
 
-# Test-user guide: building the MBv container images
+# MBv container build instructions
 
 This guide explains how to build and smoke-test the separate R and Python
 images for the bulk MBv pipeline environment in code directories `00`–`10`.
 It covers container setup only, not implementation or execution of the
 analysis workflow.
-
-- **R image:** R 4.4.3 and package versions recorded in `renv.lock`.
-- **Python image:** the locked `pyscenic_bioconda` environment, Python
-  3.10.14, pySCENIC, and Arboreto from the saved Linux x86_64 locks.
-
-The R and Python environments are separate because the pipeline uses them in
-separate jobs. The tensorQTL work in `11_eQTL_coloc` is outside this phase and
-may receive a third image later.
 
 ## Tested environments and availability
 
@@ -94,7 +91,7 @@ R builds consistently take over an hour, so plan accordingly.
 Docker images built with the commands below are local to that Docker
 installation; they have not been published to a container registry.
 
-### Machine setups and compatibility
+<br>
 
 Use this table to choose the build instructions best-suited for your setup.
 
@@ -111,20 +108,21 @@ The Python lock targets Linux x86_64, so all Docker builds use
 `linux/amd64`. Docker Desktop on Apple Silicon emulates that architecture;
 native `linux/arm64` images would need a separate Conda lock and validation.
 
+<br>
+
 ## Build and test steps
 
-These instructions outline how to execute scripts that build and test container images 
-to verify environment setup. The build logs and test results are stored in `reproducibility_outputs`
-and described in [Reading build and test results](#reading-build-and-test-results).
-
 Briefly, you need to clone the project and then use bash to build the container image(s)
-and test the builds. These tests verify the environment, not the full pipeline:
-they do not run code directories `00`–`10` end to end or validate external study data.
+and test the builds. These tests verify the environment, not the full pipeline.
+The build logs and test results are stored in `reproducibility_outputs`
+and described in [Reading build and test results](#reading-build-and-test-results).
 
 The R smoke test compares every installed package with `renv.lock` and loads
 representative packages such as sf, s2, Seurat, SingleCellExperiment, and
 spatialLIBD. The Python smoke test checks Python, pySCENIC, and Arboreto
 versions, imports representative packages, and runs `pip check`. 
+
+<br>
 
 ### Clone the project
 
@@ -163,9 +161,13 @@ test ! -e raw-data && echo "raw-data omitted"
 test ! -e processed-data && echo "processed-data omitted"
 git status --short
 ```
-This only limits files materialized in this local checkout; it does not delete files from GitHub or alter branch history. It’s suitable for building and smoke-testing the images, but the MBv analysis itself requires the data.
+This only limits files materialized in this local checkout; it does not delete files from 
+GitHub or alter branch history. It’s suitable for building and smoke-testing the images, 
+but the MBv analysis itself requires the data.
 
-### Option 1: Build and smoke-test with Docker
+<br>
+
+### Build Option 1: Docker
 
 Start Docker Desktop (or Docker Engine on Linux), then run the profiles
 separately:
@@ -184,7 +186,11 @@ build and test durations, Docker versions, image ID, and image size under
 On macOS, Docker Desktop must be running and have enough VM memory and disk.
 On Windows, use Linux containers and run the commands from WSL 2.
 
-### Option 2: Build and smoke-test portable Apptainer images on Linux
+<br>
+
+### Build Option 2: Apptainer images on Linux
+
+**These portable definitions have not yet been tested on a clean Linux host.**
 
 Use a Linux x86_64 host with Apptainer installed, then run R and Python as
 separate builds:
@@ -201,10 +207,9 @@ portable definitions use normal Linux APT behavior and do not include the
 JHPCE-specific settings. Logs, build and test durations, checksums, and
 metadata go under `reproducibility_outputs/apptainer/<UTC-run-id>/<profile>-portable/`.
 
-These portable definitions have not yet been tested on a clean Linux host.
-The JHPCE results below are not substitutes for that portable build check.
+<br>
 
-### Option 3: Build and smoke-test the JHPCE Apptainer images
+### Build Option 3: Apptainer images on JHPCE
 
 The JHPCE definitions are `container/apptainer/r-jhpce.def` and
 `container/apptainer/python-jhpce.def`. Use the login node to request a
@@ -254,6 +259,8 @@ sacct -j JOB_ID --format=JobID,JobName%18,State,ReqMem,MaxRSS,AveRSS,Elapsed -P 
 Replace `JOB_ID`, `RUN_ID`, and `PROFILE` with the values printed by the
 runner. Keep SIF images and node-local Apptainer cache/build data outside Git.
 
+<br><br>
+
 ## Reading build and test results
 
 Each run writes its results to a new UTC timestamp directory, with one
@@ -284,6 +291,8 @@ mismatches, followed by successful representative package imports. For Python,
 look for the expected and actual Python, pySCENIC, and Arboreto versions,
 `Python environment imports passed`, and `No broken requirements found.` from
 `pip check`.
+
+<br><br>
 
 ## Measured image sizes, times, and memory
 
@@ -317,6 +326,8 @@ minimum.
 
 In particular, the Python JHPCE build used about 8.11 GiB of its 10 GiB allocation, 
 so plan additional memory on other hosts when possible.
+
+<br><br>
 
 ## Reproducibility notes
 
