@@ -314,9 +314,9 @@ uncompressed contents.
 
 | Image | Size | Build time | Smoke-test time |
 | --- | ---: | ---: | ---: |
-| R | 6.19 GiB | ~ 1 hr | ~ 1 min |
+| R | 6.33 GiB | ~ 1 hr | ~ 1 min |
 | Python | 12.67 GiB | 7-8 min | ~ 1 min |
-| **Both** | **20.24 GB** | **About 1hr 10min** | **About 2 min** |
+| **Both** | **19.00 GB** | **About 1hr 10min** | **About 2 min** |
 
 Docker Desktop reported 10 CPUs and about 7.75 GiB of VM memory during these
 builds; peak memory was not measured. About 35 GB free disk is a planning
