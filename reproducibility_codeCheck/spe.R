@@ -1,3 +1,6 @@
+args <- commandArgs(trailingOnly = TRUE)
+test_dir <- args[[1L]]
+
 suppressPackageStartupMessages({
 	library("GEOquery")
 	library("SpatialExperiment")
@@ -6,8 +9,6 @@ suppressPackageStartupMessages({
 	library("HDF5Array")
 })
 
-
-test_dir = "test_results/docker/"
 
 tmp_dir <- tempfile("geoquery-", tmpdir = tempdir())
 cat("Tmp cache:", tmp_dir, "\n")
