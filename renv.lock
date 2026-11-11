@@ -994,6 +994,54 @@
       "NeedsCompilation": "yes",
       "Author": "Hervé Pagès [aut, cre], Aaron Lun [ctb], Peter Hickey [ctb]"
     },
+    "DelayedMatrixStats": {
+      "Package": "DelayedMatrixStats",
+      "Version": "1.28.1",
+      "Source": "Bioconductor",
+      "Type": "Package",
+      "Title": "Functions that Apply to Rows and Columns of 'DelayedMatrix' Objects",
+      "Date": "2025-01-09",
+      "Authors@R": "c(person(\"Peter\", \"Hickey\", role = c(\"aut\", \"cre\"), email = \"peter.hickey@gmail.com\", comment = c(ORCID = \"0000-0002-8153-6258\")), person(\"Hervé\", \"Pagès\", role = \"ctb\", email = \"hpages.on.github@gmail.com\"), person(\"Aaron\", \"Lun\", role = \"ctb\", email = \"infinite.monkeys.with.keyboards@gmail.com\"))",
+      "Description": "A port of the 'matrixStats' API for use with DelayedMatrix objects  from the 'DelayedArray' package. High-performing functions operating on rows  and columns of DelayedMatrix objects, e.g. col / rowMedians(),  col / rowRanks(), and col / rowSds(). Functions optimized per data type and  for subsetted calculations such that both memory usage and processing time is  minimized.",
+      "License": "MIT + file LICENSE",
+      "Encoding": "UTF-8",
+      "Roxygen": "list(markdown = TRUE)",
+      "RoxygenNote": "7.3.2",
+      "Depends": [
+        "MatrixGenerics (>= 1.15.1)",
+        "DelayedArray (>= 0.31.7)"
+      ],
+      "Imports": [
+        "methods",
+        "sparseMatrixStats (>= 1.13.2)",
+        "Matrix (>= 1.5-0)",
+        "S4Vectors (>= 0.17.5)",
+        "IRanges (>= 2.25.10)",
+        "SparseArray (>= 1.5.19)"
+      ],
+      "Suggests": [
+        "testthat",
+        "knitr",
+        "rmarkdown",
+        "BiocStyle",
+        "microbenchmark",
+        "profmem",
+        "HDF5Array",
+        "matrixStats (>= 1.0.0)"
+      ],
+      "VignetteBuilder": "knitr",
+      "URL": "https://github.com/PeteHaitch/DelayedMatrixStats",
+      "BugReports": "https://github.com/PeteHaitch/DelayedMatrixStats/issues",
+      "biocViews": "Infrastructure, DataRepresentation, Software",
+      "git_url": "https://git.bioconductor.org/packages/DelayedMatrixStats",
+      "git_branch": "RELEASE_3_20",
+      "git_last_commit": "7915324",
+      "git_last_commit_date": "2025-01-08",
+      "Repository": "Bioconductor 3.20",
+      "NeedsCompilation": "no",
+      "Author": "Peter Hickey [aut, cre] (<https://orcid.org/0000-0002-8153-6258>), Hervé Pagès [ctb], Aaron Lun [ctb]",
+      "Maintainer": "Peter Hickey <peter.hickey@gmail.com>"
+    },
     "Deriv": {
       "Package": "Deriv",
       "Version": "4.1.6",
@@ -1016,6 +1064,70 @@
       "Author": "Andrew Clausen [aut], Serguei Sokol [aut, cre] (<https://orcid.org/0000-0002-5674-3327>), Andreas Rappold [ctb]",
       "Maintainer": "Serguei Sokol <sokol@insa-toulouse.fr>",
       "Repository": "CRAN"
+    },
+    "DropletUtils": {
+      "Package": "DropletUtils",
+      "Version": "1.26.0",
+      "Source": "Bioconductor",
+      "Date": "2024-07-23",
+      "Title": "Utilities for Handling Single-Cell Droplet Data",
+      "Authors@R": "c( person(\"Aaron\", \"Lun\", role = \"aut\"), person(\"Jonathan\", \"Griffiths\", role=c(\"ctb\", \"cre\"), email = \"jonathan.griffiths.94@gmail.com\"), person(\"Davis\", \"McCarthy\", role=\"ctb\"), person(\"Dongze\", \"He\", role=\"ctb\"), person(\"Rob\", \"Patro\", role=\"ctb\"))",
+      "Depends": [
+        "SingleCellExperiment"
+      ],
+      "Imports": [
+        "utils",
+        "stats",
+        "methods",
+        "Matrix",
+        "Rcpp",
+        "BiocGenerics",
+        "S4Vectors",
+        "IRanges",
+        "GenomicRanges",
+        "SummarizedExperiment",
+        "BiocParallel",
+        "SparseArray (>= 1.5.18)",
+        "DelayedArray (>= 0.31.9)",
+        "DelayedMatrixStats",
+        "HDF5Array",
+        "rhdf5",
+        "edgeR",
+        "R.utils",
+        "dqrng",
+        "beachmat",
+        "scuttle"
+      ],
+      "Suggests": [
+        "testthat",
+        "knitr",
+        "BiocStyle",
+        "rmarkdown",
+        "jsonlite",
+        "DropletTestFiles"
+      ],
+      "biocViews": "ImmunoOncology, SingleCell, Sequencing, RNASeq, GeneExpression, Transcriptomics, DataImport, Coverage",
+      "Description": "Provides a number of utility functions for handling single-cell  (RNA-seq) data from droplet technologies such as 10X Genomics. This  includes data loading from count matrices or molecule information files,  identification of cells from empty droplets, removal of barcode-swapped  pseudo-cells, and downsampling of the count matrix.",
+      "License": "GPL-3",
+      "NeedsCompilation": "yes",
+      "VignetteBuilder": "knitr",
+      "LinkingTo": [
+        "Rcpp",
+        "beachmat",
+        "Rhdf5lib",
+        "BH",
+        "dqrng",
+        "scuttle"
+      ],
+      "SystemRequirements": "C++11, GNU make",
+      "RoxygenNote": "7.3.2",
+      "git_url": "https://git.bioconductor.org/packages/DropletUtils",
+      "git_branch": "RELEASE_3_20",
+      "git_last_commit": "5adf632",
+      "git_last_commit_date": "2024-10-29",
+      "Repository": "Bioconductor 3.20",
+      "Author": "Aaron Lun [aut], Jonathan Griffiths [ctb, cre], Davis McCarthy [ctb], Dongze He [ctb], Rob Patro [ctb]",
+      "Maintainer": "Jonathan Griffiths <jonathan.griffiths.94@gmail.com>"
     },
     "ExperimentHub": {
       "Package": "ExperimentHub",
@@ -13868,6 +13980,50 @@
       "Author": "Reinhard Furrer [aut, cre] (<https://orcid.org/0000-0002-6319-2332>), Florian Gerber [aut] (<https://orcid.org/0000-0001-8545-5263>), Roman Flury [aut] (<https://orcid.org/0000-0002-0349-8698>), Daniel Gerber [ctb], Kaspar Moesinger [ctb], Annina Cincera [ctb], Youcef Saad [ctb] (SPARSEKIT http://www-users.cs.umn.edu/~saad/software/SPARSKIT/), Esmond G. Ng [ctb] (Fortran Cholesky routines), Barry W. Peyton [ctb] (Fortran Cholesky routines), Joseph W.H. Liu [ctb] (Fortran Cholesky routines), Alan D. George [ctb] (Fortran Cholesky routines), Lehoucq B. Rich [ctb] (ARPACK), Maschhoff Kristi [ctb] (ARPACK), Sorensen C. Danny [ctb] (ARPACK), Yang Chao [ctb] (ARPACK)",
       "Maintainer": "Reinhard Furrer <reinhard.furrer@math.uzh.ch>",
       "Repository": "CRAN"
+    },
+    "sparseMatrixStats": {
+      "Package": "sparseMatrixStats",
+      "Version": "1.18.0",
+      "Source": "Bioconductor",
+      "Type": "Package",
+      "Title": "Summary Statistics for Rows and Columns of Sparse Matrices",
+      "Authors@R": "person(\"Constantin\", \"Ahlmann-Eltze\", email = \"artjom31415@googlemail.com\",  role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-3762-068X\"))",
+      "Description": "High performance functions for row and column operations on sparse matrices. For example: col / rowMeans2, col / rowMedians, col / rowVars etc. Currently, the optimizations are limited to data in the column sparse format.  This package is inspired by the matrixStats package by Henrik Bengtsson.",
+      "License": "MIT + file LICENSE",
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.3.1",
+      "LinkingTo": [
+        "Rcpp"
+      ],
+      "Imports": [
+        "Rcpp",
+        "Matrix",
+        "matrixStats (>= 0.60.0)",
+        "methods"
+      ],
+      "Depends": [
+        "MatrixGenerics (>= 1.5.3)"
+      ],
+      "Suggests": [
+        "testthat (>= 2.1.0)",
+        "knitr",
+        "bench",
+        "rmarkdown",
+        "BiocStyle"
+      ],
+      "SystemRequirements": "C++11",
+      "VignetteBuilder": "knitr",
+      "URL": "https://github.com/const-ae/sparseMatrixStats",
+      "BugReports": "https://github.com/const-ae/sparseMatrixStats/issues",
+      "biocViews": "Infrastructure, Software, DataRepresentation",
+      "git_url": "https://git.bioconductor.org/packages/sparseMatrixStats",
+      "git_branch": "RELEASE_3_20",
+      "git_last_commit": "172c63e",
+      "git_last_commit_date": "2024-10-29",
+      "Repository": "Bioconductor 3.20",
+      "NeedsCompilation": "yes",
+      "Author": "Constantin Ahlmann-Eltze [aut, cre] (<https://orcid.org/0000-0002-3762-068X>)",
+      "Maintainer": "Constantin Ahlmann-Eltze <artjom31415@googlemail.com>"
     },
     "spatialEco": {
       "Package": "spatialEco",
