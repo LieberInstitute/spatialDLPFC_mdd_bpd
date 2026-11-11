@@ -75,7 +75,7 @@ Requirements: JHPCE access, the Python JHPCE SIF at the path set in `apptainer.s
 
 ```bash
 mkdir -p reproducibility_codeCheck/data/expr_loom test_results/apptainer
-sbatch reproducibility_codeCheck/apptainer.sh
+sbatch reproducibility_codeCheck/apptainer_python.sh
 ```
 
 The script loads `apptainer/1.5.3`, binds the checkout to `/work`, and binds only `processed-data/09_DEG_GRN` to `/source-data` as read-only. The `#SBATCH --output` file captures standard output and errors, including the exit status; it does not create a second `tee` log.
@@ -90,7 +90,7 @@ The script retrieves dataset **GSE333974** from NCBI GEO using `GEOquery::getGEO
 
 The script downloads the full `GSE333974_RAW.tar` archive (about 4.2 GB in the recorded run), extracts its contents into an R `tempdir()`, and uses the first three samples to construct the SPE. The temporary directory is inside the container and is removed by the script at the end; it does not need its own bind mount. The full archive and extracted contents require temporary disk space during the run, even though only three samples are used for the SPE.
 
-The persistent outputs are written under `test_results/docker/`, which is part of the bound project checkout.
+The SPE output directory is passed as the first argument to the R script. It defaults to `test_results/docker/` when omitted. The directory is created by the script and is part of the bound project checkout, so outputs persist on the host.
 
 ### Run the Docker R check
 
@@ -105,10 +105,12 @@ docker run --rm --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
   mbv-r:test \
-  Rscript --vanilla reproducibility_codeCheck/docker-spe.R \
+  Rscript --vanilla reproducibility_codeCheck/docker-spe.R test_results/docker/ \
   2>&1 | tee test_results/docker/spe.log
 print "exit status: $?"
 ```
+
+`commandArgs(trailingOnly = TRUE)` in `docker-spe.R` reads the output-directory argument; the script creates that directory before writing the HDF5-backed SPE. Use `test_results/apptainer/` as the argument when running the same script in an Apptainer R image. If no argument is supplied, it uses `test_results/docker/`.
 
 `Rscript --vanilla` skips the mounted checkout's `.Rprofile`, which would activate its local renv library instead of using the package library installed in the image. The project bind preserves the SPE output and log on the host; `--rm` discards the container and its temporary download files after exit. `tee` replaces `test_results/docker/spe.log` on each run.
 
