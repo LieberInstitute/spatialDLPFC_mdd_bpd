@@ -6,10 +6,11 @@ suppressPackageStartupMessages({
 	library("HDF5Array")
 })
 
-#base_dir = "MBv_pipeline_revision"
-getwd()
+
+test_dir = "test_results/docker/"
 
 tmp_dir <- tempfile("geoquery-", tmpdir = tempdir())
+cat("Tmp cache:", tmp_dir, "\n")
 dir.create(tmp_dir)
 
 gse <- getGEO("GSE333974", destdir = tmp_dir)
@@ -83,7 +84,7 @@ for (i in 1:3) {
   stopifnot(sum(file.exists(f1))==6)
   
   # unzip spatials or else read10xVisium won't work
-  for(j in f1[4:6]) gunzip(j, destname = gsub("[.]gz$", "", j), remove = FALSE)
+  for(j in f1[4:6]) R.utils::gunzip(j, destname = gsub("[.]gz$", "", j), remove = FALSE)
   
   # remove leading symbols for new file name
   target_path = file.path(sample_dir, destinations, substr(names(destinations), 2, 100))
@@ -122,7 +123,6 @@ colData(spe) <- cdata[spe$key,c("sample_id","brnum","MBv_sample","dx","sex",
                                 #"age","seq",
                                 "key","array_row","array_col","in_tissue")]
 
-
 # load in rowData
 ## using reference GTF file
 #gtf <- rtracklayer::import(reference_gtf)
@@ -144,13 +144,13 @@ spe$expr_chrM_ratio <- spe$expr_chrM / spe$sum_umi
 
 start.time2 = Sys.time()
 cat("\nStart HDF5SummExp save:"); start.time2           
-saveHDF5SummarizedExperiment(spe, dir="test_results/local_docker/", prefix="spe_n3_",
+saveHDF5SummarizedExperiment(spe, dir=test_dir, prefix="spe_n3_",
         #chunkdim=getHDF5DumpChunkDim(c(1,ncol(spe))),
         chunkdim=c(100,500),
 	verbose=F)
 cat("\nTime elapsed (saveHDF5SummarizedExperiment):",
         round(difftime(Sys.time(), start.time2, units="mins"),2), "minutes\n")
-cat("\nFile path: test_results/local_docker/\nFile prefix: spe_n3_\n")
+cat("\nFile path:", test_dir, "\nFile prefix: spe_n3_\n")
 
 
 unlink(tmp_dir, recursive = TRUE)
