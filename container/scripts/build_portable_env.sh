@@ -6,7 +6,7 @@ root=/opt/mbv
 
 case "$profile" in
   python)
-    inputs="$root/reproducibility_inputs"
+    inputs=${MBV_REPRODUCIBILITY_INPUTS:-"$root/reproducibility_inputs"}
     conda_root=/opt/conda
     python_env="$conda_root/envs/pyscenic"
     miniforge_version=24.7.1-2
@@ -23,10 +23,12 @@ case "$profile" in
         python -m pip install --no-deps --require-hashes \
         --requirement requirements-pip.lock
     )
-    # Package caches are not part of the runtime environment. Removing them
-    # keeps both Docker and Apptainer images substantially smaller.
+    # Package caches and build inputs are not part of the runtime environment.
     "$conda_root/bin/conda" clean --all --yes
-    rm -rf /root/.cache/pip "$inputs"
+    rm -rf /root/.cache/pip
+    if [[ ${MBV_REPRODUCIBILITY_INPUTS_EPHEMERAL:-0} != 1 ]]; then
+      rm -rf "$inputs"
+    fi
     ;;
   r)
     target_lib="$root/renv-library"
