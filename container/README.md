@@ -305,7 +305,7 @@ These are measurements from the tested machines, not guaranteed minimum
 requirements. The logs and generated images of these tests are machine-specific outputs and
 remain outside Git.
 
-### Docker on Apple Silicon (2026-11-09)
+### Docker on Apple Silicon (2026-11-09/10)
 
 Measurements are from Docker Desktop 29.9.2 on an Apple Silicon Mac using the
 `linux/amd64` emulation target. R package compilation under emulation can take
@@ -313,21 +313,21 @@ longer than native x86_64 builds.
 
 | Image | Size | Build time | Smoke-test time |
 | --- | ---: | ---: | ---: |
-| R | 6.64 GB | 3,574 sec (59m 34s) | 41 sec |
-| Python | 13.6 GB | 439 sec (7m 19s) | 59 sec |
-| **Both** | **20.24 GB** | **About 66m 53s** | **About 1m 40s** |
+| R | 6.64 GB | ~ 1 hr | ~ 1 min |
+| Python | 13.6 GB | ~ 7 min | ~ 1 min |
+| **Both** | **20.24 GB** | **About 1hr 10min** | **About 2 min** |
 
 Docker Desktop reported 10 CPUs and about 7.75 GiB of VM memory during these
 builds; peak memory was not measured. About 35 GB free disk is a planning
 estimate based on the observed image and build-cache growth, not a measured
 minimum.
 
-### JHPCE Apptainer (2026-11-09)
+### JHPCE Apptainer (2026-11-09/10)
 
-| Image | SIF size | Build time | Standalone test | Peak RSS | Requested memory | Total Slurm time |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| R | 1.68 GiB | 5,611 sec (1h 33m 31s) | 25 sec | 4,827,528 KiB (4.61 GiB) | 10 GiB | 1h 35m 07s |
-| Python | 3.80 GiB | 962 sec (16m 02s) | 7 sec | 8,506,936 KiB (8.11 GiB) | 10 GiB | 17m 33s |
+| Image | SIF size | Build time | Standalone test | Peak RSS | Requested memory |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| R | 1.68 GiB | 1.5-2 hr | ~ 30 sec | ~ 4 GiB | 10 GiB |
+| Python | 3.80 GiB | ~ 15 min | ~ 10 sec | 7-8 GiB | 10 GiB |
 
 In particular, the Python JHPCE build used about 8.11 GiB of its 10 GiB allocation, 
 so plan additional memory on other hosts when possible.
