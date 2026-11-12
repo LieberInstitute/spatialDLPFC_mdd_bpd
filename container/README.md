@@ -35,8 +35,8 @@ Container-related files are organized by stage:
   and their input staging instructions.
 - `container/04_image_distribution/` contains the [distribution plan](04_image_distribution/DISTRIBUTION_PLAN.md).
 - `container/outputs/` separates generated build/test artifacts from source
-  files. Image build outputs are ignored by Git; the existing code-check outputs
-  retain their tracked state for review.
+  files. Only `.sif` images under this directory are ignored by Git; logs and
+  other outputs may be tracked unless separately ignored.
 
 <br>
 
@@ -81,8 +81,8 @@ and a JHPCE-specific definition:
 
 | Environment | Portable Linux | JHPCE |
 | --- | --- | --- |
-| R | `apptainer/r-portable.def` | `apptainer/r-jhpce.def` |
-| Python | `apptainer/python-portable.def` | `apptainer/python-jhpce.def` |
+| R | `container/02_image_build_test/apptainer/r-portable.def` | `container/02_image_build_test/apptainer/r-jhpce.def` |
+| Python | `container/02_image_build_test/apptainer/python-portable.def` | `container/02_image_build_test/apptainer/python-jhpce.def` |
 
 The portable definitions (yet to be tested) use normal Linux build behavior.
 The JHPCE definitions apply site-specific workarounds required by its 
@@ -324,7 +324,7 @@ These are measurements from the tested machines, not guaranteed minimum
 requirements. The logs and generated images of these tests are machine-specific outputs and
 remain outside Git.
 
-### Docker on Apple Silicon (2026-11-11)
+### Docker on Apple Silicon (measurements through 2026-11-12)
 
 Measurements are from Docker Desktop 29.9.2 on an Apple Silicon Mac using the
 `linux/amd64` emulation target. R package compilation under emulation can take
@@ -334,13 +334,15 @@ uncompressed contents.
 | Image | Size | Build time | Smoke-test time |
 | --- | ---: | ---: | ---: |
 | R | 6.33 GiB | ~ 1 hr | ~ 1 min |
-| Python | 12.67 GiB | 7-8 min | ~ 1 min |
-| **Both** | **19.00 GB** | **About 1hr 10min** | **About 2 min** |
+| Python (2026-11-12 rebuild) | 12.67 GiB (13.60 GB) | 425 sec (7m 05s) | 50 sec |
+| **Both** | **19.00 GiB** | **About 1hr 7min** | **About 1.5 min** |
 
-Docker Desktop reported 10 CPUs and about 7.75 GiB of VM memory during these
-builds; peak memory was not measured. About 35 GB free disk is a planning
-estimate based on the observed image and build-cache growth, not a measured
-minimum.
+Docker Desktop 29.9.2 built the Python image for `linux/amd64` on an Apple
+Silicon host using emulation. The run record did not capture Docker VM memory or
+peak memory. The earlier R build used Docker Desktop configured for 10 CPUs and
+about 7.75 GiB of VM memory; peak memory was not measured. About 35 GB free disk
+is a planning estimate based on the observed image and build-cache growth, not
+a measured minimum.
 
 ### JHPCE Apptainer (2026-11-11)
 

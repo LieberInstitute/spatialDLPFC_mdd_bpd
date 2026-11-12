@@ -40,6 +40,21 @@ attempt stopped before downloading the base image because Docker Desktop's
 credential helper was not on the calling shell's `PATH`; the runner now adds
 Docker Desktop's resource directory on macOS.
 
+## Apple Silicon Docker Python rebuild (2026-11-12)
+
+The restructured Python Docker build and smoke test passed on Docker Desktop
+29.9.2, targeting `linux/amd64` under Apple Silicon emulation. The image size
+was 13,604,890,545 bytes (12.67 GiB / 13.60 GB). Build time was 425 seconds
+(7m 05s), and the fresh-container smoke test took 50 seconds. The run record,
+build log, and smoke-test log are in
+`container/outputs/image_build_test/docker/20261112T164344Z/python/`.
+The image was built from commit `c54dd52a` and has Docker image ID
+`sha256:94c34217a023d8f94de4205363d1cc18b8797f3d8e863789898e10768c92005e`.
+
+The Docker AUCell code check also completed on the rebuilt Python image using
+the first 10% (2,126 of 21,265 cells). Its log and output loom are under
+`container/outputs/image_code_check/docker/`.
+
 ## JHPCE Apptainer results (2026-11-09)
 
 | Image | Build time | Standalone test | SIF size | Peak RSS (10 GB requested) | Result directory |
