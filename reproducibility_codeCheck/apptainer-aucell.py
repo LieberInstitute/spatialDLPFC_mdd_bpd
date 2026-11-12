@@ -1,4 +1,6 @@
 # first subset loom to 10% to try and fix docker memory issue
+import atexit
+import tempfile
 from pathlib import Path
 import loompy
 
@@ -9,7 +11,9 @@ source_loom = Path(
     "/source-data/expr_loom/"
     "spe-n119_seurat-label-Micro.Vasc_13162-genes_no-lowUMI_logcounts.loom"
 )
-subset_dir = Path("/work/reproducibility_codeCheck/data/expr_loom")
+subset_tmp = tempfile.TemporaryDirectory(prefix="mbv-aucell-")
+atexit.register(subset_tmp.cleanup)
+subset_dir = Path(subset_tmp.name)
 subset_loom = subset_dir / (
 	f"{source_loom.stem}_first10pct{source_loom.suffix}"
 )
@@ -27,7 +31,7 @@ with loompy.connect(str(source_loom), mode="r") as ds:
         {key: values[cell_indices] for key, values in ds.ca.items()},
     )
 
-print(f"Created {subset_loom} with the first {n_keep} of {n_cells} cells.")
+print(f"Created temporary subset {subset_loom} with the first {n_keep} of {n_cells} cells.")
 
 
 
@@ -62,11 +66,10 @@ SUBSET_ID="spe-n119_"+SUBSET+"_13162-genes_no-lowUMI_logcounts"
 
 #pdir = "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/"
 #RESULTS_DIR = "processed-data/09_DEG_GRN"
-LOOM_DIR = "reproducibility_codeCheck/data/expr_loom/"
 MOD_DIR = "test_results/apptainer/"
 
 MODULES_DAT_FNAME = Path("/source-data/spe-n119_13162-no-lowUMI_modules_DEG-subset-refined.dat")
-LOOM_FNAME = os.path.join(LOOM_DIR, '{}_first10pct.loom'.format(SUBSET_ID))
+LOOM_FNAME = str(subset_loom)
 OUT_FNAME = os.path.join(MOD_DIR, '{}_first10pct_modules-DEG-subset-refined_AUCell-fixed-thold-05.loom'.format(SUBSET_ID))
 
 

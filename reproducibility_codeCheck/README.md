@@ -17,7 +17,7 @@ These are functional checks on reduced inputs. They do not validate full-data re
 
 The full loom has 21,265 cells. A full-data AUCell run was killed by Docker Desktop's 8 GiB memory limit (`OOMKilled=true`, exit status 137), even after reducing the worker count. The Python scripts therefore take the first 10% of cells (2,126 cells) and run with one worker.
 
-This subset checks that the container can read the loom and module data and execute AUCell. It is not a full-data run, a measurement of full-data memory requirements, or a validation of scientific results on all cells. The scripts create a separate `*_first10pct.loom` file and leave the source loom unchanged. Loom compression means the subset file size need not be exactly 10% of the original.
+This subset checks that the container can read the loom and module data and execute AUCell. It is not a full-data run, a measurement of full-data memory requirements, or a validation of scientific results on all cells. The scripts create a separate `*_first10pct.loom` file in a unique operating-system temporary directory, leave the source loom unchanged, and remove the subset when the Python process exits. Loom compression means the subset file size need not be exactly 10% of the original.
 
 The AUCell check uses the `Micro.Vasc` cluster's module signatures, threshold `0.05`, seed `1234`, and weighted scoring (`noweights=False`).
 
@@ -146,7 +146,7 @@ print "exit status: $?"
 | Output | Docker Python | JHPCE Apptainer Python | Docker R | JHPCE Apptainer R |
 | --- | --- | --- | --- | --- |
 | Run log | `test_results/docker/aucell.log` | `test_results/apptainer/mbv-aucell-python_<job-id>.log` | `test_results/docker/spe.log` | `test_results/apptainer/mbv-spe-r_<job-id>.log` |
-| Temporary/subset input | `reproducibility_codeCheck/data/expr_loom/*_first10pct.loom` | `reproducibility_codeCheck/data/expr_loom/*_first10pct.loom` | GEO download/extraction under R `tempdir()`; removed at script end | GEO download/extraction under R `tempdir()`; removed at script end |
+| Temporary/subset input | OS temporary directory (`mbv-aucell-*/*_first10pct.loom`); removed when Python exits | OS temporary directory (`mbv-aucell-*/*_first10pct.loom`); removed when Python exits | GEO download/extraction under R `tempdir()`; removed at script end | GEO download/extraction under R `tempdir()`; removed at script end |
 | Analysis output | `test_results/docker/*_first10pct_modules-DEG-subset-refined_AUCell-fixed-thold-05.loom` | `test_results/apptainer/*_first10pct_modules-DEG-subset-refined_AUCell-fixed-thold-05.loom` | `test_results/docker/spe_n3_se.rds` and `test_results/docker/spe_n3_assays.h5` | `test_results/apptainer/spe_n3_se.rds` and `test_results/apptainer/spe_n3_assays.h5` |
 
 The older `reproducibility_codeCheck/aucell-docker.log` is a saved Docker Python capture; the current Python command writes to `test_results/docker/aucell.log`.
