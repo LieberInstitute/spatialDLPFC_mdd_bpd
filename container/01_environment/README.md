@@ -1,4 +1,4 @@
-# Environment inputs and R lockfile
+# Stage 1: Freeze environment inputs and R lockfile
 
 This stage records the package inputs used to construct the MBv container
 images. Python's frozen environment files are in [`python/`](python/). The R
@@ -12,15 +12,20 @@ spatialDLPFC_mdd_bpd/
 ├── renv/
 └── container/
     └── 01_environment/
-        ├── README.md
+        ├── README.md       # YOU ARE HERE; R update instructions
         └── python/
+            └── README.md   # Python update instructions
 ```
 
+R resources must remain at the project root to function properly. 
 The project-level `.Rprofile` activates the project's renv setup, and the
-root-level `renv.lock` records the package versions. The R Dockerfile and
-Apptainer definitions copy that lockfile from the project root during image
-builds. Do not move or edit a second copy under this directory; update the
-project-root lockfile and rebuild the R image from the project root.
+root-level `renv.lock` records the package versions. 
+
+The R Dockerfile and Apptainer definitions copy that lockfile from the project 
+root during image builds. Do not move or edit a second copy under this directory;
+update the project-root lockfile and rebuild the R image from the project root 
+(instructions below).
+
 
 ## Add an R package and update the lockfile
 
