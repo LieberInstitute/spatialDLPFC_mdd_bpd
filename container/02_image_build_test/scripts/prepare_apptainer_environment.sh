@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-profile=${1:?Usage: build_apptainer_env.sh r|python portable|jhpce}
-target=${2:?Usage: build_apptainer_env.sh r|python portable|jhpce}
+profile=${1:?Usage: prepare_apptainer_environment.sh r|python portable|jhpce}
+target=${2:?Usage: prepare_apptainer_environment.sh r|python portable|jhpce}
 
 case "$profile" in
   r)
@@ -17,11 +17,11 @@ case "$profile" in
       libicu-dev libarchive-dev libtbb-dev libabsl-dev pandoc
       zlib1g-dev libbz2-dev liblzma-dev libpcre2-dev
     )
-    verifier=/opt/mbv/scripts/verify_r_lockfile.R
+    verifier=/opt/mbv/scripts/verify_r_environment.R
     ;;
   python)
     apt_packages=(build-essential ca-certificates curl bzip2 procps)
-    verifier=/opt/mbv/scripts/verify_python_env.py
+    verifier=/opt/mbv/scripts/verify_python_environment.py
     ;;
   *) echo "Profile must be r or python" >&2; exit 2 ;;
 esac
@@ -51,4 +51,4 @@ if [[ $profile == r ]]; then
   chmod 755 /opt/mbv/project
   chmod 644 /opt/mbv/project/renv.lock
 fi
-bash /opt/mbv/scripts/build_portable_env.sh "$profile"
+bash /opt/mbv/scripts/install_locked_environment.sh "$profile"

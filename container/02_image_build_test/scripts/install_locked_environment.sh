@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-profile=${1:?Usage: build_portable_env.sh r|python}
+profile=${1:?Usage: install_locked_environment.sh r|python}
 root=/opt/mbv
 
 case "$profile" in
   python)
-    inputs=${MBV_REPRODUCIBILITY_INPUTS:-"$root/reproducibility_inputs"}
+    inputs=${MBV_BUILD_INPUTS:-"$root/build_inputs/python"}
     conda_root=/opt/conda
     python_env="$conda_root/envs/pyscenic"
     miniforge_version=24.7.1-2
@@ -26,7 +26,7 @@ case "$profile" in
     # Package caches and build inputs are not part of the runtime environment.
     "$conda_root/bin/conda" clean --all --yes
     rm -rf /root/.cache/pip
-    if [[ ${MBV_REPRODUCIBILITY_INPUTS_EPHEMERAL:-0} != 1 ]]; then
+    if [[ ${MBV_BUILD_INPUTS_EPHEMERAL:-0} != 1 ]]; then
       rm -rf "$inputs"
     fi
     ;;

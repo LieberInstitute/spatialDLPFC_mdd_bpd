@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-profile=${1:?Usage: run_portable_test.sh r|python}
+profile=${1:?Usage: run_apptainer_portable_build_smoke_test.sh r|python}
 case "$profile" in
   r|python) ;;
   *) echo "Profile must be r or python" >&2; exit 2 ;;
@@ -14,10 +14,10 @@ command -v apptainer >/dev/null || {
 
 repo_root=$(git rev-parse --show-toplevel)
 run_id=$(date -u +%Y%m%dT%H%M%SZ)
-out="$repo_root/reproducibility_outputs/apptainer/$run_id/${profile}-portable"
+out="$repo_root/container/outputs/image_build_test/apptainer/$run_id/${profile}-portable"
 mkdir -p "$out"
 image="$out/mbv-${profile}.sif"
-definition="$repo_root/container/apptainer/${profile}-portable.def"
+definition="$repo_root/container/02_image_build_test/apptainer/${profile}-portable.def"
 build_mode=${APPTAINER_BUILD_MODE:-fakeroot}
 case "$build_mode" in
   fakeroot) build_args=(--fakeroot) ;;

@@ -21,6 +21,25 @@ Jump to [build instructions](#mbv-container-build-instructions).
 
 <br>
 
+## Build and distribution directory layout
+
+Container-related files are organized by stage:
+
+- `container/01_environment/python/` contains the frozen Python environment
+  inputs. The R lockfile and `renv/` activation directory remain at the project
+  root; see the [environment README](01_environment/README.md) for the R
+  lockfile update procedure.
+- `container/02_image_build_test/` contains Docker and Apptainer definitions,
+  build and smoke-test scripts, and the build/test plan.
+- `container/03_image_code_check/` contains representative project code checks
+  and their input staging instructions.
+- `container/04_image_distribution/` contains the [distribution plan](04_image_distribution/DISTRIBUTION_PLAN.md).
+- `container/outputs/` separates generated build/test artifacts from source
+  files. Image build outputs are ignored by Git; the existing code-check outputs
+  retain their tracked state for review.
+
+<br>
+
 ## Container overview
 
 Containers package the software environments used by the MBv pipeline so that
@@ -114,7 +133,7 @@ native `linux/arm64` images would need a separate Conda lock and validation.
 
 Briefly, you need to clone the project and then use bash to build the container image(s)
 and test the builds. These tests verify the environment, not the full pipeline.
-The build logs and test results are stored in `reproducibility_outputs`
+The build logs and test results are stored in `container/outputs/image_build_test`
 and described in [Reading build and test results](#reading-build-and-test-results).
 
 The R smoke test compares every installed package with `renv.lock` and loads
@@ -176,15 +195,15 @@ separately:
 # navigate to cloned directory
 cd spatialDLPFC_mdd_bpd
 # run build/test
-bash container/scripts/run_docker_test.sh r
-bash container/scripts/run_docker_test.sh python
+bash container/02_image_build_test/scripts/run_docker_build_smoke_test.sh r
+bash container/02_image_build_test/scripts/run_docker_build_smoke_test.sh python
 ```
 
 The runner builds each image, checks its locked versions and representative
 imports, and repeats the checks in a fresh container. Docker images are tagged
 locally as `mbv-r:test` and `mbv-python:test`. The runner saves commands, logs,
 build and test durations, Docker versions, image ID, and image size under
-`reproducibility_outputs/docker/<UTC-run-id>/<profile>/`.
+`container/outputs/image_build_test/docker/<UTC-run-id>/<profile>/`.
 
 On macOS, Docker Desktop must be running and have enough VM memory and disk.
 On Windows, use Linux containers and run the commands from WSL 2.
@@ -202,8 +221,8 @@ separate builds:
 # navigate to cloned directory
 cd spatialDLPFC_mdd_bpd
 # run build/test
-bash container/scripts/run_portable_test.sh r
-bash container/scripts/run_portable_test.sh python
+bash container/02_image_build_test/scripts/run_apptainer_portable_build_smoke_test.sh r
+bash container/02_image_build_test/scripts/run_apptainer_portable_build_smoke_test.sh python
 ```
 
 The runner defaults to `apptainer build --fakeroot`, which requires fakeroot
@@ -211,14 +230,14 @@ support configured in Apptainer. If the host has root access but no fakeroot
 support, run the commands as root with `APPTAINER_BUILD_MODE=root`. The
 portable definitions use normal Linux APT behavior and do not include the
 JHPCE-specific settings. Logs, build and test durations, checksums, and
-metadata go under `reproducibility_outputs/apptainer/<UTC-run-id>/<profile>-portable/`.
+metadata go under `container/outputs/image_build_test/apptainer/<UTC-run-id>/<profile>-portable/`.
 
 <br>
 
 ### Build Option 3: Apptainer images on JHPCE
 
-The JHPCE definitions are `container/apptainer/r-jhpce.def` and
-`container/apptainer/python-jhpce.def`. Use the login node to request a
+The JHPCE definitions are `container/02_image_build_test/apptainer/r-jhpce.def` and
+`container/02_image_build_test/apptainer/python-jhpce.def`. Use the login node to request a
 separate 10 GiB compute allocation for each image. The runner loads the
 Apptainer module, builds the selected image, and performs its smoke test.
 
@@ -227,26 +246,26 @@ Apptainer module, builds the selected image, and performs its smoke test.
 cd spatialDLPFC_mdd_bpd
 
 # make dir for batch job outputs
-mkdir -p reproducibility_outputs/apptainer/batch-logs
+mkdir -p container/outputs/image_build_test/apptainer/batch-logs
 
 # run build/test as batch job for both images
 sbatch \
   --job-name=mbv-all-jhpce \
   --mem=10G \
-  --output="reproducibility_outputs/apptainer/batch-logs/all-%j.out" \
-  --wrap='bash container/scripts/run_jhpce_apptainer_test.sh all'
+  --output="container/outputs/image_build_test/apptainer/batch-logs/all-%j.out" \
+  --wrap='bash container/02_image_build_test/scripts/run_apptainer_jhpce_build_smoke_test.sh all'
 
 # run build/test as batch job for single profile (python example)
 sbatch \
   --job-name=mbv-python-jhpce \
   --mem=10G \
-  --output="reproducibility_outputs/apptainer/batch-logs/python-%j.out" \
-  --wrap='bash container/scripts/run_jhpce_apptainer_test.sh python'
+  --output="container/outputs/image_build_test/apptainer/batch-logs/python-%j.out" \
+  --wrap='bash container/02_image_build_test/scripts/run_apptainer_jhpce_build_smoke_test.sh python'
 
 # run build/test as interactive job (single profile, R example)
 srun --mem 10G --pty bash
 export MBV_JHPCE_MEM_REQUEST=10G
-bash container/scripts/run_jhpce_apptainer_test.sh r
+bash container/02_image_build_test/scripts/run_apptainer_jhpce_build_smoke_test.sh r
 ## job runs
 exit
 
@@ -261,7 +280,7 @@ profile does not use them.
 
 The runner writes the selected definition, commands, logs, image checksum,
 size, and build/test timing under
-`reproducibility_outputs/apptainer/<UTC-run-id>/<profile>-jhpce/`. Use the
+`container/outputs/image_build_test/apptainer/<UTC-run-id>/<profile>-jhpce/`. Use the
 `session-info.txt` file to batch the UTC run ID to the job ID.
 
 <br><br>
@@ -275,7 +294,7 @@ find the pass/fail status, then consult the log for details.
 
 > On JHPCE, each profile directory contains the commands run, session details,
 > and build/test output; the timestamp directory also contains a temporary cache clean-up log.
-> If using a batch job, the log saved in `reproducibility_outputs/apptainer/batch-logs`
+> If using a batch job, the log saved in `container/outputs/image_build_test/apptainer/batch-logs`
 > for the specific job ID will also report the test status and results path.
 
 A successful run records `passed` for both the build and test status fields.

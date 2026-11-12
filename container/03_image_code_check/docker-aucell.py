@@ -5,7 +5,7 @@ from pathlib import Path
 import loompy
 
 source_loom = Path(
-    "reproducibility_codeCheck/data/expr_loom/"
+    "container/03_image_code_check/data/expr_loom/"
     "spe-n119_seurat-label-Micro.Vasc_13162-genes_no-lowUMI_logcounts.loom"
 )
 subset_tmp = tempfile.TemporaryDirectory(prefix="mbv-aucell-")
@@ -59,8 +59,8 @@ SUBSET="seurat-label-"+cluster
 SUBSET_ID="spe-n119_"+SUBSET+"_13162-genes_no-lowUMI_logcounts"
 
 #pdir = "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/"
-RESULTS_DIR = "reproducibility_codeCheck/data/"
-MOD_DIR = "test_results/docker/"
+RESULTS_DIR = "container/03_image_code_check/data/"
+MOD_DIR = "container/outputs/image_code_check/docker/"
 
 MODULES_DAT_FNAME = os.path.join(RESULTS_DIR, "spe-n119_13162-no-lowUMI_modules_DEG-subset-refined.dat")
 LOOM_FNAME = str(subset_loom)

@@ -1,0 +1,13 @@
+**
+!container/
+!container/01_environment/
+!container/01_environment/python/
+!container/01_environment/python/conda-linux-64.lock
+!container/01_environment/python/requirements-pip.lock
+!container/01_environment/python/wheels/
+!container/01_environment/python/wheels/**
+!container/
+!container/02_image_build_test/
+!container/02_image_build_test/scripts/
+!container/02_image_build_test/scripts/install_locked_environment.sh
+!container/02_image_build_test/scripts/verify_python_environment.py

@@ -18,16 +18,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && mkdir -p /opt/mbv/project /opt/mbv/scripts
 
 COPY renv.lock /opt/mbv/project/renv.lock
-COPY container/scripts/verify_r_lockfile.R /opt/mbv/scripts/verify_r_lockfile.R
-COPY container/scripts/build_portable_env.sh /opt/mbv/scripts/build_portable_env.sh
+COPY container/02_image_build_test/scripts/verify_r_environment.R /opt/mbv/scripts/verify_r_environment.R
+COPY container/02_image_build_test/scripts/install_locked_environment.sh /opt/mbv/scripts/install_locked_environment.sh
 
 ENV MBV_R_LIBRARY=/opt/mbv/renv-library \
     R_LIBS_SITE=/opt/mbv/renv-library \
     R_LIBS_USER=/opt/mbv/renv-bootstrap
 
-RUN chmod a+r /opt/mbv/scripts/verify_r_lockfile.R \
-    && bash /opt/mbv/scripts/build_portable_env.sh r \
-    && Rscript --vanilla /opt/mbv/scripts/verify_r_lockfile.R \
+RUN chmod a+r /opt/mbv/scripts/verify_r_environment.R \
+    && bash /opt/mbv/scripts/install_locked_environment.sh r \
+    && Rscript --vanilla /opt/mbv/scripts/verify_r_environment.R \
         /opt/mbv/renv-library /opt/mbv/project/renv.lock \
     && Rscript --vanilla -e 'library(sf); library(s2); library(Seurat); library(SingleCellExperiment); library(spatialLIBD)'
 

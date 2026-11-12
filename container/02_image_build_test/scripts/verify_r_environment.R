@@ -1,5 +1,5 @@
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 2L) stop("Usage: verify_r_lockfile.R <target-library> <renv.lock>")
+if (length(args) != 2L) stop("Usage: verify_r_environment.R <target-library> <renv.lock>")
 
 target_lib <- args[[1L]]
 lockfile <- args[[2L]]

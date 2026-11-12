@@ -9,9 +9,9 @@ Run these commands from the repository root on Linux x86_64:
 ```bash
 module load python
 module load conda
-conda create --name pyscenic_bioconda --file reproducibility_inputs/conda-linux-64.lock
+conda create --name pyscenic_bioconda --file container/01_environment/python/conda-linux-64.lock
 conda activate pyscenic_bioconda
-cd reproducibility_inputs
+cd container/01_environment/python
 python -m pip install --no-deps --require-hashes -r requirements-pip.lock
 ```
 
@@ -28,6 +28,7 @@ The Conda explicit lock pins package URLs and builds. The pip lock lists every e
 - `requirements-pip.in` / `requirements-pip.lock`: exact pip pins and artifact hashes.
 - `wheels/`: the patched pySCENIC wheel and the Arboreto 0.1.6 wheel installed after Conda setup.
 - `pySCENIC-source/` and `pyscenic.patch`: source snapshot, base commit, and patch used to build the pySCENIC wheel.
+- `patches/pyscenic-06bafba-dask-memory-limit-5gb.patch`: duplicate copy of `pyscenic.patch`, retained from the former `container/patches/` location during reorganization; the current build uses `pyscenic.patch`.
 - `arboreto-dist/`: original Arboreto wheel and source archive from JHPCE.
 - `generate_pip_lock.py`: regenerates PyPI hashes from the exact pip pins and hashes the local wheels.
 - `SHA256SUMS.txt`: checksums for the two wheel artifacts, the Arboreto source archive, and the pySCENIC patch.
@@ -49,11 +50,11 @@ With conda-lock 4.0.4 available:
 conda create --name mbv-lock-tools python=3.10 pip
 conda activate mbv-lock-tools
 python -m pip install conda-lock==4.0.4
-conda-lock lock --file reproducibility_inputs/environment-conda.yml \
+conda-lock lock --file container/01_environment/python/environment-conda.yml \
   --platform linux-64 \
-  --lockfile reproducibility_inputs/conda-lock-conda.yml
-python reproducibility_inputs/generate_conda_explicit.py
-python reproducibility_inputs/generate_pip_lock.py
+  --lockfile container/01_environment/python/conda-lock-conda.yml
+python container/01_environment/python/generate_conda_explicit.py
+python container/01_environment/python/generate_pip_lock.py
 ```
 
 The full conda-lock resolution adds five transitive packages because the pip requirements are locked separately. The explicit installer file keeps only the exact Conda builds in the saved export; the pip lock then installs the exported pip versions, including versions that satisfy some overlapping dependencies.

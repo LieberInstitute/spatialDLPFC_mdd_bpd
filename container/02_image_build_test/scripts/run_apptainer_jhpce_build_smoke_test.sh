@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-profile=${1:?Usage: run_jhpce_apptainer_test.sh r|python|all}
+profile=${1:?Usage: run_apptainer_jhpce_build_smoke_test.sh r|python|all}
 case "$profile" in
   r|python) profiles=("$profile") ;;
   all) profiles=(python r) ;;
@@ -23,7 +23,7 @@ command -v apptainer >/dev/null || {
 }
 
 run_id=${MBV_JHPCE_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)}
-run_root="$repo_root/reproducibility_outputs/apptainer/$run_id"
+run_root="$repo_root/container/outputs/image_build_test/apptainer/$run_id"
 workdir="/tmp/mbv-apptainer-${SLURM_JOB_ID}"
 mkdir -p "$run_root" "$workdir/tmp" "$workdir/cache"
 export APPTAINER_TMPDIR="$workdir/tmp"
@@ -45,7 +45,7 @@ trap cleanup EXIT
 run_one() {
   local name=$1
   local out="$run_root/${name}-jhpce"
-  local definition="$repo_root/container/apptainer/${name}-jhpce.def"
+  local definition="$repo_root/container/02_image_build_test/apptainer/${name}-jhpce.def"
   local image="$out/mbv-$name-jhpce.sif"
   mkdir -p "$out"
 
@@ -76,7 +76,7 @@ export MBV_JHPCE_MEM_REQUEST=${MBV_JHPCE_MEM_REQUEST:-10G}
 export MBV_JHPCE_RUN_ID=$run_id
 export APPTAINER_TMPDIR="$workdir/tmp"
 export APPTAINER_CACHEDIR="$workdir/cache"
-bash container/scripts/run_jhpce_apptainer_test.sh $name
+bash container/02_image_build_test/scripts/run_apptainer_jhpce_build_smoke_test.sh $name
 EOF
 
   if [[ ! -f $definition ]]; then

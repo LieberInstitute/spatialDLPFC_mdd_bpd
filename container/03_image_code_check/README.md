@@ -26,13 +26,13 @@ The Docker check requires these files to be staged locally while the Apptainer c
 from JHPCE accesses the originals on `/dcs04/`. These small differences account for the 
 separate `.py` scripts for each container build.
 
-Prior to the running the Docker check, SFTP transfer these files into the `reproducibility_codeCheck` 
+Prior to the running the Docker check, SFTP transfer these files into the `container/03_image_code_check` 
 under a new `data` dir, mirroring the original directory structure containing an `expr_loom` subdir: 
 
-- `reproducibility_codeCheck/data/spe-n119_13162-no-lowUMI_modules_DEG-subset-refined.dat`
-- `reproducibility_codeCheck/data/expr_loom/spe-n119_seurat-label-Micro.Vasc_13162-genes_no-lowUMI_logcounts.loom`
+- `container/03_image_code_check/data/spe-n119_13162-no-lowUMI_modules_DEG-subset-refined.dat`
+- `container/03_image_code_check/data/expr_loom/spe-n119_seurat-label-Micro.Vasc_13162-genes_no-lowUMI_logcounts.loom`
 
-The files are not committed; `.gitignore` excludes `reproducibility_codeCheck/data/`.
+The files are not committed; `.gitignore` excludes `container/03_image_code_check/data/`.
 
 ### Run the Docker Python check
 
@@ -47,18 +47,18 @@ export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
 docker info
 
 # Capture output and preserve the Docker command's exit status through tee.
-mkdir -p test_results/docker
+mkdir -p container/outputs/image_code_check/docker
 set -o pipefail
 docker run --rm --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
   mbv-python:test \
-  python3 -u reproducibility_codeCheck/docker-aucell.py \
-  2>&1 | tee test_results/docker/aucell.log
+  python3 -u container/03_image_code_check/docker-aucell.py \
+  2>&1 | tee container/outputs/image_code_check/docker/aucell.log
 print "exit status: $?"
 ```
 
-The run writes a log to `test_results/docker/aucell.log` and a successful run creates an AUCell
+The run writes a log to `container/outputs/image_code_check/docker/aucell.log` and a successful run creates an AUCell
 loom file in the same location. 
 
 ### Run the JHPCE Apptainer Python check
@@ -69,11 +69,11 @@ Requirements: JHPCE access, `/dcs04/` access, the Python JHPCE SIF **at the path
 Submit from the project root so Slurm resolves its relative output path correctly:
 
 ```bash
-mkdir -p reproducibility_codeCheck/data/expr_loom test_results/apptainer
-sbatch reproducibility_codeCheck/apptainer_python.sh
+mkdir -p container/03_image_code_check/data/expr_loom container/outputs/image_code_check/apptainer
+sbatch container/03_image_code_check/apptainer_python.sh
 ```
 
-The run writes a Slurm log to `test_results/apptainer/mbv-aucell-python_<job-id>.log` and 
+The run writes a Slurm log to `container/outputs/image_code_check/apptainer/mbv-aucell-python_<job-id>.log` and 
 a successful run creates an AUCell loom file in the same location. 
 
 <br><br>
@@ -91,18 +91,18 @@ Requirements: Docker Desktop (or Docker Engine), the built `mbv-r:test` image, n
 Run from the MBv project root in zsh:
 
 ```zsh
-mkdir -p test_results/docker
+mkdir -p container/outputs/image_code_check/docker
 set -o pipefail
 docker run --rm --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
   mbv-r:test \
-  Rscript --vanilla reproducibility_codeCheck/spe.R test_results/docker/ \
-  2>&1 | tee test_results/docker/spe.log
+  Rscript --vanilla container/03_image_code_check/spe.R container/outputs/image_code_check/docker/ \
+  2>&1 | tee container/outputs/image_code_check/docker/spe.log
 print "exit status: $?"
 ```
 The project bind preserves the SPE output and log on the host; `--rm` discards the container.
-The run writes a log to `test_results/docker/spe.log` and a successful run creates an HDF5 SPE
+The run writes a log to `container/outputs/image_code_check/docker/spe.log` and a successful run creates an HDF5 SPE
 representation that consists of two, linked files in the same location. 
 
 ### Run the Apptainer R check
@@ -113,11 +113,11 @@ Apptainer (loaded through the pre-built module).
 Submit from the project root, with the Slurm log directory present before submission:
 
 ```bash
-mkdir -p test_results/apptainer
-sbatch reproducibility_codeCheck/apptainer_r.sh
+mkdir -p container/outputs/image_code_check/apptainer
+sbatch container/03_image_code_check/apptainer_r.sh
 ```
 
-The run writes a Slurm log to `test_results/apptainer/mbv-spe-r_<job-id>.log` and a successful 
+The run writes a Slurm log to `container/outputs/image_code_check/apptainer/mbv-spe-r_<job-id>.log` and a successful 
 run creates an HDF5 SPE representation that consists of two, linked files in the same location.
 
 <br><br>
@@ -126,6 +126,6 @@ run creates an HDF5 SPE representation that consists of two, linked files in the
 
 | Output | Docker Python | JHPCE Apptainer Python | Docker R | JHPCE Apptainer R |
 | --- | --- | --- | --- | --- |
-| Run log | `test_results/docker/aucell.log` | `test_results/apptainer/mbv-aucell-python_<job-id>.log` | `test_results/docker/spe.log` | `test_results/apptainer/mbv-spe-r_<job-id>.log` |
+| Run log | `container/outputs/image_code_check/docker/aucell.log` | `container/outputs/image_code_check/apptainer/mbv-aucell-python_<job-id>.log` | `container/outputs/image_code_check/docker/spe.log` | `container/outputs/image_code_check/apptainer/mbv-spe-r_<job-id>.log` |
 | Temporary/subset input | OS temporary directory (`mbv-aucell-*/*_first10pct.loom`); removed when Python exits | OS temporary directory (`mbv-aucell-*/*_first10pct.loom`); removed when Python exits | GEO download/extraction under R `tempdir()`; removed at script end | GEO download/extraction under R `tempdir()`; removed at script end |
-| Analysis output | `test_results/docker/*_first10pct_modules-DEG-subset-refined_AUCell-fixed-thold-05.loom` | `test_results/apptainer/*_first10pct_modules-DEG-subset-refined_AUCell-fixed-thold-05.loom` | `test_results/docker/spe_n3_se.rds` and `test_results/docker/spe_n3_assays.h5` | `test_results/apptainer/spe_n3_se.rds` and `test_results/apptainer/spe_n3_assays.h5` |
+| Analysis output | `container/outputs/image_code_check/docker/*_first10pct_modules-DEG-subset-refined_AUCell-fixed-thold-05.loom` | `container/outputs/image_code_check/apptainer/*_first10pct_modules-DEG-subset-refined_AUCell-fixed-thold-05.loom` | `container/outputs/image_code_check/docker/spe_n3_se.rds` and `container/outputs/image_code_check/docker/spe_n3_assays.h5` | `container/outputs/image_code_check/apptainer/spe_n3_se.rds` and `container/outputs/image_code_check/apptainer/spe_n3_assays.h5` |

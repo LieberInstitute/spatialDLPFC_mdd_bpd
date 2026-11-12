@@ -66,7 +66,7 @@ SUBSET_ID="spe-n119_"+SUBSET+"_13162-genes_no-lowUMI_logcounts"
 
 #pdir = "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/"
 #RESULTS_DIR = "processed-data/09_DEG_GRN"
-MOD_DIR = "test_results/apptainer/"
+MOD_DIR = "container/outputs/image_code_check/apptainer/"
 
 MODULES_DAT_FNAME = Path("/source-data/spe-n119_13162-no-lowUMI_modules_DEG-subset-refined.dat")
 LOOM_FNAME = str(subset_loom)

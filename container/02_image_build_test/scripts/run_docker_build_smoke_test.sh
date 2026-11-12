@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-profile=${1:?Usage: run_docker_test.sh r|python}
+profile=${1:?Usage: run_docker_build_smoke_test.sh r|python}
 case "$profile" in
   r|python) ;;
   *) echo "Profile must be r or python" >&2; exit 2 ;;
@@ -26,11 +26,11 @@ fi
 
 repo_root=$(git rev-parse --show-toplevel)
 run_id=$(date -u +%Y%m%dT%H%M%SZ)
-out="$repo_root/reproducibility_outputs/docker/$run_id/$profile"
+out="$repo_root/container/outputs/image_build_test/docker/$run_id/$profile"
 mkdir -p "$out"
 platform=linux/amd64
 tag="mbv-${profile}:test"
-dockerfile="$repo_root/container/docker/$profile/Dockerfile"
+dockerfile="$repo_root/container/02_image_build_test/docker/$profile/Dockerfile"
 build_cmd=("${docker_cmd[@]}" build --pull --platform "$platform" \
   -f "$dockerfile" -t "$tag" "$repo_root")
 
@@ -59,7 +59,7 @@ printf 'build_elapsed_seconds=%s\nbuild_status=passed\n' "$((build_end-build_sta
 test_start=$(date +%s)
 if [[ "$profile" == r ]]; then
   if ! "${docker_cmd[@]}" run --rm --platform "$platform" "$tag" Rscript --vanilla \
-      /opt/mbv/scripts/verify_r_lockfile.R /opt/mbv/renv-library /opt/mbv/project/renv.lock \
+      /opt/mbv/scripts/verify_r_environment.R /opt/mbv/renv-library /opt/mbv/project/renv.lock \
       > "$out/test.log" 2>&1 || \
       ! "${docker_cmd[@]}" run --rm --platform "$platform" "$tag" Rscript --vanilla -e \
       'library(sf); library(s2); library(Seurat); library(SingleCellExperiment); library(spatialLIBD)' \
@@ -71,7 +71,7 @@ if [[ "$profile" == r ]]; then
   fi
 else
   if ! "${docker_cmd[@]}" run --rm --platform "$platform" "$tag" sh -eu -c \
-      'python /opt/mbv/scripts/verify_python_env.py && python -m pip check' \
+      'python /opt/mbv/scripts/verify_python_environment.py && python -m pip check' \
       > "$out/test.log" 2>&1; then
     test_end=$(date +%s)
     printf 'smoke_test_elapsed_seconds=%s\nsmoke_test_status=failed\n' "$((test_end-test_start))" >> "$out/run-info.txt"

@@ -6,15 +6,15 @@ pipeline in code directories `00` through `10`. Code directory `11_eQTL_coloc`
 
 | Track | Purpose | Status | Command / next action |
 | --- | --- | --- | --- |
-| Docker on macOS | Test user-facing Linux images via Docker Desktop, without requiring a separate Linux host | Passed on Apple Silicon with Docker Desktop 29.9.2, targeting/emulating `linux/amd64` | `bash container/scripts/run_docker_test.sh r` then `bash container/scripts/run_docker_test.sh python` |
-| Portable Apptainer on clean Linux | Check general Apptainer recipes outside JHPCE | Prepared; host/access TBD, may defer | `bash container/scripts/run_portable_test.sh r` then `bash container/scripts/run_portable_test.sh python` |
+| Docker on macOS | Test user-facing Linux images via Docker Desktop, without requiring a separate Linux host | Passed on Apple Silicon with Docker Desktop 29.9.2, targeting/emulating `linux/amd64` | `bash container/02_image_build_test/scripts/run_docker_build_smoke_test.sh r` then `bash container/02_image_build_test/scripts/run_docker_build_smoke_test.sh python` |
+| Portable Apptainer on clean Linux | Check general Apptainer recipes outside JHPCE | Prepared; host/access TBD, may defer | `bash container/02_image_build_test/scripts/run_apptainer_portable_build_smoke_test.sh r` then `bash container/02_image_build_test/scripts/run_apptainer_portable_build_smoke_test.sh python` |
 | JHPCE Apptainer | Check separate site-specific R and Python builds on JHPCE | Passed on 2026-11-09; both images built and passed separate runtime checks in 10 GB compute allocations | Complete; see measured results below |
 
 The first two tracks use `linux/amd64` because the checked-in Conda explicit
 lock targets Linux x86_64. Docker Desktop on Apple Silicon emulates that target;
 record Mac build durations separately from native Linux timings. Keep all
-images and logs under the ignored `reproducibility_outputs/` tree.
-New Apptainer runs use `reproducibility_outputs/apptainer/<UTC-run-id>/<profile>-<site>/`,
+images and logs under the ignored `container/outputs/image_build_test/` tree.
+New Apptainer runs use `container/outputs/image_build_test/apptainer/<UTC-run-id>/<profile>-<site>/`,
 for example `r-portable` or `python-jhpce`. The completed JHPCE result paths
 below retain their original layout because those records were created before
 the output convention changed.
@@ -24,8 +24,8 @@ the output convention changed.
 
 | Image | Build | Fresh-container smoke test | Image size | Result directory |
 | --- | ---: | ---: | ---: | --- |
-| R | 3,574 sec (59m 34s) | 41 sec | 6.64 GB | `reproducibility_outputs/docker/20261109T154726Z/r/` |
-| Python | 439 sec (7m 19s) | 59 sec | 13.6 GB | `reproducibility_outputs/docker/20261109T170322Z/python/` |
+| R | 3,574 sec (59m 34s) | 41 sec | 6.64 GB | `container/outputs/image_build_test/docker/20261109T154726Z/r/` |
+| Python | 439 sec (7m 19s) | 59 sec | 13.6 GB | `container/outputs/image_build_test/docker/20261109T170322Z/python/` |
 
 R verified all 415 locked package versions with no missing packages or
 mismatches, then loaded representative spatial and single-cell libraries.
@@ -44,8 +44,8 @@ Docker Desktop's resource directory on macOS.
 
 | Image | Build time | Standalone test | SIF size | Peak RSS (10 GB requested) | Result directory |
 | --- | ---: | ---: | ---: | ---: | --- |
-| R | 5,611 sec (1h 33m 31s) | 25 sec | 1.68 GiB | 4,827,528 KiB (4.61 GiB) | `reproducibility_outputs/apptainer/20261109T214031Z/jhpce/r/` |
-| Python | 962 sec (16m 02s) | 7 sec | 3.80 GiB | 8,506,936 KiB (8.11 GiB) | `reproducibility_outputs/apptainer/20261109T231706Z/jhpce/python/` |
+| R | 5,611 sec (1h 33m 31s) | 25 sec | 1.68 GiB | 4,827,528 KiB (4.61 GiB) | `container/outputs/image_build_test/apptainer/20261109T214031Z/jhpce/r/` |
+| Python | 962 sec (16m 02s) | 7 sec | 3.80 GiB | 8,506,936 KiB (8.11 GiB) | `container/outputs/image_build_test/apptainer/20261109T231706Z/jhpce/python/` |
 
 R matched all 415 package versions in `renv.lock`, with no missing packages or
 version mismatches, and loaded the representative spatial and single-cell
@@ -58,4 +58,4 @@ The first R attempt built its SIF but the standalone test could not read
 `/opt/mbv/project/renv.lock`. The shared build helper now sets readable
 permissions on the project directory and copied lockfile; the subsequent R
 build and test passed. The failed run remains preserved in
-`reproducibility_outputs/apptainer/20261109T191626Z/jhpce/r/`.
+`container/outputs/image_build_test/apptainer/20261109T191626Z/jhpce/r/`.

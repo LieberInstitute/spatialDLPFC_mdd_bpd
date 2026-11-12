@@ -4,17 +4,17 @@ From: rocker/r-ver:4.4.3
 %labels
     org.opencontainers.image.title MBv R environment
     org.opencontainers.image.version 0.1-test
-    org.opencontainers.image.description Portable R renv environment for MBv pipeline validation
+    org.opencontainers.image.description JHPCE R renv environment for MBv pipeline validation
 
 %files
     renv.lock /opt/mbv/project/renv.lock
-    container/scripts/build_apptainer_env.sh /opt/mbv/scripts/build_apptainer_env.sh
-    container/scripts/build_portable_env.sh /opt/mbv/scripts/build_portable_env.sh
-    container/scripts/verify_r_lockfile.R /opt/mbv/scripts/verify_r_lockfile.R
+    container/02_image_build_test/scripts/prepare_apptainer_environment.sh /opt/mbv/scripts/prepare_apptainer_environment.sh
+    container/02_image_build_test/scripts/install_locked_environment.sh /opt/mbv/scripts/install_locked_environment.sh
+    container/02_image_build_test/scripts/verify_r_environment.R /opt/mbv/scripts/verify_r_environment.R
 
 %post
     set -eu
-    bash /opt/mbv/scripts/build_apptainer_env.sh r portable
+    bash /opt/mbv/scripts/prepare_apptainer_environment.sh r jhpce
 
 %environment
     export MBV_R_LIBRARY=/opt/mbv/renv-library
@@ -23,7 +23,7 @@ From: rocker/r-ver:4.4.3
 
 %test
     set -eu
-    Rscript --vanilla /opt/mbv/scripts/verify_r_lockfile.R \
+    Rscript --vanilla /opt/mbv/scripts/verify_r_environment.R \
         /opt/mbv/renv-library /opt/mbv/project/renv.lock
     Rscript --vanilla -e 'library(sf); library(s2); library(Seurat); library(SingleCellExperiment); library(spatialLIBD)'
 
