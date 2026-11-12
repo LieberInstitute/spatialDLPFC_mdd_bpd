@@ -8,12 +8,13 @@ pipeline in code directories `00` through `10`. Code directory `11_eQTL_coloc`
 | --- | --- | --- | --- |
 | Docker on macOS | Test user-facing Linux images via Docker Desktop, without requiring a separate Linux host | Passed on Apple Silicon with Docker Desktop 29.9.2, targeting/emulating `linux/amd64` | `bash container/02_image_build_test/scripts/run_docker_build_smoke_test.sh r` then `bash container/02_image_build_test/scripts/run_docker_build_smoke_test.sh python` |
 | Portable Apptainer on clean Linux | Check general Apptainer recipes outside JHPCE | Prepared; host/access TBD, may defer | `bash container/02_image_build_test/scripts/run_apptainer_portable_build_smoke_test.sh r` then `bash container/02_image_build_test/scripts/run_apptainer_portable_build_smoke_test.sh python` |
-| JHPCE Apptainer | Check separate site-specific R and Python builds on JHPCE | Passed on 2026-11-09; both images built and passed separate runtime checks in 10 GB compute allocations | Complete; see measured results below |
+| JHPCE Apptainer | Check separate site-specific R and Python builds on JHPCE | Latest R and Python builds and explicit tests passed on 2026-11-12 in one 10G Slurm batch job | Complete; see measured results below |
 
 The first two tracks use `linux/amd64` because the checked-in Conda explicit
 lock targets Linux x86_64. Docker Desktop on Apple Silicon emulates that target;
-record Mac build durations separately from native Linux timings. Keep all
-images and logs under the ignored `container/outputs/image_build_test/` tree.
+record Mac build durations separately from native Linux timings. Keep generated
+images and logs under `container/outputs/image_build_test/`; `.sif` images are
+ignored by Git, while logs and metadata may be tracked.
 New Apptainer runs use `container/outputs/image_build_test/apptainer/<UTC-run-id>/<profile>-<site>/`,
 for example `r-portable` or `python-jhpce`. The completed JHPCE result paths
 below retain their original layout because those records were created before
@@ -95,3 +96,22 @@ The first R attempt built its SIF but the standalone test could not read
 permissions on the project directory and copied lockfile; the subsequent R
 build and test passed. The failed run remains preserved in
 `container/outputs/image_build_test/apptainer/20261109T191626Z/jhpce/r/`.
+
+## JHPCE Apptainer rebuild (2026-11-12)
+
+Both restructured JHPCE images built and passed `apptainer test` in batch job
+`37038242` on compute node `compute-168.cm.cluster`, using Apptainer
+`1.5.3+342-g79cf6087c`. The job requested `10G` of memory. Peak RSS was not
+recorded in the saved run files.
+
+| Image | Build time | Explicit test | SIF size | SHA-256 |
+| --- | ---: | ---: | ---: | --- |
+| R | 6,428 sec (1h 47m 08s) | 28 sec | 1,858,621,440 bytes (1.73 GiB / 1.86 GB) | `7242e59319c90b438c6f06305c9f9086ebbb0b628d821cf5597a88540fdecfd2` |
+| Python | 977 sec (16m 17s) | 7 sec | 4,074,225,664 bytes (3.79 GiB / 4.07 GB) | `49003df1e082aa54ab072897f95e2a3964548d4961e862eec419d228d1017e6b` |
+
+R matched all 425 package versions in `renv.lock`, with no missing packages or
+version mismatches, and loaded the representative spatial and single-cell
+libraries. Python verified Python 3.10.14, pySCENIC 0.12.1+11.g06bafba, and
+Arboreto 0.1.6; imports passed and `pip check` reported no broken requirements.
+The run records, build/test logs, definitions used, and checksums are under
+`container/outputs/image_build_test/apptainer/20261112T171336Z/` on JHPCE.

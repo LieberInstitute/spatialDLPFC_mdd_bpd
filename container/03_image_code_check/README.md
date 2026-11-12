@@ -69,11 +69,17 @@ Submit from the project root so Slurm resolves its relative output path correctl
 
 ```bash
 mkdir -p container/03_image_code_check/inputs/expr_loom container/outputs/image_code_check/apptainer
-sbatch container/03_image_code_check/scripts/apptainer_python.sh
+# Use the run_id_utc value from the Python JHPCE build's run-info.txt.
+sbatch container/03_image_code_check/scripts/apptainer_python.sh 20261112T171336Z
 ```
 
 The run writes a Slurm log to `container/outputs/image_code_check/apptainer/mbv-aucell-python_<job-id>.log` and
 a successful run creates an AUCell loom file in the same location.
+
+The recorded JHPCE check (job `37038830`, 2026-11-12) exited with status `0`.
+It used the first 10% of the 21,265-cell loom (2,126 cells), ran AUCell with one
+worker, and wrote the result loom under
+`container/outputs/image_code_check/apptainer/`.
 
 <br><br>
 
@@ -119,11 +125,19 @@ Submit from the project root, with the Slurm log directory present before submis
 
 ```bash
 mkdir -p container/outputs/image_code_check/apptainer
-sbatch container/03_image_code_check/scripts/apptainer_r.sh
+# Use the run_id_utc value from the R JHPCE build's run-info.txt.
+sbatch container/03_image_code_check/scripts/apptainer_r.sh 20261112T171336Z
 ```
 
 The run writes a Slurm log to `container/outputs/image_code_check/apptainer/mbv-spe-r_<job-id>.log` and a successful
 run creates an HDF5 SPE representation that consists of two, linked files in the same location.
+
+The recorded JHPCE check (job `37039047`, 2026-11-12) exited with status `0`
+and reached `*** TEST END ***`. It downloaded the public GEO archive, built an
+SPE from three samples, and saved `spe_n3_se.rds` and `spe_n3_assays.h5` under
+`container/outputs/image_code_check/apptainer/`. The HDF5 save step took 3.84
+minutes. The Slurm log is
+`container/outputs/image_code_check/apptainer/mbv-spe-r_37039047.log`.
 
 <br><br>
 

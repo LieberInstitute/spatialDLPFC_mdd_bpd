@@ -121,7 +121,7 @@ Use this table to choose the build instructions best-suited for your setup.
 | Windows PC with x86_64 CPU | Docker Desktop using Linux containers; WSL 2 and Bash terminal recommended | Yes; clone inside WSL filesystem | Docker `linux/amd64`; matches CPU architecture, but this setup has not been tested |
 | Linux x86_64 with Docker | Docker Engine, Git, Bash | Yes; clone `revision` | Docker `linux/amd64`; clean Linux Docker build has not been tested |
 | Linux x86_64 with Apptainer | Apptainer, Git, Bash; configured fakeroot or root access | Yes; clone `revision` | Portable Apptainer definitions are prepared; clean Linux builds have not been tested |
-| JHPCE | JHPCE access, Slurm, and Apptainer module `apptainer/1.5.3` | Yes; checkout on `revision` | Separate named JHPCE Apptainer definitions; both built and passed runtime checks |
+| JHPCE | JHPCE access, Slurm, and Apptainer module `apptainer/1.5.3` | Yes; checkout on `revision` | Separate named JHPCE Apptainer definitions; latest R and Python builds and checks passed on 2026-11-12 |
 
 The Python lock targets Linux x86_64, so all Docker builds use
 `linux/amd64`. Docker Desktop on Apple Silicon emulates that architecture;
@@ -344,17 +344,19 @@ was configured with 10 CPUs and 8 GiB of memory; peak memory use was not
 recorded. About 35 GB free disk is a planning estimate based on the observed
 image and build-cache growth, not a measured minimum.
 
-### JHPCE Apptainer (2026-11-11)
+### JHPCE Apptainer (2026-11-12)
 
 Apptainer's image size is the `.sif` file's on-disk size which is compressed.
 
 | Image | SIF size | Build time | Standalone test | Peak RSS | Requested memory |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| R | 1.68 GiB | 1.5-2 hr | ~ 30 sec | ~ 4 GiB | 10 GiB |
-| Python | 3.79 GiB | ~ 15 min | ~ 10 sec | 7-8 GiB | 10 GiB |
+| R | 1.73 GiB (1.86 GB) | 6,428 sec (1h 47m 08s) | 28 sec | Not recorded | 10G |
+| Python | 3.79 GiB (4.07 GB) | 977 sec (16m 17s) | 7 sec | Not recorded | 10G |
 
-Due to the use of Slurm to schedule jobs, build time may vary depending on node
-assignment.
+Both profiles ran in one Slurm batch job (job `37038242`) on JHPCE using
+Apptainer `1.5.3+342-g79cf6087c`, from commit `83c4597b`. Slurm requested `10G`
+for the job; peak RSS was not captured in the saved run records. Build times
+may vary depending on node assignment.
 
 <br><br>
 
