@@ -11,7 +11,7 @@ apptainer exec \
   --bind "$PWD:/work" \
   --pwd /work \
   "$R_SIF" \
-  Rscript --vanilla reproducibility_codeCheck/apptainer-spe.R test_results/apptainer/ \
+  Rscript --vanilla reproducibility_codeCheck/spe.R test_results/apptainer/ \
   2>&1
 
 status=$?
