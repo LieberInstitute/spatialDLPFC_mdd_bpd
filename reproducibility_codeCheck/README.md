@@ -1,53 +1,43 @@
 # Container code checks
 
-This directory contains small code execution checks for the MBv R and Python container environments. They are separate from the image build and smoke tests: these scripts exercise project code with public or project data and write analysis outputs.
+This directory contains small code execution checks for the MBv R and Python container environments. 
+They are separate from the image build and smoke tests: these scripts exercise project code 
+with public or project data and write analysis outputs. These are functional checks on reduced 
+inputs. They do not validate full-data results or replace the pipeline's full analysis. 
 
-The checks currently documented here are:
+These checks occurred prior to Nextflow implementation. These checks have not yet been designed for
+portable image builds in a clean Linux setup.
 
-- **Docker Python:** runs AUCell on the first 10% of cells in a loom input.
-- **JHPCE Apptainer Python:** runs the same AUCell check using source data from JHPCE.
-- **Docker R:** downloads public GEO data and builds a small `SpatialExperiment` (SPE) from three samples.
-- **JHPCE Apptainer R:** runs the same three-sample SPE check in the JHPCE R image.
-
-These are functional checks on reduced inputs. They do not validate full-data results or replace the pipeline's full analysis.
+<br>
 
 ## Python AUCell checks
 
-### Why the Python test uses 10% of cells
-
-The full loom has 21,265 cells. A full-data AUCell run was killed by Docker Desktop's 8 GiB memory limit (`OOMKilled=true`, exit status 137), even after reducing the worker count. The Python scripts therefore take the first 10% of cells (2,126 cells) and run with one worker.
-
-This subset checks that the container can read the loom and module data and execute AUCell. It is not a full-data run, a measurement of full-data memory requirements, or a validation of scientific results on all cells. The scripts create a separate `*_first10pct.loom` file in a unique operating-system temporary directory, leave the source loom unchanged, and remove the subset when the Python process exits. Loom compression means the subset file size need not be exactly 10% of the original.
-
-The AUCell check uses the `Micro.Vasc` cluster's module signatures, threshold `0.05`, seed `1234`, and weighted scoring (`noweights=False`).
+The Python container check runs AUCell on a small subset of loom input. The full loom has 
+21,265 cells. A full-data AUCell run was killed by Docker Desktop's 8 GiB memory limit 
+(`OOMKilled=true`, exit status 137), even after reducing the worker count. Therefore, the 
+Python scripts take the first 10% of cells (2,126 cells) and run with one worker.
 
 ### Python inputs and locations
 
-#### Docker Python
+The AUCell script requires access to a loom expression file and the `module.dat` file. 
+The source files are found here: 
+`/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/09_DEG_GRN/`
+The Docker check requires these files to be staged locally while the Apptainer check 
+from JHPCE accesses the originals on `/dcs04/`. These small differences account for the 
+separate `.py` scripts for each container build.
 
-Run from the MBv project root. These input data files must be staged locally:
+Prior to the running the Docker check, SFTP transfer these files into the `reproducibility_codeCheck` 
+under a new `data` dir, mirroring the original directory structure containing an `expr_loom` subdir: 
 
-- `reproducibility_codeCheck/data/expr_loom/spe-n119_seurat-label-Micro.Vasc_13162-genes_no-lowUMI_logcounts.loom`
 - `reproducibility_codeCheck/data/spe-n119_13162-no-lowUMI_modules_DEG-subset-refined.dat`
+- `reproducibility_codeCheck/data/expr_loom/spe-n119_seurat-label-Micro.Vasc_13162-genes_no-lowUMI_logcounts.loom`
 
 The files are not committed; `.gitignore` excludes `reproducibility_codeCheck/data/`.
 
-#### JHPCE Apptainer Python
-
-The batch script `apptainer_python.sh` reads these source files from:
-
-`/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/09_DEG_GRN/`
-
-It binds only this directory, read-only, to `/source-data` in the container. The expected files are:
-
-- `/source-data/expr_loom/spe-n119_seurat-label-Micro.Vasc_13162-genes_no-lowUMI_logcounts.loom`
-- `/source-data/spe-n119_13162-no-lowUMI_modules_DEG-subset-refined.dat`
-
-The checkout is bound to `/work`; the first-10%-cells loom is written under `/work/reproducibility_codeCheck/data/expr_loom/`.
-
 ### Run the Docker Python check
 
-Requirements: Docker Desktop (or Docker Engine), the built `mbv-python:test` image for `linux/amd64`, the two local inputs above, and a project-root working directory.
+Requirements: Docker Desktop (or Docker Engine), the built `mbv-python:test` image for
+`linux/amd64`, the two local inputs above, and a project-root working directory.
 
 From the project root, run in zsh:
 
@@ -68,54 +58,35 @@ docker run --rm --platform linux/amd64 \
 print "exit status: $?"
 ```
 
-The checkout bind makes inputs and outputs available on the host. `tee` replaces `test_results/docker/aucell.log` on each run.
+The run writes a log to `test_results/docker/aucell.log` and a successful run creates an AUCell
+loom file in the same location. 
 
 ### Run the JHPCE Apptainer Python check
 
-Requirements: JHPCE access, the Python JHPCE SIF at the path set in `apptainer_python.sh`, the two source files under `processed-data/09_DEG_GRN/`, and a compute allocation with Apptainer available. Submit from the project root so Slurm resolves its relative output path correctly:
+Requirements: JHPCE access, `/dcs04/` access, the Python JHPCE SIF **at the path set in 
+`apptainer_python.sh`**, and Apptainer (loaded through the pre-built module). 
+
+Submit from the project root so Slurm resolves its relative output path correctly:
 
 ```bash
 mkdir -p reproducibility_codeCheck/data/expr_loom test_results/apptainer
 sbatch reproducibility_codeCheck/apptainer_python.sh
 ```
 
-The script loads `apptainer/1.5.3`, binds the checkout to `/work`, and binds only `processed-data/09_DEG_GRN` to `/source-data` as read-only. The `#SBATCH --output` file captures standard output and errors, including the exit status; it does not create a second `tee` log.
+The run writes a Slurm log to `test_results/apptainer/mbv-aucell-python_<job-id>.log` and 
+a successful run creates an AUCell loom file in the same location. 
 
-## JHPCE Apptainer R GEOquery and SPE check
+<br><br>
 
-This batch check runs `reproducibility_codeCheck/spe.R` in the JHPCE R SIF. It uses the same public GEO dataset, three-sample SPE construction, and HDF5-backed outputs as the Docker R check.
+## R GEOquery & SPE build checks
 
-The script downloads the full `GSE333974_RAW.tar` archive and extracts it under R's `tempdir()` inside the running Apptainer job. The script removes its temporary directory on successful completion. No separate temporary-directory bind is used in this check; the compute node's available temporary storage must have room for the downloaded archive and extracted files.
+The R container check downloads public GEO data from the MBv accession `GSE333974` into a temporary directory and builds a small `SpatialExperiment` (SPE) from three samples. The same `.R` script is used for both Docker and Apptainer checks.
 
-The batch script requests 5G memory, loads `apptainer/1.5.3`, binds the project checkout to `/work`, and executes the SIF specified in `apptainer_r.sh`. Submit from the project root, with the Slurm log directory present before submission:
-
-```bash
-mkdir -p test_results/apptainer
-sbatch reproducibility_codeCheck/apptainer_r.sh
-```
-
-The script passes `test_results/apptainer/` to `spe.R` as its output-directory argument. For the successful run recorded here, Slurm job `37035750` exited with status `0`, and the log ended with `*** TEST END ***`:
-
-- Log: `test_results/apptainer/mbv-spe-r_37035750.log`
-- SPE outputs: `test_results/apptainer/spe_n3_se.rds` and `test_results/apptainer/spe_n3_assays.h5`
-
-The log reports about 0.39 minutes for `read10xVisium()` and 0.96 minutes for the HDF5 save. It does not record the total job runtime.
-
-## Docker R GEOquery and SPE check
-
-This code check exercises the R image's GEOquery, SpatialExperiment, and supporting packages while retrieving public data and creating an SPE from the first three samples. It runs `reproducibility_codeCheck/docker-spe.R`.
-
-### Data source and temporary files
-
-The script retrieves dataset **GSE333974** from NCBI GEO using `GEOquery::getGEO()` and `getGEOSuppFiles()`. No local copy of the GEO input files is required, but the container needs network access to NCBI GEO.
-
-The script downloads the full `GSE333974_RAW.tar` archive (about 4.2 GB in the recorded run), extracts its contents into an R `tempdir()`, and uses the first three samples to construct the SPE. The temporary directory is inside the container and is removed by the script at the end; it does not need its own bind mount. The full archive and extracted contents require temporary disk space during the run, even though only three samples are used for the SPE.
-
-The SPE output directory is passed as the first argument to the R script. It defaults to `test_results/docker/` when omitted. The directory is created by the script and is part of the bound project checkout, so outputs persist on the host.
+`Rscript --vanilla` skips the mounted checkout's `.Rprofile`, which would activate its local renv library instead of using the package library installed in the image.
 
 ### Run the Docker R check
 
-Requirements: Docker Desktop (or Docker Engine), the rebuilt `mbv-r:test` image containing the updated R lockfile, network access to NCBI GEO, and enough Docker Desktop storage for the archive and its extracted contents.
+Requirements: Docker Desktop (or Docker Engine), the built `mbv-r:test` image, network access to NCBI GEO, and enough Docker Desktop storage for the archive and its extracted contents.
 
 Run from the MBv project root in zsh:
 
@@ -126,20 +97,30 @@ docker run --rm --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
   mbv-r:test \
-  Rscript --vanilla reproducibility_codeCheck/docker-spe.R test_results/docker/ \
+  Rscript --vanilla reproducibility_codeCheck/spe.R test_results/docker/ \
   2>&1 | tee test_results/docker/spe.log
 print "exit status: $?"
 ```
+The project bind preserves the SPE output and log on the host; `--rm` discards the container.
+The run writes a log to `test_results/docker/spe.log` and a successful run creates an HDF5 SPE
+representation that consists of two, linked files in the same location. 
 
-`commandArgs(trailingOnly = TRUE)` in `docker-spe.R` reads the output-directory argument; the script creates that directory before writing the HDF5-backed SPE. Use `test_results/apptainer/` as the argument when running the same script in an Apptainer R image. If no argument is supplied, it uses `test_results/docker/`.
+### Run the Apptainer R check
 
-`Rscript --vanilla` skips the mounted checkout's `.Rprofile`, which would activate its local renv library instead of using the package library installed in the image. The project bind preserves the SPE output and log on the host; `--rm` discards the container and its temporary download files after exit. `tee` replaces `test_results/docker/spe.log` on each run.
+Requirements: JHPCE access, the R JHPCE SIF **at the path set in `apptainer_r.sh`**, and 
+Apptainer (loaded through the pre-built module). 
 
-### R outputs and pass/fail
+Submit from the project root, with the Slurm log directory present before submission:
 
-- `test_results/docker/spe.log` records GEOquery downloads, SPE construction, timing, session information, and completion marker `*** TEST END ***`.
-- `test_results/docker/spe_n3_se.rds` and `test_results/docker/spe_n3_assays.h5` are the HDF5-backed SPE outputs produced with prefix `spe_n3_`.
-- Exit status `0` indicates the script completed. A nonzero status indicates failure; inspect the log for the error. The log includes separate timing for `read10xVisium()` and saving the HDF5-backed object, but it does not record total script runtime.
+```bash
+mkdir -p test_results/apptainer
+sbatch reproducibility_codeCheck/apptainer_r.sh
+```
+
+The run writes a Slurm log to `test_results/apptainer/mbv-spe-r_<job-id>.log` and a successful 
+run creates an HDF5 SPE representation that consists of two, linked files in the same location.
+
+<br><br>
 
 ## Outputs at a glance
 
@@ -148,7 +129,3 @@ print "exit status: $?"
 | Run log | `test_results/docker/aucell.log` | `test_results/apptainer/mbv-aucell-python_<job-id>.log` | `test_results/docker/spe.log` | `test_results/apptainer/mbv-spe-r_<job-id>.log` |
 | Temporary/subset input | OS temporary directory (`mbv-aucell-*/*_first10pct.loom`); removed when Python exits | OS temporary directory (`mbv-aucell-*/*_first10pct.loom`); removed when Python exits | GEO download/extraction under R `tempdir()`; removed at script end | GEO download/extraction under R `tempdir()`; removed at script end |
 | Analysis output | `test_results/docker/*_first10pct_modules-DEG-subset-refined_AUCell-fixed-thold-05.loom` | `test_results/apptainer/*_first10pct_modules-DEG-subset-refined_AUCell-fixed-thold-05.loom` | `test_results/docker/spe_n3_se.rds` and `test_results/docker/spe_n3_assays.h5` | `test_results/apptainer/spe_n3_se.rds` and `test_results/apptainer/spe_n3_assays.h5` |
-
-The older `reproducibility_codeCheck/aucell-docker.log` is a saved Docker Python capture; the current Python command writes to `test_results/docker/aucell.log`.
-
-These checks cover the Python image with a reduced AUCell input and the Docker and JHPCE Apptainer R images with public GEO data and three samples. They do not test portable Apptainer builds on a clean Linux host, a full 21,265-cell AUCell run, or full-scale SPE construction from every GEO sample.
