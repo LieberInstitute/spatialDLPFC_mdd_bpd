@@ -37,8 +37,8 @@ stopifnot(identical(rownames(donor.data), donor.data$GEO_sample))
 
 
 
-supp_files <- getGEOSuppFiles('GSE333974', fetch_files = FALSE)
-supp_files
+(supp_files <- getGEOSuppFiles('GSE333974', fetch_files = FALSE,
+	baseDir = tmp_dir, makeDirectory = FALSE))
 # use first 4 files to build spe
 
 # use last tar file to build from scratch spaceranger output
