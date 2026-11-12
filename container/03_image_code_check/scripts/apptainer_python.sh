@@ -12,7 +12,7 @@ apptainer exec \
   --bind "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/09_DEG_GRN:/source-data:ro" \
   --pwd /work \
   "$PYTHON_SIF" \
-  python3 -u container/03_image_code_check/apptainer-aucell.py \
+  python3 -u container/03_image_code_check/scripts/apptainer-aucell.py \
   2>&1
 
 status=$?

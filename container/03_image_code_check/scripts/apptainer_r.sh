@@ -11,7 +11,7 @@ apptainer exec \
   --bind "$PWD:/work" \
   --pwd /work \
   "$R_SIF" \
-  Rscript --vanilla container/03_image_code_check/spe.R container/outputs/image_code_check/apptainer/ \
+  Rscript --vanilla container/03_image_code_check/scripts/spe.R container/outputs/image_code_check/apptainer/ \
   2>&1
 
 status=$?
