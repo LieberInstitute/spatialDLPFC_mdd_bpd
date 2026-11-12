@@ -1,0 +1,1453 @@
+INFO:    User not listed in /etc/subuid, trying root-mapped namespace
+INFO:    fakeroot command not found
+INFO:    Installing some packages may fail
+INFO:    Starting build...
+INFO:    Fetching OCI image...
+INFO:    Extracting OCI image...
+INFO:    Inserting Apptainer configuration...
+INFO:    Copying container/01_environment/python/conda-linux-64.lock to /opt/mbv/build_inputs/python/conda-linux-64.lock
+INFO:    Copying container/01_environment/python/requirements-pip.lock to /opt/mbv/build_inputs/python/requirements-pip.lock
+INFO:    Copying container/01_environment/python/wheels to /opt/mbv/build_inputs/python/wheels
+INFO:    Copying container/02_image_build_test/scripts/prepare_apptainer_environment.sh to /opt/mbv/scripts/prepare_apptainer_environment.sh
+INFO:    Copying container/02_image_build_test/scripts/install_locked_environment.sh to /opt/mbv/scripts/install_locked_environment.sh
+INFO:    Copying container/02_image_build_test/scripts/verify_python_environment.py to /opt/mbv/scripts/verify_python_environment.py
+INFO:    Running post scriptlet
++ set -eu
++ bash /opt/mbv/scripts/prepare_apptainer_environment.sh python jhpce
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [368 kB]
+Fetched 9407 kB in 1s (6571 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  binutils binutils-common binutils-x86-64-linux-gnu cpp cpp-12 dpkg-dev g++
+  g++-12 gcc gcc-12 libasan8 libatomic1 libbinutils libbrotli1 libc-dev-bin
+  libc6-dev libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libcurl4 libdpkg-perl
+  libgcc-12-dev libgdbm-compat4 libgdbm6 libgomp1 libgprofng0 libgssapi-krb5-2
+  libisl23 libitm1 libjansson4 libk5crypto3 libkeyutils1 libkrb5-3
+  libkrb5support0 libldap-2.5-0 liblsan0 libmpc3 libmpfr6 libncursesw6
+  libnghttp2-14 libnsl-dev libnsl2 libperl5.36 libproc2-0 libpsl5 libquadmath0
+  librtmp1 libsasl2-2 libsasl2-modules-db libssh2-1 libssl3 libstdc++-12-dev
+  libtirpc-common libtirpc-dev libtirpc3 libtsan2 libubsan1 linux-libc-dev
+  make openssl patch perl perl-modules-5.36 rpcsvc-proto xz-utils
+Suggested packages:
+  binutils-doc bzip2-doc cpp-doc gcc-12-locales cpp-12-doc debian-keyring
+  g++-multilib g++-12-multilib gcc-12-doc gcc-multilib manpages-dev autoconf
+  automake libtool flex bison gdb gcc-doc gcc-12-multilib glibc-doc gnupg | sq
+  | sqop | pgpainless-cli sensible-utils git bzr gdbm-l10n krb5-doc krb5-user
+  libstdc++-12-doc make-doc ed diffutils-doc perl-doc
+  libterm-readline-gnu-perl | libterm-readline-perl-perl
+  libtap-harness-archive-perl
+Recommended packages:
+  fakeroot gnupg | sq | sqop | pgpainless-cli libalgorithm-merge-perl manpages
+  manpages-dev libc-devtools libfile-fcntllock-perl liblocale-gettext-perl
+  krb5-locales libldap-common libgpm2 publicsuffix libsasl2-modules netbase
+  psmisc
+The following NEW packages will be installed:
+  binutils binutils-common binutils-x86-64-linux-gnu build-essential bzip2
+  ca-certificates cpp cpp-12 curl dpkg-dev g++ g++-12 gcc gcc-12 libasan8
+  libatomic1 libbinutils libbrotli1 libc-dev-bin libc6-dev libcc1-0
+  libcrypt-dev libctf-nobfd0 libctf0 libcurl4 libdpkg-perl libgcc-12-dev
+  libgdbm-compat4 libgdbm6 libgomp1 libgprofng0 libgssapi-krb5-2 libisl23
+  libitm1 libjansson4 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0
+  libldap-2.5-0 liblsan0 libmpc3 libmpfr6 libncursesw6 libnghttp2-14
+  libnsl-dev libnsl2 libperl5.36 libproc2-0 libpsl5 libquadmath0 librtmp1
+  libsasl2-2 libsasl2-modules-db libssh2-1 libssl3 libstdc++-12-dev
+  libtirpc-common libtirpc-dev libtirpc3 libtsan2 libubsan1 linux-libc-dev
+  make openssl patch perl perl-modules-5.36 procps rpcsvc-proto xz-utils
+0 upgraded, 71 newly installed, 0 to remove and 0 not upgraded.
+Need to get 80.8 MB of archives.
+After this operation, 332 MB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian-security bookworm-security/main amd64 perl-modules-5.36 all 5.36.0-7+deb12u4 [2817 kB]
+Get:2 http://deb.debian.org/debian bookworm/main amd64 libgdbm6 amd64 1.23-3 [72.2 kB]
+Get:3 http://deb.debian.org/debian bookworm/main amd64 libgdbm-compat4 amd64 1.23-3 [48.2 kB]
+Get:4 http://deb.debian.org/debian-security bookworm-security/main amd64 libperl5.36 amd64 5.36.0-7+deb12u4 [4208 kB]
+Get:5 http://deb.debian.org/debian-security bookworm-security/main amd64 perl amd64 5.36.0-7+deb12u4 [239 kB]
+Get:6 http://deb.debian.org/debian bookworm/main amd64 libncursesw6 amd64 6.4-4 [134 kB]
+Get:7 http://deb.debian.org/debian bookworm/main amd64 libproc2-0 amd64 2:4.0.2-3 [62.8 kB]
+Get:8 http://deb.debian.org/debian bookworm/main amd64 procps amd64 2:4.0.2-3 [709 kB]
+Get:9 http://deb.debian.org/debian bookworm/main amd64 bzip2 amd64 1.0.8-5+b1 [49.8 kB]
+Get:10 http://deb.debian.org/debian-security bookworm-security/main amd64 libssl3 amd64 3.0.22-1~deb12u2 [2040 kB]
+Get:11 http://deb.debian.org/debian-security bookworm-security/main amd64 openssl amd64 3.0.22-1~deb12u2 [1442 kB]
+Get:12 http://deb.debian.org/debian-security bookworm-security/main amd64 ca-certificates all 20250419~deb12u2 [161 kB]
+Get:13 http://deb.debian.org/debian-security bookworm-security/main amd64 xz-utils amd64 5.4.1-1+deb12u2 [471 kB]
+Get:14 http://deb.debian.org/debian bookworm/main amd64 binutils-common amd64 2.40-2 [2487 kB]
+Get:15 http://deb.debian.org/debian bookworm/main amd64 libbinutils amd64 2.40-2 [572 kB]
+Get:16 http://deb.debian.org/debian bookworm/main amd64 libctf-nobfd0 amd64 2.40-2 [153 kB]
+Get:17 http://deb.debian.org/debian bookworm/main amd64 libctf0 amd64 2.40-2 [89.8 kB]
+Get:18 http://deb.debian.org/debian bookworm/main amd64 libgprofng0 amd64 2.40-2 [812 kB]
+Get:19 http://deb.debian.org/debian bookworm/main amd64 libjansson4 amd64 2.14-2 [40.8 kB]
+Get:20 http://deb.debian.org/debian bookworm/main amd64 binutils-x86-64-linux-gnu amd64 2.40-2 [2246 kB]
+Get:21 http://deb.debian.org/debian bookworm/main amd64 binutils amd64 2.40-2 [65.0 kB]
+Get:22 http://deb.debian.org/debian bookworm/main amd64 libc-dev-bin amd64 2.36-9+deb12u14 [48.1 kB]
+Get:23 http://deb.debian.org/debian-security bookworm-security/main amd64 linux-libc-dev amd64 6.1.190-1 [2409 kB]
+Get:24 http://deb.debian.org/debian bookworm/main amd64 libcrypt-dev amd64 1:4.4.33-2 [118 kB]
+Get:25 http://deb.debian.org/debian bookworm/main amd64 libkrb5support0 amd64 1.20.1-2+deb12u5 [33.2 kB]
+Get:26 http://deb.debian.org/debian bookworm/main amd64 libk5crypto3 amd64 1.20.1-2+deb12u5 [79.7 kB]
+Get:27 http://deb.debian.org/debian bookworm/main amd64 libkeyutils1 amd64 1.6.3-2 [8808 B]
+Get:28 http://deb.debian.org/debian bookworm/main amd64 libkrb5-3 amd64 1.20.1-2+deb12u5 [332 kB]
+Get:29 http://deb.debian.org/debian bookworm/main amd64 libgssapi-krb5-2 amd64 1.20.1-2+deb12u5 [135 kB]
+Get:30 http://deb.debian.org/debian bookworm/main amd64 libtirpc-common all 1.3.3+ds-1 [14.0 kB]
+Get:31 http://deb.debian.org/debian bookworm/main amd64 libtirpc3 amd64 1.3.3+ds-1 [85.2 kB]
+Get:32 http://deb.debian.org/debian bookworm/main amd64 libnsl2 amd64 1.3.0-2 [39.5 kB]
+Get:33 http://deb.debian.org/debian bookworm/main amd64 libtirpc-dev amd64 1.3.3+ds-1 [191 kB]
+Get:34 http://deb.debian.org/debian bookworm/main amd64 libnsl-dev amd64 1.3.0-2 [66.4 kB]
+Get:35 http://deb.debian.org/debian bookworm/main amd64 rpcsvc-proto amd64 1.4.3-1 [63.3 kB]
+Get:36 http://deb.debian.org/debian bookworm/main amd64 libc6-dev amd64 2.36-9+deb12u14 [1904 kB]
+Get:37 http://deb.debian.org/debian bookworm/main amd64 libisl23 amd64 0.25-1.1 [683 kB]
+Get:38 http://deb.debian.org/debian bookworm/main amd64 libmpfr6 amd64 4.2.0-1 [701 kB]
+Get:39 http://deb.debian.org/debian bookworm/main amd64 libmpc3 amd64 1.3.1-1 [51.5 kB]
+Get:40 http://deb.debian.org/debian bookworm/main amd64 cpp-12 amd64 12.2.0-14+deb12u1 [9768 kB]
+Get:41 http://deb.debian.org/debian bookworm/main amd64 cpp amd64 4:12.2.0-3 [6836 B]
+Get:42 http://deb.debian.org/debian bookworm/main amd64 libcc1-0 amd64 12.2.0-14+deb12u1 [41.7 kB]
+Get:43 http://deb.debian.org/debian bookworm/main amd64 libgomp1 amd64 12.2.0-14+deb12u1 [116 kB]
+Get:44 http://deb.debian.org/debian bookworm/main amd64 libitm1 amd64 12.2.0-14+deb12u1 [26.1 kB]
+Get:45 http://deb.debian.org/debian bookworm/main amd64 libatomic1 amd64 12.2.0-14+deb12u1 [9376 B]
+Get:46 http://deb.debian.org/debian bookworm/main amd64 libasan8 amd64 12.2.0-14+deb12u1 [2193 kB]
+Get:47 http://deb.debian.org/debian bookworm/main amd64 liblsan0 amd64 12.2.0-14+deb12u1 [969 kB]
+Get:48 http://deb.debian.org/debian bookworm/main amd64 libtsan2 amd64 12.2.0-14+deb12u1 [2197 kB]
+Get:49 http://deb.debian.org/debian bookworm/main amd64 libubsan1 amd64 12.2.0-14+deb12u1 [883 kB]
+Get:50 http://deb.debian.org/debian bookworm/main amd64 libquadmath0 amd64 12.2.0-14+deb12u1 [145 kB]
+Get:51 http://deb.debian.org/debian bookworm/main amd64 libgcc-12-dev amd64 12.2.0-14+deb12u1 [2437 kB]
+Get:52 http://deb.debian.org/debian bookworm/main amd64 gcc-12 amd64 12.2.0-14+deb12u1 [19.3 MB]
+Get:53 http://deb.debian.org/debian bookworm/main amd64 gcc amd64 4:12.2.0-3 [5216 B]
+Get:54 http://deb.debian.org/debian bookworm/main amd64 libstdc++-12-dev amd64 12.2.0-14+deb12u1 [2047 kB]
+Get:55 http://deb.debian.org/debian bookworm/main amd64 g++-12 amd64 12.2.0-14+deb12u1 [10.7 MB]
+Get:56 http://deb.debian.org/debian bookworm/main amd64 g++ amd64 4:12.2.0-3 [1356 B]
+Get:57 http://deb.debian.org/debian bookworm/main amd64 make amd64 4.3-4.1 [396 kB]
+Get:58 http://deb.debian.org/debian bookworm/main amd64 libdpkg-perl all 1.21.23 [604 kB]
+Get:59 http://deb.debian.org/debian bookworm/main amd64 patch amd64 2.7.6-7 [128 kB]
+Get:60 http://deb.debian.org/debian bookworm/main amd64 dpkg-dev all 1.21.23 [1354 kB]
+Get:61 http://deb.debian.org/debian bookworm/main amd64 build-essential amd64 12.9 [7704 B]
+Get:62 http://deb.debian.org/debian-security bookworm-security/main amd64 libbrotli1 amd64 1.0.9-2+deb12u1 [275 kB]
+Get:63 http://deb.debian.org/debian-security bookworm-security/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg-10+deb12u1 [20.5 kB]
+Get:64 http://deb.debian.org/debian-security bookworm-security/main amd64 libsasl2-2 amd64 2.1.28+dfsg-10+deb12u1 [59.9 kB]
+Get:65 http://deb.debian.org/debian bookworm/main amd64 libldap-2.5-0 amd64 2.5.13+dfsg-5 [183 kB]
+Get:66 http://deb.debian.org/debian bookworm/main amd64 libnghttp2-14 amd64 1.52.0-1+deb12u3 [72.4 kB]
+Get:67 http://deb.debian.org/debian bookworm/main amd64 libpsl5 amd64 0.21.2-1 [58.7 kB]
+Get:68 http://deb.debian.org/debian bookworm/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2+b2 [60.8 kB]
+Get:69 http://deb.debian.org/debian-security bookworm-security/main amd64 libssh2-1 amd64 1.10.0-3+deb12u1 [176 kB]
+Get:70 http://deb.debian.org/debian bookworm/main amd64 libcurl4 amd64 7.88.1-10+deb12u15 [392 kB]
+Get:71 http://deb.debian.org/debian bookworm/main amd64 curl amd64 7.88.1-10+deb12u15 [316 kB]
+debconf: delaying package configuration, since apt-utils is not installed
+Fetched 80.8 MB in 12s (6521 kB/s)
+Selecting previously unselected package perl-modules-5.36.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 6096 files and directories currently installed.)
+Preparing to unpack .../00-perl-modules-5.36_5.36.0-7+deb12u4_all.deb ...
+Unpacking perl-modules-5.36 (5.36.0-7+deb12u4) ...
+Selecting previously unselected package libgdbm6:amd64.
+Preparing to unpack .../01-libgdbm6_1.23-3_amd64.deb ...
+Unpacking libgdbm6:amd64 (1.23-3) ...
+Selecting previously unselected package libgdbm-compat4:amd64.
+Preparing to unpack .../02-libgdbm-compat4_1.23-3_amd64.deb ...
+Unpacking libgdbm-compat4:amd64 (1.23-3) ...
+Selecting previously unselected package libperl5.36:amd64.
+Preparing to unpack .../03-libperl5.36_5.36.0-7+deb12u4_amd64.deb ...
+Unpacking libperl5.36:amd64 (5.36.0-7+deb12u4) ...
+Selecting previously unselected package perl.
+Preparing to unpack .../04-perl_5.36.0-7+deb12u4_amd64.deb ...
+Unpacking perl (5.36.0-7+deb12u4) ...
+Selecting previously unselected package libncursesw6:amd64.
+Preparing to unpack .../05-libncursesw6_6.4-4_amd64.deb ...
+Unpacking libncursesw6:amd64 (6.4-4) ...
+Selecting previously unselected package libproc2-0:amd64.
+Preparing to unpack .../06-libproc2-0_2%3a4.0.2-3_amd64.deb ...
+Unpacking libproc2-0:amd64 (2:4.0.2-3) ...
+Selecting previously unselected package procps.
+Preparing to unpack .../07-procps_2%3a4.0.2-3_amd64.deb ...
+Unpacking procps (2:4.0.2-3) ...
+Selecting previously unselected package bzip2.
+Preparing to unpack .../08-bzip2_1.0.8-5+b1_amd64.deb ...
+Unpacking bzip2 (1.0.8-5+b1) ...
+Selecting previously unselected package libssl3:amd64.
+Preparing to unpack .../09-libssl3_3.0.22-1~deb12u2_amd64.deb ...
+Unpacking libssl3:amd64 (3.0.22-1~deb12u2) ...
+Selecting previously unselected package openssl.
+Preparing to unpack .../10-openssl_3.0.22-1~deb12u2_amd64.deb ...
+Unpacking openssl (3.0.22-1~deb12u2) ...
+Selecting previously unselected package ca-certificates.
+Preparing to unpack .../11-ca-certificates_20250419~deb12u2_all.deb ...
+Unpacking ca-certificates (20250419~deb12u2) ...
+Selecting previously unselected package xz-utils.
+Preparing to unpack .../12-xz-utils_5.4.1-1+deb12u2_amd64.deb ...
+Unpacking xz-utils (5.4.1-1+deb12u2) ...
+Selecting previously unselected package binutils-common:amd64.
+Preparing to unpack .../13-binutils-common_2.40-2_amd64.deb ...
+Unpacking binutils-common:amd64 (2.40-2) ...
+Selecting previously unselected package libbinutils:amd64.
+Preparing to unpack .../14-libbinutils_2.40-2_amd64.deb ...
+Unpacking libbinutils:amd64 (2.40-2) ...
+Selecting previously unselected package libctf-nobfd0:amd64.
+Preparing to unpack .../15-libctf-nobfd0_2.40-2_amd64.deb ...
+Unpacking libctf-nobfd0:amd64 (2.40-2) ...
+Selecting previously unselected package libctf0:amd64.
+Preparing to unpack .../16-libctf0_2.40-2_amd64.deb ...
+Unpacking libctf0:amd64 (2.40-2) ...
+Selecting previously unselected package libgprofng0:amd64.
+Preparing to unpack .../17-libgprofng0_2.40-2_amd64.deb ...
+Unpacking libgprofng0:amd64 (2.40-2) ...
+Selecting previously unselected package libjansson4:amd64.
+Preparing to unpack .../18-libjansson4_2.14-2_amd64.deb ...
+Unpacking libjansson4:amd64 (2.14-2) ...
+Selecting previously unselected package binutils-x86-64-linux-gnu.
+Preparing to unpack .../19-binutils-x86-64-linux-gnu_2.40-2_amd64.deb ...
+Unpacking binutils-x86-64-linux-gnu (2.40-2) ...
+Selecting previously unselected package binutils.
+Preparing to unpack .../20-binutils_2.40-2_amd64.deb ...
+Unpacking binutils (2.40-2) ...
+Selecting previously unselected package libc-dev-bin.
+Preparing to unpack .../21-libc-dev-bin_2.36-9+deb12u14_amd64.deb ...
+Unpacking libc-dev-bin (2.36-9+deb12u14) ...
+Selecting previously unselected package linux-libc-dev:amd64.
+Preparing to unpack .../22-linux-libc-dev_6.1.190-1_amd64.deb ...
+Unpacking linux-libc-dev:amd64 (6.1.190-1) ...
+Selecting previously unselected package libcrypt-dev:amd64.
+Preparing to unpack .../23-libcrypt-dev_1%3a4.4.33-2_amd64.deb ...
+Unpacking libcrypt-dev:amd64 (1:4.4.33-2) ...
+Selecting previously unselected package libkrb5support0:amd64.
+Preparing to unpack .../24-libkrb5support0_1.20.1-2+deb12u5_amd64.deb ...
+Unpacking libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+Selecting previously unselected package libk5crypto3:amd64.
+Preparing to unpack .../25-libk5crypto3_1.20.1-2+deb12u5_amd64.deb ...
+Unpacking libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+Selecting previously unselected package libkeyutils1:amd64.
+Preparing to unpack .../26-libkeyutils1_1.6.3-2_amd64.deb ...
+Unpacking libkeyutils1:amd64 (1.6.3-2) ...
+Selecting previously unselected package libkrb5-3:amd64.
+Preparing to unpack .../27-libkrb5-3_1.20.1-2+deb12u5_amd64.deb ...
+Unpacking libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+Selecting previously unselected package libgssapi-krb5-2:amd64.
+Preparing to unpack .../28-libgssapi-krb5-2_1.20.1-2+deb12u5_amd64.deb ...
+Unpacking libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+Selecting previously unselected package libtirpc-common.
+Preparing to unpack .../29-libtirpc-common_1.3.3+ds-1_all.deb ...
+Unpacking libtirpc-common (1.3.3+ds-1) ...
+Selecting previously unselected package libtirpc3:amd64.
+Preparing to unpack .../30-libtirpc3_1.3.3+ds-1_amd64.deb ...
+Unpacking libtirpc3:amd64 (1.3.3+ds-1) ...
+Selecting previously unselected package libnsl2:amd64.
+Preparing to unpack .../31-libnsl2_1.3.0-2_amd64.deb ...
+Unpacking libnsl2:amd64 (1.3.0-2) ...
+Selecting previously unselected package libtirpc-dev:amd64.
+Preparing to unpack .../32-libtirpc-dev_1.3.3+ds-1_amd64.deb ...
+Unpacking libtirpc-dev:amd64 (1.3.3+ds-1) ...
+Selecting previously unselected package libnsl-dev:amd64.
+Preparing to unpack .../33-libnsl-dev_1.3.0-2_amd64.deb ...
+Unpacking libnsl-dev:amd64 (1.3.0-2) ...
+Selecting previously unselected package rpcsvc-proto.
+Preparing to unpack .../34-rpcsvc-proto_1.4.3-1_amd64.deb ...
+Unpacking rpcsvc-proto (1.4.3-1) ...
+Selecting previously unselected package libc6-dev:amd64.
+Preparing to unpack .../35-libc6-dev_2.36-9+deb12u14_amd64.deb ...
+Unpacking libc6-dev:amd64 (2.36-9+deb12u14) ...
+Selecting previously unselected package libisl23:amd64.
+Preparing to unpack .../36-libisl23_0.25-1.1_amd64.deb ...
+Unpacking libisl23:amd64 (0.25-1.1) ...
+Selecting previously unselected package libmpfr6:amd64.
+Preparing to unpack .../37-libmpfr6_4.2.0-1_amd64.deb ...
+Unpacking libmpfr6:amd64 (4.2.0-1) ...
+Selecting previously unselected package libmpc3:amd64.
+Preparing to unpack .../38-libmpc3_1.3.1-1_amd64.deb ...
+Unpacking libmpc3:amd64 (1.3.1-1) ...
+Selecting previously unselected package cpp-12.
+Preparing to unpack .../39-cpp-12_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking cpp-12 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package cpp.
+Preparing to unpack .../40-cpp_4%3a12.2.0-3_amd64.deb ...
+Unpacking cpp (4:12.2.0-3) ...
+Selecting previously unselected package libcc1-0:amd64.
+Preparing to unpack .../41-libcc1-0_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking libcc1-0:amd64 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package libgomp1:amd64.
+Preparing to unpack .../42-libgomp1_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking libgomp1:amd64 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package libitm1:amd64.
+Preparing to unpack .../43-libitm1_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking libitm1:amd64 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package libatomic1:amd64.
+Preparing to unpack .../44-libatomic1_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking libatomic1:amd64 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package libasan8:amd64.
+Preparing to unpack .../45-libasan8_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking libasan8:amd64 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package liblsan0:amd64.
+Preparing to unpack .../46-liblsan0_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking liblsan0:amd64 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package libtsan2:amd64.
+Preparing to unpack .../47-libtsan2_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking libtsan2:amd64 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package libubsan1:amd64.
+Preparing to unpack .../48-libubsan1_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking libubsan1:amd64 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package libquadmath0:amd64.
+Preparing to unpack .../49-libquadmath0_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking libquadmath0:amd64 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package libgcc-12-dev:amd64.
+Preparing to unpack .../50-libgcc-12-dev_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking libgcc-12-dev:amd64 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package gcc-12.
+Preparing to unpack .../51-gcc-12_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking gcc-12 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package gcc.
+Preparing to unpack .../52-gcc_4%3a12.2.0-3_amd64.deb ...
+Unpacking gcc (4:12.2.0-3) ...
+Selecting previously unselected package libstdc++-12-dev:amd64.
+Preparing to unpack .../53-libstdc++-12-dev_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking libstdc++-12-dev:amd64 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package g++-12.
+Preparing to unpack .../54-g++-12_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking g++-12 (12.2.0-14+deb12u1) ...
+Selecting previously unselected package g++.
+Preparing to unpack .../55-g++_4%3a12.2.0-3_amd64.deb ...
+Unpacking g++ (4:12.2.0-3) ...
+Selecting previously unselected package make.
+Preparing to unpack .../56-make_4.3-4.1_amd64.deb ...
+Unpacking make (4.3-4.1) ...
+Selecting previously unselected package libdpkg-perl.
+Preparing to unpack .../57-libdpkg-perl_1.21.23_all.deb ...
+Unpacking libdpkg-perl (1.21.23) ...
+Selecting previously unselected package patch.
+Preparing to unpack .../58-patch_2.7.6-7_amd64.deb ...
+Unpacking patch (2.7.6-7) ...
+Selecting previously unselected package dpkg-dev.
+Preparing to unpack .../59-dpkg-dev_1.21.23_all.deb ...
+Unpacking dpkg-dev (1.21.23) ...
+Selecting previously unselected package build-essential.
+Preparing to unpack .../60-build-essential_12.9_amd64.deb ...
+Unpacking build-essential (12.9) ...
+Selecting previously unselected package libbrotli1:amd64.
+Preparing to unpack .../61-libbrotli1_1.0.9-2+deb12u1_amd64.deb ...
+Unpacking libbrotli1:amd64 (1.0.9-2+deb12u1) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../62-libsasl2-modules-db_2.1.28+dfsg-10+deb12u1_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg-10+deb12u1) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../63-libsasl2-2_2.1.28+dfsg-10+deb12u1_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.28+dfsg-10+deb12u1) ...
+Selecting previously unselected package libldap-2.5-0:amd64.
+Preparing to unpack .../64-libldap-2.5-0_2.5.13+dfsg-5_amd64.deb ...
+Unpacking libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+Selecting previously unselected package libnghttp2-14:amd64.
+Preparing to unpack .../65-libnghttp2-14_1.52.0-1+deb12u3_amd64.deb ...
+Unpacking libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+Selecting previously unselected package libpsl5:amd64.
+Preparing to unpack .../66-libpsl5_0.21.2-1_amd64.deb ...
+Unpacking libpsl5:amd64 (0.21.2-1) ...
+Selecting previously unselected package librtmp1:amd64.
+Preparing to unpack .../67-librtmp1_2.4+20151223.gitfa8646d.1-2+b2_amd64.deb ...
+Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+Selecting previously unselected package libssh2-1:amd64.
+Preparing to unpack .../68-libssh2-1_1.10.0-3+deb12u1_amd64.deb ...
+Unpacking libssh2-1:amd64 (1.10.0-3+deb12u1) ...
+Selecting previously unselected package libcurl4:amd64.
+Preparing to unpack .../69-libcurl4_7.88.1-10+deb12u15_amd64.deb ...
+Unpacking libcurl4:amd64 (7.88.1-10+deb12u15) ...
+Selecting previously unselected package curl.
+Preparing to unpack .../70-curl_7.88.1-10+deb12u15_amd64.deb ...
+Unpacking curl (7.88.1-10+deb12u15) ...
+Setting up libkeyutils1:amd64 (1.6.3-2) ...
+Setting up libpsl5:amd64 (0.21.2-1) ...
+Setting up libtirpc-common (1.3.3+ds-1) ...
+Setting up libbrotli1:amd64 (1.0.9-2+deb12u1) ...
+Setting up binutils-common:amd64 (2.40-2) ...
+Setting up libssl3:amd64 (3.0.22-1~deb12u2) ...
+Setting up libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+Setting up linux-libc-dev:amd64 (6.1.190-1) ...
+Setting up libctf-nobfd0:amd64 (2.40-2) ...
+Setting up libgomp1:amd64 (12.2.0-14+deb12u1) ...
+Setting up bzip2 (1.0.8-5+b1) ...
+Setting up libjansson4:amd64 (2.14-2) ...
+Setting up libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg-10+deb12u1) ...
+Setting up perl-modules-5.36 (5.36.0-7+deb12u4) ...
+Setting up rpcsvc-proto (1.4.3-1) ...
+Setting up make (4.3-4.1) ...
+Setting up libmpfr6:amd64 (4.2.0-1) ...
+Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+Setting up xz-utils (5.4.1-1+deb12u2) ...
+update-alternatives: using /usr/bin/xz to provide /usr/bin/lzma (lzma) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzma.1.gz because associated file /usr/share/man/man1/xz.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/unlzma.1.gz because associated file /usr/share/man/man1/unxz.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzcat.1.gz because associated file /usr/share/man/man1/xzcat.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzmore.1.gz because associated file /usr/share/man/man1/xzmore.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzless.1.gz because associated file /usr/share/man/man1/xzless.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzdiff.1.gz because associated file /usr/share/man/man1/xzdiff.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzcmp.1.gz because associated file /usr/share/man/man1/xzcmp.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzgrep.1.gz because associated file /usr/share/man/man1/xzgrep.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzegrep.1.gz because associated file /usr/share/man/man1/xzegrep.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzfgrep.1.gz because associated file /usr/share/man/man1/xzfgrep.1.gz (of link group lzma) doesn't exist
+Setting up libquadmath0:amd64 (12.2.0-14+deb12u1) ...
+Setting up libproc2-0:amd64 (2:4.0.2-3) ...
+Setting up libmpc3:amd64 (1.3.1-1) ...
+Setting up libatomic1:amd64 (12.2.0-14+deb12u1) ...
+Setting up patch (2.7.6-7) ...
+Setting up libncursesw6:amd64 (6.4-4) ...
+Setting up libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+Setting up libsasl2-2:amd64 (2.1.28+dfsg-10+deb12u1) ...
+Setting up libubsan1:amd64 (12.2.0-14+deb12u1) ...
+Setting up libcrypt-dev:amd64 (1:4.4.33-2) ...
+Setting up libasan8:amd64 (12.2.0-14+deb12u1) ...
+Setting up procps (2:4.0.2-3) ...
+Setting up libssh2-1:amd64 (1.10.0-3+deb12u1) ...
+Setting up libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+Setting up libtsan2:amd64 (12.2.0-14+deb12u1) ...
+Setting up libbinutils:amd64 (2.40-2) ...
+Setting up libisl23:amd64 (0.25-1.1) ...
+Setting up libc-dev-bin (2.36-9+deb12u14) ...
+Setting up openssl (3.0.22-1~deb12u2) ...
+Setting up libcc1-0:amd64 (12.2.0-14+deb12u1) ...
+Setting up liblsan0:amd64 (12.2.0-14+deb12u1) ...
+Setting up libitm1:amd64 (12.2.0-14+deb12u1) ...
+Setting up libgdbm6:amd64 (1.23-3) ...
+Setting up libctf0:amd64 (2.40-2) ...
+Setting up cpp-12 (12.2.0-14+deb12u1) ...
+Setting up libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+Setting up ca-certificates (20250419~deb12u2) ...
+Updating certificates in /etc/ssl/certs...
+148 added, 0 removed; done.
+Setting up libgprofng0:amd64 (2.40-2) ...
+Setting up libgcc-12-dev:amd64 (12.2.0-14+deb12u1) ...
+Setting up libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+Setting up libgdbm-compat4:amd64 (1.23-3) ...
+Setting up cpp (4:12.2.0-3) ...
+Setting up libcurl4:amd64 (7.88.1-10+deb12u15) ...
+Setting up curl (7.88.1-10+deb12u15) ...
+Setting up libperl5.36:amd64 (5.36.0-7+deb12u4) ...
+Setting up binutils-x86-64-linux-gnu (2.40-2) ...
+Setting up libtirpc3:amd64 (1.3.3+ds-1) ...
+Setting up binutils (2.40-2) ...
+Setting up perl (5.36.0-7+deb12u4) ...
+Setting up libtirpc-dev:amd64 (1.3.3+ds-1) ...
+Setting up gcc-12 (12.2.0-14+deb12u1) ...
+Setting up libdpkg-perl (1.21.23) ...
+Setting up libnsl2:amd64 (1.3.0-2) ...
+Setting up gcc (4:12.2.0-3) ...
+Setting up dpkg-dev (1.21.23) ...
+Setting up libnsl-dev:amd64 (1.3.0-2) ...
+Setting up libc6-dev:amd64 (2.36-9+deb12u14) ...
+Setting up libstdc++-12-dev:amd64 (12.2.0-14+deb12u1) ...
+Setting up g++-12 (12.2.0-14+deb12u1) ...
+Setting up g++ (4:12.2.0-3) ...
+update-alternatives: using /usr/bin/g++ to provide /usr/bin/c++ (c++) in auto mode
+Setting up build-essential (12.9) ...
+Processing triggers for libc-bin (2.36-9+deb12u14) ...
+Processing triggers for ca-certificates (20250419~deb12u2) ...
+Updating certificates in /etc/ssl/certs...
+0 added, 0 removed; done.
+Running hooks in /etc/ca-certificates/update.d...
+done.
+W: chown to root:adm of file /var/log/apt/term.log failed - OpenLog (22: Invalid argument)
+PREFIX=/opt/conda
+
+Transaction
+
+  Prefix: /opt/conda/envs/_virtual_specs_checks
+
+  All requested packages already installed
+
+Dry run. Not executing the transaction.
+Unpacking payload ...
+Extracting _libgcc_mutex-0.1-conda_forge.tar.bz2
+Extracting ca-certificates-2024.8.30-hbcca054_0.conda
+Extracting ld_impl_linux-64-2.40-hf3520f5_7.conda
+Extracting pybind11-abi-4-hd8ed1ab_3.tar.bz2
+Extracting python_abi-3.12-5_cp312.conda
+Extracting tzdata-2024a-h8827d51_1.conda
+Extracting libgomp-14.1.0-h77fa898_1.conda
+Extracting _openmp_mutex-4.5-2_gnu.tar.bz2
+Extracting libgcc-14.1.0-h77fa898_1.conda
+Extracting libexpat-2.6.3-h5888daf_0.conda
+Extracting libgcc-ng-14.1.0-h69a702a_1.conda
+Extracting libstdcxx-14.1.0-hc0a3c3a_1.conda
+Extracting openssl-3.3.2-hb9d3cd8_0.conda
+Extracting bzip2-1.0.8-h4bc722e_7.conda
+Extracting c-ares-1.32.3-h4bc722e_0.conda
+Extracting keyutils-1.6.1-h166bdaf_0.tar.bz2
+Extracting libev-4.33-hd590300_2.conda
+Extracting libffi-3.4.2-h7f98852_5.tar.bz2
+Extracting libiconv-1.17-hd590300_2.conda
+Extracting libnsl-2.0.1-hd590300_0.conda
+Extracting libstdcxx-ng-14.1.0-h4852527_1.conda
+Extracting libuuid-2.38.1-h0b41bf4_0.conda
+Extracting libxcrypt-4.4.36-hd590300_1.conda
+Extracting libzlib-1.3.1-h4ab18f5_1.conda
+Extracting lzo-2.10-hd590300_1001.conda
+Extracting ncurses-6.5-he02047a_1.conda
+Extracting reproc-14.2.4.post0-hd590300_1.conda
+Extracting xz-5.2.6-h166bdaf_0.tar.bz2
+Extracting fmt-10.2.1-h00ab1b0_0.conda
+Extracting icu-75.1-he02047a_0.conda
+Extracting libedit-3.1.20191231-he28a2e2_2.tar.bz2
+Extracting libnghttp2-1.58.0-h47da74e_1.conda
+Extracting libsolv-0.7.30-h3509ff9_0.conda
+Extracting libsqlite-3.46.1-hadc24fc_0.conda
+Extracting libssh2-1.11.0-h0841786_0.conda
+Extracting lz4-c-1.9.4-hcb278e6_0.conda
+Extracting readline-8.2-h8228510_1.conda
+Extracting reproc-cpp-14.2.4.post0-h59595ed_1.conda
+Extracting tk-8.6.13-noxft_h4845f30_101.conda
+Extracting yaml-cpp-0.8.0-h59595ed_0.conda
+Extracting zstd-1.5.6-ha6fb4c9_0.conda
+Extracting krb5-1.21.3-h659f571_0.conda
+Extracting libxml2-2.12.7-he7c6b58_4.conda
+Extracting python-3.12.6-hc5c86c4_1_cpython.conda
+Extracting libarchive-3.7.4-hfca40fe_0.conda
+Extracting libcurl-8.10.1-hbbe4b11_0.conda
+Extracting menuinst-2.1.2-py312h7900ff3_1.conda
+Extracting archspec-0.2.3-pyhd8ed1ab_0.conda
+Extracting boltons-24.0.0-pyhd8ed1ab_0.conda
+Extracting brotli-python-1.1.0-py312h2ec8cdc_2.conda
+Extracting certifi-2024.8.30-pyhd8ed1ab_0.conda
+Extracting charset-normalizer-3.3.2-pyhd8ed1ab_0.conda
+Extracting colorama-0.4.6-pyhd8ed1ab_0.tar.bz2
+Extracting distro-1.9.0-pyhd8ed1ab_0.conda
+Extracting frozendict-2.4.4-py312h66e93f0_1.conda
+Extracting hpack-4.0.0-pyh9f0ad1d_0.tar.bz2
+Extracting hyperframe-6.0.1-pyhd8ed1ab_0.tar.bz2
+Extracting idna-3.10-pyhd8ed1ab_0.conda
+Extracting jsonpointer-3.0.0-py312h7900ff3_1.conda
+Extracting libmamba-1.5.9-h4cc3d14_0.conda
+Extracting packaging-24.1-pyhd8ed1ab_0.conda
+Extracting platformdirs-4.3.6-pyhd8ed1ab_0.conda
+Extracting pluggy-1.5.0-pyhd8ed1ab_0.conda
+Extracting pycosat-0.6.6-py312h98912ed_0.conda
+Extracting pycparser-2.22-pyhd8ed1ab_0.conda
+Extracting pysocks-1.7.1-pyha2e5f31_6.tar.bz2
+Extracting ruamel.yaml.clib-0.2.8-py312h98912ed_0.conda
+Extracting setuptools-74.1.2-pyhd8ed1ab_0.conda
+Extracting truststore-0.9.2-pyhd8ed1ab_0.conda
+Extracting wheel-0.44.0-pyhd8ed1ab_0.conda
+Extracting cffi-1.17.1-py312h06ac9bb_0.conda
+Extracting h2-4.1.0-pyhd8ed1ab_0.tar.bz2
+Extracting jsonpatch-1.33-pyhd8ed1ab_0.conda
+Extracting libmambapy-1.5.9-py312h7fb9e8e_0.conda
+Extracting pip-24.2-pyh8b19718_1.conda
+Extracting ruamel.yaml-0.18.6-py312h98912ed_0.conda
+Extracting tqdm-4.66.5-pyhd8ed1ab_0.conda
+Extracting zstandard-0.23.0-py312hef9b889_1.conda
+Extracting conda-package-streaming-0.10.0-pyhd8ed1ab_0.conda
+Extracting urllib3-2.2.3-pyhd8ed1ab_0.conda
+Extracting conda-package-handling-2.3.0-pyh7900ff3_0.conda
+Extracting requests-2.32.3-pyhd8ed1ab_0.conda
+Extracting conda-24.7.1-py312h7900ff3_0.conda
+Extracting conda-libmamba-solver-24.7.0-pyhd8ed1ab_0.conda
+Extracting mamba-1.5.9-py312h9460a1c_0.conda
+
+Installing base environment...
+
+Transaction
+
+  Prefix: /opt/conda
+
+  Updating specs:
+
+   - conda-forge/linux-64::_libgcc_mutex==0.1=conda_forge[md5=d7c89558ba9fa0495403155b64376d81]
+   - conda-forge/linux-64::ca-certificates==2024.8.30=hbcca054_0[md5=c27d1c142233b5bc9ca570c6e2e0c244]
+   - conda-forge/linux-64::ld_impl_linux-64==2.40=hf3520f5_7[md5=b80f2f396ca2c28b8c14c437a4ed1e74]
+   - conda-forge/noarch::pybind11-abi==4=hd8ed1ab_3[md5=878f923dd6acc8aeb47a75da6c4098be]
+   - conda-forge/linux-64::python_abi==3.12=5_cp312[md5=0424ae29b104430108f5218a66db7260]
+   - conda-forge/noarch::tzdata==2024a=h8827d51_1[md5=8bfdead4e0fff0383ae4c9c50d0531bd]
+   - conda-forge/linux-64::libgomp==14.1.0=h77fa898_1[md5=23c255b008c4f2ae008f81edcabaca89]
+   - conda-forge/linux-64::_openmp_mutex==4.5=2_gnu[md5=73aaf86a425cc6e73fcf236a5a46396d]
+   - conda-forge/linux-64::libgcc==14.1.0=h77fa898_1[md5=002ef4463dd1e2b44a94a4ace468f5d2]
+   - conda-forge/linux-64::libexpat==2.6.3=h5888daf_0[md5=59f4c43bb1b5ef1c71946ff2cbf59524]
+   - conda-forge/linux-64::libgcc-ng==14.1.0=h69a702a_1[md5=1efc0ad219877a73ef977af7dbb51f17]
+   - conda-forge/linux-64::libstdcxx==14.1.0=hc0a3c3a_1[md5=9dbb9699ea467983ba8a4ba89b08b066]
+   - conda-forge/linux-64::openssl==3.3.2=hb9d3cd8_0[md5=4d638782050ab6faa27275bed57e9b4e]
+   - conda-forge/linux-64::bzip2==1.0.8=h4bc722e_7[md5=62ee74e96c5ebb0af99386de58cf9553]
+   - conda-forge/linux-64::c-ares==1.32.3=h4bc722e_0[md5=7624e34ee6baebfc80d67bac76cc9d9d]
+   - conda-forge/linux-64::keyutils==1.6.1=h166bdaf_0[md5=30186d27e2c9fa62b45fb1476b7200e3]
+   - conda-forge/linux-64::libev==4.33=hd590300_2[md5=172bf1cd1ff8629f2b1179945ed45055]
+   - conda-forge/linux-64::libffi==3.4.2=h7f98852_5[md5=d645c6d2ac96843a2bfaccd2d62b3ac3]
+   - conda-forge/linux-64::libiconv==1.17=hd590300_2[md5=d66573916ffcf376178462f1b61c941e]
+   - conda-forge/linux-64::libnsl==2.0.1=hd590300_0[md5=30fd6e37fe21f86f4bd26d6ee73eeec7]
+   - conda-forge/linux-64::libstdcxx-ng==14.1.0=h4852527_1[md5=bd2598399a70bb86d8218e95548d735e]
+   - conda-forge/linux-64::libuuid==2.38.1=h0b41bf4_0[md5=40b61aab5c7ba9ff276c41cfffe6b80b]
+   - conda-forge/linux-64::libxcrypt==4.4.36=hd590300_1[md5=5aa797f8787fe7a17d1b0821485b5adc]
+   - conda-forge/linux-64::libzlib==1.3.1=h4ab18f5_1[md5=57d7dc60e9325e3de37ff8dffd18e814]
+   - conda-forge/linux-64::lzo==2.10=hd590300_1001[md5=ec7398d21e2651e0dcb0044d03b9a339]
+   - conda-forge/linux-64::ncurses==6.5=he02047a_1[md5=70caf8bb6cf39a0b6b7efc885f51c0fe]
+   - conda-forge/linux-64::reproc==14.2.4.post0=hd590300_1[md5=82ca53502dfd5a64a80dee76dae14685]
+   - conda-forge/linux-64::xz==5.2.6=h166bdaf_0[md5=2161070d867d1b1204ea749c8eec4ef0]
+   - conda-forge/linux-64::fmt==10.2.1=h00ab1b0_0[md5=35ef8bc24bd34074ebae3c943d551728]
+   - conda-forge/linux-64::icu==75.1=he02047a_0[md5=8b189310083baabfb622af68fd9d3ae3]
+   - conda-forge/linux-64::libedit==3.1.20191231=he28a2e2_2[md5=4d331e44109e3f0e19b4cb8f9b82f3e1]
+   - conda-forge/linux-64::libnghttp2==1.58.0=h47da74e_1[md5=700ac6ea6d53d5510591c4344d5c989a]
+   - conda-forge/linux-64::libsolv==0.7.30=h3509ff9_0[md5=02539b77d25aa4f65b20246549e256c3]
+   - conda-forge/linux-64::libsqlite==3.46.1=hadc24fc_0[md5=36f79405ab16bf271edb55b213836dac]
+   - conda-forge/linux-64::libssh2==1.11.0=h0841786_0[md5=1f5a58e686b13bcfde88b93f547d23fe]
+   - conda-forge/linux-64::lz4-c==1.9.4=hcb278e6_0[md5=318b08df404f9c9be5712aaa5a6f0bb0]
+   - conda-forge/linux-64::readline==8.2=h8228510_1[md5=47d31b792659ce70f470b5c82fdfb7a4]
+   - conda-forge/linux-64::reproc-cpp==14.2.4.post0=h59595ed_1[md5=715e1d720ec1a03715bebd237972fca5]
+   - conda-forge/linux-64::tk==8.6.13=noxft_h4845f30_101[md5=d453b98d9c83e71da0741bb0ff4d76bc]
+   - conda-forge/linux-64::yaml-cpp==0.8.0=h59595ed_0[md5=965eaacd7c18eb8361fd12bb9e7a57d7]
+   - conda-forge/linux-64::zstd==1.5.6=ha6fb4c9_0[md5=4d056880988120e29d75bfff282e0f45]
+   - conda-forge/linux-64::krb5==1.21.3=h659f571_0[md5=3f43953b7d3fb3aaa1d0d0723d91e368]
+   - conda-forge/linux-64::libxml2==2.12.7=he7c6b58_4[md5=08a9265c637230c37cb1be4a6cad4536]
+   - conda-forge/linux-64::python==3.12.6=hc5c86c4_1_cpython[md5=00836baacdca254f28c54d2543e97514]
+   - conda-forge/linux-64::libarchive==3.7.4=hfca40fe_0[md5=32ddb97f897740641d8d46a829ce1704]
+   - conda-forge/linux-64::libcurl==8.10.1=hbbe4b11_0[md5=6e801c50a40301f6978c53976917b277]
+   - conda-forge/linux-64::menuinst==2.1.2=py312h7900ff3_1[md5=c6575ae996f2bc0369c73b632db5ca61]
+   - conda-forge/noarch::archspec==0.2.3=pyhd8ed1ab_0[md5=192278292e20704f663b9c766909d67b]
+   - conda-forge/noarch::boltons==24.0.0=pyhd8ed1ab_0[md5=61de176bd62041f9cd5bd4fcd09eb0ff]
+   - conda-forge/linux-64::brotli-python==1.1.0=py312h2ec8cdc_2[md5=b0b867af6fc74b2a0aa206da29c0f3cf]
+   - conda-forge/noarch::certifi==2024.8.30=pyhd8ed1ab_0[md5=12f7d00853807b0531775e9be891cb11]
+   - conda-forge/noarch::charset-normalizer==3.3.2=pyhd8ed1ab_0[md5=7f4a9e3fcff3f6356ae99244a014da6a]
+   - conda-forge/noarch::colorama==0.4.6=pyhd8ed1ab_0[md5=3faab06a954c2a04039983f2c4a50d99]
+   - conda-forge/noarch::distro==1.9.0=pyhd8ed1ab_0[md5=bbdb409974cd6cb30071b1d978302726]
+   - conda-forge/linux-64::frozendict==2.4.4=py312h66e93f0_1[md5=82a14d06575c4023a5df6b0798acff71]
+   - conda-forge/noarch::hpack==4.0.0=pyh9f0ad1d_0[md5=914d6646c4dbb1fd3ff539830a12fd71]
+   - conda-forge/noarch::hyperframe==6.0.1=pyhd8ed1ab_0[md5=9f765cbfab6870c8435b9eefecd7a1f4]
+   - conda-forge/noarch::idna==3.10=pyhd8ed1ab_0[md5=7ba2ede0e7c795ff95088daf0dc59753]
+   - conda-forge/linux-64::jsonpointer==3.0.0=py312h7900ff3_1[md5=6b51f7459ea4073eeb5057207e2e1e3d]
+   - conda-forge/linux-64::libmamba==1.5.9=h4cc3d14_0[md5=896cece5b883ad86e9dd88b1f4d23c99]
+   - conda-forge/noarch::packaging==24.1=pyhd8ed1ab_0[md5=cbe1bb1f21567018ce595d9c2be0f0db]
+   - conda-forge/noarch::platformdirs==4.3.6=pyhd8ed1ab_0[md5=fd8f2b18b65bbf62e8f653100690c8d2]
+   - conda-forge/noarch::pluggy==1.5.0=pyhd8ed1ab_0[md5=d3483c8fc2dc2cc3f5cf43e26d60cabf]
+   - conda-forge/linux-64::pycosat==0.6.6=py312h98912ed_0[md5=8f1c372e7b843167be885dc8229931c1]
+   - conda-forge/noarch::pycparser==2.22=pyhd8ed1ab_0[md5=844d9eb3b43095b031874477f7d70088]
+   - conda-forge/noarch::pysocks==1.7.1=pyha2e5f31_6[md5=2a7de29fb590ca14b5243c4c812c8025]
+   - conda-forge/linux-64::ruamel.yaml.clib==0.2.8=py312h98912ed_0[md5=05f31c2a79ba61df8d6d903ce4a4ce7b]
+   - conda-forge/noarch::setuptools==74.1.2=pyhd8ed1ab_0[md5=56c9c11d004428e81d02eeb730fc6336]
+   - conda-forge/noarch::truststore==0.9.2=pyhd8ed1ab_0[md5=f14e46d1bf271e748ff556d8b872e28a]
+   - conda-forge/noarch::wheel==0.44.0=pyhd8ed1ab_0[md5=d44e3b085abcaef02983c6305b84b584]
+   - conda-forge/linux-64::cffi==1.17.1=py312h06ac9bb_0[md5=a861504bbea4161a9170b85d4d2be840]
+   - conda-forge/noarch::h2==4.1.0=pyhd8ed1ab_0[md5=b748fbf7060927a6e82df7cb5ee8f097]
+   - conda-forge/noarch::jsonpatch==1.33=pyhd8ed1ab_0[md5=bfdb7c5c6ad1077c82a69a8642c87aff]
+   - conda-forge/linux-64::libmambapy==1.5.9=py312h7fb9e8e_0[md5=ccaeeb6e3caaf0c744480393791aa366]
+   - conda-forge/noarch::pip==24.2=pyh8b19718_1[md5=6c78fbb8ddfd64bcb55b5cbafd2d2c43]
+   - conda-forge/linux-64::ruamel.yaml==0.18.6=py312h98912ed_0[md5=a99a06a875138829ef65f44bbe2c30ca]
+   - conda-forge/noarch::tqdm==4.66.5=pyhd8ed1ab_0[md5=c6e94fc2b2ec71ea33fe7c7da259acb4]
+   - conda-forge/linux-64::zstandard==0.23.0=py312hef9b889_1[md5=8b7069e9792ee4e5b4919a7a306d2e67]
+   - conda-forge/noarch::conda-package-streaming==0.10.0=pyhd8ed1ab_0[md5=3480386e00995f7a1dfb3b9aa2fe70fd]
+   - conda-forge/noarch::urllib3==2.2.3=pyhd8ed1ab_0[md5=6b55867f385dd762ed99ea687af32a69]
+   - conda-forge/noarch::conda-package-handling==2.3.0=pyh7900ff3_0[md5=0a7dce281ae2be81acab0aa963e6bb99]
+   - conda-forge/noarch::requests==2.32.3=pyhd8ed1ab_0[md5=5ede4753180c7a550a443c430dc8ab52]
+   - conda-forge/linux-64::conda==24.7.1=py312h7900ff3_0[md5=e1bf59014e88eaff036101358f63a496]
+   - conda-forge/noarch::conda-libmamba-solver==24.7.0=pyhd8ed1ab_0[md5=857c9e25f0a77c0bd7eb622d46d9418f]
+   - conda-forge/linux-64::mamba==1.5.9=py312h9460a1c_0[md5=a8525c8a1647b4f5967fa6b552722851]
+
+
+  Package                         Version  Build               Channel         Size
+─────────────────────────────────────────────────────────────────────────────────────
+  Install:
+─────────────────────────────────────────────────────────────────────────────────────
+
+  + _libgcc_mutex                     0.1  conda_forge         conda-forge         
+  + ca-certificates             2024.8.30  hbcca054_0          conda-forge         
+  + ld_impl_linux-64                 2.40  hf3520f5_7          conda-forge         
+  + pybind11-abi                        4  hd8ed1ab_3          conda-forge         
+  + python_abi                       3.12  5_cp312             conda-forge         
+  + tzdata                          2024a  h8827d51_1          conda-forge         
+  + libgomp                        14.1.0  h77fa898_1          conda-forge         
+  + _openmp_mutex                     4.5  2_gnu               conda-forge         
+  + libgcc                         14.1.0  h77fa898_1          conda-forge         
+  + libexpat                        2.6.3  h5888daf_0          conda-forge         
+  + libgcc-ng                      14.1.0  h69a702a_1          conda-forge         
+  + libstdcxx                      14.1.0  hc0a3c3a_1          conda-forge         
+  + openssl                         3.3.2  hb9d3cd8_0          conda-forge         
+  + bzip2                           1.0.8  h4bc722e_7          conda-forge         
+  + c-ares                         1.32.3  h4bc722e_0          conda-forge         
+  + keyutils                        1.6.1  h166bdaf_0          conda-forge         
+  + libev                            4.33  hd590300_2          conda-forge         
+  + libffi                          3.4.2  h7f98852_5          conda-forge         
+  + libiconv                         1.17  hd590300_2          conda-forge         
+  + libnsl                          2.0.1  hd590300_0          conda-forge         
+  + libstdcxx-ng                   14.1.0  h4852527_1          conda-forge         
+  + libuuid                        2.38.1  h0b41bf4_0          conda-forge         
+  + libxcrypt                      4.4.36  hd590300_1          conda-forge         
+  + libzlib                         1.3.1  h4ab18f5_1          conda-forge         
+  + lzo                              2.10  hd590300_1001       conda-forge         
+  + ncurses                           6.5  he02047a_1          conda-forge         
+  + reproc                   14.2.4.post0  hd590300_1          conda-forge         
+  + xz                              5.2.6  h166bdaf_0          conda-forge         
+  + fmt                            10.2.1  h00ab1b0_0          conda-forge         
+  + icu                              75.1  he02047a_0          conda-forge         
+  + libedit                  3.1.20191231  he28a2e2_2          conda-forge         
+  + libnghttp2                     1.58.0  h47da74e_1          conda-forge         
+  + libsolv                        0.7.30  h3509ff9_0          conda-forge         
+  + libsqlite                      3.46.1  hadc24fc_0          conda-forge         
+  + libssh2                        1.11.0  h0841786_0          conda-forge         
+  + lz4-c                           1.9.4  hcb278e6_0          conda-forge         
+  + readline                          8.2  h8228510_1          conda-forge         
+  + reproc-cpp               14.2.4.post0  h59595ed_1          conda-forge         
+  + tk                             8.6.13  noxft_h4845f30_101  conda-forge         
+  + yaml-cpp                        0.8.0  h59595ed_0          conda-forge         
+  + zstd                            1.5.6  ha6fb4c9_0          conda-forge         
+  + krb5                           1.21.3  h659f571_0          conda-forge         
+  + libxml2                        2.12.7  he7c6b58_4          conda-forge         
+  + python                         3.12.6  hc5c86c4_1_cpython  conda-forge         
+  + libarchive                      3.7.4  hfca40fe_0          conda-forge         
+  + libcurl                        8.10.1  hbbe4b11_0          conda-forge         
+  + menuinst                        2.1.2  py312h7900ff3_1     conda-forge         
+  + archspec                        0.2.3  pyhd8ed1ab_0        conda-forge         
+  + boltons                        24.0.0  pyhd8ed1ab_0        conda-forge         
+  + brotli-python                   1.1.0  py312h2ec8cdc_2     conda-forge         
+  + certifi                     2024.8.30  pyhd8ed1ab_0        conda-forge         
+  + charset-normalizer              3.3.2  pyhd8ed1ab_0        conda-forge         
+  + colorama                        0.4.6  pyhd8ed1ab_0        conda-forge         
+  + distro                          1.9.0  pyhd8ed1ab_0        conda-forge         
+  + frozendict                      2.4.4  py312h66e93f0_1     conda-forge         
+  + hpack                           4.0.0  pyh9f0ad1d_0        conda-forge         
+  + hyperframe                      6.0.1  pyhd8ed1ab_0        conda-forge         
+  + idna                             3.10  pyhd8ed1ab_0        conda-forge         
+  + jsonpointer                     3.0.0  py312h7900ff3_1     conda-forge         
+  + libmamba                        1.5.9  h4cc3d14_0          conda-forge         
+  + packaging                        24.1  pyhd8ed1ab_0        conda-forge         
+  + platformdirs                    4.3.6  pyhd8ed1ab_0        conda-forge         
+  + pluggy                          1.5.0  pyhd8ed1ab_0        conda-forge         
+  + pycosat                         0.6.6  py312h98912ed_0     conda-forge         
+  + pycparser                        2.22  pyhd8ed1ab_0        conda-forge         
+  + pysocks                         1.7.1  pyha2e5f31_6        conda-forge         
+  + ruamel.yaml.clib                0.2.8  py312h98912ed_0     conda-forge         
+  + setuptools                     74.1.2  pyhd8ed1ab_0        conda-forge         
+  + truststore                      0.9.2  pyhd8ed1ab_0        conda-forge         
+  + wheel                          0.44.0  pyhd8ed1ab_0        conda-forge         
+  + cffi                           1.17.1  py312h06ac9bb_0     conda-forge         
+  + h2                              4.1.0  pyhd8ed1ab_0        conda-forge         
+  + jsonpatch                        1.33  pyhd8ed1ab_0        conda-forge         
+  + libmambapy                      1.5.9  py312h7fb9e8e_0     conda-forge         
+  + pip                              24.2  pyh8b19718_1        conda-forge         
+  + ruamel.yaml                    0.18.6  py312h98912ed_0     conda-forge         
+  + tqdm                           4.66.5  pyhd8ed1ab_0        conda-forge         
+  + zstandard                      0.23.0  py312hef9b889_1     conda-forge         
+  + conda-package-streaming        0.10.0  pyhd8ed1ab_0        conda-forge         
+  + urllib3                         2.2.3  pyhd8ed1ab_0        conda-forge         
+  + conda-package-handling          2.3.0  pyh7900ff3_0        conda-forge         
+  + requests                       2.32.3  pyhd8ed1ab_0        conda-forge         
+  + conda                          24.7.1  py312h7900ff3_0     conda-forge         
+  + conda-libmamba-solver          24.7.0  pyhd8ed1ab_0        conda-forge         
+  + mamba                           1.5.9  py312h9460a1c_0     conda-forge         
+
+  Summary:
+
+  Install: 85 packages
+
+  Total download: 0 B
+
+─────────────────────────────────────────────────────────────────────────────────────
+
+
+
+Transaction starting
+
+Transaction finished
+
+To activate this environment, use:
+
+    micromamba activate /opt/conda
+
+Or to execute a single command in this environment, use:
+
+    micromamba run -p /opt/conda mycommand
+
+installation finished.
+
+Downloading and Extracting Packages: ...working... done
+
+## Package Plan ##
+
+  environment location: /opt/conda/envs/pyscenic
+
+  added / updated specs:
+    - conda-forge/linux-64::_libgcc_mutex==0.1=main[md5=aeab635f2cfd266ff89877d8daa56435]
+    - defaults/linux-64::_openmp_mutex==5.1=1_gnu[md5=71d281e9c2192cb3fa425655a8defb85]
+    - defaults/linux-64::anyio==4.2.0=py310h06a4308_0[md5=fbca54a5a6f422d0c4acf4c3e7a2be2a]
+    - defaults/linux-64::argon2-cffi-bindings==21.2.0=py310h7f8727e_0[md5=d70cc9c1ada3adfbe0f8912f43b3f7e6]
+    - defaults/linux-64::async-lru==2.0.4=py310h06a4308_0[md5=c1dbc1745786150ee5a9fbc5ee7c897f]
+    - defaults/linux-64::attrs==23.1.0=py310h06a4308_0[md5=c01f08056ba4037e55fe0b66eb398970]
+    - defaults/linux-64::babel==2.11.0=py310h06a4308_0[md5=1eff25d9f192342c01d960c6bae79c32]
+    - defaults/linux-64::beautifulsoup4==4.12.3=py310h06a4308_0[md5=9af8d216db44081940b4d4475390e629]
+    - defaults/linux-64::brotli-python==1.0.9=py310h6a678d5_8[md5=c7098c1b40187f13bb030f5f0e553f33]
+    - defaults/linux-64::bzip2==1.0.8=h5eee18b_6[md5=f21a3ff51c1b271977f53ce956a69297]
+    - defaults/linux-64::ca-certificates==2024.7.2=h06a4308_0[md5=5c6799c01e9be4c7ba294f6530b2d562]
+    - defaults/linux-64::certifi==2024.7.4=py310h06a4308_0[md5=4577adeac9f6a5566b2cc6614cc30e82]
+    - defaults/linux-64::cffi==1.16.0=py310h5eee18b_1[md5=30deeb1ccdd6f9c41eec05248c2d1f7a]
+    - defaults/linux-64::comm==0.2.1=py310h06a4308_0[md5=9c029b34a0b3894a4deb8db98989041f]
+    - defaults/linux-64::cyrus-sasl==2.1.28=h52b45da_1[md5=d634af1577e4008f9228ae96ce671c44]
+    - defaults/linux-64::dbus==1.13.18=hb2f20db_0[md5=6a6a6f1391f807847404344489ef6cf4]
+    - defaults/linux-64::debugpy==1.6.7=py310h6a678d5_0[md5=757bde11c9bd2e979b836eafbabe266e]
+    - defaults/linux-64::expat==2.6.2=h6a678d5_0[md5=55049db2772dae035f6b8a95f72b5970]
+    - defaults/linux-64::fontconfig==2.14.1=h55d465d_3[md5=3c63ea2bfc6d5ff6ac4173817f550d75]
+    - defaults/linux-64::freetype==2.12.1=h4a9f257_0[md5=bdc7b5952e9c5dca01bc2f4ccef2f974]
+    - defaults/linux-64::glib-tools==2.78.4=h6a678d5_0[md5=3dbe6227cd59818dca9afb75ccb70708]
+    - defaults/linux-64::glib==2.78.4=h6a678d5_0[md5=045ff487547f7b2b7ff01648681b8ebe]
+    - defaults/linux-64::gst-plugins-base==1.14.1=h6a678d5_1[md5=afd9cbe949d670d24cc0a007aaec1fe1]
+    - defaults/linux-64::gstreamer==1.14.1=h5eee18b_1[md5=f2f26e6f869b5d87f41bd059fae47c3e]
+    - defaults/linux-64::icu==73.1=h6a678d5_0[md5=6d09df641fc23f7d277a04dc7ea32dd4]
+    - defaults/linux-64::idna==3.7=py310h06a4308_0[md5=e6999f40f91d7c7e46dc13b4283cb6d8]
+    - defaults/linux-64::ipykernel==6.28.0=py310h06a4308_0[md5=823deb0266e0af842aea071be56230d3]
+    - defaults/linux-64::ipython==8.25.0=py310h06a4308_0[md5=e32effa77253cd8a4248f0d281982460]
+    - defaults/linux-64::ipywidgets==8.1.2=py310h06a4308_0[md5=ad7dfaf3a13f1e97df37b0d84aeb6ee7]
+    - defaults/linux-64::jedi==0.19.1=py310h06a4308_0[md5=2b4aa6f4f6d81ce279aff5d6b56fb663]
+    - defaults/linux-64::jinja2==3.1.4=py310h06a4308_0[md5=3c05f1abf47bf14e2d502081b33b7ed1]
+    - defaults/linux-64::jpeg==9e=h5eee18b_3[md5=7c070fc8280710bdbef12813039058f8]
+    - defaults/linux-64::jsonschema-specifications==2023.7.1=py310h06a4308_0[md5=0cf6985bde6513725f978825b4a1fe24]
+    - defaults/linux-64::jsonschema==4.19.2=py310h06a4308_0[md5=ddb32fd9ff8b311faf8246bfaa94c725]
+    - defaults/linux-64::jupyter-lsp==2.2.0=py310h06a4308_0[md5=30a6985505e6e1db158b95f4f368a937]
+    - defaults/linux-64::jupyter==1.0.0=py310h06a4308_9[md5=403fe85a04f380e2c0041860d74474d5]
+    - defaults/linux-64::jupyter_client==8.6.0=py310h06a4308_0[md5=6a5b045cd1bb33968aad4a84d0358a4a]
+    - defaults/linux-64::jupyter_console==6.6.3=py310h06a4308_0[md5=fa6873ef4b33e75b594f174b47204b20]
+    - defaults/linux-64::jupyter_core==5.7.2=py310h06a4308_0[md5=3ffb5ce9b6602b43145787e347336dad]
+    - defaults/linux-64::jupyter_events==0.10.0=py310h06a4308_0[md5=e3b368670e477817eef39cc42a567e8e]
+    - defaults/linux-64::jupyter_server==2.14.1=py310h06a4308_0[md5=392d7947859a7b7100ee019f8c4a7c8e]
+    - defaults/linux-64::jupyter_server_terminals==0.4.4=py310h06a4308_1[md5=d6fcaa94147e55220c2dcc6d49dd7fcb]
+    - defaults/linux-64::jupyterlab==4.0.11=py310h06a4308_0[md5=0722afe7d790bf75d7c16515eaec38c1]
+    - defaults/linux-64::jupyterlab_server==2.25.1=py310h06a4308_0[md5=2ef965e972f716ddde0b8e60ca3198ba]
+    - defaults/linux-64::jupyterlab_widgets==3.0.10=py310h06a4308_0[md5=d1e2de0c23438954bf3f59747dc1ea8a]
+    - defaults/linux-64::krb5==1.20.1=h143b758_1[md5=cf1accc86321fa25d6b978cc748039ae]
+    - defaults/linux-64::ld_impl_linux-64==2.38=h1181459_1[md5=68eedfd9c06f2b0e6888d8db345b7f5b]
+    - defaults/linux-64::libclang13==14.0.6=default_he11475f_1[md5=44890feda1cf51639d9c94afbacce011]
+    - defaults/linux-64::libclang==14.0.6=default_hc6dbbc7_1[md5=8f12583c4027b2861cff470f6b8837c4]
+    - defaults/linux-64::libcups==2.4.2=h2d74bed_1[md5=3f265c2172a9e8c90a74037b6fa13685]
+    - defaults/linux-64::libedit==3.1.20230828=h5eee18b_0[md5=850eb5a9d2d7d3c66cce12e84406ca08]
+    - defaults/linux-64::libffi==3.4.4=h6a678d5_1[md5=70646cc713f0c43926cfdcfe9b695fe0]
+    - defaults/linux-64::libgcc-ng==11.2.0=h1234567_1[md5=a87728dabf3151fb9cfa990bd2eb0464]
+    - defaults/linux-64::libglib==2.78.4=hdc74915_0[md5=2f6d27741e931d5b6ba56e1a1312aaf0]
+    - defaults/linux-64::libgomp==11.2.0=h1234567_1[md5=b372c0eea9b60732fdae4b817a63c8cd]
+    - defaults/linux-64::libiconv==1.16=h5eee18b_3[md5=197b1a0886a31fccab2167340528eebc]
+    - defaults/linux-64::libllvm14==14.0.6=hdb19cb5_3[md5=aefea2b45cf32f12b4f1ffaa70aa3201]
+    - defaults/linux-64::libpng==1.6.39=h5eee18b_0[md5=f6aee38184512eb05b06c2e94d39ab22]
+    - defaults/linux-64::libpq==12.17=hdbd6064_0[md5=6bed363e25859faff66bf546a11c10e8]
+    - defaults/linux-64::libsodium==1.0.18=h7b6447c_0[md5=c8783b20f0e14bc1d701352c26c264d5]
+    - defaults/linux-64::libstdcxx-ng==11.2.0=h1234567_1[md5=57623d10a70e09e1d048c2b2b6f4e2dd]
+    - defaults/linux-64::libuuid==1.41.5=h5eee18b_0[md5=4a6a2354414c9080327274aa514e5299]
+    - defaults/linux-64::libxcb==1.15=h7f8727e_0[md5=ada518dcadd6aaee9aae47ba9a671553]
+    - defaults/linux-64::libxkbcommon==1.0.1=h097e994_2[md5=2034c43f1937baff79d339f45bbd36a8]
+    - defaults/linux-64::libxml2==2.13.1=hfdd30dd_2[md5=193c6940cccb654f7c543b0f680dc0b9]
+    - defaults/linux-64::lz4-c==1.9.4=h6a678d5_1[md5=2ee58861f2b92b868ce761abb831819d]
+    - defaults/linux-64::matplotlib-inline==0.1.6=py310h06a4308_0[md5=e859a6e0f1a83035d1b534aabc8d52cb]
+    - defaults/linux-64::mistune==2.0.4=py310h06a4308_0[md5=bcf35f9ce918a28237d9bf043668c61f]
+    - defaults/linux-64::mysql==5.7.24=h721c034_2[md5=dfc19ca2466d275c4c1f73b62c57f37b]
+    - defaults/linux-64::nbclient==0.8.0=py310h06a4308_0[md5=6404f1449ac1ee63488346f57337a94e]
+    - defaults/linux-64::nbconvert==7.10.0=py310h06a4308_0[md5=f85f96f5acf365754a293fc7fa1a094a]
+    - defaults/linux-64::nbformat==5.9.2=py310h06a4308_0[md5=512706d0dfb22a2bafc2131bca01f6e8]
+    - defaults/linux-64::ncurses==6.4=h6a678d5_0[md5=5558eec6e2191741a92f832ea826251c]
+    - defaults/linux-64::nest-asyncio==1.6.0=py310h06a4308_0[md5=d9a3dbcdff898e95ed158a2c12814d1b]
+    - defaults/linux-64::notebook-shim==0.2.3=py310h06a4308_0[md5=e40f9097956041fae3d1fa19d1788622]
+    - defaults/linux-64::notebook==7.0.8=py310h06a4308_2[md5=621da69915cdfc6fd3cc095c58f955e4]
+    - defaults/linux-64::openssl==3.0.14=h5eee18b_0[md5=37b6dad6aa49000a4230a9f0cad172f6]
+    - defaults/linux-64::overrides==7.4.0=py310h06a4308_0[md5=f190438a5380646ecbfbd7d67b4eacb4]
+    - defaults/linux-64::packaging==24.1=py310h06a4308_0[md5=c18450584a4bb28dc85561cc7472c998]
+    - defaults/linux-64::pcre2==10.42=hebb0a14_1[md5=727e15c3cfa02b032da4eb0c1123e977]
+    - defaults/linux-64::pip==24.2=py310h06a4308_0[md5=d79843883fd017af69e0df44ba9d164c]
+    - defaults/linux-64::platformdirs==3.10.0=py310h06a4308_0[md5=e75261f061adb0fcb519c8b842789132]
+    - defaults/linux-64::ply==3.11=py310h06a4308_0[md5=ef39417278853a79e018bafdefc88eda]
+    - defaults/linux-64::prometheus_client==0.14.1=py310h06a4308_0[md5=10a26e84b3736bc9decdcfec008f2ed8]
+    - defaults/linux-64::prompt-toolkit==3.0.43=py310h06a4308_0[md5=c41df84dc09099b67eb4f1e24619b921]
+    - defaults/linux-64::psutil==5.9.0=py310h5eee18b_0[md5=b48c5c1b4198a08f61426140a29254fc]
+    - defaults/linux-64::pygments==2.15.1=py310h06a4308_1[md5=fa74688099132ad3b477dff90d2ad426]
+    - defaults/linux-64::pyqt5-sip==12.13.0=py310h5eee18b_0[md5=ee2428bdb51578d0f187530ad95873f3]
+    - defaults/linux-64::pyqt==5.15.10=py310h6a678d5_0[md5=b37458c102306a8ec033822373692f42]
+    - defaults/linux-64::pysocks==1.7.1=py310h06a4308_0[md5=b0753810caadcd4a550c833f87fb3866]
+    - defaults/linux-64::python-dateutil==2.9.0post0=py310h06a4308_2[md5=004cb2d4a6c2ad5f0f512816947a6989]
+    - defaults/linux-64::python-fastjsonschema==2.16.2=py310h06a4308_0[md5=747b43bf00c8f43d747e052c8e0c6be8]
+    - defaults/linux-64::python-json-logger==2.0.7=py310h06a4308_0[md5=0c1250f400bf68605c16b87f05a2ff38]
+    - defaults/linux-64::python==3.10.14=h955ad1f_1[md5=4f8cd8904cbb89236e053f00a75bc971]
+    - defaults/linux-64::pytz==2024.1=py310h06a4308_0[md5=afa7054a6953af1313cdbcaad46318c6]
+    - defaults/linux-64::pyyaml==6.0.1=py310h5eee18b_0[md5=f4b712ce86fc6982bbe772d8c9308f6f]
+    - defaults/linux-64::pyzmq==25.1.2=py310h6a678d5_0[md5=0d7042e20622782c186f1a27d361fe0e]
+    - defaults/linux-64::qt-main==5.15.2=h53bd1ea_10[md5=bd0c79e82df6323f638bdcb871891b61]
+    - defaults/linux-64::qtconsole==5.5.1=py310h06a4308_0[md5=3a03a0f8ee5ab2079a6c04ad02501105]
+    - defaults/linux-64::qtpy==2.4.1=py310h06a4308_0[md5=45491c697f2dcfa100b65d5e65d636f0]
+    - defaults/linux-64::readline==8.2=h5eee18b_0[md5=be42180685cce6e6b0329201d9f48efb]
+    - defaults/linux-64::referencing==0.30.2=py310h06a4308_0[md5=b1ba1ff819562e8608cfe45b77cd6494]
+    - defaults/linux-64::requests==2.32.3=py310h06a4308_0[md5=c74ba5d74df7f83cc98f45ef64c4242d]
+    - defaults/linux-64::rfc3339-validator==0.1.4=py310h06a4308_0[md5=0e1a4b998b3d80117889eb35d4031cf3]
+    - defaults/linux-64::rfc3986-validator==0.1.1=py310h06a4308_0[md5=9f3ff7dd1978eced21346085c5e66eee]
+    - defaults/linux-64::rpds-py==0.10.6=py310hb02cf49_0[md5=aa9c04f35218916696b861161a93295f]
+    - defaults/linux-64::send2trash==1.8.2=py310h06a4308_0[md5=ff231ad58b158acea1ea32b372e58cda]
+    - defaults/linux-64::setuptools==72.1.0=py310h06a4308_0[md5=206274155cba77012d984b975f79b7ba]
+    - defaults/linux-64::sip==6.7.12=py310h6a678d5_0[md5=7f705ea16114add381872f3ef1f79ec1]
+    - defaults/linux-64::sniffio==1.3.0=py310h06a4308_0[md5=57a56b93cd6fcda1b4c62545f34e4e08]
+    - defaults/linux-64::soupsieve==2.5=py310h06a4308_0[md5=3c548d3f16f4d02da970812eade65790]
+    - defaults/linux-64::sqlite==3.45.3=h5eee18b_0[md5=acf93d6aceb74d6110e20b44cc45939e]
+    - defaults/linux-64::terminado==0.17.1=py310h06a4308_0[md5=308a4d2e8c57649c2c0148883d0cc791]
+    - defaults/linux-64::tinycss2==1.2.1=py310h06a4308_0[md5=1990f924a39d84ab86454934a392bb29]
+    - defaults/linux-64::tk==8.6.14=h39e8969_0[md5=78dbc5e3c69143ebc037fc5d5b22e597]
+    - defaults/linux-64::tomli==2.0.1=py310h06a4308_0[md5=16e032c58fc284838f0e0b42f03d5a1d]
+    - defaults/linux-64::tornado==6.4.1=py310h5eee18b_0[md5=15c334f9356b472601d93b1118b1c1b9]
+    - defaults/linux-64::traitlets==5.14.3=py310h06a4308_0[md5=41493f5ef185d46a832281f22678cb5a]
+    - defaults/linux-64::typing_extensions==4.11.0=py310h06a4308_0[md5=565c12e3184d8aec560855a609ff546c]
+    - defaults/linux-64::urllib3==2.2.2=py310h06a4308_0[md5=4230442d7c557b286405a6e1980f8eda]
+    - defaults/linux-64::webencodings==0.5.1=py310h06a4308_1[md5=bf910a6e6f99eb6d9d2ba14bd7b7c066]
+    - defaults/linux-64::websocket-client==1.8.0=py310h06a4308_0[md5=b61cf37c42ec42da83da9fee52285d3f]
+    - defaults/linux-64::wheel==0.43.0=py310h06a4308_0[md5=8827c3fb7f57702f6f6a82a591df0321]
+    - defaults/linux-64::widgetsnbextension==4.0.10=py310h06a4308_0[md5=f33d5004a37bb235613adf88ca1000bc]
+    - defaults/linux-64::xz==5.4.6=h5eee18b_1[md5=1562802f843297ee776a50b9329597ed]
+    - defaults/linux-64::yaml==0.2.5=h7b6447c_0[md5=39fdbf4db769e494ffb06d95680c83d8]
+    - defaults/linux-64::zeromq==4.3.5=h6a678d5_0[md5=354c934a4a5500f4c455c630f2702dbc]
+    - defaults/linux-64::zlib==1.2.13=h5eee18b_1[md5=92e42d8310108b0a440fb2e60b2b2a25]
+    - defaults/linux-64::zstd==1.5.5=hc292b87_2[md5=3b7fe809e5b429b4f90fe064842a2370]
+    - defaults/noarch::argon2-cffi==21.3.0=pyhd3eb1b0_0[md5=f00b851bc61b4c313903d31c7daecb09]
+    - defaults/noarch::asttokens==2.0.5=pyhd3eb1b0_0[md5=140486e2ce4f3931b44aa5f7ff8d88da]
+    - defaults/noarch::bleach==4.1.0=pyhd3eb1b0_0[md5=256eb7e384e35f993ef8ccd6c4f45e58]
+    - defaults/noarch::charset-normalizer==3.3.2=pyhd3eb1b0_0[md5=c6fea3691e85cf7f568b0618ec29fc4f]
+    - defaults/noarch::decorator==5.1.1=pyhd3eb1b0_0[md5=4d969aac32a0faf84af90c797bfc7fec]
+    - defaults/noarch::defusedxml==0.7.1=pyhd3eb1b0_0[md5=d912068b0729930972adcaac338882c0]
+    - defaults/noarch::executing==0.8.3=pyhd3eb1b0_0[md5=7be61d1c3c555fb37682b28d7a53d622]
+    - defaults/noarch::json5==0.9.6=pyhd3eb1b0_0[md5=4e721ee2dbfa20069719d2ee19185031]
+    - defaults/noarch::jupyterlab_pygments==0.1.2=py_0[md5=af46aff4922ca45df6ba19b313df6070]
+    - defaults/noarch::pandocfilters==1.5.0=pyhd3eb1b0_0[md5=5547ced9e3bb4c513405998957b52c7b]
+    - defaults/noarch::parso==0.8.3=pyhd3eb1b0_0[md5=c6f0f6219bf5ce2b510ef4b75cbc3e01]
+    - defaults/noarch::pexpect==4.8.0=pyhd3eb1b0_3[md5=765b2562d6cdd14bb6d44fc170a04331]
+    - defaults/noarch::prompt_toolkit==3.0.43=hd3eb1b0_0[md5=244c80adf85e37e2a4158d0f0c199566]
+    - defaults/noarch::ptyprocess==0.7.0=pyhd3eb1b0_2[md5=7441d2827d4bfbcc1fa308875a146246]
+    - defaults/noarch::pure_eval==0.2.2=pyhd3eb1b0_0[md5=a87d6d9827e5dff68d34d69971f8a9b1]
+    - defaults/noarch::pycparser==2.21=pyhd3eb1b0_0[md5=135a72ff2a31150a3a3ff0b1edd41ca9]
+    - defaults/noarch::six==1.16.0=pyhd3eb1b0_1[md5=34586824d411d36af2fa40e799c172d0]
+    - defaults/noarch::stack_data==0.2.0=pyhd3eb1b0_0[md5=6212968e73726f6da42e5ffcd2bea92d]
+    - defaults/noarch::wcwidth==0.2.5=pyhd3eb1b0_0[md5=ffa649340272c3f6466ba01da254c3b0]
+
+
+The following NEW packages will be INSTALLED:
+
+  _libgcc_mutex      conda-forge/linux-64::_libgcc_mutex-0.1-main 
+  _openmp_mutex      pkgs/main/linux-64::_openmp_mutex-5.1-1_gnu 
+  anyio              pkgs/main/linux-64::anyio-4.2.0-py310h06a4308_0 
+  argon2-cffi        pkgs/main/noarch::argon2-cffi-21.3.0-pyhd3eb1b0_0 
+  argon2-cffi-bindi~ pkgs/main/linux-64::argon2-cffi-bindings-21.2.0-py310h7f8727e_0 
+  asttokens          pkgs/main/noarch::asttokens-2.0.5-pyhd3eb1b0_0 
+  async-lru          pkgs/main/linux-64::async-lru-2.0.4-py310h06a4308_0 
+  attrs              pkgs/main/linux-64::attrs-23.1.0-py310h06a4308_0 
+  babel              pkgs/main/linux-64::babel-2.11.0-py310h06a4308_0 
+  beautifulsoup4     pkgs/main/linux-64::beautifulsoup4-4.12.3-py310h06a4308_0 
+  bleach             pkgs/main/noarch::bleach-4.1.0-pyhd3eb1b0_0 
+  brotli-python      pkgs/main/linux-64::brotli-python-1.0.9-py310h6a678d5_8 
+  bzip2              pkgs/main/linux-64::bzip2-1.0.8-h5eee18b_6 
+  ca-certificates    pkgs/main/linux-64::ca-certificates-2024.7.2-h06a4308_0 
+  certifi            pkgs/main/linux-64::certifi-2024.7.4-py310h06a4308_0 
+  cffi               pkgs/main/linux-64::cffi-1.16.0-py310h5eee18b_1 
+  charset-normalizer pkgs/main/noarch::charset-normalizer-3.3.2-pyhd3eb1b0_0 
+  comm               pkgs/main/linux-64::comm-0.2.1-py310h06a4308_0 
+  cyrus-sasl         pkgs/main/linux-64::cyrus-sasl-2.1.28-h52b45da_1 
+  dbus               pkgs/main/linux-64::dbus-1.13.18-hb2f20db_0 
+  debugpy            pkgs/main/linux-64::debugpy-1.6.7-py310h6a678d5_0 
+  decorator          pkgs/main/noarch::decorator-5.1.1-pyhd3eb1b0_0 
+  defusedxml         pkgs/main/noarch::defusedxml-0.7.1-pyhd3eb1b0_0 
+  executing          pkgs/main/noarch::executing-0.8.3-pyhd3eb1b0_0 
+  expat              pkgs/main/linux-64::expat-2.6.2-h6a678d5_0 
+  fontconfig         pkgs/main/linux-64::fontconfig-2.14.1-h55d465d_3 
+  freetype           pkgs/main/linux-64::freetype-2.12.1-h4a9f257_0 
+  glib               pkgs/main/linux-64::glib-2.78.4-h6a678d5_0 
+  glib-tools         pkgs/main/linux-64::glib-tools-2.78.4-h6a678d5_0 
+  gst-plugins-base   pkgs/main/linux-64::gst-plugins-base-1.14.1-h6a678d5_1 
+  gstreamer          pkgs/main/linux-64::gstreamer-1.14.1-h5eee18b_1 
+  icu                pkgs/main/linux-64::icu-73.1-h6a678d5_0 
+  idna               pkgs/main/linux-64::idna-3.7-py310h06a4308_0 
+  ipykernel          pkgs/main/linux-64::ipykernel-6.28.0-py310h06a4308_0 
+  ipython            pkgs/main/linux-64::ipython-8.25.0-py310h06a4308_0 
+  ipywidgets         pkgs/main/linux-64::ipywidgets-8.1.2-py310h06a4308_0 
+  jedi               pkgs/main/linux-64::jedi-0.19.1-py310h06a4308_0 
+  jinja2             pkgs/main/linux-64::jinja2-3.1.4-py310h06a4308_0 
+  jpeg               pkgs/main/linux-64::jpeg-9e-h5eee18b_3 
+  json5              pkgs/main/noarch::json5-0.9.6-pyhd3eb1b0_0 
+  jsonschema         pkgs/main/linux-64::jsonschema-4.19.2-py310h06a4308_0 
+  jsonschema-specif~ pkgs/main/linux-64::jsonschema-specifications-2023.7.1-py310h06a4308_0 
+  jupyter            pkgs/main/linux-64::jupyter-1.0.0-py310h06a4308_9 
+  jupyter-lsp        pkgs/main/linux-64::jupyter-lsp-2.2.0-py310h06a4308_0 
+  jupyter_client     pkgs/main/linux-64::jupyter_client-8.6.0-py310h06a4308_0 
+  jupyter_console    pkgs/main/linux-64::jupyter_console-6.6.3-py310h06a4308_0 
+  jupyter_core       pkgs/main/linux-64::jupyter_core-5.7.2-py310h06a4308_0 
+  jupyter_events     pkgs/main/linux-64::jupyter_events-0.10.0-py310h06a4308_0 
+  jupyter_server     pkgs/main/linux-64::jupyter_server-2.14.1-py310h06a4308_0 
+  jupyter_server_te~ pkgs/main/linux-64::jupyter_server_terminals-0.4.4-py310h06a4308_1 
+  jupyterlab         pkgs/main/linux-64::jupyterlab-4.0.11-py310h06a4308_0 
+  jupyterlab_pygmen~ pkgs/main/noarch::jupyterlab_pygments-0.1.2-py_0 
+  jupyterlab_server  pkgs/main/linux-64::jupyterlab_server-2.25.1-py310h06a4308_0 
+  jupyterlab_widgets pkgs/main/linux-64::jupyterlab_widgets-3.0.10-py310h06a4308_0 
+  krb5               pkgs/main/linux-64::krb5-1.20.1-h143b758_1 
+  ld_impl_linux-64   pkgs/main/linux-64::ld_impl_linux-64-2.38-h1181459_1 
+  libclang           pkgs/main/linux-64::libclang-14.0.6-default_hc6dbbc7_1 
+  libclang13         pkgs/main/linux-64::libclang13-14.0.6-default_he11475f_1 
+  libcups            pkgs/main/linux-64::libcups-2.4.2-h2d74bed_1 
+  libedit            pkgs/main/linux-64::libedit-3.1.20230828-h5eee18b_0 
+  libffi             pkgs/main/linux-64::libffi-3.4.4-h6a678d5_1 
+  libgcc-ng          pkgs/main/linux-64::libgcc-ng-11.2.0-h1234567_1 
+  libglib            pkgs/main/linux-64::libglib-2.78.4-hdc74915_0 
+  libgomp            pkgs/main/linux-64::libgomp-11.2.0-h1234567_1 
+  libiconv           pkgs/main/linux-64::libiconv-1.16-h5eee18b_3 
+  libllvm14          pkgs/main/linux-64::libllvm14-14.0.6-hdb19cb5_3 
+  libpng             pkgs/main/linux-64::libpng-1.6.39-h5eee18b_0 
+  libpq              pkgs/main/linux-64::libpq-12.17-hdbd6064_0 
+  libsodium          pkgs/main/linux-64::libsodium-1.0.18-h7b6447c_0 
+  libstdcxx-ng       pkgs/main/linux-64::libstdcxx-ng-11.2.0-h1234567_1 
+  libuuid            pkgs/main/linux-64::libuuid-1.41.5-h5eee18b_0 
+  libxcb             pkgs/main/linux-64::libxcb-1.15-h7f8727e_0 
+  libxkbcommon       pkgs/main/linux-64::libxkbcommon-1.0.1-h097e994_2 
+  libxml2            pkgs/main/linux-64::libxml2-2.13.1-hfdd30dd_2 
+  lz4-c              pkgs/main/linux-64::lz4-c-1.9.4-h6a678d5_1 
+  matplotlib-inline  pkgs/main/linux-64::matplotlib-inline-0.1.6-py310h06a4308_0 
+  mistune            pkgs/main/linux-64::mistune-2.0.4-py310h06a4308_0 
+  mysql              pkgs/main/linux-64::mysql-5.7.24-h721c034_2 
+  nbclient           pkgs/main/linux-64::nbclient-0.8.0-py310h06a4308_0 
+  nbconvert          pkgs/main/linux-64::nbconvert-7.10.0-py310h06a4308_0 
+  nbformat           pkgs/main/linux-64::nbformat-5.9.2-py310h06a4308_0 
+  ncurses            pkgs/main/linux-64::ncurses-6.4-h6a678d5_0 
+  nest-asyncio       pkgs/main/linux-64::nest-asyncio-1.6.0-py310h06a4308_0 
+  notebook           pkgs/main/linux-64::notebook-7.0.8-py310h06a4308_2 
+  notebook-shim      pkgs/main/linux-64::notebook-shim-0.2.3-py310h06a4308_0 
+  openssl            pkgs/main/linux-64::openssl-3.0.14-h5eee18b_0 
+  overrides          pkgs/main/linux-64::overrides-7.4.0-py310h06a4308_0 
+  packaging          pkgs/main/linux-64::packaging-24.1-py310h06a4308_0 
+  pandocfilters      pkgs/main/noarch::pandocfilters-1.5.0-pyhd3eb1b0_0 
+  parso              pkgs/main/noarch::parso-0.8.3-pyhd3eb1b0_0 
+  pcre2              pkgs/main/linux-64::pcre2-10.42-hebb0a14_1 
+  pexpect            pkgs/main/noarch::pexpect-4.8.0-pyhd3eb1b0_3 
+  pip                pkgs/main/linux-64::pip-24.2-py310h06a4308_0 
+  platformdirs       pkgs/main/linux-64::platformdirs-3.10.0-py310h06a4308_0 
+  ply                pkgs/main/linux-64::ply-3.11-py310h06a4308_0 
+  prometheus_client  pkgs/main/linux-64::prometheus_client-0.14.1-py310h06a4308_0 
+  prompt-toolkit     pkgs/main/linux-64::prompt-toolkit-3.0.43-py310h06a4308_0 
+  prompt_toolkit     pkgs/main/noarch::prompt_toolkit-3.0.43-hd3eb1b0_0 
+  psutil             pkgs/main/linux-64::psutil-5.9.0-py310h5eee18b_0 
+  ptyprocess         pkgs/main/noarch::ptyprocess-0.7.0-pyhd3eb1b0_2 
+  pure_eval          pkgs/main/noarch::pure_eval-0.2.2-pyhd3eb1b0_0 
+  pycparser          pkgs/main/noarch::pycparser-2.21-pyhd3eb1b0_0 
+  pygments           pkgs/main/linux-64::pygments-2.15.1-py310h06a4308_1 
+  pyqt               pkgs/main/linux-64::pyqt-5.15.10-py310h6a678d5_0 
+  pyqt5-sip          pkgs/main/linux-64::pyqt5-sip-12.13.0-py310h5eee18b_0 
+  pysocks            pkgs/main/linux-64::pysocks-1.7.1-py310h06a4308_0 
+  python             pkgs/main/linux-64::python-3.10.14-h955ad1f_1 
+  python-dateutil    pkgs/main/linux-64::python-dateutil-2.9.0post0-py310h06a4308_2 
+  python-fastjsonsc~ pkgs/main/linux-64::python-fastjsonschema-2.16.2-py310h06a4308_0 
+  python-json-logger pkgs/main/linux-64::python-json-logger-2.0.7-py310h06a4308_0 
+  pytz               pkgs/main/linux-64::pytz-2024.1-py310h06a4308_0 
+  pyyaml             pkgs/main/linux-64::pyyaml-6.0.1-py310h5eee18b_0 
+  pyzmq              pkgs/main/linux-64::pyzmq-25.1.2-py310h6a678d5_0 
+  qt-main            pkgs/main/linux-64::qt-main-5.15.2-h53bd1ea_10 
+  qtconsole          pkgs/main/linux-64::qtconsole-5.5.1-py310h06a4308_0 
+  qtpy               pkgs/main/linux-64::qtpy-2.4.1-py310h06a4308_0 
+  readline           pkgs/main/linux-64::readline-8.2-h5eee18b_0 
+  referencing        pkgs/main/linux-64::referencing-0.30.2-py310h06a4308_0 
+  requests           pkgs/main/linux-64::requests-2.32.3-py310h06a4308_0 
+  rfc3339-validator  pkgs/main/linux-64::rfc3339-validator-0.1.4-py310h06a4308_0 
+  rfc3986-validator  pkgs/main/linux-64::rfc3986-validator-0.1.1-py310h06a4308_0 
+  rpds-py            pkgs/main/linux-64::rpds-py-0.10.6-py310hb02cf49_0 
+  send2trash         pkgs/main/linux-64::send2trash-1.8.2-py310h06a4308_0 
+  setuptools         pkgs/main/linux-64::setuptools-72.1.0-py310h06a4308_0 
+  sip                pkgs/main/linux-64::sip-6.7.12-py310h6a678d5_0 
+  six                pkgs/main/noarch::six-1.16.0-pyhd3eb1b0_1 
+  sniffio            pkgs/main/linux-64::sniffio-1.3.0-py310h06a4308_0 
+  soupsieve          pkgs/main/linux-64::soupsieve-2.5-py310h06a4308_0 
+  sqlite             pkgs/main/linux-64::sqlite-3.45.3-h5eee18b_0 
+  stack_data         pkgs/main/noarch::stack_data-0.2.0-pyhd3eb1b0_0 
+  terminado          pkgs/main/linux-64::terminado-0.17.1-py310h06a4308_0 
+  tinycss2           pkgs/main/linux-64::tinycss2-1.2.1-py310h06a4308_0 
+  tk                 pkgs/main/linux-64::tk-8.6.14-h39e8969_0 
+  tomli              pkgs/main/linux-64::tomli-2.0.1-py310h06a4308_0 
+  tornado            pkgs/main/linux-64::tornado-6.4.1-py310h5eee18b_0 
+  traitlets          pkgs/main/linux-64::traitlets-5.14.3-py310h06a4308_0 
+  typing_extensions  pkgs/main/linux-64::typing_extensions-4.11.0-py310h06a4308_0 
+  urllib3            pkgs/main/linux-64::urllib3-2.2.2-py310h06a4308_0 
+  wcwidth            pkgs/main/noarch::wcwidth-0.2.5-pyhd3eb1b0_0 
+  webencodings       pkgs/main/linux-64::webencodings-0.5.1-py310h06a4308_1 
+  websocket-client   pkgs/main/linux-64::websocket-client-1.8.0-py310h06a4308_0 
+  wheel              pkgs/main/linux-64::wheel-0.43.0-py310h06a4308_0 
+  widgetsnbextension pkgs/main/linux-64::widgetsnbextension-4.0.10-py310h06a4308_0 
+  xz                 pkgs/main/linux-64::xz-5.4.6-h5eee18b_1 
+  yaml               pkgs/main/linux-64::yaml-0.2.5-h7b6447c_0 
+  zeromq             pkgs/main/linux-64::zeromq-4.3.5-h6a678d5_0 
+  zlib               pkgs/main/linux-64::zlib-1.2.13-h5eee18b_1 
+  zstd               pkgs/main/linux-64::zstd-1.5.5-hc292b87_2 
+
+
+
+Downloading and Extracting Packages: ...working... done
+Preparing transaction: ...working... done
+Verifying transaction: ...working... done
+Executing transaction: ...working... done
+#
+# To activate this environment, use
+#
+#     $ conda activate /opt/conda/envs/pyscenic
+#
+# To deactivate an active environment, use
+#
+#     $ conda deactivate
+
+Processing ./wheels/arboreto-0.1.6-py2.py3-none-any.whl (from -r requirements-pip.lock (line 1956))
+Processing ./wheels/pyscenic-0.12.1+11.g06bafba-py3-none-any.whl (from -r requirements-pip.lock (line 1959))
+Collecting absl-py==2.1.0 (from -r requirements-pip.lock (line 7))
+  Downloading absl_py-2.1.0-py3-none-any.whl (133 kB)
+Collecting aiohappyeyeballs==2.4.0 (from -r requirements-pip.lock (line 10))
+  Downloading aiohappyeyeballs-2.4.0-py3-none-any.whl (12 kB)
+Collecting aiohttp==3.10.5 (from -r requirements-pip.lock (line 13))
+  Downloading aiohttp-3.10.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 26.1 MB/s eta 0:00:00
+Collecting aiosignal==1.3.1 (from -r requirements-pip.lock (line 105))
+  Downloading aiosignal-1.3.1-py3-none-any.whl (7.6 kB)
+Collecting anndata==0.10.8 (from -r requirements-pip.lock (line 108))
+  Downloading anndata-0.10.8-py3-none-any.whl (124 kB)
+Collecting array-api-compat==1.8 (from -r requirements-pip.lock (line 111))
+  Downloading array_api_compat-1.8-py3-none-any.whl (38 kB)
+Collecting async-timeout==4.0.3 (from -r requirements-pip.lock (line 114))
+  Downloading async_timeout-4.0.3-py3-none-any.whl (5.7 kB)
+Collecting bokeh==3.8.2 (from -r requirements-pip.lock (line 117))
+  Downloading bokeh-3.8.2-py3-none-any.whl (7.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.2/7.2 MB 61.9 MB/s eta 0:00:00
+Collecting boltons==25.0.0 (from -r requirements-pip.lock (line 120))
+  Downloading boltons-25.0.0-py3-none-any.whl (194 kB)
+Collecting chex==0.1.86 (from -r requirements-pip.lock (line 123))
+  Downloading chex-0.1.86-py3-none-any.whl (98 kB)
+Collecting click==8.3.1 (from -r requirements-pip.lock (line 126))
+  Downloading click-8.3.1-py3-none-any.whl (108 kB)
+Collecting cloudpickle==3.1.2 (from -r requirements-pip.lock (line 129))
+  Downloading cloudpickle-3.1.2-py3-none-any.whl (22 kB)
+Collecting contextlib2==21.6.0 (from -r requirements-pip.lock (line 132))
+  Downloading contextlib2-21.6.0-py2.py3-none-any.whl (13 kB)
+Collecting contourpy==1.2.1 (from -r requirements-pip.lock (line 135))
+  Downloading contourpy-1.2.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (305 kB)
+Collecting ctxcore==0.2.0 (from -r requirements-pip.lock (line 180))
+  Downloading ctxcore-0.2.0-py3-none-any.whl (5.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.8/5.8 MB 109.9 MB/s eta 0:00:00
+Collecting cycler==0.12.1 (from -r requirements-pip.lock (line 183))
+  Downloading cycler-0.12.1-py3-none-any.whl (8.3 kB)
+Collecting cytoolz==1.1.0 (from -r requirements-pip.lock (line 186))
+  Downloading cytoolz-1.1.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (2.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.7/2.7 MB 83.8 MB/s eta 0:00:00
+Collecting dask==2026.1.2 (from -r requirements-pip.lock (line 360))
+  Downloading dask-2026.1.2-py3-none-any.whl (1.5 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 36.4 MB/s eta 0:00:00
+Collecting dill==0.3.8 (from -r requirements-pip.lock (line 363))
+  Downloading dill-0.3.8-py3-none-any.whl (116 kB)
+Collecting diptest==0.10.0 (from -r requirements-pip.lock (line 366))
+  Downloading diptest-0.10.0-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (221 kB)
+Collecting distributed==2026.1.2 (from -r requirements-pip.lock (line 392))
+  Downloading distributed-2026.1.2-py3-none-any.whl (1.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.0/1.0 MB 70.0 MB/s eta 0:00:00
+Collecting docrep==0.3.2 (from -r requirements-pip.lock (line 395))
+  Downloading docrep-0.3.2.tar.gz (33 kB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting etils==1.7.0 (from -r requirements-pip.lock (line 398))
+  Downloading etils-1.7.0-py3-none-any.whl (152 kB)
+Collecting exceptiongroup==1.2.2 (from -r requirements-pip.lock (line 401))
+  Downloading exceptiongroup-1.2.2-py3-none-any.whl (16 kB)
+Collecting filelock==3.15.4 (from -r requirements-pip.lock (line 404))
+  Downloading filelock-3.15.4-py3-none-any.whl (16 kB)
+Collecting flax==0.8.5 (from -r requirements-pip.lock (line 407))
+  Downloading flax-0.8.5-py3-none-any.whl (731 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 731.3/731.3 kB 24.0 MB/s eta 0:00:00
+Collecting fonttools==4.53.1 (from -r requirements-pip.lock (line 410))
+  Downloading fonttools-4.53.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.6/4.6 MB 71.2 MB/s eta 0:00:00
+Collecting frozendict==2.4.7 (from -r requirements-pip.lock (line 453))
+  Downloading frozendict-2.4.7-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (120 kB)
+Collecting frozenlist==1.4.1 (from -r requirements-pip.lock (line 545))
+  Downloading frozenlist-1.4.1-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (239 kB)
+Collecting fsspec==2024.6.1 (from -r requirements-pip.lock (line 623))
+  Downloading fsspec-2024.6.1-py3-none-any.whl (177 kB)
+Collecting h5py==3.11.0 (from -r requirements-pip.lock (line 626))
+  Downloading h5py-3.11.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (5.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.3/5.3 MB 48.9 MB/s eta 0:00:00
+Collecting humanize==4.10.0 (from -r requirements-pip.lock (line 648))
+  Downloading humanize-4.10.0-py3-none-any.whl (126 kB)
+Collecting igraph==0.11.6 (from -r requirements-pip.lock (line 651))
+  Downloading igraph-0.11.6-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.1/3.1 MB 53.0 MB/s eta 0:00:00
+Collecting importlib-metadata==8.7.1 (from -r requirements-pip.lock (line 691))
+  Downloading importlib_metadata-8.7.1-py3-none-any.whl (27 kB)
+Collecting importlib-resources==6.4.4 (from -r requirements-pip.lock (line 694))
+  Downloading importlib_resources-6.4.4-py3-none-any.whl (35 kB)
+Collecting interlap==0.2.7 (from -r requirements-pip.lock (line 697))
+  Downloading interlap-0.2.7.tar.gz (6.1 kB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting jax==0.4.31 (from -r requirements-pip.lock (line 700))
+  Downloading jax-0.4.31-py3-none-any.whl (2.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 123.5 MB/s eta 0:00:00
+Collecting jaxlib==0.4.31 (from -r requirements-pip.lock (line 703))
+  Downloading jaxlib-0.4.31-cp310-cp310-manylinux2014_x86_64.whl (88.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 88.1/88.1 MB 95.7 MB/s eta 0:00:00
+Collecting joblib==1.4.2 (from -r requirements-pip.lock (line 720))
+  Downloading joblib-1.4.2-py3-none-any.whl (301 kB)
+Collecting kiwisolver==1.4.5 (from -r requirements-pip.lock (line 723))
+  Downloading kiwisolver-1.4.5-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl (1.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.6/1.6 MB 105.2 MB/s eta 0:00:00
+Collecting legacy-api-wrap==1.4 (from -r requirements-pip.lock (line 828))
+  Downloading legacy_api_wrap-1.4-py3-none-any.whl (15 kB)
+Collecting leidenalg==0.10.2 (from -r requirements-pip.lock (line 831))
+  Downloading leidenalg-0.10.2-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 108.8 MB/s eta 0:00:00
+Collecting lightning==2.1.4 (from -r requirements-pip.lock (line 866))
+  Downloading lightning-2.1.4-py3-none-any.whl (2.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 59.1 MB/s eta 0:00:00
+Collecting lightning-utilities==0.11.6 (from -r requirements-pip.lock (line 869))
+  Downloading lightning_utilities-0.11.6-py3-none-any.whl (26 kB)
+Collecting llvmlite==0.43.0 (from -r requirements-pip.lock (line 872))
+  Downloading llvmlite-0.43.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (43.9 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 43.9/43.9 MB 136.8 MB/s eta 0:00:00
+Collecting locket==1.0.0 (from -r requirements-pip.lock (line 894))
+  Downloading locket-1.0.0-py2.py3-none-any.whl (4.4 kB)
+Collecting loompy==3.0.8 (from -r requirements-pip.lock (line 897))
+  Downloading loompy-3.0.8.tar.gz (49 kB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting lz4==4.4.5 (from -r requirements-pip.lock (line 900))
+  Downloading lz4-4.4.5-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 91.8 MB/s eta 0:00:00
+Collecting markdown-it-py==3.0.0 (from -r requirements-pip.lock (line 958))
+  Downloading markdown_it_py-3.0.0-py3-none-any.whl (87 kB)
+Collecting markupsafe==2.1.5 (from -r requirements-pip.lock (line 961))
+  Downloading MarkupSafe-2.1.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (25 kB)
+Collecting matplotlib==3.9.2 (from -r requirements-pip.lock (line 1022))
+  Downloading matplotlib-3.9.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (8.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.3/8.3 MB 132.8 MB/s eta 0:00:00
+Collecting mdurl==0.1.2 (from -r requirements-pip.lock (line 1063))
+  Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Collecting ml-collections==0.1.1 (from -r requirements-pip.lock (line 1066))
+  Downloading ml_collections-0.1.1.tar.gz (77 kB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting ml-dtypes==0.4.0 (from -r requirements-pip.lock (line 1069))
+  Downloading ml_dtypes-0.4.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.2/2.2 MB 79.4 MB/s eta 0:00:00
+Collecting mpmath==1.3.0 (from -r requirements-pip.lock (line 1087))
+  Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 70.1 MB/s eta 0:00:00
+Collecting msgpack==1.0.8 (from -r requirements-pip.lock (line 1090))
+  Downloading msgpack-1.0.8-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (385 kB)
+Collecting mudata==0.3.0 (from -r requirements-pip.lock (line 1147))
+  Downloading mudata-0.3.0-py3-none-any.whl (39 kB)
+Collecting multidict==6.0.5 (from -r requirements-pip.lock (line 1150))
+  Downloading multidict-6.0.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (124 kB)
+Collecting multipledispatch==1.0.0 (from -r requirements-pip.lock (line 1241))
+  Downloading multipledispatch-1.0.0-py3-none-any.whl (12 kB)
+Collecting multiprocessing-on-dill==3.5.0a4 (from -r requirements-pip.lock (line 1244))
+  Downloading multiprocessing_on_dill-3.5.0a4.tar.gz (53 kB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting narwhals==2.17.0 (from -r requirements-pip.lock (line 1247))
+  Downloading narwhals-2.17.0-py3-none-any.whl (444 kB)
+Collecting natsort==8.4.0 (from -r requirements-pip.lock (line 1250))
+  Downloading natsort-8.4.0-py3-none-any.whl (38 kB)
+Collecting networkx==3.3 (from -r requirements-pip.lock (line 1253))
+  Downloading networkx-3.3-py3-none-any.whl (1.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 94.6 MB/s eta 0:00:00
+Collecting numba==0.60.0 (from -r requirements-pip.lock (line 1256))
+  Downloading numba-0.60.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (3.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.7/3.7 MB 128.4 MB/s eta 0:00:00
+Collecting numexpr==2.14.1 (from -r requirements-pip.lock (line 1278))
+  Downloading numexpr-2.14.1-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (440 kB)
+Collecting numpy==1.26.4 (from -r requirements-pip.lock (line 1336))
+  Downloading numpy-1.26.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.2/18.2 MB 200.0 MB/s eta 0:00:00
+Collecting numpy-groupies==0.11.3 (from -r requirements-pip.lock (line 1373))
+  Downloading numpy_groupies-0.11.3-py3-none-any.whl (40 kB)
+Collecting numpyro==0.15.2 (from -r requirements-pip.lock (line 1376))
+  Downloading numpyro-0.15.2-py3-none-any.whl (348 kB)
+Collecting nvidia-cublas-cu12==12.1.3.1 (from -r requirements-pip.lock (line 1379))
+  Downloading nvidia_cublas_cu12-12.1.3.1-py3-none-manylinux1_x86_64.whl (410.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 410.6/410.6 MB 108.5 MB/s eta 0:00:00
+Collecting nvidia-cuda-cupti-cu12==12.1.105 (from -r requirements-pip.lock (line 1383))
+  Downloading nvidia_cuda_cupti_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (14.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14.1/14.1 MB 93.6 MB/s eta 0:00:00
+Collecting nvidia-cuda-nvrtc-cu12==12.1.105 (from -r requirements-pip.lock (line 1387))
+  Downloading nvidia_cuda_nvrtc_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (23.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 23.7/23.7 MB 107.6 MB/s eta 0:00:00
+Collecting nvidia-cuda-runtime-cu12==12.1.105 (from -r requirements-pip.lock (line 1391))
+  Downloading nvidia_cuda_runtime_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (823 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 823.6/823.6 kB 99.8 MB/s eta 0:00:00
+Collecting nvidia-cudnn-cu12==9.1.0.70 (from -r requirements-pip.lock (line 1395))
+  Downloading nvidia_cudnn_cu12-9.1.0.70-py3-none-manylinux2014_x86_64.whl (664.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 664.8/664.8 MB 73.0 MB/s eta 0:00:00
+Collecting nvidia-cufft-cu12==11.0.2.54 (from -r requirements-pip.lock (line 1399))
+  Downloading nvidia_cufft_cu12-11.0.2.54-py3-none-manylinux1_x86_64.whl (121.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 121.6/121.6 MB 133.5 MB/s eta 0:00:00
+Collecting nvidia-curand-cu12==10.3.2.106 (from -r requirements-pip.lock (line 1403))
+  Downloading nvidia_curand_cu12-10.3.2.106-py3-none-manylinux1_x86_64.whl (56.5 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 56.5/56.5 MB 110.3 MB/s eta 0:00:00
+Collecting nvidia-cusolver-cu12==11.4.5.107 (from -r requirements-pip.lock (line 1407))
+  Downloading nvidia_cusolver_cu12-11.4.5.107-py3-none-manylinux1_x86_64.whl (124.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 124.2/124.2 MB 107.4 MB/s eta 0:00:00
+Collecting nvidia-cusparse-cu12==12.1.0.106 (from -r requirements-pip.lock (line 1411))
+  Downloading nvidia_cusparse_cu12-12.1.0.106-py3-none-manylinux1_x86_64.whl (196.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 196.0/196.0 MB 130.5 MB/s eta 0:00:00
+Collecting nvidia-nccl-cu12==2.20.5 (from -r requirements-pip.lock (line 1415))
+  Downloading nvidia_nccl_cu12-2.20.5-py3-none-manylinux2014_x86_64.whl (176.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 176.2/176.2 MB 120.0 MB/s eta 0:00:00
+Collecting nvidia-nvjitlink-cu12==12.6.20 (from -r requirements-pip.lock (line 1419))
+  Downloading nvidia_nvjitlink_cu12-12.6.20-py3-none-manylinux2014_x86_64.whl (19.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 19.7/19.7 MB 75.3 MB/s eta 0:00:00
+Collecting nvidia-nvtx-cu12==12.1.105 (from -r requirements-pip.lock (line 1424))
+  Downloading nvidia_nvtx_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (99 kB)
+Collecting opt-einsum==3.3.0 (from -r requirements-pip.lock (line 1428))
+  Downloading opt_einsum-3.3.0-py3-none-any.whl (65 kB)
+Collecting optax==0.2.3 (from -r requirements-pip.lock (line 1431))
+  Downloading optax-0.2.3-py3-none-any.whl (289 kB)
+Collecting orbax-checkpoint==0.6.0 (from -r requirements-pip.lock (line 1434))
+  Downloading orbax_checkpoint-0.6.0-py3-none-any.whl (253 kB)
+Collecting pandas==2.2.2 (from -r requirements-pip.lock (line 1437))
+  Downloading pandas-2.2.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.0/13.0 MB 58.4 MB/s eta 0:00:00
+Collecting parse==1.20.2 (from -r requirements-pip.lock (line 1467))
+  Downloading parse-1.20.2-py2.py3-none-any.whl (20 kB)
+Collecting partd==1.4.2 (from -r requirements-pip.lock (line 1470))
+  Downloading partd-1.4.2-py3-none-any.whl (18 kB)
+Collecting patsy==0.5.6 (from -r requirements-pip.lock (line 1473))
+  Downloading patsy-0.5.6-py2.py3-none-any.whl (233 kB)
+Collecting pillow==10.4.0 (from -r requirements-pip.lock (line 1476))
+  Downloading pillow-10.4.0-cp310-cp310-manylinux_2_28_x86_64.whl (4.5 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 119.7 MB/s eta 0:00:00
+Collecting protobuf==5.27.3 (from -r requirements-pip.lock (line 1557))
+  Downloading protobuf-5.27.3-cp38-abi3-manylinux2014_x86_64.whl (309 kB)
+Collecting pyarrow==23.0.1 (from -r requirements-pip.lock (line 1569))
+  Downloading pyarrow-23.0.1-cp310-cp310-manylinux_2_28_x86_64.whl (47.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 47.6/47.6 MB 146.5 MB/s eta 0:00:00
+Collecting pybedtools==0.10.0 (from -r requirements-pip.lock (line 1620))
+  Downloading pybedtools-0.10.0.tar.gz (12.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.6/12.6 MB 53.8 MB/s eta 0:00:00
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting pynndescent==0.5.13 (from -r requirements-pip.lock (line 1623))
+  Downloading pynndescent-0.5.13-py3-none-any.whl (56 kB)
+Collecting pynvml==11.5.3 (from -r requirements-pip.lock (line 1626))
+  Downloading pynvml-11.5.3-py3-none-any.whl (53 kB)
+Collecting pyparsing==3.1.2 (from -r requirements-pip.lock (line 1629))
+  Downloading pyparsing-3.1.2-py3-none-any.whl (103 kB)
+Collecting pyro-api==0.1.2 (from -r requirements-pip.lock (line 1632))
+  Downloading pyro_api-0.1.2-py3-none-any.whl (11 kB)
+Collecting pyro-ppl==1.9.1 (from -r requirements-pip.lock (line 1635))
+  Downloading pyro_ppl-1.9.1-py3-none-any.whl (755 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 756.0/756.0 kB 86.1 MB/s eta 0:00:00
+Collecting pysam==0.22.1 (from -r requirements-pip.lock (line 1638))
+  Downloading pysam-0.22.1-cp310-cp310-manylinux_2_28_x86_64.whl (22.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 22.0/22.0 MB 87.5 MB/s eta 0:00:00
+Collecting pytorch-ignite==0.5.1 (from -r requirements-pip.lock (line 1666))
+  Downloading pytorch_ignite-0.5.1-py3-none-any.whl (312 kB)
+Collecting pytorch-lightning==2.4.0 (from -r requirements-pip.lock (line 1669))
+  Downloading pytorch_lightning-2.4.0-py3-none-any.whl (815 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 815.2/815.2 kB 74.6 MB/s eta 0:00:00
+Collecting rich==13.7.1 (from -r requirements-pip.lock (line 1672))
+  Downloading rich-13.7.1-py3-none-any.whl (240 kB)
+Collecting scanpy==1.10.2 (from -r requirements-pip.lock (line 1675))
+  Downloading scanpy-1.10.2-py3-none-any.whl (2.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 20.9 MB/s eta 0:00:00
+Collecting scglue==0.3.2 (from -r requirements-pip.lock (line 1678))
+  Downloading scglue-0.3.2-py3-none-any.whl (81 kB)
+Collecting scikit-learn==1.5.1 (from -r requirements-pip.lock (line 1681))
+  Downloading scikit_learn-1.5.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.4/13.4 MB 104.2 MB/s eta 0:00:00
+Collecting scipy==1.13.1 (from -r requirements-pip.lock (line 1703))
+  Downloading scipy-1.13.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (38.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 38.6/38.6 MB 105.7 MB/s eta 0:00:00
+Collecting scvi-tools==1.1.6 (from -r requirements-pip.lock (line 1729))
+  Downloading scvi_tools-1.1.6-py3-none-any.whl (387 kB)
+Collecting seaborn==0.13.2 (from -r requirements-pip.lock (line 1732))
+  Downloading seaborn-0.13.2-py3-none-any.whl (294 kB)
+Collecting session-info==1.0.0 (from -r requirements-pip.lock (line 1735))
+  Downloading session_info-1.0.0.tar.gz (24 kB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting sortedcontainers==2.4.0 (from -r requirements-pip.lock (line 1738))
+  Downloading sortedcontainers-2.4.0-py2.py3-none-any.whl (29 kB)
+Collecting sparse==0.15.4 (from -r requirements-pip.lock (line 1741))
+  Downloading sparse-0.15.4-py2.py3-none-any.whl (237 kB)
+Collecting statsmodels==0.14.2 (from -r requirements-pip.lock (line 1744))
+  Downloading statsmodels-0.14.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (10.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.8/10.8 MB 113.4 MB/s eta 0:00:00
+Collecting stdlib-list==0.10.0 (from -r requirements-pip.lock (line 1769))
+  Downloading stdlib_list-0.10.0-py3-none-any.whl (79 kB)
+Collecting sympy==1.13.2 (from -r requirements-pip.lock (line 1772))
+  Downloading sympy-1.13.2-py3-none-any.whl (6.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.2/6.2 MB 89.7 MB/s eta 0:00:00
+Collecting tblib==3.2.2 (from -r requirements-pip.lock (line 1775))
+  Downloading tblib-3.2.2-py3-none-any.whl (12 kB)
+Collecting tensorboardx==2.6.2.2 (from -r requirements-pip.lock (line 1778))
+  Downloading tensorboardX-2.6.2.2-py2.py3-none-any.whl (101 kB)
+Collecting tensorstore==0.1.64 (from -r requirements-pip.lock (line 1781))
+  Downloading tensorstore-0.1.64-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (14.9 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14.9/14.9 MB 64.9 MB/s eta 0:00:00
+Collecting texttable==1.7.0 (from -r requirements-pip.lock (line 1803))
+  Downloading texttable-1.7.0-py2.py3-none-any.whl (10 kB)
+Collecting threadpoolctl==3.5.0 (from -r requirements-pip.lock (line 1806))
+  Downloading threadpoolctl-3.5.0-py3-none-any.whl (18 kB)
+Collecting toolz==0.12.1 (from -r requirements-pip.lock (line 1809))
+  Downloading toolz-0.12.1-py3-none-any.whl (56 kB)
+Collecting torch==2.4.0 (from -r requirements-pip.lock (line 1812))
+  Downloading torch-2.4.0-cp310-cp310-manylinux1_x86_64.whl (797.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 797.2/797.2 MB 56.2 MB/s eta 0:00:00
+Collecting torchmetrics==1.4.1 (from -r requirements-pip.lock (line 1834))
+  Downloading torchmetrics-1.4.1-py3-none-any.whl (866 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 866.2/866.2 kB 74.3 MB/s eta 0:00:00
+Collecting tqdm==4.66.5 (from -r requirements-pip.lock (line 1837))
+  Downloading tqdm-4.66.5-py3-none-any.whl (78 kB)
+Collecting triton==3.0.0 (from -r requirements-pip.lock (line 1840))
+  Downloading triton-3.0.0-1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (209.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 209.4/209.4 MB 125.0 MB/s eta 0:00:00
+Collecting typing-extensions==4.12.2 (from -r requirements-pip.lock (line 1847))
+  Downloading typing_extensions-4.12.2-py3-none-any.whl (37 kB)
+Collecting tzdata==2024.1 (from -r requirements-pip.lock (line 1850))
+  Downloading tzdata-2024.1-py2.py3-none-any.whl (345 kB)
+Collecting umap-learn==0.5.6 (from -r requirements-pip.lock (line 1853))
+  Downloading umap_learn-0.5.6-py3-none-any.whl (85 kB)
+Collecting xyzservices==2025.11.0 (from -r requirements-pip.lock (line 1856))
+  Downloading xyzservices-2025.11.0-py3-none-any.whl (93 kB)
+Collecting yarl==1.9.4 (from -r requirements-pip.lock (line 1859))
+  Downloading yarl-1.9.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (301 kB)
+Collecting zict==3.0.0 (from -r requirements-pip.lock (line 1950))
+  Downloading zict-3.0.0-py2.py3-none-any.whl (43 kB)
+Collecting zipp==3.20.0 (from -r requirements-pip.lock (line 1953))
+  Downloading zipp-3.20.0-py3-none-any.whl (9.4 kB)
+Building wheels for collected packages: docrep, interlap, loompy, ml-collections, multiprocessing-on-dill, pybedtools, session-info
+  Building wheel for docrep (setup.py): started
+  Building wheel for docrep (setup.py): finished with status 'done'
+  Created wheel for docrep: filename=docrep-0.3.2-py3-none-any.whl size=19876 sha256=85ba65e9178c42229849efb38bbe0da0a23698b89e7fd502d7084eba5e1bcd96
+  Stored in directory: /root/.cache/pip/wheels/c3/64/48/03c38d8d906159eaa210b3c548fdb590eb3e2a4a5745ae2172
+  Building wheel for interlap (setup.py): started
+  Building wheel for interlap (setup.py): finished with status 'done'
+  Created wheel for interlap: filename=interlap-0.2.7-py3-none-any.whl size=6282 sha256=ed4f04bd133b7124b03622631644bfe9927915e1d318827d86f59b1592045b47
+  Stored in directory: /root/.cache/pip/wheels/5d/3c/21/dca425a32351003442bd2d970559ed44c1a5ce7c4ac13ff82a
+  Building wheel for loompy (setup.py): started
+  Building wheel for loompy (setup.py): finished with status 'done'
+  Created wheel for loompy: filename=loompy-3.0.8-py3-none-any.whl size=54013 sha256=b66406edbf97ed9a027e918349808a8284507c6ea4696c5728e600fdabc1a27a
+  Stored in directory: /root/.cache/pip/wheels/85/bd/f4/25b77f84a3422e43793b60935a51cdff79072b7682d1dd6d79
+  Building wheel for ml-collections (setup.py): started
+  Building wheel for ml-collections (setup.py): finished with status 'done'
+  Created wheel for ml-collections: filename=ml_collections-0.1.1-py3-none-any.whl size=94507 sha256=3544fc0bd8f751edff8e72a87f39760d0d5c72ae4e313592094b8e264e18f1a3
+  Stored in directory: /root/.cache/pip/wheels/7b/89/c9/a9b87790789e94aadcfc393c283e3ecd5ab916aed0a31be8fe
+  Building wheel for multiprocessing-on-dill (setup.py): started
+  Building wheel for multiprocessing-on-dill (setup.py): finished with status 'done'
+  Created wheel for multiprocessing-on-dill: filename=multiprocessing_on_dill-3.5.0a4-py3-none-any.whl size=64015 sha256=1219d9bcd261611057b883f32f6da386ffe2f6da6ea8a463e5d3fff8d5e8d9b3
+  Stored in directory: /root/.cache/pip/wheels/52/a3/23/469338abd7afd17354280b1148a7e0fdf405a8de947108a738
+  Building wheel for pybedtools (setup.py): started
+  Building wheel for pybedtools (setup.py): finished with status 'done'
+  Created wheel for pybedtools: filename=pybedtools-0.10.0-cp310-cp310-linux_x86_64.whl size=12829592 sha256=e0101f869c5d06ba65923e6042528458e0b709c14182941da5d26bb09a921031
+  Stored in directory: /root/.cache/pip/wheels/e5/26/a4/6913af11fdcfbc926c98fee0768b4fe955f6e3cc7ebe2c9d9e
+  Building wheel for session-info (setup.py): started
+  Building wheel for session-info (setup.py): finished with status 'done'
+  Created wheel for session-info: filename=session_info-1.0.0-py3-none-any.whl size=8023 sha256=0a21ea095e55c8cdff0ebfdaae4d2cc2e26cf0f36b03f7651a505f69848c8d95
+  Stored in directory: /root/.cache/pip/wheels/6a/aa/b9/eb5d4031476ec10802795b97ccf937b9bd998d68a9b268765a
+Successfully built docrep interlap loompy ml-collections multiprocessing-on-dill pybedtools session-info
+Installing collected packages: umap-learn, triton, texttable, tensorboardx, sortedcontainers, pytorch-ignite, pyro-api, pynndescent, pybedtools, patsy, parse, multiprocessing-on-dill, multipledispatch, mpmath, interlap, docrep, ctxcore, array-api-compat, arboreto, zipp, zict, yarl, xyzservices, tzdata, typing-extensions, tqdm, torchmetrics, torch, toolz, threadpoolctl, tensorstore, tblib, sympy, stdlib-list, statsmodels, sparse, session-info, seaborn, scvi-tools, scipy, scikit-learn, scglue, scanpy, rich, pytorch-lightning, pyscenic, pysam, pyro-ppl, pyparsing, pynvml, pyarrow, protobuf, pillow, partd, pandas, orbax-checkpoint, optax, opt-einsum, nvidia-nvtx-cu12, nvidia-nvjitlink-cu12, nvidia-nccl-cu12, nvidia-cusparse-cu12, nvidia-cusolver-cu12, nvidia-curand-cu12, nvidia-cufft-cu12, nvidia-cudnn-cu12, nvidia-cuda-runtime-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-cupti-cu12, nvidia-cublas-cu12, numpyro, numpy-groupies, numpy, numexpr, numba, networkx, natsort, narwhals, multidict, mudata, msgpack, ml-dtypes, ml-collections, mdurl, matplotlib, markupsafe, markdown-it-py, lz4, loompy, locket, llvmlite, lightning-utilities, lightning, leidenalg, legacy-api-wrap, kiwisolver, joblib, jaxlib, jax, importlib-resources, importlib-metadata, igraph, humanize, h5py, fsspec, frozenlist, frozendict, fonttools, flax, filelock, exceptiongroup, etils, distributed, diptest, dill, dask, cytoolz, cycler, contourpy, contextlib2, cloudpickle, click, chex, boltons, bokeh, async-timeout, anndata, aiosignal, aiohttp, aiohappyeyeballs, absl-py
+  Attempting uninstall: typing-extensions
+    Found existing installation: typing_extensions 4.11.0
+    Uninstalling typing_extensions-4.11.0:
+      Successfully uninstalled typing_extensions-4.11.0
+Successfully installed absl-py-2.1.0 aiohappyeyeballs-2.4.0 aiohttp-3.10.5 aiosignal-1.3.1 anndata-0.10.8 arboreto-0.1.6 array-api-compat-1.8 async-timeout-4.0.3 bokeh-3.8.2 boltons-25.0.0 chex-0.1.86 click-8.3.1 cloudpickle-3.1.2 contextlib2-21.6.0 contourpy-1.2.1 ctxcore-0.2.0 cycler-0.12.1 cytoolz-1.1.0 dask-2026.1.2 dill-0.3.8 diptest-0.10.0 distributed-2026.1.2 docrep-0.3.2 etils-1.7.0 exceptiongroup-1.2.2 filelock-3.15.4 flax-0.8.5 fonttools-4.53.1 frozendict-2.4.7 frozenlist-1.4.1 fsspec-2024.6.1 h5py-3.11.0 humanize-4.10.0 igraph-0.11.6 importlib-metadata-8.7.1 importlib-resources-6.4.4 interlap-0.2.7 jax-0.4.31 jaxlib-0.4.31 joblib-1.4.2 kiwisolver-1.4.5 legacy-api-wrap-1.4 leidenalg-0.10.2 lightning-2.1.4 lightning-utilities-0.11.6 llvmlite-0.43.0 locket-1.0.0 loompy-3.0.8 lz4-4.4.5 markdown-it-py-3.0.0 markupsafe-2.1.5 matplotlib-3.9.2 mdurl-0.1.2 ml-collections-0.1.1 ml-dtypes-0.4.0 mpmath-1.3.0 msgpack-1.0.8 mudata-0.3.0 multidict-6.0.5 multipledispatch-1.0.0 multiprocessing-on-dill-3.5.0a4 narwhals-2.17.0 natsort-8.4.0 networkx-3.3 numba-0.60.0 numexpr-2.14.1 numpy-1.26.4 numpy-groupies-0.11.3 numpyro-0.15.2 nvidia-cublas-cu12-12.1.3.1 nvidia-cuda-cupti-cu12-12.1.105 nvidia-cuda-nvrtc-cu12-12.1.105 nvidia-cuda-runtime-cu12-12.1.105 nvidia-cudnn-cu12-9.1.0.70 nvidia-cufft-cu12-11.0.2.54 nvidia-curand-cu12-10.3.2.106 nvidia-cusolver-cu12-11.4.5.107 nvidia-cusparse-cu12-12.1.0.106 nvidia-nccl-cu12-2.20.5 nvidia-nvjitlink-cu12-12.6.20 nvidia-nvtx-cu12-12.1.105 opt-einsum-3.3.0 optax-0.2.3 orbax-checkpoint-0.6.0 pandas-2.2.2 parse-1.20.2 partd-1.4.2 patsy-0.5.6 pillow-10.4.0 protobuf-5.27.3 pyarrow-23.0.1 pybedtools-0.10.0 pynndescent-0.5.13 pynvml-11.5.3 pyparsing-3.1.2 pyro-api-0.1.2 pyro-ppl-1.9.1 pysam-0.22.1 pyscenic-0.12.1+11.g06bafba pytorch-ignite-0.5.1 pytorch-lightning-2.4.0 rich-13.7.1 scanpy-1.10.2 scglue-0.3.2 scikit-learn-1.5.1 scipy-1.13.1 scvi-tools-1.1.6 seaborn-0.13.2 session-info-1.0.0 sortedcontainers-2.4.0 sparse-0.15.4 statsmodels-0.14.2 stdlib-list-0.10.0 sympy-1.13.2 tblib-3.2.2 tensorboardx-2.6.2.2 tensorstore-0.1.64 texttable-1.7.0 threadpoolctl-3.5.0 toolz-0.12.1 torch-2.4.0 torchmetrics-1.4.1 tqdm-4.66.5 triton-3.0.0 typing-extensions-4.12.2 tzdata-2024.1 umap-learn-0.5.6 xyzservices-2025.11.0 yarl-1.9.4 zict-3.0.0 zipp-3.20.0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+Will remove 233 (370.0 MB) tarball(s).
+Will remove 1 index cache(s).
+Will remove 11 (1.6 MB) package(s).
+There are no tempfile(s) to remove.
+There are no logfile(s) to remove.
+INFO:    Adding labels
+INFO:    Adding environment to container
+INFO:    Adding runscript
+INFO:    Adding testscript
+INFO:    Running testscript
+python: expected=3.10.14 actual=3.10.14
+pyscenic: expected=0.12.1+11.g06bafba actual=0.12.1+11.g06bafba
+arboreto: expected=0.1.6 actual=0.1.6
+Python environment imports passed
+No broken requirements found.
+INFO:    Creating SIF file...
+INFO:    To see mksquashfs output with progress bar enable verbose logging
+INFO:    Build complete: /users/jthompso/spatialDLPFC_mdd_bpd/container/outputs/image_build_test/apptainer/20261112T171336Z/python-jhpce/mbv-python-jhpce.sif

@@ -1,0 +1,23 @@
+site=JHPCE
+run_id_utc=20261112T171336Z
+profile=python
+repository=/users/jthompso/spatialDLPFC_mdd_bpd
+branch=revision
+commit=83c4597bfc2835118f2a1607ef882cd449c3661f
+job_id=37038242
+host=compute-168.cm.cluster
+requested_memory=unknown
+JobId=37038242 JobName=mbv-all-jhpce UserId=jthompso(43084) GroupId=users(100) MCS_label=N/A Priority=5 Nice=0 Account=jhpce QOS=normal JobState=RUNNING Reason=None Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0 RunTime=00:00:00 TimeLimit=1-00:00:00 TimeMin=N/A SubmitTime=2026-11-12T12:13:36 EligibleTime=2026-11-12T12:13:36 AccrueTime=2026-11-12T12:13:36 StartTime=2026-11-12T12:13:36 EndTime=2026-11-13T12:13:36 Deadline=N/A SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-11-12T12:13:36 Scheduler=Main Partition=shared AllocNode:Sid=jhpce01:4153252 ReqNodeList=(null) ExcNodeList=(null) NodeList=compute-168 BatchHost=compute-168 NumNodes=1 NumCPUs=1 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:* TRES=cpu=1,mem=10G,node=1,billing=10241 Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=* MinCPUsNode=1 MinMemoryNode=10G MinTmpDiskNode=0 Features=(null) DelayBoot=00:00:00 OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null) Command=(null) WorkDir=/users/jthompso/spatialDLPFC_mdd_bpd StdErr=/users/jthompso/spatialDLPFC_mdd_bpd/container/outputs/image_build_test/apptainer/batch-logs/all-37038242.out StdIn=/dev/null StdOut=/users/jthompso/spatialDLPFC_mdd_bpd/container/outputs/image_build_test/apptainer/batch-logs/all-37038242.out Power= 
+
+Apptainer version: apptainer version 1.5.3+342-g79cf6087c
+
+Host memory:
+               total        used        free      shared  buff/cache   available
+Mem:           1.0Ti       126Gi       464Gi        78Mi       421Gi       880Gi
+Swap:           12Gi       6.8Gi       5.2Gi
+
+Filesystem capacity:
+Filesystem              Size  Used Avail Use% Mounted on
+dcs08:/srv/dcs08/users   60T   38T   22T  64% /users
+/dev/sda6               345G  5.2G  340G   2% /tmp
+

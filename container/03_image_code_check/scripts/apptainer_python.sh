@@ -3,7 +3,13 @@
 #SBATCH --mem=5G
 #SBATCH -o container/outputs/image_code_check/apptainer/%x_%j.log
 
-PYTHON_SIF="container/outputs/image_build_test/apptainer/20261111T141200Z/python-jhpce/mbv-python-jhpce.sif"
+UTC_DIR=${1:?Usage: sbatch container/03_image_code_check/scripts/apptainer_python.sh <UTC-dir>}
+if [[ ! "$UTC_DIR" =~ ^[0-9]{8}T[0-9]{6}Z$ ]]; then
+  echo "UTC-dir must look like 20261112T141200Z" >&2
+  exit 2
+fi
+
+PYTHON_SIF="container/outputs/image_build_test/apptainer/$UTC_DIR/python-jhpce/mbv-python-jhpce.sif"
 
 module load apptainer/1.5.3
 
