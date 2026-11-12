@@ -21,6 +21,7 @@ build resources.
 | Build from the project checkout | Docker image or Apptainer SIF built locally from the checked-in definitions and locks | Users who can build containers and want to inspect or modify the build | Requires a project clone, network access during the build, substantial build time, and enough memory and disk. |
 | Publish Docker images to GHCR | Versioned OCI/Docker images, pulled with Docker | Workstations using Docker Desktop or Docker Engine, including macOS and Windows | Convenient for users; public images can be pulled without a GitHub login. The Docker images target `linux/amd64`; Apple Silicon runs that target using emulation. |
 | Publish Apptainer images as SIF files | Ready-to-run `.sif` files, for example through GitHub Releases or an institutional storage location | Linux and HPC users who need Apptainer | SIF files are built and tested separately for portable Linux and JHPCE. Publishing a SIF through a registry requires an explicit OCI/ORAS distribution and retrieval procedure; it is not the same as publishing a Docker image. |
+| Share image files through Globus | `.sif` files directly, and Docker images exported as `.tar.gz` archives | Project collaborators who already access MBv data through Globus, especially HPC users | Globus transfers files from a configured collection; users must download the artifacts before running them. It is not a Docker or Apptainer registry, and collection sharing permissions and subscription eligibility must be confirmed. |
 | Publish Apptainer-compatible OCI images | OCI images that Apptainer can pull and convert to SIF | Linux users who prefer registry-based delivery | Must be tested with the selected registry, architecture, tags, and Apptainer version. This is a later option; the existing Docker images should not be assumed to be the tested Apptainer builds. |
 
 ## Recommendation for this project
@@ -37,6 +38,77 @@ Publish only images that passed their corresponding final code and environment
 checks. Use a release tag such as `v1.0.0`, and also record the full MBv Git
 commit associated with each image. Do not use `latest` as the reproducibility
 reference: tags can be moved, while a digest identifies the exact image content.
+
+### GHCR layer-size check
+
+GitHub documents a **10 GB maximum size per image layer** and a 10-minute
+upload timeout; the documented size limit is per layer, not a 10 GB cap on the
+whole image ([GHCR documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)).
+The current Docker image totals are about 6.80 GB for R and 13.60 GB for Python.
+Local `docker image history` output reports the largest layer as 2.73 GB for R
+and 9.08 GB for Python. On those measurements, neither image exceeds the layer
+limit, although Python is closer to it. These sizes are from local Docker
+history, not a completed GHCR upload; verify the actual push and watch for
+upload timeouts before announcing a release. Recheck layer sizes after any
+Dockerfile or dependency changes.
+
+### Globus as an alternative file-transfer route
+
+Because the project already uses Globus to share large data files, it may also
+be used to make container artifacts available to collaborators. This is a
+file-download workflow: Globus transfers files between storage collections,
+but does not provide `docker pull` or `apptainer pull` access to a shared folder.
+Users need the appropriate container runtime installed after downloading the
+artifacts.
+
+- **Apptainer:** share `.sif` files and a share-ready `SHA256SUMS` file in a
+  read-only collection folder. Users download the SIFs and checksum file,
+  verify them with `sha256sum -c`, then run the SIFs with Apptainer. The current
+  build runner writes the original absolute image path in `image.sha256`; make
+  a share-ready checksum file using relative filenames before transfer, for
+  example from the UTC run directory:
+
+  ```bash
+  sha256sum r-jhpce/mbv-r-jhpce.sif \
+    python-jhpce/mbv-python-jhpce.sif > SHA256SUMS
+  ```
+
+  The latest JHPCE SIFs are about 1.73 GiB (R) and 3.79 GiB (Python); a
+  portable profile should be offered separately after it is tested on clean
+  Linux.
+- **Docker:** export the versioned `linux/amd64` images to one archive, then
+  transfer that archive and its checksum through Globus. For the current local
+  test tags, the export command is:
+
+  ```bash
+  docker image save --platform linux/amd64 mbv-r:test mbv-python:test \
+    | gzip > mbv-docker-images.tar.gz
+  sha256sum mbv-docker-images.tar.gz > mbv-docker-images.tar.gz.sha256
+  ```
+
+  After downloading, a user checks the checksum and loads the archive with
+  `docker load --input mbv-docker-images.tar.gz`. Docker supports saving images
+  to tar archives and loading gzip-compressed archives ([save](https://docs.docker.com/reference/cli/docker/image/save/),
+  [load](https://docs.docker.com/reference/cli/docker/image/load/)). The
+  compressed archive size has not yet been measured; users need enough local
+  disk space for the download and loaded images.
+
+Globus guest collection sharing is subject to the source collection's
+configuration and subscription eligibility. Globus documents guest sharing as
+available on collections with an active subscription, with some Globus Connect
+Personal cases requiring subscription-group membership
+([Globus sharing guide](https://docs.globus.org/guides/tutorials/manage-files/share-files/)).
+Check with the collection administrator that a read-only software-artifact
+folder can be shared with the intended user group. Existing data-sharing access
+does not by itself confirm that the same paths or collection permissions can
+be used for container images.
+
+For this project, Globus is a useful **secondary delivery option** for
+collaborators who already use the project collection or need a direct SIF
+download. GHCR remains simpler for workstation users because Docker pulls
+versioned images directly, and Apptainer can use a registry route when that is
+validated. Document artifact versions, source commit, profile, checksum, and
+required runtime with any Globus-shared image files.
 
 Keep Docker and Apptainer distribution decisions separate. GHCR can store Docker
 and OCI images; it does not make the tested JHPCE SIF available automatically.
