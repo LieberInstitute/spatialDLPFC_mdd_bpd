@@ -333,16 +333,16 @@ uncompressed contents.
 
 | Image | Size | Build time | Smoke-test time |
 | --- | ---: | ---: | ---: |
-| R | 6.33 GiB | ~ 1 hr | ~ 1 min |
+| R (2026-11-12 rebuild) | 6.33 GiB (6.80 GB) | 3,332 sec (55m 32s) | 40 sec |
 | Python (2026-11-12 rebuild) | 12.67 GiB (13.60 GB) | 425 sec (7m 05s) | 50 sec |
-| **Both** | **19.00 GiB** | **About 1hr 7min** | **About 1.5 min** |
+| **Both** | **19.00 GiB (20.40 GB)** | **About 1hr 3min** | **About 1.5 min** |
 
 Docker Desktop 29.9.2 built the Python image for `linux/amd64` on an Apple
-Silicon host using emulation. The run record did not capture Docker VM memory or
-peak memory. The earlier R build used Docker Desktop configured for 10 CPUs and
-about 7.75 GiB of VM memory; peak memory was not measured. About 35 GB free disk
-is a planning estimate based on the observed image and build-cache growth, not
-a measured minimum.
+Silicon host using emulation. The R and Python rebuilds used the same Docker
+Desktop version and target platform. During the R build, Docker Desktop's VM
+was configured with 10 CPUs and 8 GiB of memory; peak memory use was not
+recorded. About 35 GB free disk is a planning estimate based on the observed
+image and build-cache growth, not a measured minimum.
 
 ### JHPCE Apptainer (2026-11-11)
 

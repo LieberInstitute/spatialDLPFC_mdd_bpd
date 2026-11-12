@@ -104,6 +104,12 @@ The project bind preserves the SPE output and log on the host; `--rm` discards t
 The run writes a log to `container/outputs/image_code_check/docker/spe.log` and a successful run creates an HDF5 SPE
 representation that consists of two, linked files in the same location.
 
+The recorded Docker R check on 2026-11-12 reached `*** TEST END ***` after
+downloading the public `GSE333974_RAW.tar` archive (about 4.2 GB) and building
+an SPE from three samples. It produced `spe_n3_se.rds` and
+`spe_n3_assays.h5`; see `container/outputs/image_code_check/docker/spe.log` for
+the run log.
+
 ### Run the Apptainer R check
 
 Requirements: JHPCE access, the R JHPCE SIF **at the path set in `apptainer_r.sh`**, and

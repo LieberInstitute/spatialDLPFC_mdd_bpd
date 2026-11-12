@@ -55,6 +55,27 @@ The Docker AUCell code check also completed on the rebuilt Python image using
 the first 10% (2,126 of 21,265 cells). Its log and output loom are under
 `container/outputs/image_code_check/docker/`.
 
+## Apple Silicon Docker R rebuild (2026-11-12)
+
+The restructured R Docker image built and passed its smoke test on Docker
+Desktop 29.9.2, targeting `linux/amd64` under Apple Silicon emulation. The image
+size was 6,798,736,903 bytes (6.33 GiB / 6.80 GB). Build time was 3,332 seconds
+(55m 32s), and the fresh-container smoke test took 40 seconds. The run record,
+build log, and smoke-test log are in
+`container/outputs/image_build_test/docker/20261112T165849Z/r/`.
+The image was built from commit `83c4597b` and has Docker image ID
+`sha256:8b1779430c71e450134a20562ec10aea2a27a577e1beb8fa5d2a985b2014360d`.
+
+The R verifier matched all 425 packages in `renv.lock` with no missing packages
+or version mismatches. Representative spatial and single-cell packages loaded
+successfully. During the build, Docker Desktop was configured with 10 CPUs and
+8 GiB of VM memory; peak memory use was not recorded.
+
+The Docker R code check downloaded the 4.2 GB `GSE333974_RAW.tar` archive,
+created an SPE from three samples, reached `*** TEST END ***`, and wrote
+`spe_n3_se.rds` and `spe_n3_assays.h5`. Its log and outputs are under
+`container/outputs/image_code_check/docker/`.
+
 ## JHPCE Apptainer results (2026-11-09)
 
 | Image | Build time | Standalone test | SIF size | Peak RSS (10 GB requested) | Result directory |

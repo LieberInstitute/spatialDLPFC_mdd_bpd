@@ -1,0 +1,16 @@
+profile=r
+run_id_utc=20261112T165849Z
+repository=/Users/jacquelinethompson/Documents/ChatGPT/MBv_pipeline_revision
+git_branch=revision
+git_commit=83c4597bfc2835118f2a1607ef882cd449c3661f
+host=Darwin Mac.lan 24.6.0 Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:30 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6020 arm64
+platform=linux/amd64
+Docker client=29.9.2 server=29.9.2
+build_command=docker build --pull --platform linux/amd64 -f /Users/jacquelinethompson/Documents/ChatGPT/MBv_pipeline_revision/container/02_image_build_test/docker/r/Dockerfile -t mbv-r:test /Users/jacquelinethompson/Documents/ChatGPT/MBv_pipeline_revision 
+build_elapsed_seconds=3332
+build_status=passed
+smoke_test_elapsed_seconds=40
+smoke_test_status=passed
+image_id=sha256:8b1779430c71e450134a20562ec10aea2a27a577e1beb8fa5d2a985b2014360d
+image_size_bytes=6798736903
+result=passed
