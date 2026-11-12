@@ -33,7 +33,7 @@ for(mod_gene in	mod_genes) {
 
 	set_size = sort(sapply(reg1, length))
 
-	pdf(file=paste0("plots/publication/Figure4/",mod_gene, "-module_regulon_upset.pdf"), height=4, width=4, onefile=F)
+	pdf(file=paste0("plots/publication/Figure_nvu/",mod_gene, "-module_regulon_upset.pdf"), height=4, width=4, onefile=F)
 	print(upset(fromList(reg1), sets=names(set_size)[set_size>0], keep.order=T, mb.ratio=c(.5,.5)))
 	dev.off()
 }

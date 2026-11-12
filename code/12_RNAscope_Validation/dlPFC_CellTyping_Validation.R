@@ -3,7 +3,7 @@ library(ggplot2)
 library(ggpubr)
 
 # Read csv's and generate cell centroid coordinate 
-indir <- "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/15_RNAscope_Validation/ObjectData"
+indir <- "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/processed-data/12_RNAscope_Validation/ObjectData"
 files <- list.files(indir, pattern = "\\.csv$", full.names = TRUE)
 
 dt_list <- lapply(files, function(f) {
@@ -82,7 +82,7 @@ p_density <- ggplot(single_pos_dt,
 print(p_density)
 
 # Save plot to cluster and GitHub
-outdir <- "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/plots/15_RNAscope_Validation"
+outdir <- "/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/plots/12_RNAscope_Validation"
 dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
 
 ggsave(

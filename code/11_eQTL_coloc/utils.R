@@ -3553,6 +3553,45 @@ flatten_coloc_results <- function(result_list, disorder, dataset_id, context,
   out[]
 }
 
+write_coloc_exploratory_na <- function(workbook, sheet, dt) {
+  if (!identical(sheet, "coloc_pass")) return(invisible(FALSE))
+  columns <- c("lead_variant_gwas_exploratory", "gwas_support_exploratory")
+  stopifnot(all(c("disorder", columns) %in% names(dt)))
+  sczd_rows <- which(dt$disorder == "SCZD")
+
+  ## display missing SCZD exploratory annotations without changing analytical values.
+  for (column in columns) {
+    missing_rows <- sczd_rows[is.na(dt[[column]][sczd_rows])]
+    for (row in missing_rows) {
+      openxlsx::writeData(
+        workbook, sheet = sheet, x = "N/A",
+        startCol = match(column, names(dt)), startRow = row + 1L,
+        colNames = FALSE, rowNames = FALSE
+      )
+    }
+  }
+  invisible(TRUE)
+}
+
+write_eqtl_summary_na <- function(workbook, sheet, dt) {
+  if (!identical(sheet, "eQTL_summary")) return(invisible(FALSE))
+  stopifnot("eQTL_type" %in% names(dt))
+  nominal_rows <- which(dt$eQTL_type == "nominal_BH05")
+
+  ## display unreported nominal-summary counts without changing analytical values.
+  for (column in grep("^n_", names(dt), value = TRUE)) {
+    missing_rows <- nominal_rows[is.na(dt[[column]][nominal_rows])]
+    for (row in missing_rows) {
+      openxlsx::writeData(
+        workbook, sheet = sheet, x = "N/A",
+        startCol = match(column, names(dt)), startRow = row + 1L,
+        colNames = FALSE, rowNames = FALSE
+      )
+    }
+  }
+  invisible(TRUE)
+}
+
 flatten_coloc_snps <- function(result_list, disorder, dataset_id, context, split = "all") {
   require_data_table()
   disorder_value <- disorder

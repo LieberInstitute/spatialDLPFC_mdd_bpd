@@ -1,5 +1,6 @@
 # spatialDLPFC_mdd_bpd
 
+This repo contains all code associated with the [Thompson et al. 2026](https://doi.org/10.64898/2026.10.22.761067) preprint.
 
 ![Experimental Overview](https://github.com/LieberInstitute/spatialDLPFC_mdd_bpd/blob/gh-pages/images/landing-page.png?raw=true)  
 
@@ -23,7 +24,7 @@ We provide the following interactive websites, organized by dataset with softwar
 
 
 ## Data Access
-We provide a public [globus endpoint](https://research.libd.org/globus/) to access R objects associate with apps for this project ([jhpce#spatialDLPFC_mdd_bpd](https://app.globus.org/file-manager?origin_id=b1944770-cf42-41bb-8b20-479f501187a3&origin_path=%2F)). Image and SpaceRanger output files can be accessed via Gene Expression Omnibus (GEO) under accession number [GSE333974](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE333974). Project data was also uploaded to the National Institute of Mental Health Data Archive (NDA) and can be found at [10.15154/m7k5-3z24](https://dx.doi.org/10.15154/m7k5-3z24). A Zenodo Archive for this project can be found at [link](link). 
+We provide a public [globus endpoint](https://research.libd.org/globus/) to access R objects associate with apps for this project ([jhpce#spatialDLPFC_mdd_bpd](https://app.globus.org/file-manager?origin_id=b1944770-cf42-41bb-8b20-479f501187a3&origin_path=%2F)). Image and SpaceRanger output files can be accessed via Gene Expression Omnibus (GEO) under accession number [GSE333974](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE333974). Project data was also uploaded to the National Institute of Mental Health Data Archive (NDA) and can be found at [10.15154/m7k5-3z24](https://dx.doi.org/10.15154/m7k5-3z24). A Zenodo Archive for this project can be found at [10.5281/zenodo.23425268](https://doi.org/10.5281/zenodo.23425268). 
 
 
 ## Contact
