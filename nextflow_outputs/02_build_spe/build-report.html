@@ -18,11 +18,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="Nextflow workflow report for run id [pensive_shaw]">
+  <meta name="description" content="Nextflow workflow report for run id [distraught_nightingale]">
   <meta name="author" content="Paolo Di Tommaso, Phil Ewels">
   <link rel="icon" type="image/png" href="https://www.nextflow.io/img/favicon.png" />
 
-  <title>[pensive_shaw] Nextflow Workflow Report</title>
+  <title>[distraught_nightingale] Nextflow Workflow Report</title>
 
   <style type="text/css">
   /*!
@@ -137,7 +137,7 @@ table.DTCR_clonedTable.dataTable{position:absolute !important;background-color:r
         <li class="nav-item"><a class="nav-link" href="#tasks">Tasks</a></li>
       </ul>
       <span class="navbar-text">
-        [pensive_shaw]
+        [distraught_nightingale]
       </span>
     </div>
   </nav>
@@ -146,7 +146,7 @@ table.DTCR_clonedTable.dataTable{position:absolute !important;background-color:r
     <div class="container">
 
       <h1 class="display-3">Nextflow workflow report</h1>
-      <h2 class="text-muted mb-4"><samp>[pensive_shaw]</samp> <em>(resumed run)</em></h2>
+      <h2 class="text-muted mb-4"><samp>[distraught_nightingale]</samp> </h2>
 
       
           <div class="alert alert-success mb-4">
@@ -157,8 +157,8 @@ table.DTCR_clonedTable.dataTable{position:absolute !important;background-color:r
       <dl>
         <dt>Run times</dt>
         <dd>
-          <span id="workflow_start">16-Nov-2026 16:16:35</span> - <span id="workflow_complete">16-Nov-2026 16:20:19</span>
-          (<span id="completed_fromnow"></span>duration: <strong>3m 44s</strong>)
+          <span id="workflow_start">16-Nov-2026 17:36:50</span> - <span id="workflow_complete">16-Nov-2026 17:39:46</span>
+          (<span id="completed_fromnow"></span>duration: <strong>2m 56s</strong>)
         </dd>
 
         <dl>
@@ -171,12 +171,12 @@ table.DTCR_clonedTable.dataTable{position:absolute !important;background-color:r
         </dl>
 
         <dt>Nextflow command</dt>
-        <dd><pre class="nfcommand"><code>nextflow run main.nf -params-file nextflow-test.yaml -resume -with-report nextflow_outputs/02_build_spe/build-report.html</code></pre></dd>
+        <dd><pre class="nfcommand"><code>nextflow run main.nf -params-file nextflow-test.yaml -with-report nextflow_outputs/02_build_spe/build-report.html</code></pre></dd>
       </dl>
 
       <dl class="row small">
         <dt class="col-sm-3">CPU-Hours</dt>
-        <dd class="col-sm-9"><samp>0.1</samp></dd>
+        <dd class="col-sm-9"><samp>(a few seconds)</samp></dd>
 
         <dt class="col-sm-3">Launch directory</dt>
         <dd class="col-sm-9"><samp>/Users/jacquelinethompson/Documents/ChatGPT/MBv_pipeline_revision</samp></dd>
@@ -210,7 +210,7 @@ table.DTCR_clonedTable.dataTable{position:absolute !important;background-color:r
         
 
         <dt class="col-sm-3">Workflow session</dt>
-        <dd class="col-sm-9"><code>18b5d32c-733c-45a7-a6ea-5846d8830609</code></dd>
+        <dd class="col-sm-9"><code>fdc92edc-b7ce-49c1-abd3-3385b480447f</code></dd>
 
         
 
@@ -1091,7 +1091,7 @@ $(function() {
 
   // Nextflow report data
   window.data = { "trace":[
-{"task_id":"1","hash":"fa\/6f6384","native_id":"80169","process":"SPE_CONTAINER_CHECK","module":"-","container":"mbv-r:test","tag":"-","name":"SPE_CONTAINER_CHECK","status":"COMPLETED","exit":"0","submit":"1794863795542","start":"1794863795597","complete":"1794864018998","duration":"223456","realtime":"220761","%cpu":"54.2","%mem":"31.4","rss":"2610851840","vmem":"5151113216","peak_rss":"2734923776","peak_vmem":"5243490304","rchar":"4849723501","wchar":"9084250126","syscr":"476358","syscw":"1525691","read_bytes":"541433856","write_bytes":"9084248370","attempt":"1","workdir":"\/Users\/jacquelinethompson\/Documents\/ChatGPT\/MBv_pipeline_revision\/work\/fa\/6f6384e0c7dea7d9c95cacc0082762","script":"\n    export TMPDIR=$PWD # Force R\'s tempdir() to use the current Nextflow task work directory\n    set -o pipefail\n    Rscript --vanilla \"01_spe-from-GEO.R\" 3\n    test -s \"02_build_spe\/spe_n3_assays.h5\"\n    test -s \"02_build_spe\/spe_n3_se.rds\"\n    ","scratch":"-","queue":"-","cpus":"1","memory":"-","disk":"-","time":"-","env":"-","error_action":"-","vol_ctxt":"1539057","inv_ctxt":"4875","hostname":"-","cpu_model":"VirtualApple @ 2.50GHz","accelerator":"-","accelerator_type":"-"}], "summary":[{"cpuUsage":{"mean":54.2,"min":54.2,"q1":54.2,"q2":54.2,"q3":54.2,"max":54.2,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"},"process":"SPE_CONTAINER_CHECK","gpuMemAvg":null,"vmem":{"mean":5243490304,"min":5243490304,"q1":5243490304,"q2":5243490304,"q3":5243490304,"max":5243490304,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"},"reads":{"mean":4849723501,"min":4849723501,"q1":4849723501,"q2":4849723501,"q3":4849723501,"max":4849723501,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"},"gpuUsage":null,"cpu":{"mean":54.2,"min":54.2,"q1":54.2,"q2":54.2,"q3":54.2,"max":54.2,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"},"gpuMemPeak":null,"mem":{"mean":2734923776,"min":2734923776,"q1":2734923776,"q2":2734923776,"q3":2734923776,"max":2734923776,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"},"memUsage":null,"timeUsage":null,"time":{"mean":220761,"min":220761,"q1":220761,"q2":220761,"q3":220761,"max":220761,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"},"writes":{"mean":9084250126,"min":9084250126,"q1":9084250126,"q2":9084250126,"q3":9084250126,"max":9084250126,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"}}] };
+{"task_id":"1","hash":"a4\/164659","native_id":"68444","process":"SPE_CONTAINER_CHECK","module":"-","container":"mbv-r:test","tag":"-","name":"SPE_CONTAINER_CHECK","status":"COMPLETED","exit":"0","submit":"1794868611147","start":"1794868611201","complete":"1794868786766","duration":"175619","realtime":"174709","%cpu":"60.0","%mem":"29.4","rss":"2446348288","vmem":"4824465408","peak_rss":"2554380288","peak_vmem":"4884369408","rchar":"4806856941","wchar":"9002104647","syscr":"465755","syscw":"1525722","read_bytes":"4861952","write_bytes":"9002102909","attempt":"1","workdir":"\/Users\/jacquelinethompson\/Documents\/ChatGPT\/MBv_pipeline_revision\/work\/a4\/164659b917fe4ced7f50567e09d8f7","script":"\n    export TMPDIR=$PWD # Force R\'s tempdir() to use the current Nextflow task work directory\n    set -o pipefail\n    Rscript --vanilla \"01_spe-from-GEO.R\" 3\n    test -s \"02_build_spe\/spe_n3_assays.h5\"\n    test -s \"02_build_spe\/spe_n3_se.rds\"\n    ","scratch":"-","queue":"-","cpus":"1","memory":"-","disk":"-","time":"-","env":"-","error_action":"-","vol_ctxt":"1475729","inv_ctxt":"4675","hostname":"-","cpu_model":"VirtualApple @ 2.50GHz","accelerator":"-","accelerator_type":"-"}], "summary":[{"cpuUsage":{"mean":60,"min":60,"q1":60,"q2":60,"q3":60,"max":60,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"},"process":"SPE_CONTAINER_CHECK","gpuMemAvg":null,"vmem":{"mean":4884369408,"min":4884369408,"q1":4884369408,"q2":4884369408,"q3":4884369408,"max":4884369408,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"},"reads":{"mean":4806856941,"min":4806856941,"q1":4806856941,"q2":4806856941,"q3":4806856941,"max":4806856941,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"},"gpuUsage":null,"cpu":{"mean":60,"min":60,"q1":60,"q2":60,"q3":60,"max":60,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"},"gpuMemPeak":null,"mem":{"mean":2554380288,"min":2554380288,"q1":2554380288,"q2":2554380288,"q3":2554380288,"max":2554380288,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"},"memUsage":null,"timeUsage":null,"time":{"mean":174709,"min":174709,"q1":174709,"q2":174709,"q3":174709,"max":174709,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"},"writes":{"mean":9002104647,"min":9002104647,"q1":9002104647,"q2":9002104647,"q3":9002104647,"max":9002104647,"minLabel":"SPE_CONTAINER_CHECK","maxLabel":"SPE_CONTAINER_CHECK","q1Label":"SPE_CONTAINER_CHECK","q2Label":"SPE_CONTAINER_CHECK","q3Label":"SPE_CONTAINER_CHECK"}}] };
 
   </script>
 

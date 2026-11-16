@@ -12,10 +12,20 @@ suppressPackageStartupMessages({
 tmp_dir <- tempfile("geoq", tmpdir = tempdir())
 stopifnot(dir.create(tmp_dir))
 
-gse <- getGEO("GSE333974", destdir = tmp_dir)
-#Found 1 file(s)
-#GSE333974_series_matrix.txt.gz
-pd = pData(gse[[1]])
+# GEO serves the files directly, even when its directory listings return 403.
+options(timeout = 300)
+geo_url <- "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE333nnn/GSE333974"
+download_geo_file <- function(subdir, filename) {
+  url <- paste(geo_url, subdir, filename, sep = "/")
+  destination <- file.path(tmp_dir, filename)
+  if (download.file(url, destination, mode = "wb") != 0L) {
+    stop("GEO download failed: ", url)
+  }
+  destination
+}
+
+series_matrix <- download_geo_file("matrix", "GSE333974_series_matrix.txt.gz")
+pd <- pData(getGEO(filename = series_matrix, getGPL = FALSE))
 tmp = pd[,44:46]
 tmp[,1] = sapply(strsplit(sapply(strsplit(tmp[,1], "suppl\\/"), function(x) x[[2]]), "_matrix"), function(y) y[[1]])
 colnames(tmp) = c("sample_str","dx","sex")
@@ -34,25 +44,10 @@ stopifnot(identical(rownames(donor.data), donor.data$GEO_sample))
 # can merge this with ST1 for age and rin demo data
 write.csv(donor.data, "GEO_donor_data.csv", row.names=FALSE)
 
-supp_files <- getGEOSuppFiles('GSE333974', fetch_files = FALSE,
-  baseDir = tmp_dir, makeDirectory = FALSE
-)
-
-
-
-# use last tar file to build from scratch spaceranger output
-options(timeout = 300) # increase timeout limit to 5 min
-supp_files <- getGEOSuppFiles('GSE333974', 
-  baseDir = tmp_dir,
-  filter_regex = "RAW\\.tar")
-
-cat(rownames(supp_files), "\n")
-
-tar_dir <- file.path(tmp_dir, 
-  "GSE333974/extracted_raw")
-untar(file.path(tmp_dir, 
-  "GSE333974/GSE333974_RAW.tar"), exdir = tar_dir)
-# untar creates flat dir
+features_path <- download_geo_file("suppl", "GSE333974_MBv_n119_features.csv.gz")
+raw_archive <- download_geo_file("suppl", "GSE333974_RAW.tar")
+tar_dir <- file.path(tmp_dir, "extracted_raw")
+stopifnot(untar(raw_archive, exdir = tar_dir) == 0L)
 
 # nest files
 create_dir <- function(path, recursive = FALSE) {
@@ -73,8 +68,7 @@ destinations <- c(
 )
 
 sids = donor.data$sample_str
-nest_dir = file.path(tmp_dir, 
-  "GSE333974/nested")
+nest_dir <- file.path(tmp_dir, "nested")
 create_dir(nest_dir)
 
 for (i in 1:sample_set) {
@@ -132,10 +126,7 @@ colData(spe) <- cdata[spe$key,c("sample_id","brnum","MBv_sample","dx","sex",
 ## this is only the first line of many: https://github.com/LieberInstitute/spatialLIBD/blob/devel/R/read10xVisiumWrapper.R#L105
 
 # if pulling from provided GSE333974 feature data
-sf <- getGEOSuppFiles("GSE333974", 
-  baseDir = file.path(tmp_dir, "GSE333974"), makeDirectory = F,
-	filter_regex = "feature")
-fdata = read.csv(rownames(sf), row.names=1)
+fdata = read.csv(features_path, row.names=1)
 stopifnot(identical(rownames(spe), rownames(fdata)))
 rowData(spe) = as(fdata[,1:7], "DataFrame")
 
