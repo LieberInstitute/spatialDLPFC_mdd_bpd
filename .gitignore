@@ -1,32 +1,54 @@
 spe_tracker_current.txt
 spe_tracker_archive.txt
 
-.Rproj.user
-.Rhistory
-processed-data/**/*.Rdata
-processed-data/**/*.rda
-processed-data/**/*.rds
-processed-data/**/*.dat
-code/**/*.rda
+_jhpce_org/
+
+*.Rdata
+*.rda
+*.rds
+*.dat
+*.h5
 
 raw-data/Maitra-2023/*.gz
 
 sample_ids-visium.txt
 
-.Ruserdata
+
 
 **/logs/
 **/nonHDF5_logs/
 **/multi-file_logs/
 **/array_logs/
 **/archive/
-**/__pycache__/
-**/notebooks/
-/container/outputs/**/*.sif
+
+
+# R environment infrastructure
+.Rproj.user
+.Rhistory
+.Ruserdata
 renv/library
 
+
+# python/jupyter infrastructure
+**/__pycache__/
+**/notebooks/
 .ipynb_checkpoints/
-_jhpce_org/
+raw-data/SCENIC_aux/
+pySCENIC/
+!pySCENIC/src/pyscenic/cli/pyscenic.py
+arboreto/
+conda_exports/
+
+
+# container infrastructure
+/container/outputs/**/*.sif
+
+# nextflow infrastructure
+/.nextflow/
+/.nextflow.log*
+/work/
+
+
 
 plots/spaceranger_segment/
 processed-data/spaceranger_segment/*
@@ -51,8 +73,4 @@ plots/11_eQTL_coloc/boxplots/eqtl_boxplot_degs_broad_union_uvasc.pdf
 plots/11_eQTL_coloc/boxplots/*.svg
 **/conservative_low-UMI-filt/
 
-raw-data/SCENIC_aux/
-pySCENIC/
-!pySCENIC/src/pyscenic/cli/pyscenic.py
-arboreto/
-conda_exports/
+
