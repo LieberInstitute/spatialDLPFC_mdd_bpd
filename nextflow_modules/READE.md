@@ -13,5 +13,7 @@ nextflow clean -before <run_name> -f && find work -type d -empty -delete
 
 Run nextflow
 ```
-nextflow run main.nf -params-file nextflow-test.yaml
+nextflow run main.nf -profile test
+# if running a continuance on pre-fetched GSE or pre-built spe
+nextflow run main.nf -profile test -resume
 ```

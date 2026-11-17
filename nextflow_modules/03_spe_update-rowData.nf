@@ -1,0 +1,19 @@
+process GENE_REF {
+    container 'mbv-r:test'
+
+    input:
+    path spe_script
+    val n_samples
+    tuple path(assay_h5), path(se_rds)
+
+    output:
+    tuple path("spe_n${n_samples}_assays.h5"), path("spe_n${n_samples}_se.rds"), emit: spe_files
+
+    script:
+    """
+    export TMPDIR=\$PWD # Force R's tempdir() to use the current Nextflow task work directory
+    Rscript --vanilla "$spe_script" $assay_h5
+    test -s "spe_n${n_samples}_assays.h5"
+    test -s "spe_n${n_samples}_se.rds"
+    """
+}
