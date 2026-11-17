@@ -1,8 +1,10 @@
 process SPE_GEO_BUILD {
-    container 'mbv-r:test'
+    label 'mbv_r'
+    container r_image
 
     input:
     path spe_script
+    val r_image
     val n_samples
     path geo_bundle
     path sample_set

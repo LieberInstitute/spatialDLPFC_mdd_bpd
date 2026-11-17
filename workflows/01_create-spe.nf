@@ -4,7 +4,13 @@ include { GENE_REF } from './modules/01_create-spe/03_spe_update-rowData.nf'
 
 // pipeline parameters
 params {
-    n_samples: Integer
+    // global workflow parameters
+    container_runtime: String = ''
+    r_docker_image: String = ''
+    r_apptainer_image: String = ''
+    // full sample set (over-written if test profile used)
+    n_samples: Integer = 119
+    // module-specific parameters
     stage_subdir: String = '01_create-spe'
     timeout: Integer = 300
 }
@@ -12,11 +18,29 @@ params {
 
 workflow {
     main:
+    // check container runtime declared with profile and set image
+    if (params.container_runtime == 'docker') {
+        if (!params.r_docker_image) {
+            error 'Set r_docker_image in your Nextflow params .yaml file.'
+        }
+        r_image = params.r_docker_image
+    } else if (params.container_runtime == 'apptainer') {
+        if (!params.r_apptainer_image.startsWith('/')) {
+            error 'Set r_apptainer_image to an absolute SIF path in your Nextflow params .yaml file.'
+        }
+        r_image = "file://${params.r_apptainer_image}"
+    } else {
+        error 'Select the docker or apptainer profile.'
+    }
+
+    // set working directory for R scripts
     rDir = file("${launchDir}/code/")
-    FETCH_GEO("${rDir}/02_build_spe/01_GSE333974.R", params.n_samples, params.timeout)
-    SPE_GEO_BUILD("${rDir}/02_build_spe/02_spe-from-GEO.R", params.n_samples,
+
+    // run spe creation workflow modules
+    FETCH_GEO("${rDir}/02_build_spe/01_GSE333974.R", r_image, params.n_samples, params.timeout)
+    SPE_GEO_BUILD("${rDir}/02_build_spe/02_spe-from-GEO.R", r_image, params.n_samples,
         FETCH_GEO.out.geo_bundle, FETCH_GEO.out.geo_samples)
-    GENE_REF("${rDir}/02_build_spe/03_update-rowData.R", params.n_samples, params.timeout,
+    GENE_REF("${rDir}/02_build_spe/03_update-rowData.R", r_image, params.n_samples, params.timeout,
         SPE_GEO_BUILD.out.spe_files)
 
     publish:

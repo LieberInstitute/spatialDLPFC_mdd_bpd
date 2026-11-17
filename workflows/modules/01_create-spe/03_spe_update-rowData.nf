@@ -1,10 +1,12 @@
 process GENE_REF {
-    container 'mbv-r:test'
+    label 'mbv_r'
+    container r_image
     
     stageInMode 'copy'
     
     input:
     path spe_script
+    val r_image
     val n_samples
     val timeout
     tuple path(assay_h5), path(se_rds)

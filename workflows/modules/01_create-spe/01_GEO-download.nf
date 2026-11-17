@@ -1,8 +1,10 @@
 process FETCH_GEO {
-    container 'mbv-r:test'
+    label 'mbv_r'
+    container r_image
 
     input:
     path spe_script
+    val r_image
     val n_samples
     val timeout
 
