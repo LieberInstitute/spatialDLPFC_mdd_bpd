@@ -1,5 +1,6 @@
 args <- commandArgs(trailingOnly = TRUE)
-h5Path <- args[[1L]]
+maxseconds <- args[[1L]]
+h5Path <- args[[2L]]
 
 fname = basename(h5Path)
 h5_prefix = gsub("assays.h5$", "", fname)
@@ -19,7 +20,7 @@ spe <- loadHDF5SummarizedExperiment(dir = ".", prefix = h5_prefix)
 ## this is only the first line of many: https://github.com/LieberInstitute/spatialLIBD/blob/devel/R/read10xVisiumWrapper.R#L105
 
 # if pulling from provided GSE333974 feature data
-options(timeout = 300) # increase timeout limit to 5 min for downloading large files
+options(timeout = maxseconds) # increase timeout limit to 5 min for downloading large files
 tmp_dir <- tempfile("geoq", tmpdir = tempdir())
 dir.create(tmp_dir, showWarnings = FALSE)
 geo_url <- "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE333nnn/GSE333974"

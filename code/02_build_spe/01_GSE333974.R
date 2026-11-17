@@ -1,6 +1,6 @@
 args <- commandArgs(trailingOnly = TRUE)
 sample_set <- args[[1L]]
-
+maxseconds <- args[[2]]
 suppressPackageStartupMessages({
 	library("GEOquery")
 })
@@ -27,7 +27,7 @@ create_dir(tmp_dir)
 ###GSE333974_series_matrix.txt.gz
 
 ## use direct URL download to avoid NCBI GEO server blocking multiple requests from same IP
-options(timeout = 300) # increase timeout limit to 5 min for downloading large files
+options(timeout = maxseconds) # increase timeout limit to 5 min for downloading large files
 geo_url <- "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE333nnn/GSE333974"
 download_geo_file <- function(subdir, filename) {
   url <- paste(geo_url, subdir, filename, sep = "/")

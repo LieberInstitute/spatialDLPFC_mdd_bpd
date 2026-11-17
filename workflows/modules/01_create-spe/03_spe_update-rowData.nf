@@ -1,9 +1,12 @@
 process GENE_REF {
     container 'mbv-r:test'
-
+    
+    stageInMode 'copy'
+    
     input:
     path spe_script
     val n_samples
+    val timeout
     tuple path(assay_h5), path(se_rds)
 
     output:
@@ -12,7 +15,7 @@ process GENE_REF {
     script:
     """
     export TMPDIR=\$PWD # Force R's tempdir() to use the current Nextflow task work directory
-    Rscript --vanilla "$spe_script" $assay_h5
+    Rscript --vanilla "$spe_script" $timeout $assay_h5
     test -s "spe_n${n_samples}_assays.h5"
     test -s "spe_n${n_samples}_se.rds"
     """
