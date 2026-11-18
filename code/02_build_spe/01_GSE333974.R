@@ -1,6 +1,10 @@
 args <- commandArgs(trailingOnly = TRUE)
 sample_set <- args[[1L]]
 maxseconds <- args[[2]]
+raw_archive <- args[[3L]]
+if (!file.exists(raw_archive)) {
+  stop("GEO raw archive not found: ", raw_archive)
+}
 suppressPackageStartupMessages({
 	library("GEOquery")
 })
@@ -65,10 +69,9 @@ write.csv(donor.data, file.path(out_dir, "GEO_donor_data.csv"), row.names=FALSE)
 
 
 
-# DOWNLOAD SPACERANGER OUTPUTS FROM GEO #
+# EXTRACT SPACERANGER OUTPUTS FROM GEO #
 
-## first download to tempdir then restructure desired samples into published output
-raw_archive <- download_geo_file("suppl", "GSE333974_RAW.tar")
+## Extract the staged archive, then restructure the selected samples.
 tar_dir <- file.path(tmp_dir, "extracted_raw")
 stopifnot(untar(raw_archive, exdir = tar_dir) == 0L)
 

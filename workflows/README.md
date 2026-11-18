@@ -34,23 +34,39 @@ Clean up wd and remove empty work subdir
 nextflow clean -before <run_name> -f && find work -type d -empty -delete
 ```
 
+### GEO transfer instability
+GEO download speeds and outcomes can vary substantially. To give users 
+better flexibility to troubleshoot connections, the large (4GB) tar file
+containing spaceranger output for all 119 donors is now retrieved in a
+separate workflow step. 
 
+`DOWNLOAD_GEO_ARCHIVE` fetches the tar with curl before `FETCH_GEO` extracts
+the selected samples. The archive stays in Nextflow's work directory so
+`-resume` can reuse a completed download. Each transfer attempt uses
+`--timeout` as its time limit. The download tries up to three times.
+
+If the GEO hostname gives inconsistent responses, you can temporarily add
+`--geo_archive_resolve_ip <verified-IP>` to the launch command. Confirm that
+the address works from JHPCE before using it. By default, curl uses DNS.
 
 # Tests completed
 
 **01_create-spe**
-- successful Docker run with container and GTF input variable: `fervent_hugle` 
+- successful Docker run with container, GTF input variable, and curl GEO archive: `mighty_bhaskara` 
 ```
-nextflow run workflows/01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml
+nextflow run workflows/01_create-spe.nf -profile docker,test \
+  -params-file nextflow-test.yaml \
+  --geo_archive_resolve_ip 130.14.250.12
 ```
 
-- pending Apptainer run
+- Apptainer test on JHPCE
 ```bash
 srun --mem 1G --pty bash # need to be in compute or transfer node to load nextflow module
-module load nextflow # current v24.10.5 has lots of syntax differences from 26.10.0 so asking for update
+module load nextflow/26.10.6
 nextflow run workflows/01_create-spe.nf -profile apptainer,test -params-file nextflow-test.yaml \
-  -o nextflow_outputs/apptainer-test 
+  -o nextflow_outputs/apptainer-test
 ```
+
 
 # TO-DO
 
@@ -59,3 +75,4 @@ nextflow run workflows/01_create-spe.nf -profile apptainer,test -params-file nex
 option I want to keep but also want to be able to set an absolute path to a desired
 gtf file. Final product will be an input param stored in .yaml clarifying the 
 reference genome input
+- update GEO series matrix to include all donor metadata (age, RIN, seq batch/ round)

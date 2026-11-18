@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
 	library("HDF5Array")
 })
 
-# build basic SPE
+# BUILD BASIC SPE #
 donor.data <- read.csv(file.path(nest_dir, "GEO_donor_data.csv"), row.names=1)
 
 cat("\nBuild spe start time:", format(Sys.time(), tz="EST"), "\n")

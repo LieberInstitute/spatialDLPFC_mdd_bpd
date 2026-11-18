@@ -7,6 +7,7 @@ process FETCH_GEO {
     val r_image
     val n_samples
     val timeout
+    path raw_archive
 
     output:
     path 'GSE333974', emit: geo_bundle
@@ -15,6 +16,6 @@ process FETCH_GEO {
     script:
     """
     export TMPDIR=\$PWD # Force R's tempdir() to use the current Nextflow task work directory
-    Rscript --vanilla "$spe_script" $n_samples $timeout
+    Rscript --vanilla "$spe_script" "$n_samples" "$timeout" "$raw_archive"
     """
 }

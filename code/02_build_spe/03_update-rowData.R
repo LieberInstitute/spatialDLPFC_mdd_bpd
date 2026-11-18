@@ -38,7 +38,10 @@ rowdata_from_GEO <- function(spe) {
   return(spe)
 }
 
-# gene data from gtf else from GEO
+
+
+# UPDATE ROWDATA FROM GTF, ELSE FROM GEO #
+
 if (!is.na(reference_gtf)) {
   
   # spatialLIBD code: https://github.com/LieberInstitute/spatialLIBD/blob/devel/R/read10xVisiumWrapper.R#L105

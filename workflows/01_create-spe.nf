@@ -1,3 +1,4 @@
+include { DOWNLOAD_GEO_ARCHIVE } from './modules/01_create-spe/00_GEO-download-archive.nf'
 include { FETCH_GEO } from './modules/01_create-spe/01_GEO-download.nf'
 include { SPE_GEO_BUILD } from './modules/01_create-spe/02_spe_build-from-GEO.nf'
 include { GENE_REF } from './modules/01_create-spe/03_spe_update-rowData.nf'
@@ -13,6 +14,7 @@ params {
     // module-specific parameters
     stage_subdir: String = '01_create-spe'
     timeout: Integer = 300
+    geo_archive_resolve_ip: String = ''
     reference_gtf: String = ''
 }
 
@@ -37,9 +39,12 @@ workflow {
     // set working directory for R scripts
     rDir = file("${launchDir}/code/")
 
+    // GEOquery performance is unstable so try curl tar fetch
+    DOWNLOAD_GEO_ARCHIVE(r_image, params.timeout, params.geo_archive_resolve_ip ?: 'default')
+
     // run spe creation workflow modules
     FETCH_GEO("${rDir}/02_build_spe/01_GSE333974.R", r_image, 
-        params.n_samples, params.timeout)
+        params.n_samples, params.timeout, DOWNLOAD_GEO_ARCHIVE.out.raw_archive)
     
     SPE_GEO_BUILD("${rDir}/02_build_spe/02_spe-from-GEO.R", r_image, 
         params.n_samples,
