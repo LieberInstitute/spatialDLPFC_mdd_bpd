@@ -39,15 +39,11 @@ nextflow clean -before <run_name> -f && find work -type d -empty -delete
 # Tests completed
 
 **01_create-spe**
-- successful Docker run: `deadly_waddington` 
+- successful Docker run with container and GTF input variable: `fervent_hugle` 
 ```
-nextflow run workflows/01_create-spe.nf -profile test -with-report workflows/01_report.html --timeout 600
+nextflow run workflows/01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml
 ```
-- successful Docker run (with container revisions): `irreverent_celsius`
-```
-nextflow run workflows/01_create-spe.nf -profile docker,test \
-  -params-file nextflow-test.yaml
-```
+
 - pending Apptainer run
 ```bash
 srun --mem 1G --pty bash # need to be in compute or transfer node to load nextflow module
