@@ -3,7 +3,7 @@ suppressPackageStartupMessages({
 	#library(dplyr)
 	library(ggplot2)
 })
-source("code/02_build_spe/getMBvSampleInfo_function.r")
+source("code/01_spaceranger/INTERNAL_getMBvSampleInfo_function.r")
 
 l1 = list.files("processed-data/01_spaceranger")
 summExists = file.exists(paste0("processed-data/01_spaceranger/",l1,"/outs/metrics_summary.csv"))
@@ -72,15 +72,6 @@ p5 <- ggplot(mdata, aes(x=slide2, y=Median.UMI.Counts.per.Spot))+
 	labs(title="Median.UMI.Counts.per.Spot", x="seq. round & slide")+
 	theme_bw()+theme(axis.text.x=element_text(angle=90, hjust=1))
 
-ggsave(filename="plots/02_build_spe/r1_r2_r3_spaceranger_overview.png", 
+ggsave(filename="plots/01_spaceranger/INTERNAL_r1-r2-r3_spaceranger_overview.png", 
 	gridExtra::grid.arrange(p1, p2, p3, p4, p5, ncol=1),
 	bg="white", height=30, width=24)
-#pdf("plots/02_build_spe/r1_r2_r3_spaceranger_overview.pdf", #height=12, width=12)
-#	height=6, width=36)
-	#gridExtra::grid.arrange(p1, p2, p3, p4, p5, ncol=2)
-#	p1
-#	p2
-#	p3
-#	p4
-#	p5
-#dev.off()
