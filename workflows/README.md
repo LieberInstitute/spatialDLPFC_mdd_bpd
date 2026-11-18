@@ -59,7 +59,7 @@ nextflow run workflows/01_create-spe.nf -profile apptainer,test -params-file nex
 # TO-DO
 
 **01_create-spe**
-- write options for reference genome file: currently pulling from features.csv which
+- [PASSED LOCAL DOCKER TEST] write options for reference genome file: currently pulling from features.csv which
 option I want to keep but also want to be able to set an absolute path to a desired
 gtf file. Final product will be an input param stored in .yaml clarifying the 
 reference genome input

@@ -13,6 +13,7 @@ params {
     // module-specific parameters
     stage_subdir: String = '01_create-spe'
     timeout: Integer = 300
+    reference_gtf: String = ''
 }
 
 
@@ -37,11 +38,20 @@ workflow {
     rDir = file("${launchDir}/code/")
 
     // run spe creation workflow modules
-    FETCH_GEO("${rDir}/02_build_spe/01_GSE333974.R", r_image, params.n_samples, params.timeout)
-    SPE_GEO_BUILD("${rDir}/02_build_spe/02_spe-from-GEO.R", r_image, params.n_samples,
+    FETCH_GEO("${rDir}/02_build_spe/01_GSE333974.R", r_image, 
+        params.n_samples, params.timeout)
+    
+    SPE_GEO_BUILD("${rDir}/02_build_spe/02_spe-from-GEO.R", r_image, 
+        params.n_samples,
         FETCH_GEO.out.geo_bundle, FETCH_GEO.out.geo_samples)
-    GENE_REF("${rDir}/02_build_spe/03_update-rowData.R", r_image, params.n_samples, params.timeout,
-        SPE_GEO_BUILD.out.spe_files)
+
+    // check for GTF file
+    gtf_file = params.reference_gtf ? file(params.reference_gtf, glob: false) : null
+    gtf_input = gtf_file != null && gtf_file.isFile() ? gtf_file : []
+
+    GENE_REF("${rDir}/02_build_spe/03_update-rowData.R", r_image, 
+        params.n_samples, params.timeout,
+        SPE_GEO_BUILD.out.spe_files, params.reference_gtf, gtf_input)
 
     publish:
     geo_path = FETCH_GEO.out.geo_bundle
