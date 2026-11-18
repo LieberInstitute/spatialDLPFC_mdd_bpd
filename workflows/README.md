@@ -59,13 +59,22 @@ nextflow run workflows/01_create-spe.nf -profile docker,test \
   --geo_archive_resolve_ip 130.14.250.12
 ```
 
-- Successful Apptainer run on JHPCE with container, GTF input variable, and curl GEO archive: `boring_picasso`
+- Successful Apptainer test run on JHPCE with container, GTF input variable, and curl GEO archive: `boring_picasso`
 ```bash
 srun --mem 1G --pty bash # need to be in compute or transfer node to load nextflow module
 module load nextflow/26.10.6
 nextflow run workflows/01_create-spe.nf -profile apptainer,test -params-file nextflow-test.yaml \
   -o nextflow_outputs/apptainer-test \
   -with-report workflows/01_apptainer-report.html
+```
+- Successful Apptainer full run on JHPCE with container, GTF input variable, and curl GEO archive: `awesome_leibniz`
+```bash
+srun --mem 4G --pty bash # previously had nextflow success but OOM runner with 1GB
+module load nextflow/26.10.6
+export NXF_JVM_ARGS="-Xms256m -Xmx2g"
+nextflow run workflows/01_create-spe.nf -profile apptainer -params-file nextflow-test.yaml \
+  -with-report workflows/01_apptainer-full-report.html \
+  -resume
 ```
 
 
