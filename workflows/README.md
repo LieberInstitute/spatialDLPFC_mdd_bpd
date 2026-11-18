@@ -52,27 +52,24 @@ the address works from JHPCE before using it. By default, curl uses DNS.
 # Tests completed
 
 **01_create-spe**
-- successful Docker run with container, GTF input variable, and curl GEO archive: `mighty_bhaskara` 
+- Successful Docker run with container, GTF input variable, and curl GEO archive: `mighty_bhaskara` 
 ```
 nextflow run workflows/01_create-spe.nf -profile docker,test \
   -params-file nextflow-test.yaml \
   --geo_archive_resolve_ip 130.14.250.12
 ```
 
-- Apptainer test on JHPCE
+- Successful Apptainer run on JHPCE with container, GTF input variable, and curl GEO archive: `boring_picasso`
 ```bash
 srun --mem 1G --pty bash # need to be in compute or transfer node to load nextflow module
 module load nextflow/26.10.6
 nextflow run workflows/01_create-spe.nf -profile apptainer,test -params-file nextflow-test.yaml \
-  -o nextflow_outputs/apptainer-test
+  -o nextflow_outputs/apptainer-test \
+  -with-report workflows/01_apptainer-report.html
 ```
 
 
 # TO-DO
 
 **01_create-spe**
-- [PASSED LOCAL DOCKER TEST] write options for reference genome file: currently pulling from features.csv which
-option I want to keep but also want to be able to set an absolute path to a desired
-gtf file. Final product will be an input param stored in .yaml clarifying the 
-reference genome input
 - update GEO series matrix to include all donor metadata (age, RIN, seq batch/ round)
