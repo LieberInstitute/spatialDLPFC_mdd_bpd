@@ -34,7 +34,7 @@ rowdata_from_GEO <- function(spe) {
   features_path <- download_geo_file("suppl", "GSE333974_MBv_n119_features.csv.gz")
   fdata = read.csv(features_path, row.names=1)
   stopifnot(identical(rownames(spe), rownames(fdata)))
-  rowData(spe) = as(fdata[,1:7], "DataFrame")
+  rowData(spe) = as(fdata[,1:6], "DataFrame")
   return(spe)
 }
 
