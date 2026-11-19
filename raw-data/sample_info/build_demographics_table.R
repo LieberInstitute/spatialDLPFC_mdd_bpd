@@ -28,7 +28,8 @@ demo$age = signif(demo$age, 3)
 # seq/rnd expansion
 demo$instrum = factor(demo$seq, levels = c("SC-TC", "SKCCC", "Psomagen-1", "Psomagen-2"),
     labels = c("Novaseq 6000", "Novaseq 6000", "Novaseq X", "Novaseq X"))
-demo$batch = demo$seq
+demo$batch = factor(demo$seq, levels = c("SC-TC", "SKCCC", "Psomagen-1", "Psomagen-2"),
+    labels = c("batch1", "batch2", "batch3", "batch4"))
 demo$seq <- NULL
 
 # add additional variables

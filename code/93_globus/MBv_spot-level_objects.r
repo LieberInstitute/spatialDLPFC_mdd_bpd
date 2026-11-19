@@ -34,14 +34,27 @@ rowData(spe)$grnboost2 = rownames(spe) %in% rownames(tmp)[rowData(tmp)$GRNBOOST2
 # extract colData columns
 colData(spe) <- colData(spe)[,c("sample_id", "brnum", "MBv_sample", #ID keys
                                 "condition", "sex", "age", #experimental group
-				"seq", #sequencing batch
+				#"seq", #sequencing batch
                                 "key", "array_row", "array_col", "in_tissue", #spatial metrics
                                 "sum_umi", "sum_gene", "expr_chrM_ratio", "remove_spots")] #QC metrics
 # round age to tenths for privacy
 colData(spe)$age = signif(colData(spe)$age, 3)
 # update language
-colnames(colData(spe))[4] = "diagnosis"
-spe$diagnosis = gsub("BPD", "BD", spe$diagnosis)
+colnames(colData(spe))[4] = "dx"
+spe$dx = gsub("BPD", "BD", spe$dx)
+
+df1 = as.data.frame(colData(spe))
+demo <- read.csv("raw-data/sample_info/n119_demographics.csv", row.names=1)
+df1 = merge(df1, demo[,c("sample_id","brnum","MBv_sample","RIN","batch","slide")])
+rownames(df1) <- df1$key
+df1 = df1[rownames(colData(spe)), c(
+        "sample_id", "brnum", "MBv_sample", #ID keys
+        "dx", "sex", "age", "RIN",
+        "batch", "slide",
+        "key", "array_row", "array_col", "in_tissue",
+        "sum_umi", "sum_gene", "expr_chrM_ratio", "remove_spots"
+)]
+colData(spe) <- as(df1, "DataFrame")
 
 # add spatial domain annotations
 cdata = read.csv("processed-data/05_clustering/PRECAST/colData_all-precast-clusters.csv", row.names=1)
