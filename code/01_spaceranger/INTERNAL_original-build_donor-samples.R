@@ -1,13 +1,7 @@
 setwd('/dcs04/lieber/marmaypag/spatialDLPFC_mdd_bpd_LIBD4100/spatialDLPFC_mdd_bpd/')
-suppressPackageStartupMessages({
-    library("SpatialExperiment")
-    library("spatialLIBD")
-    library("rtracklayer")
-    library("HDF5Array")
-})
 
 # Get sample info
-source("code/01_spaceranger/INTERNAL_getMBvSampleInfo_function.r")
+source("raw-data/sample_info/getMBvSampleInfo_function.R")
 demo = getMBvSampleInfo(REDCapFile="Visium_DATA_2025-01-22_1406.csv",
                         demoFile="DLPFC_cross-disorders_demographics_MBv.csv")
 
@@ -46,4 +40,3 @@ demo[demo$brnum %in% repeated_donors,]
 #### of donor Br5366. They were fairly equal. We decided to keep the sample that was run
 #### in the large Psomagen batch and remove V13F27-338_C1. 
 #### In the Nextflow/GEO build, only the Psomagen sample (V13B23-380_A1) is present for this donor.
-

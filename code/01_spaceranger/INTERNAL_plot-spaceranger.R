@@ -3,7 +3,7 @@ suppressPackageStartupMessages({
 	#library(dplyr)
 	library(ggplot2)
 })
-source("code/01_spaceranger/INTERNAL_getMBvSampleInfo_function.r")
+source("raw-data/sample_info/getMBvSampleInfo_function.R")
 
 l1 = list.files("processed-data/01_spaceranger")
 summExists = file.exists(paste0("processed-data/01_spaceranger/",l1,"/outs/metrics_summary.csv"))
