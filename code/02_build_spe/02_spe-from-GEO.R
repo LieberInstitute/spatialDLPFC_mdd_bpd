@@ -34,7 +34,8 @@ rownames(cdata) <- cdata$key
 #"diagnosis"       "sex"             "age"             "seq"            
 #"key"             "array_row"       "array_col"       "in_tissue"
 colData(spe) <- cdata[spe$key,c("sample_id","brnum","MBv_sample","dx","sex",
-  #"age","seq",
+  #"age","RIN",
+  #"batch","slide",
   "key","array_row","array_col","in_tissue")]
 
 spe$sum_umi <- colSums(counts(spe))
