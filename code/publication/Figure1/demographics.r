@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
 
 cpList <- readRDS("plots/colorPalettes.rds")
 
-demo = read.csv("processed-data/publication/demographics.csv")
+demo = read.csv("raw-data/sample_info/n119_demographics.csv", row.names=1)
 
 demo$cond_sex = factor(paste(demo$condition, demo$sex), levels=c("NTC F","NTC M","MDD F","MDD M","BD F","BD M"),
 	labels=gsub(" ", "\n", c("NTC F","NTC M","MDD F","MDD M","BD F","BD M")))

@@ -1,22 +1,7 @@
 library(dplyr)
 set.seed(123)
 
-demo = read.csv("processed-data/publication/supp_tables/demographics.csv")
-
-df1 = read.csv("raw-data/sample_info/MBv_suicide.csv")
-table(df1$PrimaryDx)
-
-# 6 donors not included in study
-filter(df1, !BrNum %in% demo$brnum)
-filter(df1, !BrNum %in% demo$brnum)$BrNum
-
-demo = left_join(demo, df1[,c("BrNum","Manner.Of.Death","Violent.method.")], by=c("brnum"="BrNum"))
-
-demo$suicide = !is.na(demo$Manner.Of.Death)
-
-table(demo$suicide)
-table(demo$Smoking)
-
+demo = read.csv("raw-data/sample_info/n119_demographics.csv", row.names=1)
 
 t1 = mutate(demo, condition=factor(condition, levels=c("NTC","MDD","BD"))) %>%
   group_by(condition, sex) %>%

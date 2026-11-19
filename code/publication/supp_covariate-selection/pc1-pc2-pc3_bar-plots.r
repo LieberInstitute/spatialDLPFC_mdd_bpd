@@ -15,7 +15,7 @@ spe_pseudo$pc3 = reducedDim(spe_pseudo, "PCA_1663")[,3]
 spe_sm <- spe_pseudo
 
 #add additional covars
-demo = read.csv("processed-data/publication/supp_tables/demographics.csv")
+demo = read.csv("raw-data/sample_info/n119_demographics.csv", row.names=1)
 
 new.cdata = merge(colData(spe_sm)[,c("sample_id","brnum","condition","sex","smoothed_k9_1663","nspots","chrM_ratio","pc3","detected","sum","slide","seq")],
         demo[,c("sample_id","brnum","sex","age","RIN","BMI","Smoking")], sort=F)

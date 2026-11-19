@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 #need to remove age from colData because of significant digits change
-demo = read.csv("processed-data/publication/supp_tables/demographics.csv")
+demo = read.csv("raw-data/sample_info/n119_demographics.csv", row.names=1)
 
 # collinearity of donor-level variables
 cat("\nCorrelation of donor-level variables...\n")

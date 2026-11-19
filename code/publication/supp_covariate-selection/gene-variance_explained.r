@@ -12,7 +12,7 @@ suppressPackageStartupMessages({
 set.seed(123)
 
 
-demo = read.csv("processed-data/publication/supp_tables/demographics.csv")
+demo = read.csv("raw-data/sample_info/n119_demographics.csv", row.names=1)
 
 
 # domain-SP

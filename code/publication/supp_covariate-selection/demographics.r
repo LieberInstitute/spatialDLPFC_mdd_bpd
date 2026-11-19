@@ -8,7 +8,7 @@ set.seed(123)
 
 cpList <- readRDS("plots/colorPalettes.rds")
 names(cpList$dx.pal)[3]="BD"
-demo = read.csv("processed-data/publication/supp_tables/demographics.csv")
+demo = read.csv("raw-data/sample_info/n119_demographics.csv", row.names=1)
 
 #chisq
 cat("\n\nChi-squared of dx on smoking status...\n")
