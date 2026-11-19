@@ -1,14 +1,13 @@
 # About
 Principal demographic data is derived from two major sources (see below). Throughout the analysis process,
 additional donor information was explored and is present in smaller distinct CSV files. 
-
-<br>
->[!WARNING]
+<br><br>
+>[!CAUTION]
 >This data is for internal LIBD reference only and is not suitable for public distribution due to the 
 >abundance of sensitive PHI that could be used to identify donors. Donor demographic info approved
 >for public distribution references these files. The build info for the public files can be found in
 >the corresponding `code` files (e.g., Globus, publication Tables and Supplemental Tables).
-<br>
+<br><br>
 
 In addition to metadata CSV files, this directory contains two R scripts. The code in `getMBvSampleInfo_function.R` 
 is a wrapper to build the core demographic info from the principal sources. This function is 
@@ -48,16 +47,18 @@ measurements (if collected)
 ### Sequencing rounds
 Round 1: An initial sequencing run was performed on the first 6 non-pilot slides (V13F27-338, V13F27-348, V13Y10-020, 
 V13Y10-021, V13Y10-022, V13Y10-023). These were actually run for different cores (see batches).
+
 Round 2: The remaining 34 slides were run together (round 2). An experimental error occurred on V13B23-339_A1 that 
 was caught prior to submitting the samples for sequencing. This sample was not sequenced and a new tissue section 
 and sample preparation was performed on V13B23-283_B1 which was submitted with other Visium slides for a lateral 
 septum experiment.
+
 Round 3: Quality control performed on the sequenced data from all 40 slides revealed two slides with substantially 
 fewer reads across all samples (one from round 1 V13Y10-020 and one from round 2 V13B23-331). See 
 "plots/01_spaceranger/INTERNAL_r1-r2-r3_spaceranger-overview.png". These new tissue sections were selected for 
 the 8 samples on these slides. V13Y10-020 --> V13B23-282, V13B23-331 --> V13B23-279. 
 
-### Repeated MDD male Compiling demographic information for MBv project
+### Repeated MDD male
 One brain donor (Br5366) provided sections for two different samples in this experiment: V13F27-338_C1 (round 1) 
 and V13B23-380_A1 (round 2). This means that although there are 120 samples, there are only 119 donors and that 
 the MDD male group only has 19 donors while all of the other diagnosis*sex groups have 20. One of these samples
