@@ -4,9 +4,10 @@ additional donor information was explored and is present in smaller distinct CSV
 <br><br>
 >[!CAUTION]
 >This data is for internal LIBD reference only and is not suitable for public distribution due to the 
->abundance of sensitive PHI that could be used to identify donors. Donor demographic info approved
->for public distribution references these files. The build info for the public files can be found in
->the corresponding `code` files (e.g., Globus, publication Tables and Supplemental Tables).
+>abundance of sensitive PHI that could be used to identify donors. All contents within this directory
+>are untracked with `.gitignore` and can only be accessed through JHPCE `/dcs04/`. However, since some
+>scripts required to generate published tables and plots refer to data in this directory, the README 
+>exists as a public-facing explanation for the absence of these donor demographic from the repository.
 <br><br>
 
 In addition to metadata CSV files, this directory contains two R scripts. The code in `getMBvSampleInfo_function.R` 
