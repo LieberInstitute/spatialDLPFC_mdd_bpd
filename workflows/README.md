@@ -80,5 +80,24 @@ nextflow run workflows/01_create-spe.nf -profile apptainer -params-file nextflow
 
 # TO-DO
 
+## Stage 2 QC and annotation
+
+The first stage 2 process, `MAD_OUTLIER_DETECTION`, computes sample- and
+slide-level lower 3-MAD flags and detects spatial edges and problem areas.
+From the repository root, supply the stage 1 directory containing the paired
+`spe_n<n_samples>_assays.h5` and `spe_n<n_samples>_se.rds` files:
+
+```bash
+nextflow run workflows/02_QC-annotation.nf -profile docker,test \
+  -params-file nextflow-test.yaml \
+  --spe_dir nextflow_outputs/test/01_create-spe
+```
+
+For a full run, omit the `test` profile and pass the full stage 1 output
+directory. Use `apptainer` in place of `docker` on JHPCE.
+The published `02_QC-annotation/colData_edges-problem-areas.csv` contains
+the original spot metadata and the new outlier, edge, and problem-area fields.
+This process retains the existing QC calculations and writes a metadata table.
+
 **01_create-spe**
 - update GEO series matrix to include all donor metadata (age, RIN, seq batch/ round)
