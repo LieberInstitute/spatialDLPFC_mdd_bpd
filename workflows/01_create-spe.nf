@@ -66,12 +66,12 @@ workflow {
 
 output {
     geo_path {
-        path params.stage_subdir
+        path { "processed-data/${params.stage_subdir}" }
     }
     geo_samples {
-        path params.stage_subdir
+        path { "processed-data/${params.stage_subdir}" }
     }
     spe_files {
-        path params.stage_subdir
+        path { "processed-data/${params.stage_subdir}" }
     }
 }
