@@ -3,8 +3,8 @@ nest_dir <- args[[1L]]
 sample_set <- read.table(args[[2L]], header=FALSE, stringsAsFactors=FALSE)[[1L]]
 
 suppressPackageStartupMessages({
-	library("SpatialExperiment")
-	library("HDF5Array")
+	library(SpatialExperiment)
+	library(HDF5Array)
 })
 
 # BUILD BASIC SPE #

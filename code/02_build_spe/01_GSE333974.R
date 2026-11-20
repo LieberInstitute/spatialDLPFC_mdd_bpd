@@ -6,7 +6,7 @@ if (!file.exists(raw_archive)) {
   stop("GEO raw archive not found: ", raw_archive)
 }
 suppressPackageStartupMessages({
-	library("GEOquery")
+	library(GEOquery)
 })
 
 out_dir <- "GSE333974"

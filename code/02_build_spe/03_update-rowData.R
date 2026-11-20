@@ -7,10 +7,10 @@ fname = basename(h5Path)
 h5_prefix = gsub("assays.h5$", "", fname)
 
 suppressPackageStartupMessages({
-	library("GEOquery")
-	library("SpatialExperiment")
-	library("HDF5Array")
-  library("rtracklayer")
+	library(GEOquery)
+	library(SpatialExperiment)
+	library(HDF5Array)
+  library(rtracklayer)
 })
 
 spe <- loadHDF5SummarizedExperiment(dir = ".", prefix = h5_prefix)
