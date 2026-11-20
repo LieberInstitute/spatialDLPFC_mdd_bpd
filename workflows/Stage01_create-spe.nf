@@ -1,7 +1,7 @@
-include { DOWNLOAD_GEO_ARCHIVE } from './modules/01_create-spe/00_GEO-download-archive.nf'
-include { FETCH_GEO } from './modules/01_create-spe/01_GEO-download.nf'
-include { SPE_GEO_BUILD } from './modules/01_create-spe/02_spe_build-from-GEO.nf'
-include { GENE_REF } from './modules/01_create-spe/03_spe_update-rowData.nf'
+include { DOWNLOAD_GEO_ARCHIVE } from './modules/Stage01_create-spe/00_GEO-download-archive.nf'
+include { FETCH_GEO } from './modules/Stage01_create-spe/01_GEO-download.nf'
+include { SPE_GEO_BUILD } from './modules/Stage01_create-spe/02_spe_build-from-GEO.nf'
+include { GENE_REF } from './modules/Stage01_create-spe/03_spe_update-rowData.nf'
 
 // pipeline parameters
 params {
@@ -12,7 +12,7 @@ params {
     // full sample set (over-written if test profile used)
     n_samples: Integer = 119
     // module-specific parameters
-    stage_subdir: String = '01_create-spe'
+    stage_subdir: String = 'Stage01_create-spe'
     timeout: Integer = 300
     geo_archive_resolve_ip: String = ''
     reference_gtf: String = ''
