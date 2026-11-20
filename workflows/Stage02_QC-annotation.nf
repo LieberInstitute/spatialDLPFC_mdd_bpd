@@ -1,6 +1,8 @@
+include { CREATE_COLOR_PALETTES } from './modules/Stage02_QC-annotation/00_create-color-palettes.nf'
 include { MAD_OUTLIER_DETECTION } from './modules/Stage02_QC-annotation/01_MAD-outlier-detection.nf'
 include { REVIEW_EDGES_OUTLIER_AREAS } from './modules/Stage02_QC-annotation/02_review-edges-outlier-areas.nf'
 include { SPOTSWEEPER } from './modules/Stage02_QC-annotation/03_spotsweeper.nf'
+include { QC_PLOTS } from './modules/Stage02_QC-annotation/04_QC-plots.nf'
 
 
 // pipeline parameters
@@ -61,16 +63,34 @@ workflow {
         params.ignore_edge_samples.join(',')
     )
 
+    CREATE_COLOR_PALETTES(
+        file("${launchDir}/plots/create_colorPalettes.R", checkIfExists: true),
+        r_image
+    )
+
+    QC_PLOTS(
+        file("${rDir}/03_QC/04_QC-plots.R", checkIfExists: true),
+        r_image, SPOTSWEEPER.out.coldata, CREATE_COLOR_PALETTES.out.palettes
+    )
+
     publish:
+    color_palettes = CREATE_COLOR_PALETTES.out.palettes
     review_pdf = REVIEW_EDGES_OUTLIER_AREAS.out.review_pdf
     qc_coldata = SPOTSWEEPER.out.coldata
+    qc_summary_pdf = QC_PLOTS.out.summary_pdf
 }
 
 output {
+    color_palettes {
+        path 'plots'
+    }
     review_pdf {
         path { "plots/${params.stage_subdir}" }
     }
     qc_coldata {
         path { "processed-data/${params.stage_subdir}" }
+    }
+    qc_summary_pdf {
+        path { "plots/${params.stage_subdir}" }
     }
 }

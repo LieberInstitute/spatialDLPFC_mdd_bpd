@@ -74,5 +74,11 @@ qc.df[true.spots, "genes_local.outlier"] = colData(spe)$genes_local.outlier
 qc.df$chrM.ratio_local.outlier = NA
 qc.df[true.spots, "chrM.ratio_local.outlier"] =	colData(spe)$chrM.ratio_local.outlier
 
+qc.df$spotsweeper_outlier = qc.df$umi_local.outlier | qc.df$genes_local.outlier | qc.df$chrM.ratio_local.outlier
+
+qc.df$remove_spots = qc.df$remove_spots | qc.df$spotsweeper_outlier
+c1 = grep("remove_spots", colnames(qc.df))
+qc.df = qc.df[,c(setdiff(1:ncol(qc.df), c1), c1)]
+
 #save coldata
 write.csv(qc.df, "colData_QC.csv", row.names=T)
