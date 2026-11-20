@@ -50,8 +50,7 @@ workflow {
 
     REVIEW_EDGES_OUTLIER_AREAS(
         file("${rDir}/03_QC/02_review_edges-outlier-areas.R", checkIfExists: true),
-        r_image, spe_dir, params.n_samples, MAD_OUTLIER_DETECTION.out.coldata,
-        //plots_dir.resolve(params.stage_subdir)
+        r_image, spe_dir, params.n_samples, MAD_OUTLIER_DETECTION.out.coldata
     )
 
     publish:

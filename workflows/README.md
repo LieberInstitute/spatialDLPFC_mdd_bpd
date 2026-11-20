@@ -9,7 +9,7 @@ export NXF_LOG_FILE="$PWD/.nextflow/logs/create-spe.log"
 To specify different .log names for different runs use
 ```
 nextflow -log .nextflow/logs/01_create-spe.log \
-run workflows/01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml
+run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml
 ```
 
 Run nextflow from the project/root directory. If running from JHPCE
@@ -18,21 +18,33 @@ running the workflow with `-profile test` to use only 3 donors for
 testing. `nextflow-test.yaml` supplies the Docker image name and the Apptainer
 SIF path. The runtime profile selects which image to use.
 ```
-nextflow run workflows/01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml \
+nextflow run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml \
 -with-report workflows/01_report.html #if want to create report
 # if running a continuance on pre-fetched GSE or pre-built spe
-nextflow run workflows/01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml -resume
+nextflow run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml -resume
 ```
 
 Optionally run and generate resource use report
 ```
-nextflow run workflows/01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml -with-report workflows/01_report.html
+nextflow run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml -with-report workflows/01_report.html
 ```
 
 Clean up wd and remove empty work subdir
 ```
 nextflow clean -before <run_name> -f && find work -type d -empty -delete
 ```
+
+### Published output layout
+
+The default output root is the launch directory. The `test` profile uses
+`test/` beneath that directory. Each stage publishes analysis files under
+`processed-data/<stage_subdir>/` and figures under `plots/<stage_subdir>/`.
+
+For example, the stage 2 test publishes its CSV to
+`test/processed-data/Stage02_QC-annotation/` and its PDF to
+`test/plots/Stage02_QC-annotation/`. A custom `-o my-run` places both
+trees beneath `my-run/`. Supply stage 2's `--spe_dir` from the matching
+stage 1 `processed-data/Stage01_create-spe/` directory.
 
 ### GEO transfer instability
 GEO download speeds and outcomes can vary substantially. To give users 
@@ -52,19 +64,20 @@ the address works from JHPCE before using it. By default, curl uses DNS.
 # Tests completed
 
 **01_create-spe**
-- Successful Docker run with container, GTF input variable, and curl GEO archive: `mighty_bhaskara` 
-```
-nextflow run workflows/01_create-spe.nf -profile docker,test \
+- Successful Docker run with container, GTF input variable, and curl GEO archive: `peaceful_sammet` 
+```bash
+nextflow run workflows/Stage01_create-spe.nf -profile docker,test \
   -params-file nextflow-test.yaml \
-  --geo_archive_resolve_ip 130.14.250.12
+  -with-report workflows/reports/Stage01_docker-report.html
+#  --geo_archive_resolve_ip 130.14.250.12
 ```
 
 - Successful Apptainer test run on JHPCE with container, GTF input variable, and curl GEO archive: `boring_picasso`
 ```bash
 srun --mem 1G --pty bash # need to be in compute or transfer node to load nextflow module
 module load nextflow/26.10.6
-nextflow run workflows/01_create-spe.nf -profile apptainer,test -params-file nextflow-test.yaml \
-  -o nextflow_outputs/apptainer-test \
+nextflow run workflows/Stage01_create-spe.nf -profile apptainer,test -params-file nextflow-test.yaml \
+  -o apptainer-test \
   -with-report workflows/01_apptainer-report.html
 ```
 - Successful Apptainer full run on JHPCE with container, GTF input variable, and curl GEO archive: `awesome_leibniz`
@@ -72,11 +85,19 @@ nextflow run workflows/01_create-spe.nf -profile apptainer,test -params-file nex
 srun --mem 4G --pty bash # previously had nextflow success but OOM runner with 1GB
 module load nextflow/26.10.6
 export NXF_JVM_ARGS="-Xms256m -Xmx2g"
-nextflow run workflows/01_create-spe.nf -profile apptainer -params-file nextflow-test.yaml \
+nextflow run workflows/Stage01_create-spe.nf -profile apptainer -params-file nextflow-test.yaml \
   -with-report workflows/01_apptainer-full-report.html \
   -resume
 ```
 
+**02_QC-annotation**
+
+- Successful Docker run processes 1-2: `extravagant_kowalevski`
+```bash
+nextflow run workflows/Stage02_QC-annotation.nf -profile docker,test \
+  -params-file nextflow-test.yaml \
+  --spe_dir nextflow_outputs/test/processed-data/Stage01_create-spe
+```
 
 # TO-DO
 
@@ -87,15 +108,11 @@ slide-level lower 3-MAD flags and detects spatial edges and problem areas.
 From the repository root, supply the stage 1 directory containing the paired
 `spe_n<n_samples>_assays.h5` and `spe_n<n_samples>_se.rds` files:
 
-```bash
-nextflow run workflows/02_QC-annotation.nf -profile docker,test \
-  -params-file nextflow-test.yaml \
-  --spe_dir nextflow_outputs/test/01_create-spe
-```
+
 
 For a full run, omit the `test` profile and pass the full stage 1 output
 directory. Use `apptainer` in place of `docker` on JHPCE.
-The published `02_QC-annotation/colData_edges-outlier-areas.csv` contains
+The published `processed-data/Stage02_QC-annotation/colData_edges-outlier-areas.csv` contains
 the original spot metadata and the new outlier, edge, and problem-area fields.
 This process retains the existing QC calculations and writes a metadata table.
 
