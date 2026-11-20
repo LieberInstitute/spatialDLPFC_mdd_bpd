@@ -1,5 +1,6 @@
 include { MAD_OUTLIER_DETECTION } from './modules/Stage02_QC-annotation/01_MAD-outlier-detection.nf'
 include { REVIEW_EDGES_OUTLIER_AREAS } from './modules/Stage02_QC-annotation/02_review-edges-outlier-areas.nf'
+include { SPOTSWEEPER } from './modules/Stage02_QC-annotation/03_spotsweeper.nf'
 
 
 // pipeline parameters
@@ -12,9 +13,10 @@ params {
     reference_gtf: String = ''
     // HDF5 spe
     n_samples: Integer = 119
-    spe_dir: Path
+    spe_dir: Path = 'processed-data/Stage01_create-spe'
     // module-specific parameters
     stage_subdir: String = 'Stage02_QC-annotation'
+    ignore_edge_samples: List = ['V13B23-302_A1', 'V13B23-302_C1']
 }
 
 
@@ -53,16 +55,22 @@ workflow {
         r_image, spe_dir, params.n_samples, MAD_OUTLIER_DETECTION.out.coldata
     )
 
+    SPOTSWEEPER(
+        file("${rDir}/03_QC/03_spotsweeper.R", checkIfExists: true),
+        r_image, spe_dir, params.n_samples, MAD_OUTLIER_DETECTION.out.coldata,
+        params.ignore_edge_samples.join(',')
+    )
+
     publish:
-    mad_outliers = MAD_OUTLIER_DETECTION.out.coldata
     review_pdf = REVIEW_EDGES_OUTLIER_AREAS.out.review_pdf
+    qc_coldata = SPOTSWEEPER.out.coldata
 }
 
 output {
-    mad_outliers {
-        path { "processed-data/${params.stage_subdir}" }
-    }
     review_pdf {
         path { "plots/${params.stage_subdir}" }
+    }
+    qc_coldata {
+        path { "processed-data/${params.stage_subdir}" }
     }
 }

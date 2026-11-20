@@ -1,6 +1,6 @@
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 3L) {
-    stop("Usage: Rscript 02_review_edges-outlier-areas.R <spe_dir> <n_samples> <qc_coldata>")
+    stop("Usage: Rscript 02_review_edges-outlier-areas.R <spe_dir> <n_samples> <qc_df>")
 }
 spe_dir <- args[[1L]]
 n_samples <- as.integer(args[[2L]])

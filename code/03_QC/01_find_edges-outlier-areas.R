@@ -103,5 +103,5 @@ colData(spe)[spe$MAD_area_id %in% remove.areas, "outlier_area"] = TRUE
 
 
 # SAVE 3MAD-BASED OUTLIER DETECTED #
-write.csv(colData(spe), "colData_edges-outlier-areas.csv", row.names=T)
+write.csv(colData(spe), "colData_QC.csv", row.names=T)
 

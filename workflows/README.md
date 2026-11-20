@@ -64,10 +64,10 @@ the address works from JHPCE before using it. By default, curl uses DNS.
 # Tests completed
 
 **01_create-spe**
-- Successful Docker run with container, GTF input variable, and curl GEO archive: `peaceful_sammet` 
+- Successful Docker run with container, GTF input variable, and curl GEO archive: `spontaneous_avogadro` 
 ```bash
 nextflow run workflows/Stage01_create-spe.nf -profile docker,test \
-  -params-file nextflow-test.yaml \
+  -params-file nextflow.yaml \
   -with-report workflows/reports/Stage01_docker-report.html
 #  --geo_archive_resolve_ip 130.14.250.12
 ```
@@ -92,12 +92,12 @@ nextflow run workflows/Stage01_create-spe.nf -profile apptainer -params-file nex
 
 **02_QC-annotation**
 
-- Successful Docker run processes 1-2: `extravagant_kowalevski`
+- Successful Docker run processes 1-3: `fervent_escher`
 ```bash
 nextflow run workflows/Stage02_QC-annotation.nf -profile docker,test \
-  -params-file nextflow-test.yaml \
-  --spe_dir nextflow_outputs/test/processed-data/Stage01_create-spe
+  -params-file nextflow.yaml 
 ```
+
 
 # TO-DO
 
@@ -112,9 +112,10 @@ From the repository root, supply the stage 1 directory containing the paired
 
 For a full run, omit the `test` profile and pass the full stage 1 output
 directory. Use `apptainer` in place of `docker` on JHPCE.
-The published `processed-data/Stage02_QC-annotation/colData_edges-outlier-areas.csv` contains
-the original spot metadata and the new outlier, edge, and problem-area fields.
-This process retains the existing QC calculations and writes a metadata table.
+Process 1 writes an intermediate metadata table containing the original spot
+metadata and the new outlier, edge, and problem-area fields. This table feeds
+the review and SpotSweeper processes. Only the expanded SpotSweeper table is
+published as `processed-data/Stage02_QC-annotation/colData_QC.csv`.
 
 Process 2, `REVIEW_EDGES_OUTLIER_AREAS`, consumes that table and the stage 1
 SPE directory. It publishes `check_edges-outlier-areas.pdf`, with paired
@@ -122,6 +123,23 @@ UMI and QC-category plots for each sample flagged for edge artifacts or low
 UMI areas. Images are resolved from the stage 1 GEO bundle when available.
 Missing images trigger a warning and spots-only plots. If no samples are
 flagged, the PDF records that result.
+
+Process 3, `SPOTSWEEPER`, consumes process 1's table and the stage 1 SPE.
+It excludes edges, flagged outlier areas, spots with at most 100 UMIs, and
+off-tissue spots before computing local outliers for UMI counts, detected
+genes, and mitochondrial fractions. It publishes the expanded table to
+`processed-data/Stage02_QC-annotation/colData_QC.csv`. Local-outlier values
+are NA for spots excluded before SpotSweeper. The script retains the supplied
+pre-SpotSweeper `remove_spots` flag.
+
+Optionally set `ignore_edge_samples` to a YAML list of sample IDs to retain
+their edge-labeled spots (other exclusion rules still apply):
+
+```yaml
+ignore_edge_samples: ['V13F27-338_A1']
+```
+
+Omit this key to apply the edge labels to every sample.
 
 **01_create-spe**
 - update GEO series matrix to include all donor metadata (age, RIN, seq batch/ round)

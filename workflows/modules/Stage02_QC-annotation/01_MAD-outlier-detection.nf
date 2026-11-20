@@ -10,12 +10,12 @@ process MAD_OUTLIER_DETECTION {
     val n_samples
 
     output:
-    path 'colData_edges-outlier-areas.csv', emit: coldata
+    path 'colData_QC.csv', emit: coldata
 
     script:
     """
     export TMPDIR=\$PWD
     Rscript --vanilla "$qc_script" "$spe_dir" "$n_samples" "$edge_functions"
-    test -s colData_edges-outlier-areas.csv
+    test -s colData_QC.csv
     """
 }
