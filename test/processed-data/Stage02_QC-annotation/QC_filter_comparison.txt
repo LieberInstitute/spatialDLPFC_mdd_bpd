@@ -1,0 +1,19 @@
+Comparison of regenerated and published QC filters
+
+Total spots compared: 34,940
+
+30,388 spots are retained by both filter sets.
+4,511 spots are removed by both filter sets.
+41 spots are retained by regenerated QC but removed by published QC.
+0 spots are removed by regenerated QC but retained by published QC.
+
+All 41 differences are restricted to slide V13F27-338.
+Published QC used four samples on this slide, whereas regenerated QC
+uses three. This changes the slide-level 3MAD thresholds and may also
+affect downstream local outlier detection.
+
+QC filters selected for downstream analysis: published
+keep_generated_qc: false
+
+The saved SPE uses the published removal flags to reproduce the
+published dataset's QC filtering.

@@ -64,7 +64,7 @@ the address works from JHPCE before using it. By default, curl uses DNS.
 # Tests completed
 
 **01_create-spe**
-- Successful Docker run with container, GTF input variable, and curl GEO archive: `spontaneous_avogadro` 
+- Successful Docker run (7 sample) with container, GTF input variable, and curl GEO archive: `condescending_linnaeus` 
 ```bash
 nextflow run workflows/Stage01_create-spe.nf -profile docker,test \
   -params-file nextflow.yaml \
@@ -92,7 +92,7 @@ nextflow run workflows/Stage01_create-spe.nf -profile apptainer -params-file nex
 
 **02_QC-annotation**
 
-- Successful Docker run processes 1-3: `fervent_escher`
+- Successful Docker run (7 sample) processes 1-3: `grave_kalman`
 ```bash
 nextflow run workflows/Stage02_QC-annotation.nf -profile docker,test \
   -params-file nextflow.yaml 
@@ -147,8 +147,8 @@ comparison.
 `keep_generated_qc: false` in `nextflow.yaml` retains the published filters
 when selected. Set it to `true` to retain the regenerated filters, departing
 from the published filtering. The final CSV records both filter sets and the
-selected source. The updated HDF5 SPE, CSV, cross-tabulation
-(`QC_filter_comparison.csv`), and per-spot discrepancies
+selected source. The updated HDF5 SPE, CSV, comparison summary
+(`QC_filter_comparison.txt`), and per-spot discrepancies
 (`QC_filter_differences.csv`) publish under
 `processed-data/Stage02_QC-annotation/`. The comparison must pass for either
 filter policy. Earlier QC plots show the regenerated QC used for review.

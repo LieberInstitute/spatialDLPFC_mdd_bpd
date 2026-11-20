@@ -13,9 +13,12 @@ params {
     n_samples: Integer = 119
     // module-specific parameters
     stage_subdir: String = 'Stage01_create-spe'
-    timeout: Integer = 300
-    geo_archive_resolve_ip: String = ''
-    reference_gtf: String = ''
+    timeout: Integer = 300 // override manually if needed but 5 min limit works consistently
+    geo_archive_resolve_ip: String = '' // provide manually if needed
+    reference_gtf: String = '' // pull from YAML
+    // downstream module-specific parameters declated in shared YAML
+    keep_generated_qc: Boolean
+    ignore_edge_samples: List = []
 }
 
 

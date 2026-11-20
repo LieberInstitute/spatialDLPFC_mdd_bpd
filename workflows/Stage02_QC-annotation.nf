@@ -12,15 +12,15 @@ params {
     container_runtime: String = ''
     r_docker_image: String = ''
     r_apptainer_image: String = ''
-    // Accepted when reusing the stage 1 container params file.
-    reference_gtf: String = ''
     // HDF5 spe
     n_samples: Integer = 119
     spe_dir: Path = 'processed-data/Stage01_create-spe'
     // module-specific parameters
     stage_subdir: String = 'Stage02_QC-annotation'
-    ignore_edge_samples: List
-    keep_generated_qc: Boolean
+    ignore_edge_samples: List // pull from YAML
+    keep_generated_qc: Boolean // pull from YAML
+    // upstream/downstream module-specific parameters declated in shared YAML
+    reference_gtf: String = ''
 }
 
 
@@ -92,7 +92,6 @@ workflow {
     qc_summary_pdf = QC_PLOTS.out.summary_pdf
     qc_spe = ACTUALIZE_QC_FILTERS.out.spe_files
     qc_comparison = ACTUALIZE_QC_FILTERS.out.comparison
-    qc_differences = ACTUALIZE_QC_FILTERS.out.differences
 }
 
 output {
@@ -112,9 +111,6 @@ output {
         path { "processed-data/${params.stage_subdir}" }
     }
     qc_comparison {
-        path { "processed-data/${params.stage_subdir}" }
-    }
-    qc_differences {
         path { "processed-data/${params.stage_subdir}" }
     }
 }

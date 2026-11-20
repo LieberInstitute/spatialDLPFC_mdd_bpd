@@ -16,8 +16,7 @@ process ACTUALIZE_QC_FILTERS {
     output:
     tuple path("spe_n${n_samples}_assays.h5"), path("spe_n${n_samples}_se.rds"), emit: spe_files
     path 'colData_QC.csv', emit: coldata
-    path 'QC_filter_comparison.csv', emit: comparison
-    path 'QC_filter_differences.csv', emit: differences
+    path 'QC_filter_comparison.txt', emit: comparison
 
     script:
     """
