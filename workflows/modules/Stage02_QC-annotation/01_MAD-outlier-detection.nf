@@ -6,8 +6,7 @@ process MAD_OUTLIER_DETECTION {
     path qc_script
     path edge_functions
     val r_image
-    path spe_dir
-    val n_samples
+    tuple path(assay_h5), path(se_rds)
 
     output:
     path 'colData_QC.csv', emit: coldata
@@ -15,7 +14,7 @@ process MAD_OUTLIER_DETECTION {
     script:
     """
     export TMPDIR=\$PWD
-    Rscript --vanilla "$qc_script" "$spe_dir" "$n_samples" "$edge_functions"
+    Rscript --vanilla "$qc_script" "$assay_h5" "$edge_functions"
     test -s colData_QC.csv
     """
 }

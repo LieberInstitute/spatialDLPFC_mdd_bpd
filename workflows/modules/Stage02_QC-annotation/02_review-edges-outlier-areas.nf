@@ -5,8 +5,7 @@ process REVIEW_EDGES_OUTLIER_AREAS {
     input:
     path qc_script
     val r_image
-    path spe_dir
-    val n_samples
+    tuple path(assay_h5), path(se_rds)
     path qc_df
 
     output:
@@ -15,7 +14,7 @@ process REVIEW_EDGES_OUTLIER_AREAS {
     script:
     """
     export TMPDIR=\$PWD
-    Rscript --vanilla "$qc_script" "$spe_dir" "$n_samples" "$qc_df"
+    Rscript --vanilla "$qc_script" "$assay_h5" "$qc_df"
     test -s check_edges-outlier-areas.pdf
     """
 }

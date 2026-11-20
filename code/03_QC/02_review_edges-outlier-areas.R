@@ -1,10 +1,10 @@
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 3L) {
-    stop("Usage: Rscript 02_review_edges-outlier-areas.R <spe_dir> <n_samples> <qc_df>")
+if (length(args) != 2L) {
+    stop("Usage: Rscript 02_review_edges-outlier-areas.R <assay_h5> <qc_df>")
 }
-spe_dir <- args[[1L]]
-n_samples <- as.integer(args[[2L]])
-spe_prefix <- paste0("spe_n", n_samples, "_")
+h5Path <- args[[1L]]
+fname = basename(h5Path)
+h5_prefix = sub("assays\\.h5$", "", fname)
 
 suppressPackageStartupMessages({
     library(SpatialExperiment)
@@ -18,11 +18,10 @@ suppressPackageStartupMessages({
 
 # LOAD SPE AND QC ANNOTATIONS #
 
-spe <- loadHDF5SummarizedExperiment(dir=spe_dir, prefix=spe_prefix)
-stopifnot(length(unique(spe$sample_id)) == n_samples)
+spe <- loadHDF5SummarizedExperiment(dir=".", prefix=h5_prefix)
 spe$lg10.umi = log10(spe$sum_umi+1)
 
-qc.areas = read.csv(args[[3L]], row.names=1)
+qc.areas = read.csv(args[[2L]], row.names=1)
 stopifnot(identical(colnames(spe), rownames(qc.areas)))
 
 

@@ -108,6 +108,11 @@ slide-level lower 3-MAD flags and detects spatial edges and problem areas.
 From the repository root, supply the stage 1 directory containing the paired
 `spe_n<n_samples>_assays.h5` and `spe_n<n_samples>_se.rds` files:
 
+All SPE-consuming stage 2 processes receive this pair as a tuple. Each R
+script accepts the assay filename and derives the prefix to load the SPE
+from the task directory. Read-only processes stage symlinks;
+`ACTUALIZE_QC_FILTERS` stages copies so resaving cannot modify stage 1 files.
+
 
 
 For a full run, omit the `test` profile and pass the full stage 1 output
@@ -118,7 +123,7 @@ the review and SpotSweeper processes. Only the expanded SpotSweeper table is
 published as `processed-data/Stage02_QC-annotation/colData_QC.csv`.
 
 Process 2, `REVIEW_EDGES_OUTLIER_AREAS`, consumes that table and the stage 1
-SPE directory. It publishes `check_edges-outlier-areas.pdf`, with paired
+SPE file pair. It publishes `check_edges-outlier-areas.pdf`, with paired
 UMI and QC-category plots for each sample flagged for edge artifacts or low
 UMI areas. Images are resolved from the stage 1 GEO bundle when available.
 Missing images trigger a warning and spots-only plots. If no samples are
@@ -130,16 +135,34 @@ off-tissue spots before computing local outliers for UMI counts, detected
 genes, and mitochondrial fractions. It publishes the expanded table to
 `processed-data/Stage02_QC-annotation/colData_QC.csv`. Local-outlier values
 are NA for spots excluded before SpotSweeper. The script retains the supplied
-pre-SpotSweeper `remove_spots` flag.
+QC flags for the following comparison.
 
-Optionally set `ignore_edge_samples` to a YAML list of sample IDs to retain
+Process 5, `ACTUALIZE_QC_FILTERS`, compares regenerated `remove_spots`
+with the published GSE333974 observation metadata, matched by spot key and
+restricted to the requested samples. It stops if any discrepancy occurs
+outside slide `V13F27-338`, whose original four-sample QC differs from the
+regenerated three-sample QC. Off-tissue spots are explicitly removed before
+comparison.
+
+`keep_generated_qc: false` in `nextflow.yaml` retains the published filters
+when selected. Set it to `true` to retain the regenerated filters, departing
+from the published filtering. The final CSV records both filter sets and the
+selected source. The updated HDF5 SPE, CSV, cross-tabulation
+(`QC_filter_comparison.csv`), and per-spot discrepancies
+(`QC_filter_differences.csv`) publish under
+`processed-data/Stage02_QC-annotation/`. The comparison must pass for either
+filter policy. Earlier QC plots show the regenerated QC used for review.
+
+Set the required `ignore_edge_samples` to a YAML list of sample IDs to retain
 their edge-labeled spots (other exclusion rules still apply):
 
 ```yaml
 ignore_edge_samples: ['V13F27-338_A1']
 ```
 
-Omit this key to apply the edge labels to every sample.
+Use `ignore_edge_samples: []` to apply the edge labels to every sample, including
+for tests that do not contain the listed samples. Both QC settings are configured
+in the params YAML; the test profile does not override them.
 
 **01_create-spe**
 - update GEO series matrix to include all donor metadata (age, RIN, seq batch/ round)

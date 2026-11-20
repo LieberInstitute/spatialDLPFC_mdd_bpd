@@ -4,10 +4,10 @@ if (length(args) != 2L) {
 }
 
 suppressPackageStartupMessages({
-    library("dplyr")
-    library("ggplot2")
-    library("gridExtra")
-    library("ggbeeswarm")
+    library(dplyr)
+    library(ggplot2)
+    library(gridExtra)
+    library(ggbeeswarm)
 })
 
 set.seed(123) # for consistency with ggbeeswarm

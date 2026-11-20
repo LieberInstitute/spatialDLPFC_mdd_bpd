@@ -1,13 +1,13 @@
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 3L) {
-    stop("Usage: Rscript 02_find_edges-problem-areas.r <spe_dir> <n_samples> <edge_functions>")
+if (length(args) != 2L) {
+    stop("Usage: Rscript 01_find_edges-outlier-areas.R <assay_h5> <edge_functions>")
 }
-spe_dir <- args[[1L]]
-n_samples <- as.integer(args[[2L]])
-spe_prefix <- paste0("spe_n", n_samples, "_")
+h5Path <- args[[1L]]
+fname = basename(h5Path)
+h5_prefix = sub("assays\\.h5$", "", fname)
 
 # NEXTFLOW ENTRY REQUREMENT CHECK
-required_files <- file.path(spe_dir, paste0(spe_prefix, c("assays.h5", "se.rds")))
+required_files <- paste0(h5_prefix, c("assays.h5", "se.rds"))
 if (!all(file.exists(required_files))) {
     stop("Missing SPE files: ", paste(required_files[!file.exists(required_files)], collapse = ", "))
 }
@@ -23,8 +23,8 @@ suppressPackageStartupMessages({
 
 # LOAD SPE AND RASTER FUNCTIONS #
 
-source(args[[3L]])
-spe <- loadHDF5SummarizedExperiment(dir=spe_dir, prefix=spe_prefix)
+source(args[[2L]])
+spe <- loadHDF5SummarizedExperiment(dir=".", prefix=h5_prefix)
 
 ## THIS WILL BE ABLE TO GO AFTER GEO SAMPLE MATRIX FILE IS UPDATED
 # The GEO stage 1 SPE retains sample_id but omits the original slide column.
@@ -42,7 +42,6 @@ if (!all(required_columns %in% colnames(colData(spe)))) {
     stop("SPE is missing required colData columns: ",
          paste(setdiff(required_columns, colnames(colData(spe))), collapse = ", "))
 }
-stopifnot(length(unique(spe$sample_id)) == n_samples)
 
 
 
