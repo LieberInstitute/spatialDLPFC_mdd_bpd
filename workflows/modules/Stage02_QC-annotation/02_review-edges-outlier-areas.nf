@@ -1,7 +1,6 @@
 process REVIEW_EDGES_OUTLIER_AREAS {
     label 'mbv_r'
     container r_image
-    //publishDir path: { plots_dir }, mode: 'copy', failOnError: true
 
     input:
     path qc_script
@@ -9,7 +8,6 @@ process REVIEW_EDGES_OUTLIER_AREAS {
     path spe_dir
     val n_samples
     path qc_coldata
-    //val plots_dir
 
     output:
     path 'check_edges-outlier-areas.pdf', emit: review_pdf

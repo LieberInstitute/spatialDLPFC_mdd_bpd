@@ -1,5 +1,5 @@
-include { MAD_OUTLIER_DETECTION } from './modules/02_QC-annotation/01_MAD-outlier-detection.nf'
-include { REVIEW_EDGES_OUTLIER_AREAS } from './modules/02_QC-annotation/02_review-edges-outlier-areas.nf'
+include { MAD_OUTLIER_DETECTION } from './modules/Stage02_QC-annotation/01_MAD-outlier-detection.nf'
+include { REVIEW_EDGES_OUTLIER_AREAS } from './modules/Stage02_QC-annotation/02_review-edges-outlier-areas.nf'
 
 
 // pipeline parameters
@@ -14,8 +14,7 @@ params {
     n_samples: Integer = 119
     spe_dir: Path
     // module-specific parameters
-    stage_subdir: String = '02_QC-annotation'
-    //plots_dir: String = ''
+    stage_subdir: String = 'Stage02_QC-annotation'
 }
 
 
@@ -40,16 +39,6 @@ workflow {
     rDir = file("${launchDir}/code/")
 
     spe_dir = file(params.spe_dir, checkIfExists: true, glob: false)
-
-    // Mirror output runs beneath plots; an explicit plots_dir overrides this.
-    //output_root = workflow.outputDir
-    //default_output_root = file("${launchDir}/nextflow_outputs")
-    //plot_suffix = output_root.startsWith(default_output_root)
-    //    ? default_output_root.relativize(output_root).toString()
-    //    : output_root.fileName.toString()
-    //plots_dir = params.plots_dir
-    //    ? file(params.plots_dir)
-    //    : file("${launchDir}/plots").resolve(plot_suffix)
     
     
     // run QC and annotation modules
