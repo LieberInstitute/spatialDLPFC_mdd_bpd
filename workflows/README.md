@@ -1,13 +1,13 @@
 # Breadcrumbs
 
 Bury `.nextflow.log` files in subdir:
-```
+```bash
 mkdir -p .nextflow/logs
 export NXF_LOG_FILE="$PWD/.nextflow/logs/create-spe.log"
 ```
 
 To specify different .log names for different runs use
-```
+```bash
 nextflow -log .nextflow/logs/01_create-spe.log \
 run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml
 ```
@@ -17,7 +17,7 @@ make sure you're on a node where `sbatch` is available. In this example we are
 running the workflow with `-profile test` to use only 3 donors for
 testing. `nextflow-test.yaml` supplies the Docker image name and the Apptainer
 SIF path. The runtime profile selects which image to use.
-```
+```bash
 nextflow run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml \
 -with-report workflows/01_report.html #if want to create report
 # if running a continuance on pre-fetched GSE or pre-built spe
@@ -25,12 +25,12 @@ nextflow run workflows/Stage01_create-spe.nf -profile docker,test -params-file n
 ```
 
 Optionally run and generate resource use report
-```
+```bash
 nextflow run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml -with-report workflows/01_report.html
 ```
 
 Clean up wd and remove empty work subdir
-```
+```bash
 nextflow clean -before <run_name> -f && find work -type d -empty -delete
 ```
 
@@ -90,6 +90,15 @@ nextflow run workflows/Stage02_QC-annotation.nf -profile docker,test \
   -params-file nextflow.yaml 
 ```
 
+- Apptainer full run on JHPCE: ``
+```bash
+srun --mem 4G --pty bash # previously had nextflow success but OOM runner with 1GB
+module load nextflow/26.10.6
+export NXF_JVM_ARGS="-Xms256m -Xmx2g"
+nextflow run workflows/Stage02_QC-annotation.nf -profile apptainer -params-file nextflow.yaml \
+  -with-report workflows/reports/Stage02_apptainer-full-report.html \
+  --spe_dir nextflow_outputs/01_create-spe
+```
 
 # TO-DO
 

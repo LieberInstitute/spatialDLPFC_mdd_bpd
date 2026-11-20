@@ -54,14 +54,17 @@ spe = spe[,!spe$remove_spots & spe$in_tissue]
 # RUN SPOTSWEEPER #
 
 ## Calculate local outliers: UMI
+cat(format(Sys.time()), "Calculate local outliers (umi counts)...","\n")
 spe <- localOutliers(spe, metric = "sum_umi", direction = "lower", log = TRUE)
 colnames(colData(spe))[ncol(colData(spe))-1] = "umi_local.outlier"
 
 ## Calculate local outliers: detected genes
+cat(format(Sys.time()), "Calculate local outliers (n genes)...","\n")
 spe <- localOutliers(spe, metric = "sum_gene", direction = "lower", log = TRUE)
 colnames(colData(spe))[ncol(colData(spe))-1] = "genes_local.outlier"
 
 ## Calculate local outliers: mito fractions
+cat(format(Sys.time()), "Calculate local outliers (mito %)...","\n")
 spe <- localOutliers(spe, metric = "expr_chrM_ratio", direction = "higher", log = FALSE)
 colnames(colData(spe))[ncol(colData(spe))-1] = "chrM.ratio_local.outlier"
 
