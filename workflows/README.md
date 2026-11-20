@@ -95,9 +95,16 @@ nextflow run workflows/02_QC-annotation.nf -profile docker,test \
 
 For a full run, omit the `test` profile and pass the full stage 1 output
 directory. Use `apptainer` in place of `docker` on JHPCE.
-The published `02_QC-annotation/colData_edges-problem-areas.csv` contains
+The published `02_QC-annotation/colData_edges-outlier-areas.csv` contains
 the original spot metadata and the new outlier, edge, and problem-area fields.
 This process retains the existing QC calculations and writes a metadata table.
+
+Process 2, `REVIEW_EDGES_OUTLIER_AREAS`, consumes that table and the stage 1
+SPE directory. It publishes `check_edges-outlier-areas.pdf`, with paired
+UMI and QC-category plots for each sample flagged for edge artifacts or low
+UMI areas. Images are resolved from the stage 1 GEO bundle when available.
+Missing images trigger a warning and spots-only plots. If no samples are
+flagged, the PDF records that result.
 
 **01_create-spe**
 - update GEO series matrix to include all donor metadata (age, RIN, seq batch/ round)
