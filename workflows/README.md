@@ -90,7 +90,7 @@ nextflow run workflows/Stage02_QC-annotation.nf -profile docker,test \
   -params-file nextflow.yaml 
 ```
 
-- Apptainer full run on JHPCE: ``
+- Apptainer full run on JHPCE: `distracted_mclean`
 ```bash
 srun --mem 4G --pty bash # previously had nextflow success but OOM runner with 1GB
 module load nextflow/26.10.6
