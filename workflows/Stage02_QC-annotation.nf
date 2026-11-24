@@ -4,6 +4,7 @@ include { REVIEW_EDGES_OUTLIER_AREAS } from './modules/Stage02_QC-annotation/02_
 include { SPOTSWEEPER } from './modules/Stage02_QC-annotation/03_spotsweeper.nf'
 include { QC_PLOTS } from './modules/Stage02_QC-annotation/04_QC-plots.nf'
 include { ACTUALIZE_QC_FILTERS } from './modules/Stage02_QC-annotation/05_actualize-QC-filters.nf'
+include { NORMALIZATION } from './modules/Stage02_QC-annotation/06_normalization.nf'
 
 
 // pipeline parameters
@@ -85,13 +86,20 @@ workflow {
         SPOTSWEEPER.out.coldata, params.keep_generated_qc
     )
 
+    NORMALIZATION(
+        file("${rDir}/04_feature_selection/01_apply-QC_norm.R", checkIfExists: true),
+        r_image, params.n_samples,
+        ACTUALIZE_QC_FILTERS.out.spe_files, ACTUALIZE_QC_FILTERS.out.coldata
+    )
+
     publish:
     color_palettes = CREATE_COLOR_PALETTES.out.palettes
     review_pdf = REVIEW_EDGES_OUTLIER_AREAS.out.review_pdf
     qc_coldata = ACTUALIZE_QC_FILTERS.out.coldata
     qc_summary_pdf = QC_PLOTS.out.summary_pdf
-    qc_spe = ACTUALIZE_QC_FILTERS.out.spe_files
     qc_comparison = ACTUALIZE_QC_FILTERS.out.comparison
+    qc_spe = ACTUALIZE_QC_FILTERS.out.spe_files
+    normalized_spe = NORMALIZATION.out.spe_files
 }
 
 output {
@@ -107,10 +115,13 @@ output {
     qc_summary_pdf {
         path { "plots/${params.stage_subdir}" }
     }
-    qc_spe {
+    qc_comparison {
         path { "processed-data/${params.stage_subdir}" }
     }
-    qc_comparison {
+        qc_spe {
+        path { "processed-data/${params.stage_subdir}" }
+    }
+    normalized_spe {
         path { "processed-data/${params.stage_subdir}" }
     }
 }
