@@ -42,6 +42,7 @@ workflow {
 
     // set working directory for R scripts
     rDir = file("${launchDir}/code/")
+    published_geo_dir = workflow.outputDir.resolve("processed-data/${params.stage_subdir}/GSE333974").toString()
 
     // GEOquery performance is unstable so try curl tar fetch
     DOWNLOAD_GEO_ARCHIVE(r_image, params.timeout, params.geo_archive_resolve_ip ?: 'default')
@@ -52,7 +53,7 @@ workflow {
     
     SPE_GEO_BUILD("${rDir}/02_build_spe/02_spe-from-GEO.R", r_image, 
         params.n_samples,
-        FETCH_GEO.out.geo_bundle, FETCH_GEO.out.geo_samples)
+        FETCH_GEO.out.geo_bundle, FETCH_GEO.out.geo_samples, published_geo_dir)
 
     // check for GTF file
     gtf_file = params.reference_gtf ? file(params.reference_gtf, glob: false) : null

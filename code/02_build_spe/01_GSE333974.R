@@ -57,23 +57,28 @@ pd$sex <- ifelse(pd$sex=="Male", "M", "F")
 
 ## Expand GSM name into component metadata.
 sample_str <- sub("_matrix[.]mtx[.]gz$", "", basename(pd$supplementary_file_9))
-# Keep sample_str first: the SPE build reads it as the donor table row names.
-tmp = data.frame(sample_str=sample_str, pd, row.names=rownames(pd))
+pd$supplementary_file_9 <- NULL
+rownames(pd) <- sample_str
 
-sdata = do.call(rbind.data.frame, strsplit(tmp$sample_str, "_"))
+sdata = do.call(rbind.data.frame, strsplit(sample_str, "_"))
 
 sdata = data.frame("GEO_sample"=sdata[,1], "MBv_sample"=paste(sdata[,2], sdata[,3], sep="_"),
-  #"dx"=sdata[,4], "sex"=sdata[,5],
+  "check_dx"=sdata[,4], "check_sex"=sdata[,5], # include hard-coded dx and sex from GSM sample title name as sanity check below
   "brnum"=sapply(strsplit(sdata[,6], "-"), function(x) x[[1]]),
   "slide"=substr(sdata[,6], start=8, stop=20), "array"=sdata[,7])
 sdata$sample_id = paste(sdata$slide, sdata$array, sep="_")
 
 
 ## complete and save donor data
-donor.data = cbind(tmp, sdata)
-stopifnot(identical(rownames(donor.data), donor.data$GEO_sample))
+donor.data = cbind(pd, sdata)
+stopifnot(identical(donor.data$dx, donor.data$check_dx),
+  identical(donor.data$sex, donor.data$check_sex))
 
-write.csv(donor.data, file.path(out_dir, "GEO_donor_data.csv"), row.names=FALSE)
+write.csv(donor.data[,c("sample_id","brnum","MBv_sample",
+  "dx","sex","age","RIN",
+  "batch","slide",
+  "instrument_model", # keep in donor data csv because corresponds to the 2 platform-specific series matrices
+  "GEO_sample")], file.path(out_dir, "GEO_donor_data.csv"), row.names=TRUE)
 
 
 
@@ -96,10 +101,8 @@ destinations <- c(
   "-tissue_positions.csv.gz" = spatial_dir
 )
 
-sids = donor.data$sample_str
+sids = rownames(donor.data)
 nest_dir = out_dir
-#nest_dir = file.path(out_dir, "nested")
-#create_dir(nest_dir)
 
 for (i in 1:sample_set) {
   sample_dir <- file.path(nest_dir, sids[i])

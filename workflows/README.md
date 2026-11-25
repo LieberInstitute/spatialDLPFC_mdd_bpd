@@ -1,37 +1,85 @@
 # Breadcrumbs
+All commands executed in the cloned project/root directory. If running from JHPCE
+make sure you're on a node where `sbatch` is available.
 
 Bury `.nextflow.log` files in subdir:
 ```bash
 mkdir -p .nextflow/logs
-export NXF_LOG_FILE="$PWD/.nextflow/logs/create-spe.log"
+export NXF_LOG_FILE="$PWD/.nextflow/logs/.nextflow.log"
 ```
 
-To specify different .log names for different runs use
+Pick a nextflow entry point to run a portion of the MBv analysis. There are 4 entry
+points for this project, separating the analysis into 4 stages. 
+
+```
+MBv analysis pipeline
+│
+├── Stage 1: Create SPE
+│     └── code/02_build_spe
+│
+├── Stage 2: QC, feature selection & annotation
+│     ├── code/03_QC
+│     ├── code/04_feature_selection
+│     └── code/05_clustering
+│
+├── Stage 3: Pseudobulk & differential expression
+│     ├── code/06_pseudobulk
+│     ├── code/07-1_covariate_sensitivity
+│     └── code/07_dx_DE
+│
+└── Stage 4: Gene regulatory networks
+      ├── code/09_DEG_GRN
+      └── code/10_SCENIC
+```
+
+Run a stage of analysis by calling the entry point nextflow file and supplying options
+for the following required parameters:
+- YAML location: many things, importantly the docker images and apptainer SIF path
+- profile: Select docker or apptainer depending on your setup
+
 ```bash
-nextflow -log .nextflow/logs/01_create-spe.log \
-run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml
+nextflow run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow.yaml
 ```
 
-Run nextflow from the project/root directory. If running from JHPCE
-make sure you're on a node where `sbatch` is available. In this example we are
-running the workflow with `-profile test` to use only 3 donors for
-testing. `nextflow-test.yaml` supplies the Docker image name and the Apptainer
-SIF path. The runtime profile selects which image to use.
+There are also some optional parameters, all of which are helpful when troubleshooting and
+establishing a workflow.
+- resume: pickup from cached checkpoint
+- 'test' profile overrides default n=119 samples, running on a subset of 7 samples
+- with-report: I use to track usage so that you can anticipate memory and time requirements
+
 ```bash
-nextflow run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml \
--with-report workflows/01_report.html #if want to create report
-# if running a continuance on pre-fetched GSE or pre-built spe
-nextflow run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml -resume
+nextflow run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow.yaml \
+-with-report workflows/reports/01_report.html \
+-resume
 ```
 
-Optionally run and generate resource use report
-```bash
-nextflow run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow-test.yaml -with-report workflows/01_report.html
-```
-
-Clean up wd and remove empty work subdir
+Clean up wd (all before specific run) and remove empty work subdir
 ```bash
 nextflow clean -before <run_name> -f && find work -type d -empty -delete
+```
+
+
+### Making a map
+Check details: https://nf-co.re/docs/community/brand/workflow-schematics
+Make one map per stage. Start by building a graph running with `preview` for not actually execute analysis tasks
+```bash
+mkdir -p workflows/diagrams
+nextflow run workflows/Stage02_QC-annotation.nf \
+    -profile docker,test \
+    -params-file nextflow.yaml \
+    -preview \
+    -with-dag workflows/diagrams/Stage02.mmd
+```
+Creating conda env specifically for converting mmd to subway map:
+```bash
+conda create -n nf-metro -c conda-forge -c bioconda nf-metro
+conda activate nf-metro
+```
+Now convert
+```bash
+nf-metro render workflows/diagrams/Stage02.mmd \
+    --from-nextflow \
+    -o workflows/diagrams/Stage02.svg
 ```
 
 ### Published output layout
@@ -72,6 +120,17 @@ nextflow run workflows/Stage01_create-spe.nf -profile docker,test \
 #  --geo_archive_resolve_ip 130.14.250.12
 ```
 
+- Successful Apptainer test run with corrected GEO metadata (platform-specific series matrices): `pedantic_austin`
+```bash
+srun --mem 4G --pty bash # previously had nextflow success but OOM runner with 1GB
+module load nextflow/26.10.6
+export NXF_JVM_ARGS="-Xms256m -Xmx2g"
+export NXF_LOG_FILE="$PWD/.nextflow/logs/.nextflow.log"
+nextflow run workflows/Stage01_create-spe.nf -profile apptainer,test -params-file nextflow.yaml \
+  -with-report workflows/reports/Stage01_apptainer-test-report.html \
+  -w "$MYSCRATCH/MBv-work" -resume
+```
+
 - Successful Apptainer full run on JHPCE with container, GTF input variable, and curl GEO archive: `awesome_leibniz`
 ```bash
 srun --mem 4G --pty bash # previously had nextflow success but OOM runner with 1GB
@@ -101,6 +160,8 @@ nextflow run workflows/Stage02_QC-annotation.nf -profile apptainer -params-file 
 ```
 
 # TO-DO
+
+- container distribution
 
 **Stage01_create-spe**
 - update GEO series matrix to include all donor metadata (age, RIN, seq batch/ round)

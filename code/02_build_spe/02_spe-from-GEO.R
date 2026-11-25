@@ -1,6 +1,10 @@
 args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 3L) {
+    stop("Usage: Rscript 02_spe-from-GEO.R <geo_bundle> <sample_ids> <published_geo_dir>")
+}
 nest_dir <- args[[1L]]
 sample_set <- read.table(args[[2L]], header=FALSE, stringsAsFactors=FALSE)[[1L]]
+published_geo_dir <- args[[3L]]
 
 suppressPackageStartupMessages({
 	library(SpatialExperiment)
@@ -44,6 +48,24 @@ is_mito <- grep("^MT-", rowData(spe)$symbol)
 spe$expr_chrM <- colSums(counts(spe)[is_mito, , drop = FALSE])
 spe$expr_chrM_ratio <- spe$expr_chrM / spe$sum_umi
 
+
+# LINK IMAGES TO THE PUBLISHED GEO BUNDLE #
+## Without this section, the image path is to the cache/work dir which may be temporary or deleted later on
+## This section replaces that path with the publish output dir path
+image_data <- imgData(spe)
+image_samples <- match(image_data$sample_id, donor.data$sample_id)
+stopifnot(!anyNA(image_samples))
+for (i in seq_len(nrow(image_data))) {
+    image <- image_data$data[[i]]
+    stopifnot(is(image, "StoredSpatialImage"))
+    published_image <- file.path(published_geo_dir, rownames(donor.data)[image_samples[i]],
+                                 "outs", "spatial", basename(imgSource(image)))
+    # Publication is asynchronous: the final path need not exist inside this task.
+    # Construct the stored reference without normalizing it against the work directory.
+    image_data$data[[i]] <- new("StoredSpatialImage", path=published_image,
+                                metadata=metadata(image))
+}
+imgData(spe) <- image_data
 
 start.time2 = Sys.time()
 cat("\nStart HDF5SummExp save:"); start.time2           
