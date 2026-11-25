@@ -23,14 +23,7 @@ create_dir(tmp_dir)
 
 # EXTRACT DONOR DATA FROM GEO MATRIX #
 
-## simple version - NOT RUN
-#### this version is straightforward but can be blocked when run in nextflow due to NCBI GEO server blocking multiple requests from same IP
-## gse <- getGEO("GSE333974", destdir = tmp_dir,
-##  GSEMatrix = T, getGPL = F) # still use tempdir for matrix
-###Found 1 file(s)
-###GSE333974_series_matrix.txt.gz
-
-## use direct URL download to avoid NCBI GEO server blocking multiple requests from same IP
+## Use direct URLs for the two platform-specific series matrices.
 options(timeout = maxseconds) # increase timeout limit to 5 min for downloading large files
 geo_url <- "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE333nnn/GSE333974"
 download_geo_file <- function(subdir, filename) {
@@ -42,13 +35,30 @@ download_geo_file <- function(subdir, filename) {
   destination
 }
 
-series_matrix <- download_geo_file("matrix", "GSE333974_series_matrix.txt.gz")
-pd <- pData(getGEO(filename = series_matrix, getGPL = FALSE))
+series_matrices <- c("GSE333974-GPL24676_series_matrix.txt.gz",
+                     "GSE333974-GPL34281_series_matrix.txt.gz")
+metadata_columns <- c("supplementary_file_9", "instrument_model", "description",
+                      "age:ch1", "agent:ch1", "batch:ch1", "Sex:ch1")
+pd <- lapply(series_matrices, function(filename) {
+  series_matrix <- download_geo_file("matrix", filename)
+  metadata <- pData(getGEO(filename = series_matrix, getGPL = FALSE))
+  metadata[,metadata_columns, drop=FALSE]
+})
+pd <- do.call(rbind, pd)
 
-## expand GSM name into component metadata
-tmp = pd[,44:46]
-tmp[,1] = sapply(strsplit(sapply(strsplit(tmp[,1], "suppl\\/"), function(x) x[[2]]), "_matrix"), function(y) y[[1]])
-colnames(tmp) = c("sample_str","dx","sex")
+# Preserve GSM accession ordering before selecting the requested sample subset.
+pd <- pd[order(rownames(pd)),,drop=FALSE]
+colnames(pd) <- c("supplementary_file_9", "instrument_model", "RIN",
+                  "age", "dx", "batch", "sex")
+pd$RIN <- as.numeric(substr(pd$RIN, start=5, stop=7)) # RIN was rounded to 2 sigfig (0's were dropped)
+pd$age <- as.numeric(pd$age)
+pd$sex <- ifelse(pd$sex=="Male", "M", "F")
+
+
+## Expand GSM name into component metadata.
+sample_str <- sub("_matrix[.]mtx[.]gz$", "", basename(pd$supplementary_file_9))
+# Keep sample_str first: the SPE build reads it as the donor table row names.
+tmp = data.frame(sample_str=sample_str, pd, row.names=rownames(pd))
 
 sdata = do.call(rbind.data.frame, strsplit(tmp$sample_str, "_"))
 
@@ -63,7 +73,6 @@ sdata$sample_id = paste(sdata$slide, sdata$array, sep="_")
 donor.data = cbind(tmp, sdata)
 stopifnot(identical(rownames(donor.data), donor.data$GEO_sample))
 
-## can merge this with ST1 for age and rin demo data
 write.csv(donor.data, file.path(out_dir, "GEO_donor_data.csv"), row.names=FALSE)
 
 
