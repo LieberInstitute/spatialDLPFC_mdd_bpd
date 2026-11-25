@@ -5,6 +5,7 @@ include { GENE_REF } from './modules/Stage01_create-spe/03_spe_update-rowData.nf
 
 // pipeline parameters
 params {
+    task_trace_file: String = '' // internal execution trace used for run reporting
     // global workflow parameters
     container_runtime: String = ''
     r_docker_image: String = ''

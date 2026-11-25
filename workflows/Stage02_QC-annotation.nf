@@ -5,10 +5,14 @@ include { SPOTSWEEPER } from './modules/Stage02_QC-annotation/03_spotsweeper.nf'
 include { QC_PLOTS } from './modules/Stage02_QC-annotation/04_QC-plots.nf'
 include { ACTUALIZE_QC_FILTERS } from './modules/Stage02_QC-annotation/05_actualize-QC-filters.nf'
 include { NORMALIZATION } from './modules/Stage02_QC-annotation/06_normalization.nf'
+include { NNSVG_PREP } from './modules/Stage02_QC-annotation/07_nnSVG-prep.nf'
+include { NNSVG_PER_SAMPLE } from './modules/Stage02_QC-annotation/08_nnSVG-per-sample.nf'
+include { writeNnsvgRunReport } from './modules/Stage02_QC-annotation/nnSVG-run-report.nf'
 
 
 // pipeline parameters
 params {
+    task_trace_file: String = '' // internal execution trace used for run reporting
     // global workflow parameters
     container_runtime: String = ''
     r_docker_image: String = ''
@@ -92,6 +96,24 @@ workflow {
         ACTUALIZE_QC_FILTERS.out.spe_files, ACTUALIZE_QC_FILTERS.out.coldata
     )
 
+    NNSVG_PREP(
+        file("${rDir}/04_feature_selection/02_nnSVG-prep.R", checkIfExists: true),
+        r_image, NORMALIZATION.out.spe_files
+    )
+
+    // Flatten the prepared directories into one independently scheduled task per sample.
+    sample_spe = NNSVG_PREP.out.sample_spe.flatten().map { sample_dir ->
+        tuple(sample_dir.name, sample_dir)
+    }
+    sample_seeds = NNSVG_PREP.out.run_specifics.splitCsv(header: true, quote: '"').map { row ->
+        tuple(row.sample_id, row.nnSVG_seed.toInteger())
+    }
+    sample_inputs = sample_spe.join(sample_seeds, failOnDuplicate: true, failOnMismatch: true)
+    NNSVG_PER_SAMPLE(
+        file("${rDir}/04_feature_selection/03_nnSVG_per-sample.R", checkIfExists: true),
+        r_image, sample_inputs
+    )
+
     publish:
     color_palettes = CREATE_COLOR_PALETTES.out.palettes
     review_pdf = REVIEW_EDGES_OUTLIER_AREAS.out.review_pdf
@@ -100,6 +122,17 @@ workflow {
     qc_comparison = ACTUALIZE_QC_FILTERS.out.comparison
     qc_spe = ACTUALIZE_QC_FILTERS.out.spe_files
     normalized_spe = NORMALIZATION.out.spe_files
+    per_sample_spe = NNSVG_PREP.out.sample_spe
+    nnsvg_results = NNSVG_PER_SAMPLE.out.svg_results
+    nnsvg_run_specifics = NNSVG_PREP.out.run_specifics
+
+    onComplete:
+    if (!workflow.preview) {
+        writeNnsvgRunReport(
+            "${workflow.outputDir}/processed-data/${params.stage_subdir}/nnSVG_run_specifics.csv",
+            params.task_trace_file, params.container_runtime == 'apptainer'
+        )
+    }
 }
 
 output {
@@ -124,4 +157,14 @@ output {
     normalized_spe {
         path { "processed-data/${params.stage_subdir}" }
     }
+    per_sample_spe {
+        path { "processed-data/${params.stage_subdir}" }
+    }
+    nnsvg_run_specifics {
+        path { "processed-data/${params.stage_subdir}" }
+    }
+    nnsvg_results {
+        path { "processed-data/${params.stage_subdir}/per-sample_svgs" }
+    }
+
 }
