@@ -18,7 +18,7 @@ params {
     r_docker_image: String = ''
     r_apptainer_image: String = ''
     // HDF5 spe
-    n_samples: Integer = 119
+    n_samples: Integer // default and test override are set in nextflow.config
     spe_dir: Path = 'processed-data/Stage01_create-spe'
     // module-specific parameters
     stage_subdir: String = 'Stage02_QC-annotation'

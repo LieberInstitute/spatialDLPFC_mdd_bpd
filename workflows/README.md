@@ -11,6 +11,12 @@ export NXF_LOG_FILE="$PWD/.nextflow/logs/.nextflow.log"
 Pick a nextflow entry point to run a portion of the MBv analysis. There are 4 entry
 points for this project, separating the analysis into 4 stages. 
 
+Option to build SPE from FASTQ (Stage 1)
+Alternatively can construct unfiltered SPE from GSE333974 supplemental files.
+Either of those SPE can be input to reproduce QC and annotation with Stage 2 workflow.
+Alternatively, use the provided columns in GSE333974 supplemental file (observations).
+Provide these to Stage 3 pseudobulk and DE to reproduce statistical model results.
+
 ```
 MBv analysis pipeline
 │
@@ -27,10 +33,11 @@ MBv analysis pipeline
 │     ├── code/07-1_covariate_sensitivity
 │     └── code/07_dx_DE
 │
-└── Stage 4: Gene regulatory networks
+└── Stage 4: Gene regulatory networks *
       ├── code/09_DEG_GRN
       └── code/10_SCENIC
 ```
+* Stage 4 is not perfectly reproducible because every run with GRNBOOST2 produces a unique result.
 
 Run a stage of analysis by calling the entry point nextflow file and supplying options
 for the following required parameters:
@@ -49,7 +56,7 @@ establishing a workflow.
 
 ```bash
 nextflow run workflows/Stage01_create-spe.nf -profile docker,test -params-file nextflow.yaml \
--with-report workflows/reports/01_report.html \
+-with-report workflows/reports/Stage01_docker-test.html \
 -resume
 ```
 
@@ -59,28 +66,6 @@ nextflow clean -before <run_name> -f && find work -type d -empty -delete
 ```
 
 
-### Making a map
-Check details: https://nf-co.re/docs/community/brand/workflow-schematics
-Make one map per stage. Start by building a graph running with `preview` for not actually execute analysis tasks
-```bash
-mkdir -p workflows/diagrams
-nextflow run workflows/Stage02_QC-annotation.nf \
-    -profile docker,test \
-    -params-file nextflow.yaml \
-    -preview \
-    -with-dag workflows/diagrams/Stage02.mmd
-```
-Creating conda env specifically for converting mmd to subway map:
-```bash
-conda create -n nf-metro -c conda-forge -c bioconda nf-metro
-conda activate nf-metro
-```
-Now convert
-```bash
-nf-metro render workflows/diagrams/Stage02.mmd \
-    --from-nextflow \
-    -o workflows/diagrams/Stage02.svg
-```
 
 ### Published output layout
 
@@ -149,22 +134,27 @@ nextflow run workflows/Stage02_QC-annotation.nf -profile docker,test \
   -params-file nextflow.yaml 
 ```
 
-- Apptainer full run on JHPCE: `distracted_mclean`
+- Apptainer test run on JHPCE with corrected GEO metadata: `condescending_newton` 
 ```bash
 srun --mem 4G --pty bash # previously had nextflow success but OOM runner with 1GB
 module load nextflow/26.10.6
 export NXF_JVM_ARGS="-Xms256m -Xmx2g"
-nextflow run workflows/Stage02_QC-annotation.nf -profile apptainer -params-file nextflow.yaml \
-  -with-report workflows/reports/Stage02_apptainer-full-report.html \
-  --spe_dir nextflow_outputs/01_create-spe
+nextflow run workflows/Stage02_QC-annotation.nf -profile apptainer,test -params-file nextflow.yaml \
+  -with-report workflows/reports/Stage02_apptainer-test-report.html \
+  --spe_dir test/processed-data/Stage01_create-spe \
+  -w "$MYSCRATCH/MBv-work" -resume fa92fb74-8832-4855-8310-975e6a5be892
 ```
 
 # TO-DO
 
 - container distribution
+- load stage-specific resource configurations only for their corresponding entry points to avoid the config warnings
 
 **Stage01_create-spe**
 - update GEO series matrix to include all donor metadata (age, RIN, seq batch/ round)
 
 **Stage02_QC-annotation**
 - make QC specific readme: explain ignore_edge_samples and n=120 vs n=119 differences?
+- QC pdf edge check and 2 sample handling
+- nnSVG runs should complete within 2 hours. if much longer times, try again using resume
+- make sure different seed is well enough explained
